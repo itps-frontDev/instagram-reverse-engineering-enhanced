@@ -1,24 +1,25 @@
 import { Pool, QueryResult, QueryResultRow } from "pg";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 const pool = new Pool({
   host: process.env.DATABASE_HOST,
   port: parseInt(process.env.DATABASE_PORT || "5432"),
   database: process.env.DATABASE_NAME,
   user: process.env.DATABASE_USER,
   password: process.env.DATABASE_PASSWORD,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  ssl: false, // Il server non supporta SSL
 });
 
 // Test della connessione
 pool.on("connect", () => {
-  console.log("Connected to PostgreSQL database");
+  if (!isProduction) {
+    console.log("Connected to PostgreSQL database");
+  }
 });
 
 pool.on("error", (err) => {
   console.error("Unexpected error on idle client", err);
-  process.exit(-1);
 });
 
 /**
@@ -34,7 +35,11 @@ export async function query<T extends QueryResultRow = QueryResultRow>(
   const start = Date.now();
   const result = await pool.query<T>(text, params);
   const duration = Date.now() - start;
-  console.log("Executed query", { text, duration, rows: result.rowCount });
+  
+  if (!isProduction) {
+    console.log("Executed query", { text: text.substring(0, 100), duration, rows: result.rowCount });
+  }
+  
   return result;
 }
 
