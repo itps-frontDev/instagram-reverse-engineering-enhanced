@@ -3,12 +3,16 @@
 -- =============================================
 
 -- Tipo ENUM per il genere
-CREATE TYPE IF NOT EXISTS gender_enum AS ENUM (
-    'male', 
-    'female',
-    'custom',
-    'prefer_not_to_say'
-);
+DO $$ BEGIN
+    CREATE TYPE gender_enum AS ENUM (
+        'male', 
+        'female',
+        'custom',
+        'prefer_not_to_say'
+    );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 CREATE TABLE IF NOT EXISTS profiles (
     id SERIAL PRIMARY KEY,

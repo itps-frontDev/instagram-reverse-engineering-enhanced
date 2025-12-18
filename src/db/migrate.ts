@@ -4,7 +4,7 @@ import { join } from "path";
 import * as dotenv from "dotenv";
 
 // Carica le variabili d'ambiente
-dotenv.config({ path: ".env.local" });
+dotenv.config();
 
 const pool = new Pool({
   host: process.env.DATABASE_HOST,

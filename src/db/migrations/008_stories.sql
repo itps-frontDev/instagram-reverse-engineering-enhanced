@@ -2,10 +2,15 @@
 -- 4. ⏳ STORIE (Story)
 -- =============================================
 
-CREATE TYPE IF NOT EXISTS media_type_enum AS ENUM (
-    'image',
-    'video'
-);
+-- Riusa lo stesso ENUM di post_media (se non esiste già)
+DO $$ BEGIN
+    CREATE TYPE media_type_enum AS ENUM (
+        'image',
+        'video'
+    );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 CREATE TABLE IF NOT EXISTS stories (
     id SERIAL PRIMARY KEY,

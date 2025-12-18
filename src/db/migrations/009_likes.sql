@@ -3,11 +3,15 @@
 -- =============================================
 
 -- Tipo ENUM per content_type
-CREATE TYPE IF NOT EXISTS content_type_enum AS ENUM (
-    'post',
-    'comment',
-    'story'
-);
+DO $$ BEGIN
+    CREATE TYPE content_type_enum AS ENUM (
+        'post',
+        'comment',
+        'story'
+    );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 CREATE TABLE IF NOT EXISTS likes (
     id SERIAL PRIMARY KEY,

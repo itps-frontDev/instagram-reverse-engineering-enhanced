@@ -3,18 +3,26 @@
 -- =============================================
 
 -- Tipo ENUM per tipo di notifica
-CREATE TYPE IF NOT EXISTS notification_type_enum AS ENUM (
-    'like',
-    'comment',
-    'follow',
-    'follow_request',
-    'message',
-    'mention',
-    'tag'
-);
+DO $$ BEGIN
+    CREATE TYPE notification_type_enum AS ENUM (
+        'like',
+        'comment',
+        'follow',
+        'follow_request',
+        'message',
+        'mention',
+        'tag'
+    );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
--- Tipo ENUM per target (riusa content_type_enum se esiste, altrimenti crea)
-CREATE TYPE IF NOT EXISTS target_type_enum AS ENUM ('post', 'comment', 'story', 'chat', 'profile');
+-- Tipo ENUM per target
+DO $$ BEGIN
+    CREATE TYPE target_type_enum AS ENUM ('post', 'comment', 'story', 'chat', 'profile');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 CREATE TABLE IF NOT EXISTS notifications (
     id SERIAL PRIMARY KEY,
