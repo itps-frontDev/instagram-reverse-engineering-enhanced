@@ -14,7 +14,10 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     
     -- Almeno uno tra phone_number o email deve essere presente
-    CONSTRAINT chk_user_contact CHECK (phone_number IS NOT NULL OR email IS NOT NULL)
+    CONSTRAINT chk_user_contact CHECK (phone_number IS NOT NULL OR email IS NOT NULL),
+    
+    -- Instagram richiede età minima di 13 anni
+    CONSTRAINT chk_user_age CHECK (date_of_birth <= CURRENT_DATE - INTERVAL '13 years')
 );
 
 -- Indici per ricerca veloce

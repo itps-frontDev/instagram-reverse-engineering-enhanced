@@ -1,6 +1,15 @@
 -- =============================================
 -- 2. 👤 PROFILO (Informazioni Sociali)
 -- =============================================
+
+-- Tipo ENUM per il genere
+CREATE TYPE IF NOT EXISTS gender_enum AS ENUM (
+    'male', 
+    'female',
+    'custom',
+    'prefer_not_to_say'
+);
+
 CREATE TABLE IF NOT EXISTS profiles (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
@@ -9,7 +18,7 @@ CREATE TABLE IF NOT EXISTS profiles (
     profile_image_url TEXT,
     bio VARCHAR(150),
     website_url VARCHAR(200),
-    gender_type VARCHAR(20),
+    gender_type gender_enum,
     gender_description VARCHAR(50),
     is_private BOOLEAN NOT NULL DEFAULT FALSE,
     -- Contatori denormalizzati per performance

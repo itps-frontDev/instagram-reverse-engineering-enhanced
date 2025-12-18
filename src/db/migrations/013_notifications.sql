@@ -1,20 +1,30 @@
 -- =============================================
 -- 7. 🔔 NOTIFICHE
 -- =============================================
+
+-- Tipo ENUM per tipo di notifica
+CREATE TYPE IF NOT EXISTS notification_type_enum AS ENUM (
+    'like',
+    'comment',
+    'follow',
+    'follow_request',
+    'message',
+    'mention',
+    'tag'
+);
+
+-- Tipo ENUM per target (riusa content_type_enum se esiste, altrimenti crea)
+CREATE TYPE IF NOT EXISTS target_type_enum AS ENUM ('post', 'comment', 'story', 'chat', 'profile');
+
 CREATE TABLE IF NOT EXISTS notifications (
     id SERIAL PRIMARY KEY,
     recipient_profile_id INTEGER NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     sender_profile_id INTEGER REFERENCES profiles(id) ON DELETE SET NULL,
-    type VARCHAR(50) NOT NULL, -- 'like', 'comment', 'follow', 'follow_request', 'message', 'mention'
-    target_type VARCHAR(20), -- 'post', 'comment', 'story', 'chat', 'profile'
+    type notification_type_enum NOT NULL,
+    target_type target_type_enum,
     target_id INTEGER,
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    
-    -- Validazione tipo notifica
-    CONSTRAINT chk_notification_type CHECK (
-        type IN ('like', 'comment', 'follow', 'follow_request', 'message', 'mention', 'tag')
-    )
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 -- Indici
