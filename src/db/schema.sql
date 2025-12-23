@@ -3,7 +3,7 @@
 -- =============================================
 -- SQLite Database Schema
 -- Version: 1.0.0
--- Last Updated: 2024-12-23
+-- Last Updated: 2025-12-23
 -- =============================================
 
 PRAGMA foreign_keys = ON;
@@ -186,7 +186,7 @@ CREATE TABLE IF NOT EXISTS stories (
 );
 
 CREATE INDEX IF NOT EXISTS idx_stories_profile ON stories(profile_id, created_at DESC) WHERE deleted_at IS NULL;
-CREATE INDEX IF NOT EXISTS idx_stories_active ON stories(profile_id, expires_at DESC) WHERE deleted_at IS NULL AND expires_at < datetime('now');
+CREATE INDEX IF NOT EXISTS idx_stories_active ON stories(profile_id, expires_at DESC) WHERE deleted_at IS NULL AND expires_at > datetime('now');
 
 -- =============================================
 -- 9. 👁️ STORY_VIEWS (Visualizzazioni Storie)
