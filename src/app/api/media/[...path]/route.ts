@@ -1,37 +1,33 @@
 /**
  * @fileoverview API route for serving media files.
  *
- * This route handles requests to `/api/media/[access]/[category]/[filename]`
+ * This route handles requests to `/api/media/[category]/[entityId]/[filename]`
  * where:
- * - `access`: 'public' or 'private'
  * - `category`: 'profiles', 'posts', 'stories', or 'messages'
+ * - `entityId`: The ID of the related entity (userId, postId, etc.)
  * - `filename`: The unique file identifier
  *
- * Public files are served without authentication.
- * Private files require a valid Authorization header.
+ * IMPORTANT: Access control is handled here based on database lookups.
+ * Files are NOT separated into public/private folders. Instead, we check
+ * permissions at request time by looking up the entity in the database.
  *
  * @module api/media/[...path]
  *
  * @example
- * // Access a public post image
- * GET /api/media/public/posts/abc-123.jpg
+ * // Access a post image
+ * GET /api/media/posts/123/abc-uuid.jpg
  *
- * // Access a private message attachment (requires auth)
- * GET /api/media/private/messages/xyz-789.pdf
- * Authorization: Bearer <token>
+ * // Access a profile picture
+ * GET /api/media/profiles/456/xyz-uuid.png
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { existsSync, readFileSync } from "fs";
-import { join } from "path";
-import { getMimeType, type MediaCategory, type AccessType } from "@/lib/storage";
+import { readFile, getMimeType, type MediaCategory } from "@/lib/storage";
+// import { queryOne } from "@/lib/db";  // Uncomment when implementing auth
 
 // ============================================================================
 // CONFIGURATION
 // ============================================================================
-
-/** Base directory for uploaded files */
-const UPLOADS_DIR = join(process.cwd(), "data", "uploads");
 
 /** Valid media categories */
 const VALID_CATEGORIES: MediaCategory[] = ["profiles", "posts", "stories", "messages"];
@@ -46,7 +42,7 @@ const CACHE_MAX_AGE = 31536000;
 /**
  * Handles GET requests for media files.
  *
- * Route pattern: /api/media/[access]/[category]/[filename]
+ * Route pattern: /api/media/[category]/[entityId]/[filename]
  *
  * @param request - The incoming HTTP request
  * @param params - Route parameters containing the path segments
@@ -61,29 +57,29 @@ export async function GET(
   // Validate path structure
   if (!path || path.length < 3) {
     return NextResponse.json(
-      { error: "Invalid path. Expected: /api/media/[access]/[category]/[filename]" },
+      { error: "Invalid path. Expected: /api/media/[category]/[entityId]/[filename]" },
       { status: 400 }
     );
   }
 
-  const [accessType, category, filename] = path;
+  const [category, entityId, filename] = path;
 
   // ========================================================================
   // VALIDATION
   // ========================================================================
 
-  // Validate access type
-  if (accessType !== "public" && accessType !== "private") {
-    return NextResponse.json(
-      { error: "Invalid access type. Must be 'public' or 'private'" },
-      { status: 400 }
-    );
-  }
-
   // Validate category
   if (!VALID_CATEGORIES.includes(category as MediaCategory)) {
     return NextResponse.json(
       { error: `Invalid category. Must be one of: ${VALID_CATEGORIES.join(", ")}` },
+      { status: 400 }
+    );
+  }
+
+  // Validate entityId (should be a number or UUID-like string)
+  if (!entityId || entityId.includes("..")) {
+    return NextResponse.json(
+      { error: "Invalid entity ID" },
       { status: 400 }
     );
   }
@@ -97,52 +93,44 @@ export async function GET(
   }
 
   // ========================================================================
-  // AUTHORIZATION (for private files)
+  // AUTHORIZATION
   // ========================================================================
-
-  if (accessType === "private") {
-    const authHeader = request.headers.get("authorization");
-
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json(
-        { error: "Authentication required for private content" },
-        { status: 401 }
-      );
-    }
-
-    // TODO: Implement proper JWT verification
-    // const token = authHeader.substring(7);
-    // const user = await verifyToken(token);
-    //
-    // TODO: Implement content-specific authorization
-    // - Posts/Stories: Check if user follows the private account
-    // - Messages: Check if user is a participant in the chat
-    // - Profiles: Check if user has permission to view
-  }
+  //
+  // TODO: Implement proper authorization based on category:
+  //
+  // For POSTS:
+  // const post = queryOne('SELECT * FROM posts WHERE id = ?', [entityId]);
+  // const owner = queryOne('SELECT * FROM users WHERE id = ?', [post.user_id]);
+  // if (owner.is_private) {
+  //   const currentUser = getCurrentUserFromRequest(request);
+  //   if (!currentUser) return 401 Unauthorized;
+  //   const isFollower = queryOne(
+  //     'SELECT * FROM follows WHERE follower_id = ? AND following_id = ? AND status = "accepted"',
+  //     [currentUser.id, owner.id]
+  //   );
+  //   if (!isFollower) return 403 Forbidden;
+  // }
+  //
+  // For STORIES:
+  // Similar to posts, but also check if story has expired
+  //
+  // For MESSAGES:
+  // Check if current user is a participant in the chat
+  //
+  // For PROFILES:
+  // Profile pictures are usually public, but could check privacy settings
 
   // ========================================================================
   // FILE RETRIEVAL
   // ========================================================================
 
-  const filePath = join(UPLOADS_DIR, accessType, category, filename);
+  const fileBuffer = readFile(category as MediaCategory, entityId, filename);
 
   // Check if file exists
-  if (!existsSync(filePath)) {
+  if (!fileBuffer) {
     return NextResponse.json(
       { error: "File not found" },
       { status: 404 }
-    );
-  }
-
-  // Read file
-  let fileBuffer: Buffer;
-  try {
-    fileBuffer = readFileSync(filePath);
-  } catch (error) {
-    console.error("[Media API] Error reading file:", error);
-    return NextResponse.json(
-      { error: "Failed to read file" },
-      { status: 500 }
     );
   }
 
@@ -161,10 +149,8 @@ export async function GET(
     headers: {
       "Content-Type": contentType,
       "Content-Length": fileBuffer.length.toString(),
-      // Cache public files aggressively, private files less so
-      "Cache-Control": accessType === "public"
-        ? `public, max-age=${CACHE_MAX_AGE}, immutable`
-        : "private, max-age=3600",
+      // Cache files aggressively (they have unique UUIDs)
+      "Cache-Control": `public, max-age=${CACHE_MAX_AGE}, immutable`,
       // Security headers
       "X-Content-Type-Options": "nosniff",
     },

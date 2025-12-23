@@ -2,20 +2,24 @@
  * @fileoverview Local file storage module for media uploads.
  *
  * This module handles saving, reading, and managing media files locally.
- * Files are organized by access type (public/private) and category.
+ * Files are organized by category and entity ID (user, post, story, etc.).
+ *
+ * IMPORTANT: Access control is NOT handled here. Permission checks must be
+ * performed in the API routes that serve files, based on database lookups
+ * (e.g., checking if user is private, if requester is a follower, etc.).
  *
  * Directory structure:
  * ```
  * data/uploads/
- * ├── public/           # Publicly accessible media (no auth required)
- * │   ├── profiles/     # Profile pictures
- * │   ├── posts/        # Post media from public accounts
- * │   └── stories/      # Stories from public accounts
- * └── private/          # Protected media (requires authentication)
- *     ├── profiles/     # Profile pictures (private accounts)
- *     ├── posts/        # Post media from private accounts
- *     ├── stories/      # Stories from private accounts
- *     └── messages/     # Direct message attachments
+ * ├── profiles/{user_id}/
+ * │   └── avatar.jpg
+ * ├── posts/{post_id}/
+ * │   ├── image1.jpg
+ * │   └── image2.jpg
+ * ├── stories/{story_id}/
+ * │   └── video.mp4
+ * └── messages/{message_id}/
+ *     └── attachment.pdf
  * ```
  *
  * @module lib/storage
@@ -24,8 +28,8 @@
  * // Save a file
  * import { saveFile } from '@/lib/storage';
  *
- * const result = saveFile(buffer, 'photo.jpg', 'posts', false);
- * console.log(result.url); // '/api/media/public/posts/abc-123.jpg'
+ * const result = saveFile(buffer, 'photo.jpg', 'posts', postId);
+ * console.log(result.url); // '/api/media/posts/123/abc-uuid.jpg'
  */
 
 import {
@@ -34,7 +38,8 @@ import {
   writeFileSync,
   readFileSync,
   unlinkSync,
-  renameSync,
+  readdirSync,
+  rmSync,
 } from "fs";
 import { join, extname } from "path";
 import { randomUUID } from "crypto";
@@ -55,16 +60,9 @@ const UPLOADS_DIR = join(DATA_DIR, "uploads");
 
 /**
  * Categories of media files.
- * Each category has its own subdirectory within public/ and private/.
+ * Each category has its own subdirectory.
  */
 export type MediaCategory = "profiles" | "posts" | "stories" | "messages";
-
-/**
- * Access level for media files.
- * - `public`: Accessible without authentication
- * - `private`: Requires authentication and authorization
- */
-export type AccessType = "public" | "private";
 
 /**
  * Result object returned after successfully saving a file.
@@ -109,40 +107,19 @@ const MIME_TYPES: Record<string, string> = {
 };
 
 // ============================================================================
-// INITIALIZATION
+// UTILITY FUNCTIONS
 // ============================================================================
 
 /**
- * Creates all required storage directories if they don't exist.
+ * Ensures a directory exists, creating it if necessary.
  *
- * Should be called once at application startup to ensure
- * the directory structure is ready for file operations.
- *
- * @example
- * // Call at app initialization
- * initStorageDirectories();
+ * @param dirPath - Absolute path to the directory
  */
-export function initStorageDirectories(): void {
-  const directories = [
-    join(UPLOADS_DIR, "public", "profiles"),
-    join(UPLOADS_DIR, "public", "posts"),
-    join(UPLOADS_DIR, "public", "stories"),
-    join(UPLOADS_DIR, "private", "profiles"),
-    join(UPLOADS_DIR, "private", "posts"),
-    join(UPLOADS_DIR, "private", "stories"),
-    join(UPLOADS_DIR, "private", "messages"),
-  ];
-
-  for (const dir of directories) {
-    if (!existsSync(dir)) {
-      mkdirSync(dir, { recursive: true });
-    }
+function ensureDir(dirPath: string): void {
+  if (!existsSync(dirPath)) {
+    mkdirSync(dirPath, { recursive: true });
   }
 }
-
-// ============================================================================
-// UTILITY FUNCTIONS
-// ============================================================================
 
 /**
  * Generates a unique filename using UUID.
@@ -179,17 +156,30 @@ export function getMimeType(filename: string): string {
  * Builds the absolute filesystem path for a file.
  *
  * @param category - The media category
+ * @param entityId - The ID of the entity (user, post, story, message)
  * @param filename - The file's unique name
- * @param isPrivate - Whether the file is in the private directory
  * @returns Absolute path to the file
  */
 function buildAbsolutePath(
   category: MediaCategory,
-  filename: string,
-  isPrivate: boolean
+  entityId: string | number,
+  filename: string
 ): string {
-  const accessType: AccessType = isPrivate ? "private" : "public";
-  return join(UPLOADS_DIR, accessType, category, filename);
+  return join(UPLOADS_DIR, category, String(entityId), filename);
+}
+
+/**
+ * Builds the directory path for an entity.
+ *
+ * @param category - The media category
+ * @param entityId - The ID of the entity
+ * @returns Absolute path to the entity's directory
+ */
+function buildEntityDir(
+  category: MediaCategory,
+  entityId: string | number
+): string {
+  return join(UPLOADS_DIR, category, String(entityId));
 }
 
 // ============================================================================
@@ -200,37 +190,36 @@ function buildAbsolutePath(
  * Saves a file to the storage system.
  *
  * Generates a unique filename to prevent collisions and organizes
- * the file in the appropriate directory based on category and access level.
+ * the file by category and entity ID.
  *
  * @param buffer - The file content as a Buffer
  * @param originalName - Original filename (used for extension detection)
  * @param category - Where to store the file (profiles, posts, stories, messages)
- * @param isPrivate - Whether the file should be private (requires auth to access)
+ * @param entityId - The ID of the related entity (userId, postId, storyId, messageId)
  * @returns Upload result with filename, path, URL, size, and MIME type
  *
  * @example
- * // Save a public post image
- * const result = saveFile(imageBuffer, 'vacation.jpg', 'posts', false);
- * // result.url = '/api/media/public/posts/abc-123.jpg'
+ * // Save a post image
+ * const result = saveFile(imageBuffer, 'vacation.jpg', 'posts', postId);
+ * // result.url = '/api/media/posts/123/abc-uuid.jpg'
  *
  * @example
- * // Save a private message attachment
- * const result = saveFile(fileBuffer, 'document.pdf', 'messages', true);
- * // result.url = '/api/media/private/messages/xyz-789.pdf'
+ * // Save a profile picture
+ * const result = saveFile(avatarBuffer, 'avatar.png', 'profiles', userId);
+ * // result.url = '/api/media/profiles/456/xyz-uuid.png'
  */
 export function saveFile(
   buffer: Buffer,
   originalName: string,
   category: MediaCategory,
-  isPrivate: boolean
+  entityId: string | number
 ): UploadResult {
-  // Ensure directories exist
-  initStorageDirectories();
+  const entityDir = buildEntityDir(category, entityId);
+  ensureDir(entityDir);
 
-  const accessType: AccessType = isPrivate ? "private" : "public";
   const filename = generateFilename(originalName);
-  const relativePath = join(accessType, category, filename);
-  const absolutePath = join(UPLOADS_DIR, relativePath);
+  const relativePath = join(category, String(entityId), filename);
+  const absolutePath = join(entityDir, filename);
 
   // Write file to disk
   writeFileSync(absolutePath, buffer);
@@ -238,7 +227,7 @@ export function saveFile(
   return {
     filename,
     path: relativePath,
-    url: `/api/media/${accessType}/${category}/${filename}`,
+    url: `/api/media/${category}/${entityId}/${filename}`,
     size: buffer.length,
     mimeType: getMimeType(originalName),
   };
@@ -248,22 +237,22 @@ export function saveFile(
  * Reads a file from storage.
  *
  * @param category - The media category
+ * @param entityId - The ID of the related entity
  * @param filename - The unique filename
- * @param isPrivate - Whether to look in the private directory
  * @returns File contents as Buffer, or null if file doesn't exist
  *
  * @example
- * const buffer = readFile('posts', 'abc-123.jpg', false);
+ * const buffer = readFile('posts', 123, 'abc-uuid.jpg');
  * if (buffer) {
  *   // Process the file
  * }
  */
 export function readFile(
   category: MediaCategory,
-  filename: string,
-  isPrivate: boolean
+  entityId: string | number,
+  filename: string
 ): Buffer | null {
-  const absolutePath = buildAbsolutePath(category, filename, isPrivate);
+  const absolutePath = buildAbsolutePath(category, entityId, filename);
 
   if (!existsSync(absolutePath)) {
     return null;
@@ -273,25 +262,25 @@ export function readFile(
 }
 
 /**
- * Deletes a file from storage.
+ * Deletes a single file from storage.
  *
  * @param category - The media category
+ * @param entityId - The ID of the related entity
  * @param filename - The unique filename
- * @param isPrivate - Whether the file is in the private directory
  * @returns true if file was deleted, false if it didn't exist
  *
  * @example
- * const deleted = deleteFile('posts', 'abc-123.jpg', false);
+ * const deleted = deleteFile('posts', 123, 'abc-uuid.jpg');
  * if (deleted) {
  *   console.log('File removed successfully');
  * }
  */
 export function deleteFile(
   category: MediaCategory,
-  filename: string,
-  isPrivate: boolean
+  entityId: string | number,
+  filename: string
 ): boolean {
-  const absolutePath = buildAbsolutePath(category, filename, isPrivate);
+  const absolutePath = buildAbsolutePath(category, entityId, filename);
 
   if (!existsSync(absolutePath)) {
     return false;
@@ -302,66 +291,75 @@ export function deleteFile(
 }
 
 /**
- * Moves a file between public and private directories.
+ * Deletes all files for an entity.
  *
- * Useful when a user changes their account privacy settings,
- * requiring all their media to be moved accordingly.
+ * Useful when deleting a post, story, or user account.
+ * Removes the entire entity directory and all its contents.
  *
  * @param category - The media category
- * @param filename - The unique filename
- * @param fromPrivate - Current access level (true = private)
- * @param toPrivate - Target access level (true = private)
- * @returns New API URL for the file, or null if source doesn't exist
+ * @param entityId - The ID of the entity to delete files for
+ * @returns true if directory was deleted, false if it didn't exist
  *
  * @example
- * // User made their account private - move post to private
- * const newUrl = moveFile('posts', 'abc-123.jpg', false, true);
- * // Returns: '/api/media/private/posts/abc-123.jpg'
+ * // When deleting a post, remove all its media
+ * deleteEntityFiles('posts', postId);
  */
-export function moveFile(
+export function deleteEntityFiles(
   category: MediaCategory,
-  filename: string,
-  fromPrivate: boolean,
-  toPrivate: boolean
-): string | null {
-  // No move needed if access level is the same
-  if (fromPrivate === toPrivate) {
-    const accessType: AccessType = fromPrivate ? "private" : "public";
-    return `/api/media/${accessType}/${category}/${filename}`;
+  entityId: string | number
+): boolean {
+  const entityDir = buildEntityDir(category, entityId);
+
+  if (!existsSync(entityDir)) {
+    return false;
   }
 
-  const fromPath = buildAbsolutePath(category, filename, fromPrivate);
-  const toPath = buildAbsolutePath(category, filename, toPrivate);
+  rmSync(entityDir, { recursive: true, force: true });
+  return true;
+}
 
-  if (!existsSync(fromPath)) {
-    return null;
+/**
+ * Lists all files for an entity.
+ *
+ * @param category - The media category
+ * @param entityId - The ID of the entity
+ * @returns Array of filenames, or empty array if directory doesn't exist
+ *
+ * @example
+ * const files = listEntityFiles('posts', 123);
+ * // ['image1.jpg', 'image2.jpg']
+ */
+export function listEntityFiles(
+  category: MediaCategory,
+  entityId: string | number
+): string[] {
+  const entityDir = buildEntityDir(category, entityId);
+
+  if (!existsSync(entityDir)) {
+    return [];
   }
 
-  // Use rename for atomic move (more efficient than copy+delete)
-  renameSync(fromPath, toPath);
-
-  const toAccessType: AccessType = toPrivate ? "private" : "public";
-  return `/api/media/${toAccessType}/${category}/${filename}`;
+  return readdirSync(entityDir);
 }
 
 /**
  * Gets the absolute filesystem path for a file.
  *
  * @param category - The media category
+ * @param entityId - The ID of the related entity
  * @param filename - The unique filename
- * @param isPrivate - Whether to look in the private directory
  * @returns Absolute path if file exists, null otherwise
  *
  * @example
- * const path = getFilePath('posts', 'abc-123.jpg', false);
- * // Returns: 'C:/project/data/uploads/public/posts/abc-123.jpg'
+ * const path = getFilePath('posts', 123, 'abc-uuid.jpg');
+ * // Returns: 'C:/project/data/uploads/posts/123/abc-uuid.jpg'
  */
 export function getFilePath(
   category: MediaCategory,
-  filename: string,
-  isPrivate: boolean
+  entityId: string | number,
+  filename: string
 ): string | null {
-  const absolutePath = buildAbsolutePath(category, filename, isPrivate);
+  const absolutePath = buildAbsolutePath(category, entityId, filename);
   return existsSync(absolutePath) ? absolutePath : null;
 }
 
@@ -369,27 +367,20 @@ export function getFilePath(
  * Checks if a file exists in storage.
  *
  * @param category - The media category
+ * @param entityId - The ID of the related entity
  * @param filename - The unique filename
- * @param isPrivate - Whether to check the private directory
  * @returns true if file exists, false otherwise
  *
  * @example
- * if (fileExists('profiles', 'avatar.jpg', false)) {
+ * if (fileExists('profiles', userId, 'avatar.jpg')) {
  *   // File is available
  * }
  */
 export function fileExists(
   category: MediaCategory,
-  filename: string,
-  isPrivate: boolean
+  entityId: string | number,
+  filename: string
 ): boolean {
-  const absolutePath = buildAbsolutePath(category, filename, isPrivate);
+  const absolutePath = buildAbsolutePath(category, entityId, filename);
   return existsSync(absolutePath);
 }
-
-// ============================================================================
-// INITIALIZATION ON IMPORT
-// ============================================================================
-
-// Initialize storage directories when this module is first imported
-initStorageDirectories();
