@@ -12,12 +12,11 @@
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
-    "jsonwebtoken": "^9.0.3",
     "better-sqlite3": "^12.5.0",
+    "jsonwebtoken": "^9.0.3",
     "next": "16.0.10",
     "react": "19.2.1",
-    "react-dom": "19.2.1",
-    "sqlite3": "^5.1.7"
+    "react-dom": "19.2.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
