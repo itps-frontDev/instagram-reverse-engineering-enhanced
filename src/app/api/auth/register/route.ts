@@ -3,109 +3,78 @@ import bcrypt from 'bcryptjs';
 import sqlite3 from 'sqlite3';
 import path from 'path';
 
-// Inizializza database
-const dbPath = path.join(process.cwd(), 'instagram.db');
-const db = new sqlite3.Database(dbPath);
+export const runtime = 'nodejs';
 
-// Crea tabella utenti se non esiste
-db.run(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT UNIQUE NOT NULL,
-    username TEXT UNIQUE NOT NULL,
-    fullName TEXT NOT NULL,
-    password TEXT NOT NULL,
-    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`);
+const dbPath = path.join(process.cwd(), 'data', 'instagram.db');
+const db = new sqlite3.Database(dbPath);
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, fullName, username, password } = body;
+    // Recuperiamo i dati inviati dal form multi-step
+    const { email, password, birthDate, fullName, username } = body;
 
-    // Validazione input
-    if (!email || !fullName || !username || !password) {
-      return NextResponse.json(
-        { error: 'Tutti i campi sono obbligatori' },
-        { status: 400 }
-      );
+    // 1. Validazione
+    if (!email || !password || !username) {
+      return NextResponse.json({ error: 'Email, password e username sono obbligatori' }, { status: 400 });
     }
 
-    // Validazione email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: 'Email non valida' },
-        { status: 400 }
-      );
-    }
+    // Formattazione data di nascita per SQLite
+    const dob = birthDate ? `${birthDate.year}-${birthDate.month}-${birthDate.day}` : '2000-01-01';
+    const hashedPassword = await bcrypt.hash(String(password), 10);
+    const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
 
-    // Validazione username
-    if (username.length < 3) {
-      return NextResponse.json(
-        { error: 'Username deve contenere almeno 3 caratteri' },
-        { status: 400 }
-      );
-    }
-
-    // Validazione password
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: 'Password deve contenere almeno 6 caratteri' },
-        { status: 400 }
-      );
-    }
-
-    // Hash della password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Salva utente nel database
     return new Promise((resolve) => {
-      db.run(
-        `INSERT INTO users (email, username, fullName, password) VALUES (?, ?, ?, ?)`,
-        [email, username, fullName, hashedPassword],
-        function (err) {
+      // Usiamo serialize per assicurarci che le operazioni avvengano in ordine
+      db.serialize(() => {
+        db.run('BEGIN TRANSACTION');
+
+        // 2. Inserimento in USERS
+        const sqlUser = `
+          INSERT INTO users (email, password_hash, date_of_birth, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?)
+        `;
+        
+        db.run(sqlUser, [email, hashedPassword, dob, now, now], function (err) {
           if (err) {
+            db.run('ROLLBACK');
             if (err.message.includes('UNIQUE constraint failed')) {
-              if (err.message.includes('email')) {
-                resolve(
-                  NextResponse.json(
-                    { error: 'Email già registrata' },
-                    { status: 409 }
-                  )
-                );
-              } else if (err.message.includes('username')) {
-                resolve(
-                  NextResponse.json(
-                    { error: 'Username già in uso' },
-                    { status: 409 }
-                  )
-                );
-              }
-            } else {
-              resolve(
-                NextResponse.json(
-                  { error: 'Errore durante la registrazione' },
-                  { status: 500 }
-                )
-              );
+              return resolve(NextResponse.json({ error: 'Email già registrata' }, { status: 409 }));
             }
-          } else {
-            resolve(
-              NextResponse.json(
-                { message: 'Registrazione completata con successo', userId: this.lastID },
-                { status: 201 }
-              )
-            );
+            return resolve(NextResponse.json({ error: 'Errore inserimento utente' }, { status: 500 }));
           }
-        }
-      );
+
+          const lastUserId = this.lastID;
+
+          // 3. Inserimento in PROFILES (popolato automaticamente)
+          const sqlProfile = `
+            INSERT INTO profiles (user_id, username, full_name, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?)
+          `;
+
+          db.run(sqlProfile, [lastUserId, username, fullName, now, now], (errProfile) => {
+            if (errProfile) {
+              db.run('ROLLBACK');
+              if (errProfile.message.includes('UNIQUE constraint failed')) {
+                return resolve(NextResponse.json({ error: 'Nome utente già esistente' }, { status: 409 }));
+              }
+              return resolve(NextResponse.json({ error: 'Errore creazione profilo' }, { status: 500 }));
+            }
+
+            // Se tutto va bene, conferma
+            db.run('COMMIT');
+            resolve(
+              NextResponse.json({
+                message: 'Registrazione completata con successo',
+                userId: lastUserId,
+                username: username
+              }, { status: 201 })
+            );
+          });
+        });
+      });
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Errore del server' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Errore del server' }, { status: 500 });
   }
 }
