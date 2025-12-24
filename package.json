@@ -14,7 +14,6 @@
     "bcryptjs": "^3.0.3",
     "jsonwebtoken": "^9.0.3",
     "next": "16.0.10",
-    "pg": "^8.16.3",
     "react": "19.2.1",
     "react-dom": "19.2.1",
     "sqlite3": "^5.1.7"
@@ -22,7 +21,6 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
-    "@types/pg": "^8.16.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "dotenv": "^17.2.3",
@@ -31,5 +29,12 @@
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp",
+      "sqlite3"
+    ]
   }
 }
