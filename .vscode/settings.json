@@ -1,0 +1,11 @@
+{
+    "sqltools.useNodeRuntime": true,
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "instagram-db",
+            "database": "${workspaceFolder:instagram-reverse-engineering}/data/instagram.db"
+        }
+    ]
+}

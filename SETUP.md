@@ -33,4 +33,18 @@ Apri **http://localhost:3000**
 | `pnpm db:reset` | Ricrea database |
 | `pnpm build` | Build produzione |
 
+---
+
+## Problemi?
+
+### "Could not locate the bindings file"
+```bash
+pnpm approve-builds   # seleziona better-sqlite3, conferma con 'y'
+pnpm rebuild better-sqlite3
+```
+
+### Database non funziona
+```bash
+pnpm db:reset
+```
 
