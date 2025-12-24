@@ -11,8 +11,6 @@
     "db:reset": "tsx src/db/migrate.ts --reset"
   },
   "dependencies": {
-    "bcryptjs": "^3.0.3",
-    "jsonwebtoken": "^9.0.3",
     "next": "16.0.10",
     "react": "19.2.1",
     "react-dom": "19.2.1",
