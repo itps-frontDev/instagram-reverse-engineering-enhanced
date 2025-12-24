@@ -4,10 +4,6 @@ html {
   background: #fafafa;
 }
 
-html.dark {
-  background: #0c1014;
-}
-
 body {
   background: #fafafa;
   color: #262626;
@@ -16,9 +12,16 @@ body {
   line-height: 1.5;
 }
 
-body.dark {
-  background: #0c1014;
-  color: #fafafa;
+@media (prefers-color-scheme: dark) {
+  html {
+    background: #0c1014;
+    color-scheme: dark;
+  }
+  
+  body {
+    background: #0c1014;
+    color: #fafafa;
+  }
 }
 
 /* Hide scrollbar but keep functionality */
