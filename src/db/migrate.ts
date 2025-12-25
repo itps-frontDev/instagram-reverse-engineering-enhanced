@@ -14,9 +14,10 @@
  * pnpm db:reset
  */
 
-import Database from "better-sqlite3";
-import { readFileSync, existsSync, mkdirSync, unlinkSync } from "fs";
+import { readFile, unlink, access } from "fs/promises";
+import { existsSync, mkdirSync } from "fs";
 import { join } from "path";
+import { executeScript, queryAll } from "@/lib/db";
 
 // ============================================================================
 // CONFIGURATION
@@ -53,19 +54,18 @@ if (!existsSync(DATA_DIR)) {
  *
  * All three must be deleted for a clean reset.
  */
-function resetDatabase(): void {
+async function resetDatabase(): Promise<void> {
   console.log("🗑️  Resetting database...\n");
 
-  const filesToDelete = [
-    DB_PATH,
-    `${DB_PATH}-wal`,
-    `${DB_PATH}-shm`,
-  ];
+  const filesToDelete = [DB_PATH, `${DB_PATH}-wal`, `${DB_PATH}-shm`];
 
   for (const file of filesToDelete) {
-    if (existsSync(file)) {
-      unlinkSync(file);
+    try {
+      await access(file);
+      await unlink(file);
       console.log(`   Deleted: ${file}`);
+    } catch {
+      // File doesn't exist, skip
     }
   }
 
@@ -79,7 +79,7 @@ function resetDatabase(): void {
  * - WAL mode for better concurrent performance
  * - Foreign keys enabled for referential integrity
  */
-function createSchema(): void {
+async function createSchema(): Promise<void> {
   console.log("🚀 Creating database schema...\n");
 
   // Verify schema file exists
@@ -88,22 +88,15 @@ function createSchema(): void {
     process.exit(1);
   }
 
-  // Initialize database
-  const db = new Database(DB_PATH);
-  db.pragma("journal_mode = WAL");
-  db.pragma("foreign_keys = ON");
-
   try {
     // Read and execute schema
-    const sql = readFileSync(SCHEMA_PATH, "utf-8");
-    db.exec(sql);
+    const sql = await readFile(SCHEMA_PATH, "utf-8");
+    await executeScript(sql);
 
     // Get list of created tables
-    const tables = db
-      .prepare(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
-      )
-      .all() as { name: string }[];
+    const tables = await queryAll<{ name: string }>(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+    );
 
     console.log(`✅ Created ${tables.length} tables:\n`);
     for (const table of tables) {
@@ -115,8 +108,6 @@ function createSchema(): void {
       error instanceof Error ? error.message : error
     );
     process.exit(1);
-  } finally {
-    db.close();
   }
 }
 
@@ -150,7 +141,7 @@ Files:
  *
  * Parses command line arguments and executes the appropriate operations.
  */
-function main(): void {
+async function main(): Promise<void> {
   const args = process.argv.slice(2);
 
   // Show help
@@ -167,11 +158,11 @@ function main(): void {
 
   // Reset if requested
   if (shouldReset) {
-    resetDatabase();
+    await resetDatabase();
   }
 
   // Create schema
-  createSchema();
+  await createSchema();
 
   console.log("\n" + "─".repeat(50));
   console.log("\n🎉 Database setup complete!");
@@ -179,4 +170,4 @@ function main(): void {
 }
 
 // Run the script
-main();
+main().catch(console.error);

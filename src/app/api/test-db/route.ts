@@ -51,12 +51,12 @@ interface TableResult {
 export async function GET(): Promise<NextResponse> {
   try {
     // Get SQLite version
-    const versionResult = queryOne<VersionResult>(
+    const versionResult = await queryOne<VersionResult>(
       "SELECT sqlite_version() as version"
     );
 
     // Get list of tables (excluding SQLite internal tables)
-    const tables = queryAll<TableResult>(
+    const tables = await queryAll<TableResult>(
       "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
     );
 

@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -10,6 +10,15 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Logica aggiuntiva: mostra messaggio se arriva da registrazione completata
+  useEffect(() => {
+    if (searchParams.get('registered') === 'true') {
+      // Opzionale: potresti usare uno stato per un messaggio di successo
+      console.log("Registrazione completata con successo");
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,10 +40,12 @@ export default function LoginPage() {
         return;
       }
 
-      // Login completato
+      // Login completato: salvataggio persistente
       localStorage.setItem('user', JSON.stringify(data.user));
       localStorage.setItem('token', data.token);
+      
       router.push('/');
+      router.refresh();
     } catch (err) {
       setError('Errore di connessione');
       setLoading(false);
@@ -45,7 +56,7 @@ export default function LoginPage() {
     <div className="flex flex-col min-h-screen bg-white">
       {/* Main Content */}
       <div className="flex flex-1">
-        {/* Left side - Image */}
+        {/* Left side - Image (Invariato) */}
         <div className="hidden lg:flex lg:w-1/2 items-center justify-center">
           <img
             src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 500'%3E%3Crect fill='%23f0f0f0' width='400' height='500'/%3E%3Ctext x='200' y='250' font-size='20' text-anchor='middle' fill='%23999'%3EInstagram Login Visual%3C/text%3E%3C/svg%3E"
@@ -54,7 +65,7 @@ export default function LoginPage() {
           />
         </div>
 
-        {/* Right side - Login Form */}
+        {/* Right side - Login Form (Invariato graficamente) */}
         <div className="w-full lg:w-1/2 flex flex-col items-center justify-center px-4 py-8">
           <div className="w-full max-w-sm">
             {/* Instagram Logo */}
@@ -130,7 +141,7 @@ export default function LoginPage() {
           <div className="w-full max-w-sm border border-gray-300 text-center py-4 mt-6 rounded">
             <p className="text-sm text-gray-700">
               Non hai un account?{' '}
-              <Link href="../register/" className="font-semibold text-blue-500 hover:text-blue-700">
+              <Link href="/register" className="font-semibold text-blue-500 hover:text-blue-700">
                 Iscriviti
               </Link>
             </p>
@@ -159,30 +170,10 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Footer */}
+      {/* Footer (Invariato) */}
       <footer className="border-t border-gray-300 py-6 px-4">
-        <div className="max-w-full">
-          <div className="flex flex-wrap justify-center gap-4 text-xs text-gray-600 mb-4">
-            <Link href="#" className="hover:text-gray-900">Meta</Link>
-            <Link href="#" className="hover:text-gray-900">Informazioni</Link>
-            <Link href="#" className="hover:text-gray-900">Blog</Link>
-            <Link href="#" className="hover:text-gray-900">Lavoro con noi</Link>
-            <Link href="#" className="hover:text-gray-900">Aiuto</Link>
-            <Link href="#" className="hover:text-gray-900">API</Link>
-            <Link href="#" className="hover:text-gray-900">Privacy</Link>
-            <Link href="#" className="hover:text-gray-900">Condizioni</Link>
-            <Link href="#" className="hover:text-gray-900">Luoghi</Link>
-            <Link href="#" className="hover:text-gray-900">Instagram Lite</Link>
-            <Link href="#" className="hover:text-gray-900">Thread</Link>
-            <Link href="#" className="hover:text-gray-900">Cancellamento dei contenuti e nostri diritti</Link>
-            <Link href="#" className="hover:text-gray-900">Verifica</Link>
-          </div>
-          <div className="text-center text-xs text-gray-600">
-            <p>
-              <Link href="#" className="hover:text-gray-900">Italiano</Link>
-              {' '} • © 2025 Instagram from Meta
-            </p>
-          </div>
+        <div className="max-w-full text-center text-xs text-gray-600">
+          <p>© 2025 Instagram from Meta</p>
         </div>
       </footer>
     </div>
