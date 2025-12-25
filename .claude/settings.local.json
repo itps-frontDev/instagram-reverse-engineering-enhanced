@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(pnpm db:reset:*)",
+      "Bash(pnpm db:seed:*)"
+    ]
+  }
+}

@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "db:migrate": "tsx src/db/migrate.ts",
-    "db:reset": "tsx src/db/migrate.ts --reset"
+    "db:reset": "tsx src/db/migrate.ts --reset",
+    "db:seed": "tsx src/db/seed.ts"
   },
   "dependencies": {
     "lucide-react": "^0.562.0",
