@@ -1,61 +1,350 @@
 /**
- * @fileoverview Pagina Profilo Utente.
- * 
- * Mostra info profilo, statistiche e grid dei post.
+ * @fileoverview Instagram Profile Page
+ *
+ * Complete Instagram-identical profile page with all states:
+ * - Own profile (edit capability)
+ * - Public profile (following/not following)
+ * - Private profile (following/not following/pending)
  */
 
-import { Settings, Grid, Bookmark, UserSquare2 } from 'lucide-react';
+'use client';
 
-export default function ProfilePage({ params }: { params: Promise<{ username: string }> }) {
-  return (
-    <div className="max-w-4xl mx-auto px-4 pt-8">
-      {/* Profile Header */}
-      <div className="flex items-start gap-8 mb-12">
-        <div className="w-32 h-32 rounded-full bg-gradient-to-br from-purple-500 to-pink-500" />
-        
-        <div className="flex-1">
-          <div className="flex items-center gap-4 mb-6">
-            <h1 className="text-2xl font-light">username</h1>
-            <button className="px-6 py-1.5 bg-gray-200 rounded-lg font-semibold text-sm">
-              Modifica profilo
-            </button>
-            <Settings className="w-6 h-6 cursor-pointer" />
-          </div>
-          
-          <div className="flex gap-8 mb-6">
-            <div><span className="font-semibold">42</span> post</div>
-            <div><span className="font-semibold">1.234</span> follower</div>
-            <div><span className="font-semibold">567</span> seguiti</div>
-          </div>
-          
-          <div>
-            <p className="font-semibold">Nome Completo</p>
-            <p className="text-sm">Bio del profilo</p>
-          </div>
-        </div>
+import { use, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import ProfileHeader from '@/components/profile/ProfileHeader';
+import ProfileTabs from '@/components/profile/ProfileTabs';
+import ProfileGrid from '@/components/profile/ProfileGrid';
+import ProfilePrivateLock from '@/components/profile/ProfilePrivateLock';
+import StoriesHighlights from '@/components/profile/StoriesHighlights';
+import {
+  Profile,
+  Post,
+  FollowStatus,
+  ProfileTab,
+  StoryHighlight,
+} from '@/lib/types/profile';
+
+// ============================================================================
+// MAIN PAGE COMPONENT
+// ============================================================================
+
+export default function ProfilePage({
+  params,
+}: {
+  params: Promise<{ username: string }>;
+}) {
+  const { username } = use(params);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // State
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [followStatus, setFollowStatus] = useState<FollowStatus>({
+    isFollowing: false,
+    isFollowedBy: false,
+    isPending: false,
+    isOwnProfile: false,
+  });
+  const [canView, setCanView] = useState(true);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [highlights, setHighlights] = useState<StoryHighlight[]>([]);
+  const [activeTab, setActiveTab] = useState<ProfileTab>('posts');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingPosts, setIsLoadingPosts] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [page, setPage] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch profile data on mount
+  useEffect(() => {
+    fetchProfileData();
+  }, [username]);
+
+  // Fetch posts when tab changes
+  useEffect(() => {
+    if (profile && canView) {
+      fetchPosts(0);
+    }
+  }, [activeTab, profile, canView]);
+
+  // Sync tab with URL
+  useEffect(() => {
+    const tab = searchParams.get('tab') as ProfileTab;
+    if (tab && ['posts', 'reels', 'tagged'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
+  /**
+   * Fetch profile data, follow status, and can-view status
+   */
+  async function fetchProfileData() {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Fetch profile
+      const profileRes = await fetch(`/api/profiles/${username}`);
+      if (!profileRes.ok) {
+        if (profileRes.status === 404) {
+          setError('Profile not found');
+          return;
+        }
+        throw new Error('Failed to fetch profile');
+      }
+      const profileData = await profileRes.json();
+      setProfile(profileData.profile);
+
+      // Fetch follow status (requires auth)
+      try {
+        const followRes = await fetch(`/api/profiles/${username}/follow-status`);
+        if (followRes.ok) {
+          const followData = await followRes.json();
+          setFollowStatus(followData);
+        }
+      } catch (err) {
+        // Not authenticated - continue as guest
+        console.log('Not authenticated, viewing as guest');
+      }
+
+      // Fetch can-view status
+      const canViewRes = await fetch(`/api/profiles/${username}/can-view`);
+      if (canViewRes.ok) {
+        const canViewData = await canViewRes.json();
+        setCanView(canViewData.canView);
+      }
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+      setError('Failed to load profile');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  /**
+   * Fetch posts for current tab
+   */
+  async function fetchPosts(pageNum: number) {
+    setIsLoadingPosts(true);
+
+    try {
+      const res = await fetch(
+        `/api/profiles/${username}/posts?tab=${activeTab}&page=${pageNum}`
+      );
+
+      if (!res.ok) {
+        throw new Error('Failed to fetch posts');
+      }
+
+      const data = await res.json();
+
+      if (pageNum === 0) {
+        setPosts(data.posts);
+      } else {
+        setPosts((prev) => [...prev, ...data.posts]);
+      }
+
+      setHasMore(data.hasMore);
+      setPage(pageNum);
+    } catch (err) {
+      console.error('Error fetching posts:', err);
+    } finally {
+      setIsLoadingPosts(false);
+    }
+  }
+
+  /**
+   * Handle follow action
+   */
+  async function handleFollow() {
+    if (!profile) return;
+
+    // Optimistic update
+    setFollowStatus((prev) => ({
+      ...prev,
+      isFollowing: profile.is_private ? false : true,
+      isPending: profile.is_private ? true : false,
+    }));
+
+    try {
+      const res = await fetch('/api/profiles/actions/follow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetProfileId: profile.id }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to follow');
+      }
+
+      const data = await res.json();
+
+      // Update follow status based on response
+      setFollowStatus((prev) => ({
+        ...prev,
+        isFollowing: data.status === 'accepted',
+        isPending: data.status === 'pending',
+      }));
+
+      // Update profile counts
+      setProfile((prev) =>
+        prev
+          ? {
+              ...prev,
+              followers_count:
+                data.status === 'accepted'
+                  ? prev.followers_count + 1
+                  : prev.followers_count,
+            }
+          : null
+      );
+    } catch (err) {
+      // Revert optimistic update
+      setFollowStatus((prev) => ({
+        ...prev,
+        isFollowing: false,
+        isPending: false,
+      }));
+      console.error('Error following:', err);
+      alert('Failed to follow user');
+    }
+  }
+
+  /**
+   * Handle unfollow action
+   */
+  async function handleUnfollow() {
+    if (!profile) return;
+
+    const wasFollowing = followStatus.isFollowing;
+    const wasPending = followStatus.isPending;
+
+    // Optimistic update
+    setFollowStatus((prev) => ({
+      ...prev,
+      isFollowing: false,
+      isPending: false,
+    }));
+
+    try {
+      const res = await fetch('/api/profiles/actions/unfollow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetProfileId: profile.id }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to unfollow');
+      }
+
+      // Update profile counts
+      setProfile((prev) =>
+        prev && wasFollowing
+          ? { ...prev, followers_count: Math.max(0, prev.followers_count - 1) }
+          : prev
+      );
+
+      // If was following private account, can no longer view
+      if (profile.is_private && wasFollowing) {
+        setCanView(false);
+        setPosts([]);
+      }
+    } catch (err) {
+      // Revert optimistic update
+      setFollowStatus((prev) => ({
+        ...prev,
+        isFollowing: wasFollowing,
+        isPending: wasPending,
+      }));
+      console.error('Error unfollowing:', err);
+      alert('Failed to unfollow user');
+    }
+  }
+
+  /**
+   * Handle tab change
+   */
+  function handleTabChange(tab: ProfileTab) {
+    setActiveTab(tab);
+    router.push(`/profile/${username}?tab=${tab}`, { scroll: false });
+  }
+
+  /**
+   * Load more posts (infinite scroll)
+   */
+  function handleLoadMore() {
+    if (!isLoadingPosts && hasMore) {
+      fetchPosts(page + 1);
+    }
+  }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-500">Loading...</div>
       </div>
+    );
+  }
+
+  // Error state
+  if (error || !profile) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <h1 className="text-2xl font-semibold mb-2">
+          {error || 'Profile not found'}
+        </h1>
+        <p className="text-gray-500 mb-4">
+          This page isn&apos;t available.
+        </p>
+        <button
+          onClick={() => router.push('/')}
+          className="text-[#0095f6] font-semibold hover:opacity-70"
+        >
+          Go back to home
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="pb-12">
+      {/* Profile Header */}
+      <ProfileHeader
+        profile={profile}
+        followStatus={followStatus}
+        onFollow={handleFollow}
+        onUnfollow={handleUnfollow}
+      />
+
+      {/* Story Highlights */}
+      {followStatus.isOwnProfile && highlights.length > 0 && (
+        <StoriesHighlights highlights={highlights} profileId={profile.id} />
+      )}
 
       {/* Tabs */}
-      <div className="flex justify-center gap-16 border-t border-gray-200">
-        <button className="flex items-center gap-2 py-4 border-t border-black -mt-[1px]">
-          <Grid className="w-4 h-4" />
-          <span className="text-xs font-semibold uppercase">Post</span>
-        </button>
-        <button className="flex items-center gap-2 py-4 text-gray-400">
-          <Bookmark className="w-4 h-4" />
-          <span className="text-xs font-semibold uppercase">Salvati</span>
-        </button>
-        <button className="flex items-center gap-2 py-4 text-gray-400">
-          <UserSquare2 className="w-4 h-4" />
-          <span className="text-xs font-semibold uppercase">Tag</span>
-        </button>
-      </div>
+      <ProfileTabs
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        postsCount={profile.posts_count}
+        showTagged={followStatus.isOwnProfile}
+      />
 
-      {/* Posts Grid */}
-      <div className="grid grid-cols-3 gap-1 mt-4">
-        {Array(9).fill(null).map((_, i) => (
-          <div key={i} className="aspect-square bg-gray-200 hover:opacity-80 transition cursor-pointer" />
-        ))}
+      {/* Content Area */}
+      <div className="max-w-4xl mx-auto px-4 mt-4">
+        {canView ? (
+          <ProfileGrid
+            posts={posts}
+            isLoading={isLoadingPosts}
+            onLoadMore={handleLoadMore}
+            hasMore={hasMore}
+          />
+        ) : (
+          <ProfilePrivateLock
+            username={profile.username}
+            isPending={followStatus.isPending}
+          />
+        )}
       </div>
     </div>
   );
