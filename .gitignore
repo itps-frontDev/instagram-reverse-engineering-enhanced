@@ -1,3 +1,6 @@
+# Ignora la cartella data e tutto il suo contenuto
+data/
+
 # Logs
 logs
 *.log
