@@ -50,7 +50,7 @@ export interface FollowRelationship {
   id: number;
   follower_profile_id: number;
   following_profile_id: number;
-  status: 'pending' | 'accepted';
+  status: 'pending' | 'accepted' | 'rejected';
   created_at: string;
 }
 

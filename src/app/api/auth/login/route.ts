@@ -1,20 +1,31 @@
+/**
+ * @fileoverview Login API endpoint
+ *
+ * Handles user authentication with email/phone/username and password.
+ * Returns a JWT token in an HTTP-only cookie upon successful login.
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import sqlite3 from 'sqlite3';
-import path from 'path';
-import jwt from 'jsonwebtoken';
+import { queryOne } from '@/lib/db';
+import { generateToken } from '@/lib/jwt';
+import { AUTH_COOKIE_NAME } from '@/lib/auth';
 
 export const runtime = 'nodejs';
 
-// Configurazione Database
-const dbPath = path.join(process.cwd(), 'data', 'instagram.db');
-const db = new sqlite3.Database(dbPath);
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-2025';
+interface User {
+  id: number;
+  email: string | null;
+  phone_number: string | null;
+  password_hash: string;
+  username: string | null;
+  full_name: string | null;
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email: identifier, password } = body;
+    const { email: identifier, password, redirect } = body;
 
     if (!identifier || !password) {
       return NextResponse.json(
@@ -23,91 +34,78 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return new Promise((resolve) => {
-      // Query con JOIN per cercare in entrambe le tabelle
-      // Cerchiamo identifier in: users.email, users.phone_number o profiles.username
-      const sql = `
-        SELECT 
-          u.id, 
-          u.email, 
-          u.phone_number, 
-          u.password_hash, 
-          p.username, 
-          p.full_name
-        FROM users u
-        LEFT JOIN profiles p ON u.id = p.user_id
-        WHERE u.email = ? 
-           OR u.phone_number = ? 
-           OR p.username = ?
-        LIMIT 1
-      `;
+    // Query to find user by email, phone, or username
+    const user = await queryOne<User>(
+      `SELECT
+        u.id,
+        u.email,
+        u.phone_number,
+        u.password_hash,
+        p.username,
+        p.full_name
+      FROM users u
+      LEFT JOIN profiles p ON u.id = p.user_id
+      WHERE (u.email = ? OR u.phone_number = ? OR p.username = ?)
+        AND u.deleted_at IS NULL
+      LIMIT 1`,
+      [identifier, identifier, identifier]
+    );
 
-      db.get(sql, [identifier, identifier, identifier], async (err, user: any) => {
-        if (err) {
-          console.error('Database Error:', err);
-          return resolve(
-            NextResponse.json({ error: 'Errore interno del server' }, { status: 500 })
-          );
-        }
+    // Verify user exists
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Credenziali non valide' },
+        { status: 401 }
+      );
+    }
 
-        // 1. Verifica esistenza utente
-        if (!user) {
-          return resolve(
-            NextResponse.json({ error: 'Credenziali non valide' }, { status: 401 })
-          );
-        }
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 
-        // 2. Confronto password (usando password_hash come da tuo schema)
-        const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+    if (!isPasswordValid) {
+      return NextResponse.json(
+        { error: 'Credenziali non valide' },
+        { status: 401 }
+      );
+    }
 
-        if (!isPasswordValid) {
-          return resolve(
-            NextResponse.json({ error: 'Credenziali non valide' }, { status: 401 })
-          );
-        }
-
-        // 3. Generazione JWT token
-        const token = jwt.sign(
-          { 
-            id: user.id, 
-            email: user.email, 
-            username: user.username 
-          },
-          JWT_SECRET,
-          { expiresIn: '7d' }
-        );
-
-        // 4. Preparazione risposta
-        const response = NextResponse.json(
-          {
-            message: 'Login completato con successo',
-            user: {
-              id: user.id,
-              email: user.email,
-              username: user.username,
-              fullName: user.full_name,
-            },
-            token,
-          },
-          { status: 200 }
-        );
-
-        // 5. Impostazione Cookie HTTP-Only
-        response.cookies.set('authToken', token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          path: '/',
-          maxAge: 7 * 24 * 60 * 60, // 7 giorni
-        });
-
-        resolve(response);
-      });
+    // Generate JWT token
+    const token = generateToken({
+      id: user.id,
+      email: user.email,
+      username: user.username,
     });
+
+    // Prepare response - just return success without redirecting
+    const response = NextResponse.json(
+      {
+        message: 'Login completato con successo',
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          fullName: user.full_name,
+        },
+        redirectTo: redirect || '/',
+      },
+      { status: 200 }
+    );
+
+    // Set HTTP-only cookie
+    response.cookies.set(AUTH_COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+    });
+
+    // ...log rimossi...
+
+    return response;
   } catch (error) {
-    console.error('Login Route Error:', error);
     return NextResponse.json(
-      { error: 'Si è verificato un errore durante l\'accesso' },
+      { error: 'Si è verificato un errore durante l'accesso' },
       { status: 500 }
     );
   }

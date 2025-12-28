@@ -137,3 +137,8 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# SQLite database files (binary, generated locally via db:seed)
+*.db
+*.db-shm
+*.db-wal

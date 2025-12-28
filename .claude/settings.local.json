@@ -3,7 +3,12 @@
     "allow": [
       "Bash(find:*)",
       "Bash(pnpm db:reset:*)",
-      "Bash(pnpm db:seed:*)"
+      "Bash(pnpm db:seed:*)",
+      "Bash(dir:*)",
+      "Bash(ls:*)",
+      "Bash(sqlite3:*)",
+      "Bash(curl:*)",
+      "Bash(npm install:*)"
     ]
   }
 }

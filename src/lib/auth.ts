@@ -1,9 +1,7 @@
 /**
- * @fileoverview Authentication utilities (Mock implementation)
+ * @fileoverview Authentication utilities
  *
- * This file provides temporary mock authentication functions.
- * These will be replaced with the real authentication system
- * from the auth branch once merged.
+ * This file provides authentication functions using JWT tokens stored in HTTP-only cookies.
  *
  * @module lib/auth
  */
@@ -11,6 +9,13 @@
 import { cookies } from 'next/headers';
 import { queryOne } from '@/lib/db';
 import { Profile } from '@/lib/types/profile';
+import { verifyToken, type TokenPayload } from '@/lib/jwt';
+
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+export const AUTH_COOKIE_NAME = 'authToken';
 
 // ============================================================================
 // TYPES
@@ -26,15 +31,13 @@ export interface User {
 }
 
 // ============================================================================
-// MOCK AUTH FUNCTIONS
+// AUTH FUNCTIONS
 // ============================================================================
 
 /**
- * Get the currently authenticated user.
+ * Get the current authenticated user from the JWT token.
  *
- * **MOCK IMPLEMENTATION**
- * Uses a cookie `mock_user_id` to simulate authentication.
- * This will be replaced with real session-based auth.
+ * Reads the authToken from HTTP-only cookies, verifies it, and fetches user data.
  *
  * @returns The current user or null if not authenticated
  *
@@ -44,25 +47,28 @@ export interface User {
  * if (!user) {
  *   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
  * }
- *
- * @example
- * // For testing: Set cookie in browser dev tools
- * document.cookie = "mock_user_id=1; path=/";
  */
 export async function getCurrentUser(): Promise<User | null> {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get('mock_user_id')?.value;
+    const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
 
-    if (!userId) {
+    if (!token) {
       return null;
     }
 
+    // Verify and decode JWT token
+    const payload = verifyToken(token);
+    if (!payload) {
+      return null;
+    }
+
+    // Fetch user from database
     const user = await queryOne<User>(
       `SELECT id, email, phone_number
        FROM users
        WHERE id = ? AND deleted_at IS NULL`,
-      [parseInt(userId)]
+      [payload.id]
     );
 
     return user || null;
@@ -75,8 +81,7 @@ export async function getCurrentUser(): Promise<User | null> {
 /**
  * Get the profile for the currently authenticated user.
  *
- * **MOCK IMPLEMENTATION**
- * Fetches the profile associated with the mock authenticated user.
+ * Fetches the profile associated with the authenticated user from the JWT token.
  *
  * @returns The current user's profile or null if not authenticated
  *
@@ -165,52 +170,31 @@ export async function getCurrentProfileId(): Promise<number | null> {
   return profile?.id || null;
 }
 
-// ============================================================================
-// MOCK HELPERS (FOR TESTING)
-// ============================================================================
-
 /**
- * Helper to set mock user cookie (for testing in browser console).
+ * Get the JWT token payload without fetching user data.
+ * Faster than getCurrentUser() when you only need basic info from the token.
  *
- * **CLIENT-SIDE ONLY**
- * Use in browser dev tools console to test different users.
- *
- * @param userId - The user ID to mock
+ * @returns The token payload or null if not authenticated
  *
  * @example
- * // In browser console
- * document.cookie = "mock_user_id=1; path=/";
- * // Then refresh page to see as user 1
- *
- * document.cookie = "mock_user_id=2; path=/";
- * // Refresh to see as user 2
- *
- * document.cookie = "mock_user_id=; path=/; max-age=0";
- * // Remove cookie to see as logged-out user
+ * // Quick check for user ID without DB query
+ * const payload = await getTokenPayload();
+ * if (payload) {
+ *   console.log('User ID:', payload.id);
+ * }
  */
-export const MOCK_AUTH_COOKIE_NAME = 'mock_user_id';
+export async function getTokenPayload(): Promise<TokenPayload | null> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
 
-/**
- * Instructions for setting up mock authentication for testing.
- */
-export const MOCK_AUTH_INSTRUCTIONS = `
-Mock Authentication Setup:
+    if (!token) {
+      return null;
+    }
 
-1. Open browser dev tools (F12)
-2. Go to Console tab
-3. Run one of these commands:
-
-   // Login as user 1
-   document.cookie = "mock_user_id=1; path=/";
-
-   // Login as user 2
-   document.cookie = "mock_user_id=2; path=/";
-
-   // Logout (remove cookie)
-   document.cookie = "mock_user_id=; path=/; max-age=0";
-
-4. Refresh the page to apply changes
-
-Note: This is a MOCK implementation for testing.
-Real authentication will be provided by the auth branch.
-`;
+    return verifyToken(token);
+  } catch (error) {
+    console.error('[Auth] Error getting token payload:', error);
+    return null;
+  }
+}
