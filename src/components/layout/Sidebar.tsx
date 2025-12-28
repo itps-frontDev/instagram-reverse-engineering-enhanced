@@ -7,6 +7,7 @@
 'use client';
 
 import Link from 'next/link';
+import ProfilePicture from '@/components/ProfilePicture';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -84,18 +85,12 @@ export default function Sidebar() {
                 : 'font-normal hover:bg-[#F2F2F2] dark:hover:bg-[#121212]'
             }`}
           >
-            <div className="w-[26px] h-[26px] rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-              {profile.profile_image_url ? (
-                <img
-                  src={profile.profile_image_url}
-                  alt={profile.username}
-                  className="w-full h-full rounded-full object-cover"
-                />
-              ) : (
-                <span className="text-white text-xs font-semibold">
-                  {profile.username.charAt(0).toUpperCase()}
-                </span>
-              )}
+            <div className="w-[26px] h-[26px] flex items-center justify-center">
+              <ProfilePicture
+                src={profile.profile_image_url}
+                alt={profile.username}
+                size={26}
+              />
             </div>
             <span className="text-base text-[#262626] dark:text-white">Profilo</span>
           </Link>

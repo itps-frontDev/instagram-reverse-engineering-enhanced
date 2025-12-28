@@ -8,6 +8,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import ProfilePicture from '@/components/ProfilePicture';
 import Link from 'next/link';
 import {
   Heart,
@@ -66,17 +67,11 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-3">
           <Link href={`/profile/${post.profile_username}`}>
-            {post.profile_image_url ? (
-              <Image
-                src={post.profile_image_url}
-                alt={post.profile_username}
-                width={32}
-                height={32}
-                className="rounded-full"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500" />
-            )}
+            <ProfilePicture
+              src={post.profile_image_url}
+              alt={post.profile_username || 'Profile picture'}
+              size={32}
+            />
           </Link>
           <div className="flex items-center gap-2">
             <Link
