@@ -94,7 +94,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
             </span>
           </div>
         </div>
-        <button className="text-[#262626] dark:text-[#FAFAFA]">
+        <button type="button" className="hover:opacity-50 transition-opacity">
           <MoreHorizontal className="w-6 h-6" />
         </button>
       </div>
@@ -113,58 +113,56 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
       )}
 
       {/* Post Actions */}
-        <div className="px-4 pb-4">
-          <div className="flex items-center justify-between pt-1 pb-2">
-            <div className="flex items-center gap-4">
-              <button onClick={() => onLike(post.id)} className="hover:opacity-50 transition-opacity flex items-center gap-1">
-                <Heart
-                  className={`w-6 h-6 ${
-                    post.is_liked_by_current_user
-                      ? 'fill-[#ED4956] text-[#ED4956]'
-                      : 'text-[#262626] dark:text-[#FAFAFA]'
-                  }`}
-                />
-                {!post.is_likes_hidden && post.likes_count > 0 && (
-                  <span className="text-xs font-semibold text-[#262626] dark:text-[#FAFAFA] ml-1">{formatLikesCount(post.likes_count)}</span>
-                )}
-              </button>
-              <button className="hover:opacity-50 transition-opacity flex items-center gap-1">
-                <MessageCircle className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA]" />
-                {post.comments_count > 0 && (
-                  <span className="text-xs font-semibold text-[#262626] dark:text-[#FAFAFA] ml-1">{post.comments_count}</span>
-                )}
-              </button>
-              <button className="hover:opacity-50 transition-opacity">
-                <Send className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA]" />
-              </button>
-            </div>
-            <button onClick={() => onSave(post.id)} className="hover:opacity-50 transition-opacity">
-              <Bookmark
+      <div className="px-4 pb-4">
+        <div className="flex items-center justify-between pt-1 pb-2">
+          <div className="flex items-center gap-4">
+            <button onClick={() => onLike(post.id)} className="hover:opacity-50 transition-opacity flex items-center gap-1">
+              <Heart
                 className={`w-6 h-6 ${
-                  post.is_saved_by_current_user
-                    ? 'fill-[#262626] dark:fill-[#FAFAFA] text-[#262626] dark:text-[#FAFAFA]'
+                  post.is_liked_by_current_user
+                    ? 'fill-[#ED4956] text-[#ED4956]'
                     : 'text-[#262626] dark:text-[#FAFAFA]'
                 }`}
               />
+              {!post.is_likes_hidden && post.likes_count > 0 && (
+                <span className="text-xs font-semibold text-[#262626] dark:text-[#FAFAFA] ml-1">{formatLikesCount(post.likes_count)}</span>
+              )}
+            </button>
+            <button className="hover:opacity-50 transition-opacity flex items-center gap-1">
+              <MessageCircle className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA]" />
+              {post.comments_count > 0 && (
+                <span className="text-xs font-semibold text-[#262626] dark:text-[#FAFAFA] ml-1">{post.comments_count}</span>
+              )}
+            </button>
+            <button className="hover:opacity-50 transition-opacity">
+              <Send className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA]" />
             </button>
           </div>
-
-
-          {/* Caption */}
-          {post.caption && (
-            <div className="text-sm mb-1 text-[#262626] dark:text-[#FAFAFA]">
-              <Link
-                href={`/profile/${post.profile_username}`}
-                className="font-semibold mr-2 hover:opacity-50"
-              >
-                {post.profile_username}
-              </Link>
-              <span>{post.caption}</span>
-            </div>
-          )}
-
-
+          <button onClick={() => onSave(post.id)} className="hover:opacity-50 transition-opacity">
+            <Bookmark
+              className={`w-6 h-6 ${
+                post.is_saved_by_current_user
+                  ? 'fill-[#262626] dark:fill-[#FAFAFA] text-[#262626] dark:text-[#FAFAFA]'
+                  : 'text-[#262626] dark:text-[#FAFAFA]'
+              }`}
+            />
+          </button>
         </div>
+
+        {/* Caption */}
+        {post.caption && (
+          <div className="text-sm mb-1 text-[#262626] dark:text-[#FAFAFA]">
+            <Link
+              href={`/profile/${post.profile_username}`}
+              className="font-semibold mr-2 hover:opacity-50"
+            >
+              {post.profile_username}
+            </Link>
+            <span>{post.caption}</span>
+          </div>
+        )}
+
+      </div>
     </article>
   );
 }
