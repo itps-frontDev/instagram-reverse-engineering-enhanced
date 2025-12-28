@@ -14,7 +14,7 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen bg-white dark:bg-black">
+    <div className="flex min-h-screen bg-white dark:bg-[#0c1014]">
       {/* Desktop Sidebar - nascosta su mobile */}
       <Sidebar />
 

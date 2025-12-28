@@ -61,7 +61,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
   };
 
   return (
-    <article className="bg-white dark:bg-black border border-[#DBDBDB] dark:border-[#262626] mb-3 max-w-[470px] mx-auto">
+    <article className="mb-3 max-w-[470px] mx-auto">
       {/* Post Header */}
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-3">
@@ -106,104 +106,70 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
 
       {/* Post Media */}
       {post.media.length > 0 && (
-        <div className="relative w-full aspect-square bg-gray-100 dark:bg-gray-800">
+        <div className="relative w-full aspect-square rounded-xl border border-[#23272d] dark:border-[#23272d] bg-gray-100 dark:bg-gray-800 overflow-hidden mt-2 mb-2">
           <Image
             src={post.media[0].media_url}
             alt={post.caption || 'Post image'}
             fill
-            className="object-cover"
+            className="object-cover rounded-xl"
             sizes="(max-width: 768px) 100vw, 600px"
           />
         </div>
       )}
 
       {/* Post Actions */}
-      <div className="px-4 pb-4">
-        <div className="flex items-center justify-between pt-1 pb-2">
-          <div className="flex items-center gap-4">
-            <button onClick={() => onLike(post.id)} className="hover:opacity-50 transition-opacity">
-              <Heart
+        <div className="px-4 pb-4">
+          <div className="flex items-center justify-between pt-1 pb-2">
+            <div className="flex items-center gap-4">
+              <button onClick={() => onLike(post.id)} className="hover:opacity-50 transition-opacity flex items-center gap-1">
+                <Heart
+                  className={`w-6 h-6 ${
+                    post.is_liked_by_current_user
+                      ? 'fill-[#ED4956] text-[#ED4956]'
+                      : 'text-[#262626] dark:text-[#FAFAFA]'
+                  }`}
+                />
+                {!post.is_likes_hidden && post.likes_count > 0 && (
+                  <span className="text-xs font-semibold text-[#262626] dark:text-[#FAFAFA] ml-1">{formatLikesCount(post.likes_count)}</span>
+                )}
+              </button>
+              <button className="hover:opacity-50 transition-opacity flex items-center gap-1">
+                <MessageCircle className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA]" />
+                {post.comments_count > 0 && (
+                  <span className="text-xs font-semibold text-[#262626] dark:text-[#FAFAFA] ml-1">{post.comments_count}</span>
+                )}
+              </button>
+              <button className="hover:opacity-50 transition-opacity">
+                <Send className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA]" />
+              </button>
+            </div>
+            <button onClick={() => onSave(post.id)} className="hover:opacity-50 transition-opacity">
+              <Bookmark
                 className={`w-6 h-6 ${
-                  post.is_liked_by_current_user
-                    ? 'fill-[#ED4956] text-[#ED4956]'
+                  post.is_saved_by_current_user
+                    ? 'fill-[#262626] dark:fill-[#FAFAFA] text-[#262626] dark:text-[#FAFAFA]'
                     : 'text-[#262626] dark:text-[#FAFAFA]'
                 }`}
               />
             </button>
-            <button className="hover:opacity-50 transition-opacity">
-              <MessageCircle className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA]" />
-            </button>
-            <button className="hover:opacity-50 transition-opacity">
-              <Send className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA]" />
-            </button>
           </div>
-          <button onClick={() => onSave(post.id)} className="hover:opacity-50 transition-opacity">
-            <Bookmark
-              className={`w-6 h-6 ${
-                post.is_saved_by_current_user
-                  ? 'fill-[#262626] dark:fill-[#FAFAFA] text-[#262626] dark:text-[#FAFAFA]'
-                  : 'text-[#262626] dark:text-[#FAFAFA]'
-              }`}
-            />
-          </button>
-        </div>
 
-        {/* Likes Count */}
-        {!post.is_likes_hidden && post.likes_count > 0 && (
-          <p className="font-semibold text-sm mb-2 text-[#262626] dark:text-[#FAFAFA]">
-            {formatLikesCount(post.likes_count)} Mi piace
-          </p>
-        )}
 
-        {/* Caption */}
-        {post.caption && (
-          <div className="text-sm mb-1 text-[#262626] dark:text-[#FAFAFA]">
-            <Link
-              href={`/profile/${post.profile_username}`}
-              className="font-semibold mr-2 hover:opacity-50"
-            >
-              {post.profile_username}
-            </Link>
-            <span>{post.caption}</span>
-          </div>
-        )}
-
-        {/* View Comments */}
-        {post.comments_count > 0 && (
-          <button className="text-sm text-[#8E8E8E] dark:text-[#A8A8A8] mb-1 hover:opacity-50">
-            Visualizza tutti i {post.comments_count} commenti
-          </button>
-        )}
-
-        {/* Add Comment */}
-        {!post.is_comments_disabled && (
-          <div className="flex items-center gap-2 pt-2 mt-2 border-t border-[#EFEFEF] dark:border-[#262626]">
-            <input
-              type="text"
-              placeholder="Aggiungi un commento..."
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleCommentSubmit();
-                }
-              }}
-              disabled={isSubmitting}
-              className="flex-1 text-sm outline-none bg-transparent text-[#262626] dark:text-[#FAFAFA] placeholder:text-[#8E8E8E] dark:placeholder:text-[#A8A8A8] disabled:opacity-50"
-            />
-            {commentText.trim() && (
-              <button
-                onClick={handleCommentSubmit}
-                disabled={isSubmitting}
-                className="text-[#0095F6] font-semibold text-sm hover:text-[#004C8B] disabled:opacity-50"
+          {/* Caption */}
+          {post.caption && (
+            <div className="text-sm mb-1 text-[#262626] dark:text-[#FAFAFA]">
+              <Link
+                href={`/profile/${post.profile_username}`}
+                className="font-semibold mr-2 hover:opacity-50"
               >
-                Pubblica
-              </button>
-            )}
-          </div>
-        )}
-      </div>
+                {post.profile_username}
+              </Link>
+              <span>{post.caption}</span>
+            </div>
+          )}
+
+
+        </div>
     </article>
   );
 }

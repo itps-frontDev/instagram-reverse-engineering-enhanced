@@ -35,7 +35,7 @@ export default function Sidebar() {
   const { profile, isLoading } = useAuth();
 
   return (
-    <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-[245px] flex-col border-r border-[#DBDBDB] dark:border-[#262626] bg-white dark:bg-black py-8 px-3">
+    <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-[245px] flex-col border-r border-[#DBDBDB] dark:border-[#262626] bg-white dark:bg-[#0c1014] py-8 px-3">
       {/* Instagram Logo */}
       <div className="mb-8 px-3 pt-2">
         <Link href="/">
