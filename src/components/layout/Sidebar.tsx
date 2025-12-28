@@ -10,6 +10,7 @@ import Link from 'next/link';
 import ProfilePicture from '@/components/ProfilePicture';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useState, useRef, useEffect } from 'react';
 import {
   Home,
   Search,
@@ -33,10 +34,25 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { profile, isLoading } = useAuth();
+  const { profile, isLoading, logout } = useAuth();
+  const [showMore, setShowMore] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
+
+  // Chiudi il popup cliccando fuori
+  useEffect(() => {
+    if (!showMore) return;
+    function handleClick(e: MouseEvent) {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
+        setShowMore(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showMore]);
 
   return (
-    <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-[245px] flex-col border-r border-[#DBDBDB] dark:border-[#262626] bg-white dark:bg-[#0c1014] py-8 px-3">
+    <>
+      <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-[245px] flex-col border-r border-[#DBDBDB] dark:border-[#262626] bg-white dark:bg-[#0c1014] py-8 px-3">
       {/* Instagram Logo */}
       <div className="mb-8 px-3 pt-2">
         <Link href="/">
@@ -118,10 +134,40 @@ export default function Sidebar() {
       </nav>
 
       {/* More Menu */}
-      <button className="flex items-center gap-4 px-3 py-3 rounded-lg hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition-all duration-200">
+      <button
+        className="flex items-center gap-4 px-3 py-3 rounded-lg hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition-all duration-200"
+        onClick={() => setShowMore(true)}
+        aria-haspopup="true"
+        aria-expanded={showMore}
+      >
         <Menu className="w-[26px] h-[26px] text-[#262626] dark:text-white" />
         <span className="text-base text-[#262626] dark:text-white">Altro</span>
       </button>
     </aside>
+
+    {/* Overlay barra pop-up */}
+    {showMore && (
+      <div className="fixed inset-0 z-50 flex justify-end bg-black/40" style={{backdropFilter:'blur(1.5px)'}}>
+        <div
+          ref={moreRef}
+          className="w-[320px] h-full bg-[#18191a] dark:bg-[#18191a] shadow-2xl flex flex-col py-6 px-5 rounded-l-2xl animate-slideInRight"
+        >
+          <h2 className="text-lg font-semibold text-white mb-6">Menu</h2>
+          <button
+            className="w-full text-left py-3 px-4 rounded-lg text-white hover:bg-[#23272d] transition mb-2"
+            onClick={() => { logout(); setShowMore(false); }}
+          >
+            Esci
+          </button>
+          <button
+            className="w-full text-left py-3 px-4 rounded-lg text-white hover:bg-[#23272d] transition"
+            onClick={() => setShowMore(false)}
+          >
+            Chiudi
+          </button>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
