@@ -18,7 +18,9 @@ pnpm -v
 ```bash
 pnpm install
 pnpm db:reset
-pnpm dev
+pnpm db:seed
+pnpm run dev
+
 ```
 
 Apri **http://localhost:3000**
@@ -31,6 +33,7 @@ Apri **http://localhost:3000**
 |---------|-------------|
 | `pnpm dev` | Server sviluppo |
 | `pnpm db:reset` | Ricrea database |
+| `pnpm db:seed` | Popola il database con dati di test |
 | `pnpm build` | Build produzione |
 
 
