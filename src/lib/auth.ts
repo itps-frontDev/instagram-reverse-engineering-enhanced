@@ -58,7 +58,7 @@ export async function getCurrentUser(): Promise<User | null> {
     }
 
     // Verify and decode JWT token
-    const payload = verifyToken(token);
+    const payload = await verifyToken(token);
     if (!payload) {
       return null;
     }
@@ -192,7 +192,7 @@ export async function getTokenPayload(): Promise<TokenPayload | null> {
       return null;
     }
 
-    return verifyToken(token);
+    return await verifyToken(token);
   } catch (error) {
     console.error('[Auth] Error getting token payload:', error);
     return null;

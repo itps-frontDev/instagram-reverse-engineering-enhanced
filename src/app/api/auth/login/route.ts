@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate JWT token
-    const token = generateToken({
+    const token = await generateToken({
       id: user.id,
       email: user.email,
       username: user.username,
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (error) {
     return NextResponse.json(
-      { error: 'Si è verificato un errore durante l'accesso' },
+      { error: "Si è verificato un errore durante l'accesso" },
       { status: 500 }
     );
   }

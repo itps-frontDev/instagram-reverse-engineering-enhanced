@@ -6,7 +6,7 @@
  * @module lib/jwt
  */
 
-import jwt from 'jsonwebtoken';
+import { SignJWT, jwtVerify, decodeJwt } from 'jose';
 
 // ============================================================================
 // CONSTANTS
@@ -14,6 +14,9 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-2025';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+
+// jose richiede una chiave Uint8Array
+const getSecretKey = () => new TextEncoder().encode(JWT_SECRET);
 
 // ============================================================================
 // TYPES
@@ -47,10 +50,22 @@ export interface TokenPayload {
  *   username: 'johndoe'
  * });
  */
-export function generateToken(payload: Omit<TokenPayload, 'iat' | 'exp'>): string {
-  return jwt.sign(payload, JWT_SECRET, {
-    expiresIn: JWT_EXPIRES_IN,
-  });
+export async function generateToken(payload: Omit<TokenPayload, 'iat' | 'exp'>): Promise<string> {
+  const iat = Math.floor(Date.now() / 1000);
+  let exp: number;
+  if (typeof JWT_EXPIRES_IN === 'string' && JWT_EXPIRES_IN.endsWith('d')) {
+    const days = parseInt(JWT_EXPIRES_IN.replace('d', ''));
+    exp = iat + days * 24 * 60 * 60;
+  } else if (!isNaN(Number(JWT_EXPIRES_IN))) {
+    exp = iat + Number(JWT_EXPIRES_IN);
+  } else {
+    exp = iat + 7 * 24 * 60 * 60; // default 7d
+  }
+  return await new SignJWT({ ...payload })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt(iat)
+    .setExpirationTime(exp)
+    .sign(getSecretKey());
 }
 
 /**
@@ -67,10 +82,10 @@ export function generateToken(payload: Omit<TokenPayload, 'iat' | 'exp'>): strin
  *   console.log('Invalid token');
  * }
  */
-export function verifyToken(token: string): TokenPayload | null {
+export async function verifyToken(token: string): Promise<TokenPayload | null> {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as TokenPayload;
-    return decoded;
+    const { payload } = await jwtVerify(token, getSecretKey());
+    return payload as TokenPayload;
   } catch (error) {
     console.error('[JWT] Token verification failed:', error);
     return null;
@@ -92,7 +107,7 @@ export function verifyToken(token: string): TokenPayload | null {
  */
 export function decodeToken(token: string): TokenPayload | null {
   try {
-    const decoded = jwt.decode(token) as TokenPayload;
+    const decoded = decodeJwt(token) as TokenPayload;
     return decoded;
   } catch (error) {
     console.error('[JWT] Token decoding failed:', error);
@@ -116,7 +131,6 @@ export function isTokenExpired(token: string): boolean {
   if (!decoded || !decoded.exp) {
     return true;
   }
-
   const currentTime = Math.floor(Date.now() / 1000);
   return decoded.exp < currentTime;
 }
