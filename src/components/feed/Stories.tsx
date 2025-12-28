@@ -47,7 +47,7 @@ export default function Stories() {
   };
 
   return (
-    <div className="bg-white dark:bg-[#0c1014] border border-gray-200 dark:border-gray-800 rounded-lg p-4 mb-6 relative group">
+    <div className="p-4 mb-6 relative group">
       {/* Left Arrow */}
       {showLeftArrow && (
         <button

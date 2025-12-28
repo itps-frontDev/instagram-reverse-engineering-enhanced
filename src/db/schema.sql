@@ -66,11 +66,11 @@ CREATE TABLE IF NOT EXISTS follows (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     follower_profile_id INTEGER NOT NULL,
     following_profile_id INTEGER NOT NULL,
-    status TEXT NOT NULL DEFAULT 'accepted' CHECK (status IN ('pending', 'accepted')),
+    status TEXT NOT NULL DEFAULT 'accepted' CHECK (status IN ('pending', 'accepted', 'rejected')),
     created_at DATETIME NOT NULL DEFAULT (datetime('now')),
     updated_at DATETIME NOT NULL DEFAULT (datetime('now')),
     deleted_at DATETIME,
-    
+
     CHECK (follower_profile_id != following_profile_id),
     FOREIGN KEY (follower_profile_id) REFERENCES profiles(id) ON DELETE CASCADE,
     FOREIGN KEY (following_profile_id) REFERENCES profiles(id) ON DELETE CASCADE
@@ -81,6 +81,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_follows_unique_active ON follows(follower_
 CREATE INDEX IF NOT EXISTS idx_follows_follower ON follows(follower_profile_id) WHERE deleted_at IS NULL AND status = 'accepted';
 CREATE INDEX IF NOT EXISTS idx_follows_following ON follows(following_profile_id) WHERE deleted_at IS NULL AND status = 'accepted';
 CREATE INDEX IF NOT EXISTS idx_follows_pending ON follows(following_profile_id) WHERE deleted_at IS NULL AND status = 'pending';
+CREATE INDEX IF NOT EXISTS idx_follows_rejected ON follows(following_profile_id) WHERE deleted_at IS NULL AND status = 'rejected';
 
 -- =============================================
 -- 4. 🖼️ POSTS (Contenuto Primario)
@@ -225,7 +226,26 @@ CREATE INDEX IF NOT EXISTS idx_likes_profile ON likes(profile_id) WHERE deleted_
 CREATE INDEX IF NOT EXISTS idx_likes_content ON likes(likeable_type, likeable_id) WHERE deleted_at IS NULL;
 
 -- =============================================
--- 11. 💬 CHATS (Conversazioni Direct)
+-- 11. 🔖 SAVED_POSTS (Post Salvati)
+-- =============================================
+CREATE TABLE IF NOT EXISTS saved_posts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    profile_id INTEGER NOT NULL,
+    post_id INTEGER NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT (datetime('now')),
+    deleted_at DATETIME, -- soft delete per rimuovere dai salvati
+
+    FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE,
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+);
+
+-- Unique solo sui post salvati attivi
+CREATE UNIQUE INDEX IF NOT EXISTS idx_saved_posts_unique_active ON saved_posts(profile_id, post_id) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_saved_posts_profile ON saved_posts(profile_id) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_saved_posts_post ON saved_posts(post_id) WHERE deleted_at IS NULL;
+
+-- =============================================
+-- 12. 💬 CHATS (Conversazioni Direct)
 -- =============================================
 CREATE TABLE IF NOT EXISTS chats (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -243,7 +263,7 @@ CREATE TABLE IF NOT EXISTS chats (
 CREATE INDEX IF NOT EXISTS idx_chats_last_message ON chats(last_message_at DESC) WHERE deleted_at IS NULL;
 
 -- =============================================
--- 12. 👥 CHAT_PARTICIPANTS (Partecipanti alle Chat)
+-- 13. 👥 CHAT_PARTICIPANTS (Partecipanti alle Chat)
 -- =============================================
 CREATE TABLE IF NOT EXISTS chat_participants (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -266,7 +286,7 @@ CREATE INDEX IF NOT EXISTS idx_chat_participants_chat ON chat_participants(chat_
 CREATE INDEX IF NOT EXISTS idx_chat_participants_profile ON chat_participants(profile_id) WHERE left_at IS NULL;
 
 -- =============================================
--- 13. 💬 MESSAGES (Messaggi nelle Chat)
+-- 14. 💬 MESSAGES (Messaggi nelle Chat)
 -- =============================================
 CREATE TABLE IF NOT EXISTS messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -285,7 +305,7 @@ CREATE INDEX IF NOT EXISTS idx_messages_chat ON messages(chat_id, created_at DES
 CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender_profile_id) WHERE deleted_at IS NULL;
 
 -- =============================================
--- 14. 🔔 NOTIFICATIONS (Notifiche)
+-- 15. 🔔 NOTIFICATIONS (Notifiche)
 -- =============================================
 CREATE TABLE IF NOT EXISTS notifications (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

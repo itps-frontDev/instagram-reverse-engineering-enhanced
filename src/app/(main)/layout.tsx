@@ -14,12 +14,12 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-[#0c1014]">
+    <div className="flex min-h-screen bg-white dark:bg-[#0c1014]">
       {/* Desktop Sidebar - nascosta su mobile */}
       <Sidebar />
 
       {/* Main Content Area */}
-      <main className="flex-1 lg:ml-64 pb-16 lg:pb-0 min-h-screen flex justify-center">
+      <main className="flex-1 lg:ml-[245px] pb-16 lg:pb-0 min-h-screen flex justify-center">
         <div className="w-full max-w-[630px] xl:mr-[400px]">
           {children}
         </div>

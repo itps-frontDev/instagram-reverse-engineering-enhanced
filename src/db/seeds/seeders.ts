@@ -1,0 +1,168 @@
+/**
+ * @fileoverview Seed functions
+ *
+ * Contains all seeding logic organized by entity.
+ */
+
+import bcrypt from 'bcryptjs';
+import { execute } from '@/lib/db';
+import {
+  TEST_USERS,
+  TEST_PROFILES,
+  TEST_POSTS,
+  POST_ASSIGNMENTS,
+  TEST_FOLLOWS,
+} from './data';
+
+// ============================================================================
+// USERS
+// ============================================================================
+
+export async function seedUsers() {
+  console.log('🌱 Seeding users...');
+
+  const userIds: number[] = [];
+
+  for (const user of TEST_USERS) {
+    const password_hash = await bcrypt.hash(user.password, 10);
+
+    const result = await execute(
+      `INSERT INTO users (email, phone_number, password_hash, date_of_birth, is_email_verified)
+       VALUES (?, ?, ?, ?, 1)`,
+      [user.email, user.phone_number, password_hash, user.date_of_birth]
+    );
+
+    userIds.push(result.lastID);
+    console.log(`   ✓ Created user: ${user.email} (ID: ${result.lastID})`);
+  }
+
+  return userIds;
+}
+
+// ============================================================================
+// PROFILES
+// ============================================================================
+
+export async function seedProfiles(userIds: number[]) {
+  console.log('\n🌱 Seeding profiles...');
+
+  const profileIds: number[] = [];
+
+  for (let i = 0; i < TEST_PROFILES.length; i++) {
+    const profile = TEST_PROFILES[i];
+    const userId = userIds[i];
+
+    const result = await execute(
+      `INSERT INTO profiles (
+        user_id, username, full_name, bio, website_url,
+        is_private, is_verified,
+        followers_count, following_count, posts_count
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, 0)`,
+      [
+        userId,
+        profile.username,
+        profile.full_name,
+        profile.bio,
+        profile.website_url,
+        profile.is_private ? 1 : 0,
+        profile.is_verified ? 1 : 0,
+      ]
+    );
+
+    profileIds.push(result.lastID);
+    console.log(`   ✓ Created profile: @${profile.username} (ID: ${result.lastID})`);
+  }
+
+  return profileIds;
+}
+
+// ============================================================================
+// POSTS
+// ============================================================================
+
+export async function seedPosts(profileIds: number[]) {
+  console.log('\n🌱 Seeding posts...');
+
+  let postIndex = 0;
+
+  for (const assignment of POST_ASSIGNMENTS) {
+    const profileId = profileIds[assignment.profileIndex];
+    const profileUsername = TEST_PROFILES[assignment.profileIndex].username;
+
+    for (let i = 0; i < assignment.count; i++) {
+      const post = TEST_POSTS[postIndex++];
+
+      const result = await execute(
+        `INSERT INTO posts (profile_id, caption, likes_count, comments_count)
+         VALUES (?, ?, ?, ?)`,
+        [profileId, post.caption, post.likes, post.comments]
+      );
+
+      // Add dummy media
+      await execute(
+        `INSERT INTO post_media (post_id, media_url, media_type, position)
+         VALUES (?, ?, 'image', 0)`,
+        [result.lastID, `https://picsum.photos/seed/post${result.lastID}/1080/1350`]
+      );
+
+      console.log(`   ✓ Created post: "${post.caption}" for @${profileUsername}`);
+    }
+
+    // Update profile's posts_count
+    await execute(
+      'UPDATE profiles SET posts_count = ? WHERE id = ?',
+      [assignment.count, profileId]
+    );
+  }
+}
+
+// ============================================================================
+// FOLLOWS
+// ============================================================================
+
+export async function seedFollows(profileIds: number[]) {
+  console.log('\n🌱 Seeding follows...');
+
+  const followerCounts: { [key: number]: number } = {};
+  const followingCounts: { [key: number]: number } = {};
+
+  for (const follow of TEST_FOLLOWS) {
+    const followerProfileId = profileIds[follow.followerIndex];
+    const followingProfileId = profileIds[follow.followingIndex];
+    const followerUsername = TEST_PROFILES[follow.followerIndex].username;
+    const followingUsername = TEST_PROFILES[follow.followingIndex].username;
+
+    await execute(
+      `INSERT INTO follows (follower_profile_id, following_profile_id, status)
+       VALUES (?, ?, ?)`,
+      [followerProfileId, followingProfileId, follow.status]
+    );
+
+    const statusLabel = follow.status === 'pending' ? '(pending)' : '';
+    console.log(`   ✓ @${followerUsername} follows @${followingUsername} ${statusLabel}`);
+
+    // Count only accepted follows
+    if (follow.status === 'accepted') {
+      followingCounts[followerProfileId] = (followingCounts[followerProfileId] || 0) + 1;
+      followerCounts[followingProfileId] = (followerCounts[followingProfileId] || 0) + 1;
+    }
+  }
+
+  // Update followers/following counts
+  console.log('\n📊 Updating follow counts...');
+
+  for (let i = 0; i < profileIds.length; i++) {
+    const profileId = profileIds[i];
+    const followersCount = followerCounts[profileId] || 0;
+    const followingCount = followingCounts[profileId] || 0;
+
+    await execute(
+      `UPDATE profiles SET followers_count = ?, following_count = ? WHERE id = ?`,
+      [followersCount, followingCount, profileId]
+    );
+
+    console.log(
+      `   ✓ @${TEST_PROFILES[i].username}: ${followersCount} followers, ${followingCount} following`
+    );
+  }
+}

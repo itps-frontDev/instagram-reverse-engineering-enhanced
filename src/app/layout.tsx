@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono, Lobster_Two } from "next/font/google";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { Geist, Geist_Mono, Lobster_Two } from 'next/font/google';
+import './globals.css';
+import Providers from '@/components/Providers';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,8 +20,11 @@ const lobsterTwo = Lobster_Two({
 });
 
 export const metadata: Metadata = {
-  title: "Instagram Clone",
-  description: "Instagram reverse engineering project",
+  title: "Instagram",
+  description: "Create an account or log in to Instagram - A simple, fun & creative way to capture, edit & share photos, videos & messages with friends & family.",
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
@@ -33,7 +37,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${lobsterTwo.variable} antialiased`}
       >
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
