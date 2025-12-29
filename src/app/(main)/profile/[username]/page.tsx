@@ -310,44 +310,53 @@ export default function ProfilePage({
   return (
     <div className="w-full flex flex-col items-center pb-12 max-w-7xl mx-auto">
       <div className="w-full flex flex-col items-center">
-        {/* Profile Header */}
-        <ProfileHeader
-          profile={profile}
-          followStatus={followStatus}
-          onFollow={handleFollow}
-          onUnfollow={handleUnfollow}
-        />
+        {/* Header blocco */}
+        <div className="w-full border-b border-gray-700 pb-6">
+          <ProfileHeader
+            profile={profile}
+            followStatus={followStatus}
+            onFollow={handleFollow}
+            onUnfollow={handleUnfollow}
+          />
+        </div>
 
-        {/* Story Highlights */}
+        {/* Pulsanti blocco (già inclusi in ProfileHeader, ma separati visivamente) */}
+        {/* Highlights blocco */}
         {followStatus.isOwnProfile && highlights.length > 0 && (
-          <StoriesHighlights highlights={highlights} profileId={profile.id} />
+          <div className="w-full border-b border-gray-700 py-6 flex justify-center">
+            <StoriesHighlights highlights={highlights} profileId={profile.id} />
+          </div>
         )}
 
-        {/* Tabs */}
-        <ProfileTabs
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          postsCount={profile.posts_count}
-          showTagged={followStatus.isOwnProfile}
-        />
+        {/* Tabs blocco */}
+        <div className="w-full border-b border-gray-700 flex justify-center bg-transparent">
+          <ProfileTabs
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            postsCount={profile.posts_count}
+            showTagged={followStatus.isOwnProfile}
+          />
+        </div>
 
-        {/* Content Area */}
-        <div className="w-full px-4 mt-4">
-          {canView ? (
-            <ProfileGrid
-              posts={posts}
-              isLoading={isLoadingPosts}
-              onLoadMore={handleLoadMore}
-              hasMore={hasMore}
-              tab={activeTab}
-              isOwnProfile={followStatus.isOwnProfile}
-            />
-          ) : (
-            <ProfilePrivateLock
-              username={profile.username}
-              isPending={followStatus.isPending}
-            />
-          )}
+        {/* Content blocco */}
+        <div className="w-full flex justify-center px-4 mt-8">
+          <div className="w-full max-w-3xl">
+            {canView ? (
+              <ProfileGrid
+                posts={posts}
+                isLoading={isLoadingPosts}
+                onLoadMore={handleLoadMore}
+                hasMore={hasMore}
+                tab={activeTab}
+                isOwnProfile={followStatus.isOwnProfile}
+              />
+            ) : (
+              <ProfilePrivateLock
+                username={profile.username}
+                isPending={followStatus.isPending}
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>
