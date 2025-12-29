@@ -11,7 +11,7 @@ import Suggestions from '@/components/feed/Suggestions';
 export default function HomePage() {
   return (
     <>
-      <div className="px-4 pt-8">
+      <div className="px-4 pt-16">
         {/* Stories Section */}
         <Stories />
 
