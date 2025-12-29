@@ -53,16 +53,21 @@ export default function Sidebar() {
 
   return (
     <>
-      <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-[336px] flex-col border-r border-[#DBDBDB] dark:border-[#262626] bg-[var(--bg-primary)] py-8 px-3">
+      <aside className="hidden lg:flex fixed left-0 top-0 h-screen lg:w-[80px] xl:w-[336px] flex-col border-r border-[#DBDBDB] dark:border-[#262626] bg-[var(--bg-primary)] py-8 px-3 transition-all duration-300">
       {/* Instagram Logo */}
       <div className="mb-8 px-3 pt-2">
-        <Link href="/">
+        <Link href="/" className="flex items-center justify-center xl:justify-start">
           <h1
-            className="text-[29px] font-normal tracking-tight text-[var(--text-primary)]"
+            className="hidden xl:block text-[29px] font-normal tracking-tight text-[var(--text-primary)]"
             style={{ fontFamily: 'var(--font-instagram)' }}
           >
             Instagram
           </h1>
+          <svg className="xl:hidden w-8 h-8" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13.397 2.5h21.206c6.006 0 10.897 4.891 10.897 10.897v21.206c0 6.006-4.891 10.897-10.897 10.897H13.397C7.391 45.5 2.5 40.609 2.5 34.603V13.397C2.5 7.391 7.391 2.5 13.397 2.5z" stroke="currentColor" strokeWidth="2.5"/>
+            <circle cx="24" cy="24" r="7.5" stroke="currentColor" strokeWidth="2.5"/>
+            <circle cx="35.5" cy="12.5" r="1.5" fill="currentColor"/>
+          </svg>
         </Link>
       </div>
 
@@ -107,7 +112,7 @@ export default function Sidebar() {
                   } text-[#262626] dark:text-white`}
                 />
               )}
-              <span className="text-base text-[#262626] dark:text-white">{item.label}</span>
+              <span className="hidden xl:block text-base text-[#262626] dark:text-white">{item.label}</span>
             </Link>
           );
         })}
@@ -129,7 +134,7 @@ export default function Sidebar() {
                 size={26}
               />
             </div>
-            <span className="text-base text-[#262626] dark:text-white">Profilo</span>
+            <span className="hidden xl:block text-base text-[#262626] dark:text-white">Profilo</span>
           </Link>
         )}
       </nav>
@@ -144,14 +149,14 @@ export default function Sidebar() {
           aria-expanded={showMore}
         >
           <Menu className="w-[26px] h-[26px] text-[#262626] dark:text-white" />
-          <span className="text-base text-[#262626] dark:text-white">Altro</span>
+          <span className="hidden xl:block text-base text-[#262626] dark:text-white">Altro</span>
         </button>
 
         {/* Popup Menu */}
         {showMore && (
           <div
             ref={moreRef}
-            className="absolute bottom-full left-3 mb-2 w-[240px] bg-white dark:bg-[#262626] border border-[#DBDBDB] dark:border-[#363636] rounded-2xl shadow-lg py-2 animate-in fade-in zoom-in-95 duration-200"
+            className="absolute bottom-full lg:left-12 xl:left-3 mb-2 w-[240px] bg-white dark:bg-[#262626] border border-[#DBDBDB] dark:border-[#363636] rounded-2xl shadow-lg py-2 animate-in fade-in zoom-in-95 duration-200"
           >
             <button
               className="w-full text-left py-3 px-4 text-[#262626] dark:text-white hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition"
