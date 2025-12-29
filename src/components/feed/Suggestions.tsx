@@ -49,7 +49,7 @@ export default function Suggestions() {
   }
 
   return (
-    <aside className="hidden xl:block fixed right-8 top-24 w-80">
+    <aside className="hidden xl:block fixed right-16 top-24 w-80">
       <div className="space-y-4">
         {/* Current User Info */}
         <div className="flex items-center justify-between">

@@ -52,12 +52,12 @@ export default function Sidebar() {
 
   return (
     <>
-      <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-[245px] flex-col border-r border-[#DBDBDB] dark:border-[#262626] bg-white dark:bg-[#0c1014] py-8 px-3">
+      <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-[245px] flex-col border-r border-[#DBDBDB] dark:border-[#262626] bg-[var(--bg-primary)] py-8 px-3">
       {/* Instagram Logo */}
       <div className="mb-8 px-3 pt-2">
         <Link href="/">
           <h1
-            className="text-[29px] font-normal tracking-tight text-[#262626] dark:text-white"
+            className="text-[29px] font-normal tracking-tight text-[var(--text-primary)]"
             style={{ fontFamily: 'var(--font-instagram)' }}
           >
             Instagram
@@ -76,7 +76,7 @@ export default function Sidebar() {
               className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all duration-200 ${
                 isActive
                   ? 'font-bold'
-                  : 'font-normal hover:bg-[#F2F2F2] dark:hover:bg-[#121212]'
+                  : 'font-normal hover:bg-[var(--bg-tertiary)]'
               }`}
             >
               {item.icon === 'custom-create' ? (

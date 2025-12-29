@@ -23,7 +23,7 @@ export default function MobileNav() {
   ];
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-[#0c1014] border-t border-gray-200 dark:border-neutral-800 z-50">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-[var(--bg-primary)] border-t border-[var(--border-primary)] z-50">
       <div className="flex items-center justify-around h-14">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -36,7 +36,7 @@ export default function MobileNav() {
               className="flex items-center justify-center w-full h-full"
             >
               <Icon
-                className={`w-6 h-6 dark:text-white ${
+                className={`w-6 h-6 text-[var(--text-primary)] ${
                   isActive ? 'stroke-[2.5]' : 'stroke-2'
                 }`}
               />

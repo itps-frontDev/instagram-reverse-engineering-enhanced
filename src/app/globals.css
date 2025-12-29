@@ -1,27 +1,41 @@
 @import "tailwindcss";
 
-html {
-  background: #fafafa;
-}
-
-body {
-  background: #fafafa;
-  color: #262626;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
+:root {
+  /* Light mode colors */
+  --bg-primary: #ffffff;
+  --bg-secondary: #fafafa;
+  --bg-tertiary: #f3f4f6;
+  --text-primary: #262626;
+  --text-secondary: #737373;
+  --border-primary: #e5e7eb;
+  --border-secondary: #d1d5db;
 }
 
 @media (prefers-color-scheme: dark) {
-  html {
-    background: #0c1014;
+  :root {
+    /* Dark mode colors */
+    --bg-primary: #0c1014;
+    --bg-secondary: #0c1014;
+    --bg-tertiary: #1f2937;
+    --text-primary: #fafafa;
+    --text-secondary: #a8a8a8;
+    --border-primary: #1f2937;
+    --border-secondary: #374151;
+    
     color-scheme: dark;
   }
-  
-  body {
-    background: #0c1014;
-    color: #fafafa;
-  }
+}
+
+html {
+  background: var(--bg-secondary);
+}
+
+body {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 /* Hide scrollbar but keep functionality */
