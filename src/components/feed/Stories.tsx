@@ -35,12 +35,12 @@ export default function Stories() {
   };
 
   return (
-    <div className="relative group">
+    <div className="bg-[var(--bg-primary)] rounded-lg p-4 mb-6 relative group">
       {/* Left Arrow */}
       {currentPage > 0 && (
         <button
           onClick={goToPreviousPage}
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-[var(--bg-primary)] rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white dark:bg-[#262626] rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
           aria-label="Pagina precedente"
         >
           <ChevronLeft className="w-5 h-5 text-[var(--text-primary)]" />
@@ -51,7 +51,7 @@ export default function Stories() {
       {currentPage < totalPages - 1 && (
         <button
           onClick={goToNextPage}
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-[var(--bg-primary)] rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white dark:bg-[#262626] rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
           aria-label="Pagina successiva"
         >
           <ChevronRight className="w-5 h-5 text-[var(--text-primary)]" />
@@ -59,12 +59,12 @@ export default function Stories() {
       )}
 
       {/* Stories Container */}
-      <div className="px-4 py-9 overflow-hidden">
+      <div className="overflow-hidden">
         <div className="flex gap-4">
           {visibleStories.map((_, index) => (
             <div key={startIndex + index} className="flex flex-col items-center gap-2 flex-shrink-0">
               <div className="w-[84px] h-[84px] rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[2.5px] cursor-pointer hover:scale-105 transition-transform">
-                <div className="w-full h-full rounded-full bg-[var(--bg-secondary)] p-[2.5px]">
+                <div className="w-full h-full rounded-full bg-white dark:bg-[#0c1014] p-[2.5px]">
                   <div className="w-full h-full rounded-full bg-gray-200 dark:bg-gray-700" />
                 </div>
               </div>

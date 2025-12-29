@@ -52,7 +52,7 @@ export default function Sidebar() {
 
   return (
     <>
-      <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-[245px] flex-col border-r border-[var(--border-primary)] bg-[var(--bg-primary)] py-8 px-3">
+      <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-[245px] flex-col border-r border-[#DBDBDB] dark:border-[#262626] bg-[var(--bg-primary)] py-8 px-3">
       {/* Instagram Logo */}
       <div className="mb-8 px-3 pt-2">
         <Link href="/">
