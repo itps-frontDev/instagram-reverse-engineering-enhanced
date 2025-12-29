@@ -19,8 +19,8 @@ export default function MainLayout({
       <Sidebar />
 
       {/* Main Content Area */}
-      <main className="flex-1 lg:ml-[245px] pb-16 lg:pb-0 min-h-screen flex justify-center">
-        <div className="w-full max-w-[650px] xl:mr-[400px] xl:ml-28">
+      <main className="flex-1 lg:ml-[80px] xl:ml-[336px] pb-16 lg:pb-0 min-h-screen flex items-start justify-center 2xl:pr-[352px] transition-all duration-300">
+        <div className="w-full max-w-[710px] px-4">
           {children}
         </div>
       </main>

@@ -61,7 +61,7 @@ export default function LoginPage() {
   const isFormValid = identifier.length > 0 && password.length > 5;
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] dark:bg-black flex flex-col">
+    <div className="min-h-screen bg-[#FAFAFA] dark:bg-[#0C1014] flex flex-col">
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center px-4 pt-8 pb-0">
         <div className="flex items-center gap-8 max-w-[935px] w-full">
@@ -80,7 +80,7 @@ export default function LoginPage() {
           {/* Right side - Forms */}
           <div className="flex flex-col items-center justify-center flex-1 max-w-[350px] mx-auto">
             {/* Login Box */}
-            <div className="border border-[#DBDBDB] dark:border-[#262626] bg-white dark:bg-black w-full mb-2.5">
+            <div className="bg-[#FAFAFA] dark:bg-[#0C1014] w-full mb-2.5">
               <div className="flex flex-col items-center px-10 pt-10 pb-2.5">
                 {/* Instagram Logo */}
                 <h1
@@ -173,7 +173,7 @@ export default function LoginPage() {
               </div>
 
               {/* Forgot Password - Inside the box */}
-              <div className="border-t border-[#DBDBDB] dark:border-[#262626] py-3 px-10 text-center">
+              <div className="py-3 px-10 text-center">
                 <Link
                   href="#"
                   className="text-xs font-semibold text-[#00376B] dark:text-[#E0F1FF] hover:opacity-70 transition"
@@ -183,8 +183,19 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {/* Report Content - Under Login Box */}
+            <div className="text-center w-full mt-3 mb-10">
+              <p className="text-xs text-[#8E8E8E] dark:text-[#A8A8A8] leading-4">
+                Puoi anche{' '}
+                <Link href="#" className="font-semibold text-[#0095F6] hover:underline">
+                  segnalare i contenuti che ritieni violino
+                </Link>{' '}
+                nel tuo Paese senza accedere.
+              </p>
+            </div>
+
             {/* Sign Up Box */}
-            <div className="border border-[#DBDBDB] dark:border-[#262626] bg-white dark:bg-black w-full p-5 text-center mb-2.5">
+            <div className="bg-[#FAFAFA] dark:bg-[#0C1014] w-full p-5 text-center mb-2.5">
               <p className="text-sm text-[#262626] dark:text-white">
                 Non hai un account?{' '}
                 <Link
@@ -195,17 +206,6 @@ export default function LoginPage() {
                 </Link>
               </p>
             </div>
-
-            {/* Report Content Text - Below boxes */}
-            <div className="text-center w-full mt-3 mb-10">
-              <p className="text-xs text-[#8E8E8E] leading-4">
-                Puoi anche{' '}
-                <Link href="#" className="font-semibold hover:underline">
-                  segnalare i contenuti
-                </Link>{' '}
-                che ritieni violino nel tuo Paese senza accedere.
-              </p>
-            </div>
           </div>
         </div>
       </div>
@@ -213,7 +213,7 @@ export default function LoginPage() {
       {/* Footer */}
       <footer className="py-3 px-4 mt-auto">
         <div className="max-w-[1066px] mx-auto">
-          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 mb-3 text-xs text-[#8E8E8E]">
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 mb-3 text-xs text-[#8E8E8E] dark:text-[#A8A8A8]">
             <a href="#" className="hover:underline">
               Meta
             </a>
@@ -239,23 +239,26 @@ export default function LoginPage() {
               Condizioni
             </a>
             <a href="#" className="hover:underline">
-              Località principali
+              Luoghi
             </a>
             <a href="#" className="hover:underline">
               Instagram Lite
             </a>
             <a href="#" className="hover:underline">
+              Meta AI
+            </a>
+            <a href="#" className="hover:underline">
               Threads
             </a>
             <a href="#" className="hover:underline">
-              Caricamento contatti e non utenti
+              Caricamento dei contatti e non-utenti
             </a>
             <a href="#" className="hover:underline">
               Meta Verified
             </a>
           </div>
-          <div className="flex justify-center gap-4 text-xs text-[#8E8E8E]">
-            <select className="bg-transparent text-[#8E8E8E] text-xs border-none cursor-pointer focus:outline-none">
+          <div className="flex justify-center gap-4 text-xs text-[#8E8E8E] dark:text-[#A8A8A8]">
+            <select className="bg-transparent text-[#8E8E8E] dark:text-[#A8A8A8] text-xs border-none cursor-pointer focus:outline-none">
               <option>Italiano</option>
               <option>English</option>
               <option>Español</option>

@@ -11,6 +11,8 @@ import ProfilePicture from '@/components/ProfilePicture';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { createPortal } from 'react-dom';
 import {
   Home,
   Search,
@@ -36,8 +38,15 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { profile, isLoading, logout } = useAuth();
   const [showMore, setShowMore] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
+  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Chiudi il popup cliccando fuori
   useEffect(() => {
@@ -53,16 +62,21 @@ export default function Sidebar() {
 
   return (
     <>
-      <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-[336px] flex-col border-r border-[#DBDBDB] dark:border-[#262626] bg-[var(--bg-primary)] py-8 px-3">
+      <aside className="hidden lg:flex fixed left-0 top-0 h-screen lg:w-[80px] xl:w-[336px] flex-col border-r border-[#DBDBDB] dark:border-[#262626] bg-[var(--bg-primary)] py-8 px-3 transition-all duration-300">
       {/* Instagram Logo */}
       <div className="mb-8 px-3 pt-2">
-        <Link href="/">
+        <Link href="/" className="flex items-center justify-center xl:justify-start">
           <h1
-            className="text-[29px] font-normal tracking-tight text-[var(--text-primary)]"
+            className="hidden xl:block text-[29px] font-normal tracking-tight text-[var(--text-primary)]"
             style={{ fontFamily: 'var(--font-instagram)' }}
           >
             Instagram
           </h1>
+          <svg className="xl:hidden w-8 h-8" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13.397 2.5h21.206c6.006 0 10.897 4.891 10.897 10.897v21.206c0 6.006-4.891 10.897-10.897 10.897H13.397C7.391 45.5 2.5 40.609 2.5 34.603V13.397C2.5 7.391 7.391 2.5 13.397 2.5z" stroke="currentColor" strokeWidth="2.5"/>
+            <circle cx="24" cy="24" r="7.5" stroke="currentColor" strokeWidth="2.5"/>
+            <circle cx="35.5" cy="12.5" r="1.5" fill="currentColor"/>
+          </svg>
         </Link>
       </div>
 
@@ -107,7 +121,7 @@ export default function Sidebar() {
                   } text-[#262626] dark:text-white`}
                 />
               )}
-              <span className="text-base text-[#262626] dark:text-white">{item.label}</span>
+              <span className="hidden xl:block text-base text-[#262626] dark:text-white">{item.label}</span>
             </Link>
           );
         })}
@@ -129,7 +143,7 @@ export default function Sidebar() {
                 size={26}
               />
             </div>
-            <span className="text-base text-[#262626] dark:text-white">Profilo</span>
+            <span className="hidden xl:block text-base text-[#262626] dark:text-white">Profilo</span>
           </Link>
         )}
       </nav>
@@ -144,22 +158,93 @@ export default function Sidebar() {
           aria-expanded={showMore}
         >
           <Menu className="w-[26px] h-[26px] text-[#262626] dark:text-white" />
-          <span className="text-base text-[#262626] dark:text-white">Altro</span>
+          <span className="hidden xl:block text-base text-[#262626] dark:text-white">Altro</span>
         </button>
 
         {/* Popup Menu */}
         {showMore && (
           <div
             ref={moreRef}
-            className="absolute bottom-full left-3 mb-2 w-[240px] bg-white dark:bg-[#262626] border border-[#DBDBDB] dark:border-[#363636] rounded-2xl shadow-lg py-2 animate-in fade-in zoom-in-95 duration-200"
+            className="absolute bottom-full lg:left-12 xl:left-3 mb-2 w-[260px] bg-white dark:bg-[#262626] border border-[#DBDBDB] dark:border-[#363636] rounded-2xl shadow-lg py-2 animate-in fade-in zoom-in-95 duration-200"
           >
             <button
               className="w-full text-left py-3 px-4 text-[#262626] dark:text-white hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition"
-              onClick={() => { logout(); setShowMore(false); }}
+              onClick={() => { setShowMore(false); router.push('/settings'); }}
+            >
+              Impostazioni
+            </button>
+
+            <button
+              className="w-full text-left py-3 px-4 text-[#262626] dark:text-white hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition"
+              onClick={() => { setShowMore(false); router.push('/your-activity'); }}
+            >
+              La tua attività
+            </button>
+
+            <button
+              className="w-full text-left py-3 px-4 text-[#262626] dark:text-white hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition"
+              onClick={() => { setShowMore(false); router.push('/saved'); }}
+            >
+              Elementi salvati
+            </button>
+
+            <button
+              className="w-full text-left py-3 px-4 text-[#262626] dark:text-white hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition"
+              onClick={() => { setShowMore(false); /* toggle appearance: light/dark */ document.documentElement.classList.toggle('dark'); }}
+            >
+              Cambia aspetto
+            </button>
+
+            <button
+              className="w-full text-left py-3 px-4 text-[#262626] dark:text-white hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition"
+              onClick={() => { setShowMore(false); router.push('/report'); }}
+            >
+              Segnala un problema
+            </button>
+
+            <div className="border-t border-[#E5E5E5] dark:border-[#333333] my-1" />
+
+            <button
+              className="w-full text-left py-3 px-4 text-[#262626] dark:text-white hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition"
+              onClick={() => { setShowMore(false); router.push('/login'); }}
+            >
+              Cambia account
+            </button>
+
+            <button
+              className="w-full text-left py-3 px-4 text-[#d9534f] dark:text-[#ff6b6b] hover:bg-[#FFF0F0] dark:hover:bg-[#3a1f1f] transition"
+              onClick={() => { setShowLogoutConfirm(true); setShowMore(false); }}
             >
               Esci
             </button>
           </div>
+        )}
+
+        {/* Logout Confirmation Modal (portal) */}
+        {mounted && showLogoutConfirm && createPortal(
+          <div className="fixed inset-0 z-[1100] flex items-end sm:items-center justify-center px-4 py-6 sm:p-6">
+            <div className="absolute inset-0 bg-black/50" onClick={() => setShowLogoutConfirm(false)} />
+            <div className="relative w-full max-w-md bg-white dark:bg-[#262626] rounded-2xl border border-[#DBDBDB] dark:border-[#363636] shadow-lg">
+              <div className="px-6 pt-6 pb-3 text-center">
+                <h3 className="text-lg font-semibold text-[#262626] dark:text-white">Disconnessione</h3>
+                <p className="mt-2 text-sm text-[#777777] dark:text-[#bdbdbd]">Devi effettuare nuovamente l'accesso.</p>
+              </div>
+              <div className="border-t border-[#E5E5E5] dark:border-[#333333]" />
+              <div className="px-6 py-4 text-center">
+                <button
+                  className="w-full inline-block px-4 py-2 rounded-md bg-transparent text-[#262626] dark:text-white font-semibold hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition"
+                  onClick={async () => {
+                    await logout();
+                    setShowLogoutConfirm(false);
+                    router.push('/login');
+                  }}
+                >
+                  Accedi
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
         )}
       </div>
     </aside>
