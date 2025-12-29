@@ -40,10 +40,10 @@ export default function Stories() {
       {currentPage > 0 && (
         <button
           onClick={goToPreviousPage}
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white dark:bg-[#1a1a1a] rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-[var(--bg-primary)] rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
           aria-label="Pagina precedente"
         >
-          <ChevronLeft className="w-5 h-5 dark:text-white" />
+          <ChevronLeft className="w-5 h-5 text-[var(--text-primary)]" />
         </button>
       )}
 
@@ -51,10 +51,10 @@ export default function Stories() {
       {currentPage < totalPages - 1 && (
         <button
           onClick={goToNextPage}
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white dark:bg-[#1a1a1a] rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-[var(--bg-primary)] rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
           aria-label="Pagina successiva"
         >
-          <ChevronRight className="w-5 h-5 dark:text-white" />
+          <ChevronRight className="w-5 h-5 text-[var(--text-primary)]" />
         </button>
       )}
 
@@ -64,11 +64,11 @@ export default function Stories() {
           {visibleStories.map((_, index) => (
             <div key={startIndex + index} className="flex flex-col items-center gap-2 flex-shrink-0">
               <div className="w-[84px] h-[84px] rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[2.5px] cursor-pointer hover:scale-105 transition-transform">
-                <div className="w-full h-full rounded-full bg-white dark:bg-[#0c1014] p-[2.5px]">
+                <div className="w-full h-full rounded-full bg-[var(--bg-secondary)] p-[2.5px]">
                   <div className="w-full h-full rounded-full bg-gray-200 dark:bg-gray-700" />
                 </div>
               </div>
-              <span className="text-xs truncate w-[84px] text-center dark:text-white font-normal">
+              <span className="text-xs truncate w-[84px] text-center text-[var(--text-primary)] font-normal">
                 username{startIndex + index}
               </span>
             </div>
