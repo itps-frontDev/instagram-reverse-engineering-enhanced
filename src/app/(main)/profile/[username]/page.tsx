@@ -323,19 +323,20 @@ export default function ProfilePage({
         {/* Pulsanti blocco (già inclusi in ProfileHeader, ma separati visivamente) */}
         {/* Highlights blocco */}
         {followStatus.isOwnProfile && highlights.length > 0 && (
-          <div className="w-full py-2 flex justify-center">
+          <div className="w-full flex justify-center">
             <StoriesHighlights highlights={highlights} profileId={profile.id} />
           </div>
         )}
 
         {/* Tabs blocco */}
-        <div className="w-full border-b border-gray-700 flex justify-center bg-transparent">
+        <div className="w-full flex flex-col items-center bg-transparent">
           <ProfileTabs
             activeTab={activeTab}
             onTabChange={handleTabChange}
             postsCount={profile.posts_count}
             showTagged={followStatus.isOwnProfile}
           />
+          <div className="w-full border-b border-gray-700" />
         </div>
 
         {/* Content blocco */}
