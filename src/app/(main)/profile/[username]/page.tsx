@@ -311,7 +311,7 @@ export default function ProfilePage({
     <div className="w-full flex flex-col items-center pb-12 max-w-7xl mx-auto">
       <div className="w-full flex flex-col items-center">
         {/* Header blocco */}
-        <div className="w-full border-b border-gray-700 pb-6">
+        <div className="w-full pb-2">
           <ProfileHeader
             profile={profile}
             followStatus={followStatus}
@@ -323,7 +323,7 @@ export default function ProfilePage({
         {/* Pulsanti blocco (già inclusi in ProfileHeader, ma separati visivamente) */}
         {/* Highlights blocco */}
         {followStatus.isOwnProfile && highlights.length > 0 && (
-          <div className="w-full border-b border-gray-700 py-6 flex justify-center">
+          <div className="w-full py-2 flex justify-center">
             <StoriesHighlights highlights={highlights} profileId={profile.id} />
           </div>
         )}
@@ -339,7 +339,7 @@ export default function ProfilePage({
         </div>
 
         {/* Content blocco */}
-        <div className="w-full flex justify-center px-4 mt-8">
+        <div className="w-full flex justify-center px-4 mt-4">
           <div className="w-full max-w-3xl">
             {canView ? (
               <ProfileGrid

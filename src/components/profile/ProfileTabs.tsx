@@ -47,8 +47,7 @@ export default function ProfileTabs({
         })}
       </div>
 
-      {/* Separator Line - Full Width */}
-      <div className="w-full h-[1px] bg-gray-200 dark:bg-gray-800" />
+      {/* Separator Line rimossa per evitare doppie linee */}
     </div>
   );
 }
