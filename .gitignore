@@ -1,6 +1,3 @@
-# Ignora la cartella data e tutto il suo contenuto
-data/
-
 # Logs
 logs
 *.log
@@ -141,7 +138,12 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
+# Ignora la cartella data e tutto il suo contenuto
+data/
+
 # SQLite database files (binary, generated locally via db:seed)
 *.db
 *.db-shm
 *.db-wal
+data/instagram.db-shm
+data/instagram.db-wal
