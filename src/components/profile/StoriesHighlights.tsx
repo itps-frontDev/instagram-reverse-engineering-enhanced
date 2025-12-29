@@ -19,7 +19,7 @@ export default function StoriesHighlights({
 
   return (
     <div className="px-4 py-6 border-b border-gray-200 dark:border-gray-800">
-      <div className="max-w-4xl mx-auto overflow-x-auto scrollbar-hide">
+      <div className="max-w-5xl mx-auto overflow-x-auto scrollbar-hide">
         <div className="flex gap-6">
           {highlights.map((highlight) => (
             <button

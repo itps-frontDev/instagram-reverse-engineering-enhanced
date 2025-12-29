@@ -72,8 +72,7 @@ export default function ProfileStats({
       {/* Posts */}
       <li className="flex items-center gap-1">
         <span className="font-semibold text-sm">{formatCount(postsCount)}</span>
-        <span className="text-sm hidden md:inline">posts</span>
-        <span className="text-sm md:hidden">posts</span>
+        <span className="text-sm">post</span>
       </li>
 
       {/* Followers */}
@@ -81,11 +80,11 @@ export default function ProfileStats({
         <button
           type="button"
           className="font-semibold text-sm hover:opacity-50 transition-opacity"
-          aria-label="View followers"
+          aria-label="Visualizza follower"
         >
           {formatCount(followersCount)}
         </button>
-        <span className="text-sm">followers</span>
+        <span className="text-sm">follower</span>
       </li>
 
       {/* Following */}
@@ -93,11 +92,11 @@ export default function ProfileStats({
         <button
           type="button"
           className="font-semibold text-sm hover:opacity-50 transition-opacity"
-          aria-label="View following"
+          aria-label="Visualizza seguiti"
         >
           {formatCount(followingCount)}
         </button>
-        <span className="text-sm">following</span>
+        <span className="text-sm">seguiti</span>
       </li>
     </ul>
   );

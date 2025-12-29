@@ -308,43 +308,47 @@ export default function ProfilePage({
   }
 
   return (
-    <div className="pb-12">
-      {/* Profile Header */}
-      <ProfileHeader
-        profile={profile}
-        followStatus={followStatus}
-        onFollow={handleFollow}
-        onUnfollow={handleUnfollow}
-      />
+    <div className="w-full flex flex-col items-center pb-12 max-w-7xl mx-auto">
+      <div className="w-full flex flex-col items-center">
+        {/* Profile Header */}
+        <ProfileHeader
+          profile={profile}
+          followStatus={followStatus}
+          onFollow={handleFollow}
+          onUnfollow={handleUnfollow}
+        />
 
-      {/* Story Highlights */}
-      {followStatus.isOwnProfile && highlights.length > 0 && (
-        <StoriesHighlights highlights={highlights} profileId={profile.id} />
-      )}
-
-      {/* Tabs */}
-      <ProfileTabs
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-        postsCount={profile.posts_count}
-        showTagged={followStatus.isOwnProfile}
-      />
-
-      {/* Content Area */}
-      <div className="max-w-4xl mx-auto px-4 mt-4">
-        {canView ? (
-          <ProfileGrid
-            posts={posts}
-            isLoading={isLoadingPosts}
-            onLoadMore={handleLoadMore}
-            hasMore={hasMore}
-          />
-        ) : (
-          <ProfilePrivateLock
-            username={profile.username}
-            isPending={followStatus.isPending}
-          />
+        {/* Story Highlights */}
+        {followStatus.isOwnProfile && highlights.length > 0 && (
+          <StoriesHighlights highlights={highlights} profileId={profile.id} />
         )}
+
+        {/* Tabs */}
+        <ProfileTabs
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          postsCount={profile.posts_count}
+          showTagged={followStatus.isOwnProfile}
+        />
+
+        {/* Content Area */}
+        <div className="w-full px-4 mt-4">
+          {canView ? (
+            <ProfileGrid
+              posts={posts}
+              isLoading={isLoadingPosts}
+              onLoadMore={handleLoadMore}
+              hasMore={hasMore}
+              tab={activeTab}
+              isOwnProfile={followStatus.isOwnProfile}
+            />
+          ) : (
+            <ProfilePrivateLock
+              username={profile.username}
+              isPending={followStatus.isPending}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

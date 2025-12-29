@@ -13,9 +13,11 @@
 'use client';
 
 import Image from 'next/image';
+import { BadgeCheck, Camera } from 'lucide-react';
 import ProfileStats from './ProfileStats';
 import ProfileActions from './ProfileActions';
 import ProfileBio from './ProfileBio';
+import NewHighlight from './NewHighlight';
 import { ProfileHeaderProps } from '@/lib/types/profile';
 
 /**
@@ -32,7 +34,7 @@ export default function ProfileHeader({
 }: ProfileHeaderProps) {
   return (
     <header className="px-4 py-8 md:py-12 border-b border-gray-200 dark:border-gray-800">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <div className="flex flex-col md:flex-row gap-6 md:gap-12">
           {/* Profile Picture */}
           <div className="flex justify-center md:justify-start flex-shrink-0">
@@ -47,25 +49,29 @@ export default function ProfileHeader({
                   priority
                 />
               ) : (
-                <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800" />
+                <div
+                  className="w-full h-full rounded-full flex items-center justify-center"
+                  style={{
+                    backgroundColor: 'rgba(85,85,85,0.7)',
+                    color: '#f5f5f5',
+                    fontFamily: 'apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+                    fontSize: '14px',
+                  }}
+                >
+                  <Camera className="w-10 h-10 md:w-16 md:h-16" strokeWidth={1.5} style={{color: '#f5f5f5'}} />
+                </div>
               )}
             </div>
           </div>
 
           {/* Profile Info */}
           <div className="flex-1 min-w-0">
-            {/* Username + Actions Row */}
-            <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-5 mb-5">
+            {/* Username + Badge Row */}
+            <div className="flex items-center gap-1.5 mb-5">
               <h1 className="text-xl font-normal truncate">{profile.username}</h1>
-              <ProfileActions
-                isOwnProfile={followStatus.isOwnProfile}
-                isFollowing={followStatus.isFollowing}
-                isPending={followStatus.isPending}
-                isPrivate={profile.is_private}
-                onFollow={onFollow}
-                onUnfollow={onUnfollow}
-                isLoading={isLoading}
-              />
+              {profile.is_verified && (
+                <BadgeCheck className="w-[18px] h-[18px] text-[#0095f6] fill-[#0095f6] flex-shrink-0" />
+              )}
             </div>
 
             {/* Stats - Hidden on mobile, visible on tablet+ */}
@@ -82,10 +88,29 @@ export default function ProfileHeader({
               fullName={profile.full_name}
               bio={profile.bio}
               websiteUrl={profile.website_url}
-              isVerified={profile.is_verified}
             />
           </div>
         </div>
+
+        {/* Action Buttons - Full Width Below */}
+        <div className="mt-5">
+          <ProfileActions
+            isOwnProfile={followStatus.isOwnProfile}
+            isFollowing={followStatus.isFollowing}
+            isPending={followStatus.isPending}
+            isPrivate={profile.is_private}
+            onFollow={onFollow}
+            onUnfollow={onUnfollow}
+            isLoading={isLoading}
+          />
+        </div>
+
+        {/* Story Highlights - Only on Own Profile */}
+        {followStatus.isOwnProfile && (
+          <div className="mt-5 flex gap-4 overflow-x-auto scrollbar-hide">
+            <NewHighlight />
+          </div>
+        )}
 
         {/* Stats - Visible on mobile only */}
         <div className="md:hidden mt-6 pt-3 border-t border-gray-200 dark:border-gray-800">

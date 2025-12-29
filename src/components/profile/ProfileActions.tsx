@@ -57,18 +57,19 @@ export default function ProfileActions({
   // STATE 1: Own Profile
   if (isOwnProfile) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-4 w-full mt-4 mb-6">
         <button
-          className="px-4 h-8 rounded-lg bg-[#efefef] dark:bg-[#363636] hover:bg-[#dbdbdb] dark:hover:bg-[#262626] font-semibold text-sm transition-colors"
+          className="flex-1 h-11 px-5 rounded-[12px] bg-[#25292e] hover:bg-[#23272b] text-white font-semibold text-sm transition-colors flex items-center justify-center select-none border-none outline-none shadow-none"
+          style={{fontFamily: 'apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'}}
           onClick={() => (window.location.href = '/accounts/edit')}
         >
-          Edit profile
+          Modifica profilo
         </button>
         <button
-          className="px-4 h-8 rounded-lg bg-[#efefef] dark:bg-[#363636] hover:bg-[#dbdbdb] dark:hover:bg-[#262626] font-semibold text-sm transition-colors"
-          aria-label="Settings"
+          className="flex-1 h-11 px-5 rounded-[12px] bg-[#25292e] hover:bg-[#23272b] text-white font-semibold text-sm transition-colors flex items-center justify-center select-none border-none outline-none shadow-none"
+          style={{fontFamily: 'apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'}}
         >
-          <Settings className="w-4 h-4" />
+          Visualizza archivio
         </button>
       </div>
     );
@@ -85,7 +86,7 @@ export default function ProfileActions({
             onClick={() => setShowDropdown(!showDropdown)}
             disabled={actionLoading}
           >
-            Following
+            Segui già
             <ChevronDown className="w-3 h-3" />
           </button>
 
@@ -105,19 +106,19 @@ export default function ProfileActions({
                   onClick={handleUnfollow}
                   disabled={actionLoading}
                 >
-                  {actionLoading ? 'Unfollowing...' : 'Unfollow'}
+                  {actionLoading ? 'Annullamento...' : 'Non seguire più'}
                 </button>
                 <button
                   className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 dark:hover:bg-[#363636]"
                   onClick={() => setShowDropdown(false)}
                 >
-                  Mute
+                  Silenzia
                 </button>
                 <button
                   className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 dark:hover:bg-[#363636]"
                   onClick={() => setShowDropdown(false)}
                 >
-                  Restrict
+                  Limita
                 </button>
               </div>
             </>
@@ -126,7 +127,14 @@ export default function ProfileActions({
 
         {/* Message Button */}
         <button className="px-4 h-8 rounded-lg bg-[#efefef] dark:bg-[#363636] hover:bg-[#dbdbdb] dark:hover:bg-[#262626] font-semibold text-sm transition-colors">
-          Message
+          Messaggio
+        </button>
+
+        {/* Add Person Button */}
+        <button className="w-8 h-8 rounded-lg bg-[#efefef] dark:bg-[#363636] hover:bg-[#dbdbdb] dark:hover:bg-[#262626] font-semibold text-sm transition-colors flex items-center justify-center">
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg>
         </button>
       </div>
     );
@@ -141,10 +149,10 @@ export default function ProfileActions({
           onClick={handleUnfollow}
           disabled={actionLoading}
         >
-          {actionLoading ? 'Cancelling...' : 'Requested'}
+          {actionLoading ? 'Annullamento...' : 'Richiesta effettuata'}
         </button>
         <button className="px-4 h-8 rounded-lg bg-[#efefef] dark:bg-[#363636] hover:bg-[#dbdbdb] dark:hover:bg-[#262626] font-semibold text-sm transition-colors">
-          Message
+          Messaggio
         </button>
       </div>
     );
@@ -152,17 +160,21 @@ export default function ProfileActions({
 
   // STATE 6: Not Following (Public or Private)
   return (
-    <div className="flex items-center gap-2">
+    <div className={`flex items-center gap-2 ${isPrivate ? 'w-full' : ''}`}>
       <button
-        className="px-4 h-8 rounded-lg bg-[#0095f6] hover:bg-[#1877f2] text-white font-semibold text-sm transition-colors disabled:opacity-70"
+        className={`h-8 rounded-lg bg-[#0095f6] hover:bg-[#1877f2] text-white font-semibold text-sm transition-colors disabled:opacity-70 ${
+          isPrivate ? 'flex-1 px-6' : 'px-4'
+        }`}
         onClick={handleFollow}
         disabled={actionLoading || isLoading}
       >
-        {actionLoading ? 'Following...' : 'Follow'}
+        {actionLoading ? 'Caricamento...' : 'Segui'}
       </button>
-      <button className="px-4 h-8 rounded-lg bg-[#efefef] dark:bg-[#363636] hover:bg-[#dbdbdb] dark:hover:bg-[#262626] font-semibold text-sm transition-colors">
-        Message
-      </button>
+      {!isPrivate && (
+        <button className="px-4 h-8 rounded-lg bg-[#efefef] dark:bg-[#363636] hover:bg-[#dbdbdb] dark:hover:bg-[#262626] font-semibold text-sm transition-colors">
+          Messaggio
+        </button>
+      )}
     </div>
   );
 }
