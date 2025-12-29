@@ -37,6 +37,7 @@ export default function Sidebar() {
   const { profile, isLoading, logout } = useAuth();
   const [showMore, setShowMore] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
+  const moreButtonRef = useRef<HTMLButtonElement>(null);
 
   // Chiudi il popup cliccando fuori
   useEffect(() => {
@@ -52,7 +53,7 @@ export default function Sidebar() {
 
   return (
     <>
-      <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-[245px] flex-col border-r border-[#DBDBDB] dark:border-[#262626] bg-[var(--bg-primary)] py-8 px-3">
+      <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-[336px] flex-col border-r border-[#DBDBDB] dark:border-[#262626] bg-[var(--bg-primary)] py-8 px-3">
       {/* Instagram Logo */}
       <div className="mb-8 px-3 pt-2">
         <Link href="/">
@@ -134,40 +135,34 @@ export default function Sidebar() {
       </nav>
 
       {/* More Menu */}
-      <button
-        className="flex items-center gap-4 px-3 py-3 rounded-lg hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition-all duration-200"
-        onClick={() => setShowMore(true)}
-        aria-haspopup="true"
-        aria-expanded={showMore}
-      >
-        <Menu className="w-[26px] h-[26px] text-[#262626] dark:text-white" />
-        <span className="text-base text-[#262626] dark:text-white">Altro</span>
-      </button>
-    </aside>
-
-    {/* Overlay barra pop-up */}
-    {showMore && (
-      <div className="fixed inset-0 z-50 flex justify-end bg-black/40" style={{backdropFilter:'blur(1.5px)'}}>
-        <div
-          ref={moreRef}
-          className="w-[320px] h-full bg-[#18191a] dark:bg-[#18191a] shadow-2xl flex flex-col py-6 px-5 rounded-l-2xl animate-slideInRight"
+      <div className="relative">
+        <button
+          ref={moreButtonRef}
+          className="flex items-center gap-4 px-3 py-3 rounded-lg hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition-all duration-200 w-full"
+          onClick={() => setShowMore(!showMore)}
+          aria-haspopup="true"
+          aria-expanded={showMore}
         >
-          <h2 className="text-lg font-semibold text-white mb-6">Menu</h2>
-          <button
-            className="w-full text-left py-3 px-4 rounded-lg text-white hover:bg-[#23272d] transition mb-2"
-            onClick={() => { logout(); setShowMore(false); }}
+          <Menu className="w-[26px] h-[26px] text-[#262626] dark:text-white" />
+          <span className="text-base text-[#262626] dark:text-white">Altro</span>
+        </button>
+
+        {/* Popup Menu */}
+        {showMore && (
+          <div
+            ref={moreRef}
+            className="absolute bottom-full left-3 mb-2 w-[240px] bg-white dark:bg-[#262626] border border-[#DBDBDB] dark:border-[#363636] rounded-2xl shadow-lg py-2 animate-in fade-in zoom-in-95 duration-200"
           >
-            Esci
-          </button>
-          <button
-            className="w-full text-left py-3 px-4 rounded-lg text-white hover:bg-[#23272d] transition"
-            onClick={() => setShowMore(false)}
-          >
-            Chiudi
-          </button>
-        </div>
+            <button
+              className="w-full text-left py-3 px-4 text-[#262626] dark:text-white hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition"
+              onClick={() => { logout(); setShowMore(false); }}
+            >
+              Esci
+            </button>
+          </div>
+        )}
       </div>
-    )}
+    </aside>
     </>
   );
 }
