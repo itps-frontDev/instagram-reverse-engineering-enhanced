@@ -14,7 +14,19 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen bg-[var(--bg-secondary)]">
+    <div
+      className="flex min-h-screen"
+      style={{
+        backgroundColor: 'rgb(255,255,255)',
+        color: 'rgb(12,16,20)',
+        direction: 'ltr',
+        fontFamily: 'apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif',
+        fontSize: '14px',
+        lineHeight: '18px',
+        textSizeAdjust: '100%',
+        unicodeBidi: 'isolate',
+      }}
+    >
       {/* Desktop Sidebar - nascosta su mobile */}
       <Sidebar />
 
