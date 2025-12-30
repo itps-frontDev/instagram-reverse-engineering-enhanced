@@ -140,11 +140,7 @@ export default function Stories() {
               >
                 {/* Story Avatar with Gradient Border */}
                 <div className="relative group/story">
-<<<<<<< Updated upstream
-                  <div className="w-[82px] h-[82px] rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[2.5px] cursor-pointer">
-=======
                   <div className="w-[82px] h-[82px] rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[2.5px] cursor-pointer hover:scale-110 transition-transform">
->>>>>>> Stashed changes
                     <div className="w-full h-full rounded-full bg-white dark:bg-[#0c1014] p-[2.5px]">
                       {item.profile_image_url ? (
                         <img

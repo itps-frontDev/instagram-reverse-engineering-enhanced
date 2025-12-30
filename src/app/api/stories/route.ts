@@ -1,11 +1,8 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { getCurrentProfile } from '@/lib/auth';
 import { queryAll, queryOne, execute } from '@/lib/db';
-<<<<<<< Updated upstream
 
 export const runtime = 'nodejs';
-=======
->>>>>>> Stashed changes
 
 // GET /api/stories
 // Returns active stories for the current user: own stories + stories from followed profiles
@@ -35,17 +32,9 @@ export async function GET() {
       JOIN profiles p ON p.id = s.profile_id
       WHERE s.profile_id IN (
         SELECT following_profile_id FROM follows 
-<<<<<<< Updated upstream
         WHERE follower_profile_id = ? 
           AND status = 'accepted'
       )
-=======
-        WHERE follower_profile_id = ${currentProfile.id} 
-          AND deleted_at IS NULL 
-          AND status = 'accepted'
-      )
-        AND s.deleted_at IS NULL
->>>>>>> Stashed changes
         AND s.expires_at > datetime('now')
       ORDER BY s.created_at DESC
       LIMIT 200
