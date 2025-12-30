@@ -95,7 +95,7 @@ body {
     background-color: rgb(240, 242, 245);
     color: rgb(12, 16, 20);
     border: 1px solid rgba(43, 48, 54, 0);
-    @apply font-semibold rounded-xl px-5 py-0 h-11 transition-colors;
+    @apply font-semibold rounded-xl px-5 h-11 transition-colors flex items-center justify-center;
   }
 
   @media (prefers-color-scheme: dark) {
