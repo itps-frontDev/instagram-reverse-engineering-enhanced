@@ -64,7 +64,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
   };
 
   return (
-    <article className="mb-3 max-w-[470px] mx-auto">
+    <article className="mb-3">
       {/* Post Header */}
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-3">

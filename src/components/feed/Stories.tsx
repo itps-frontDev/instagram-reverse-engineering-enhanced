@@ -106,7 +106,7 @@ export default function Stories() {
 
   return (
     <>
-      <div className="rounded-lg py-4 px-2 mb-4 relative group">
+      <div className="rounded-lg py-4 mb-4 mt-20 relative group w-full">
         {/* Left Arrow */}
         {currentPage > 0 && (
           <button
@@ -140,7 +140,7 @@ export default function Stories() {
               >
                 {/* Story Avatar with Gradient Border */}
                 <div className="relative group/story">
-                  <div className="w-[82px] h-[82px] rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[2.5px] cursor-pointer hover:scale-110 transition-transform">
+                  <div className="w-[82px] h-[82px] rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[2.5px] cursor-pointer transition-transform">
                     <div className="w-full h-full rounded-full bg-white dark:bg-[#0c1014] p-[2.5px]">
                       {item.profile_image_url ? (
                         <img

@@ -141,7 +141,7 @@ export default function FeedContainer() {
           .map((_, i) => (
             <div
               key={i}
-              className="bg-white dark:bg-black border border-[#DBDBDB] dark:border-[#262626] max-w-[470px] mx-auto p-4 animate-pulse"
+              className="bg-white dark:bg-black border border-[#DBDBDB] dark:border-[#262626] p-4 animate-pulse"
             >
               <div className="h-64 bg-[#EFEFEF] dark:bg-[#262626] rounded" />
             </div>
@@ -152,7 +152,7 @@ export default function FeedContainer() {
 
   if (error) {
     return (
-      <div className="p-8 text-center max-w-[470px] mx-auto">
+      <div className="p-8 text-center">
         <p className="text-[#ED4956]">{error}</p>
         <button
           onClick={() => fetchPosts(0)}
@@ -166,7 +166,7 @@ export default function FeedContainer() {
 
   if (posts.length === 0) {
     return (
-      <div className="p-8 text-center text-[#8E8E8E] dark:text-[#A8A8A8] max-w-[470px] mx-auto">
+      <div className="p-8 text-center text-[#8E8E8E] dark:text-[#A8A8A8]">
         <p>Nessun post da mostrare.</p>
         <p className="text-sm mt-2">Inizia a seguire qualcuno per vedere i loro post!</p>
       </div>
@@ -186,7 +186,7 @@ export default function FeedContainer() {
       ))}
 
       {hasMore && (
-        <div className="max-w-[470px] mx-auto pt-4">
+        <div className="pt-4">
           <button
             onClick={() => fetchPosts(offset)}
             disabled={loading}

@@ -10,17 +10,13 @@ import Suggestions from '@/components/feed/Suggestions';
 
 export default function HomePage() {
   return (
-    <div className="w-full flex flex-col items-center">
+    <div className="w-full flex items-start justify-center min-h-screen lg:-ml-[40px] xl:-ml-[190px]">
       {/* Contenitore principale centrato */}
-      <div className="w-full max-w-[470px] flex flex-col items-center">
+      <div className="w-full max-w-[470px] mx-auto">
         {/* Contenitore storie */}
-        <div className="w-full">
-          <Stories />
-        </div>
+        <Stories />
         {/* Contenitore post */}
-        <div className="w-full flex flex-col items-center">
-          <FeedContainer />
-        </div>
+        <FeedContainer />
       </div>
       {/* Sidebar with suggestions (desktop XL only) */}
       <Suggestions />
