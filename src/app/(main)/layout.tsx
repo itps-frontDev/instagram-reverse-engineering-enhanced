@@ -17,8 +17,8 @@ export default function MainLayout({
     <div
       className="flex min-h-screen"
       style={{
-        backgroundColor: 'rgb(255,255,255)',
-        color: 'rgb(12,16,20)',
+        backgroundColor: 'var(--bg-secondary)',
+        color: 'var(--text-primary)',
         direction: 'ltr',
         fontFamily: 'apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif',
         fontSize: '14px',
