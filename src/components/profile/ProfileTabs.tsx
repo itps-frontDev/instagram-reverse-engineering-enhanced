@@ -143,7 +143,7 @@ export default function ProfileTabs({
               {tab.icon(isActive, isDark)}
               {/* Active indicator - positioned at bottom */}
               {isActive && (
-                <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-[rgb(12,16,20)] dark:bg-white" />
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-18 h-[2px] rounded bg-[rgb(12,16,20)] dark:bg-white" />
               )}
             </button>
           );

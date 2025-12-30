@@ -12,14 +12,19 @@ import { Plus } from 'lucide-react';
 export default function NewHighlight() {
   return (
     <div className="flex flex-col items-center gap-1">
-      {/* Circle Button */}
+      {/* Circle Button con doppio cerchio: bordo e interno */}
       <button
-        className="w-[77px] h-[77px] rounded-full border-[1.5px] border-gray-300 dark:border-gray-600 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+        className="w-[87px] h-[87px] rounded-full flex items-center justify-center p-0 border-0 bg-transparent relative group"
         aria-label="Nuova storia in evidenza"
+        tabIndex={0}
       >
-        <Plus className="w-10 h-10 text-gray-400 dark:text-gray-500" strokeWidth={1.5} />
+        {/* Outer border effetto canvas */}
+        <span className="absolute inset-0 rounded-full border-4 border-gray-300 dark:border-gray-700" style={{zIndex:1}} />
+        {/* Inner cerchio grigio */}
+        <span className="relative w-[77px] h-[77px] rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-800" style={{zIndex:2}}>
+          <Plus className="w-10 h-10 text-gray-400 dark:text-gray-500" strokeWidth={1.5} />
+        </span>
       </button>
-
       {/* Label */}
       <span className="text-xs font-normal text-black dark:text-white">
         Nuova

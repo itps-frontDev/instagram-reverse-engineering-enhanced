@@ -345,7 +345,6 @@ export default function ProfilePage({
             postsCount={profile.posts_count}
             showTagged={followStatus.isOwnProfile}
           />
-          <div className="w-full border-b border-gray-700" />
         </div>
 
         {/* Content blocco */}
