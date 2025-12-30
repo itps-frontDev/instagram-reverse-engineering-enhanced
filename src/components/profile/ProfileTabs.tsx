@@ -25,7 +25,7 @@ export default function ProfileTabs({
               ? 'text-[#262626] dark:text-[#F5F5F5]'
               : 'text-[#8E8E8E]'
           }`}
-          strokeWidth={active ? 2.5 : 2}
+          strokeWidth={2}
         />
       ),
     },
@@ -42,7 +42,7 @@ export default function ProfileTabs({
                 ? 'text-[#262626] dark:text-[#F5F5F5]'
                 : 'text-[#8E8E8E]'
             }`}
-            strokeWidth={active ? 2.5 : 2}
+            strokeWidth={2}
           />
         ),
       },
@@ -55,7 +55,7 @@ export default function ProfileTabs({
                 ? 'text-[#262626] dark:text-[#F5F5F5]'
                 : 'text-[#8E8E8E]'
             }`}
-            strokeWidth={active ? 2.5 : 2}
+            strokeWidth={2}
           />
         ),
       }
@@ -74,9 +74,9 @@ export default function ProfileTabs({
               onClick={() => onTabChange(tab.id)}
               className={
                 `relative flex items-center justify-center cursor-pointer appearance-none outline-none border-none bg-transparent flex-1 h-12 max-w-[193px] px-6 transition-colors ` +
-                (isActive
-                  ? 'font-semibold'
-                  : 'hover:bg-[#f5f5f5] dark:hover:bg-[#181c20]')
+                (!isActive
+                  ? 'hover:bg-[#f5f5f5] dark:hover:bg-[#181c20]'
+                  : '')
               }
               style={{ marginLeft: idx !== 0 ? 16 : 0 }}
             >
