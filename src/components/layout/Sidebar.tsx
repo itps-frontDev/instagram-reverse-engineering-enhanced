@@ -34,7 +34,11 @@ const navItems = [
   { icon: 'custom-create', label: 'Crea', href: '/create' },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  collapsed?: boolean;
+}
+
+export default function Sidebar({ collapsed = false }: SidebarProps) {
   const pathname = usePathname();
   const { profile, isLoading, logout } = useAuth();
   const [showMore, setShowMore] = useState(false);
@@ -62,17 +66,19 @@ export default function Sidebar() {
 
   return (
     <>
-      <aside className="hidden lg:flex fixed left-0 top-0 h-screen lg:w-[80px] xl:w-[336px] flex-col border-r border-[#DBDBDB] dark:border-[#262626] bg-[var(--bg-primary)] py-8 px-3 transition-all duration-300">
+      <aside className={`hidden lg:flex fixed left-0 top-0 h-screen flex-col border-r border-[#DBDBDB] dark:border-[#262626] bg-[var(--bg-primary)] py-8 px-3 transition-all duration-300 ${collapsed ? 'w-[80px]' : 'lg:w-[80px] xl:w-[336px]'}`}> 
       {/* Instagram Logo */}
       <div className="mb-8 px-3 pt-2">
-        <Link href="/" className="flex items-center justify-center xl:justify-start">
-          <h1
-            className="hidden xl:block text-[29px] font-normal tracking-tight text-[var(--text-primary)]"
-            style={{ fontFamily: 'var(--font-instagram)' }}
-          >
-            Instagram
-          </h1>
-          <svg className="xl:hidden w-8 h-8" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <Link href="/" className={`flex items-center justify-center ${collapsed ? '' : 'xl:justify-start'}`}>
+          {!collapsed && (
+            <h1
+              className="hidden xl:block text-[29px] font-normal tracking-tight text-[var(--text-primary)]"
+              style={{ fontFamily: 'var(--font-instagram)' }}
+            >
+              Instagram
+            </h1>
+          )}
+          <svg className="w-8 h-8" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M13.397 2.5h21.206c6.006 0 10.897 4.891 10.897 10.897v21.206c0 6.006-4.891 10.897-10.897 10.897H13.397C7.391 45.5 2.5 40.609 2.5 34.603V13.397C2.5 7.391 7.391 2.5 13.397 2.5z" stroke="currentColor" strokeWidth="2.5"/>
             <circle cx="24" cy="24" r="7.5" stroke="currentColor" strokeWidth="2.5"/>
             <circle cx="35.5" cy="12.5" r="1.5" fill="currentColor"/>
