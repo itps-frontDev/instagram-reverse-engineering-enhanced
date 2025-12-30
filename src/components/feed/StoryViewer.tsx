@@ -49,10 +49,9 @@ export default function StoryViewer({
   const [loading, setLoading] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
   const [progress, setProgress] = useState(0);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
-  const progressIntervalRef = useRef<NodeJS.Timeout>();
-  const autoPauseTimeoutRef = useRef<NodeJS.Timeout>();
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const progressIntervalRef = useRef<number | null>(null);
+  const autoPauseTimeoutRef = useRef<number | null>(null);
 
   // Fetch stories for the profile
   useEffect(() => {
@@ -74,7 +73,7 @@ export default function StoryViewer({
           
           // Find initial story index
           if (initialStoryId && profileStories.length > 0) {
-            const idx = profileStories.findIndex(s => s.id === initialStoryId);
+            const idx = profileStories.findIndex((s: Story) => s.id === initialStoryId);
             setCurrentIndex(idx >= 0 ? idx : 0);
           }
         }
@@ -109,28 +108,35 @@ export default function StoryViewer({
     }
 
     recordView();
-  }, [currentStory?.id]);
+  }, [currentStory]);
 
   // Handle auto-advance to next story
   useEffect(() => {
     if (!currentStory || loading) return;
 
-    // Clear existing interval and timeout
-    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-    if (autoPauseTimeoutRef.current) clearTimeout(autoPauseTimeoutRef.current);
+    // Clear existing interval and timeout (use explicit null checks)
+    if (progressIntervalRef.current !== null) {
+      window.clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+    if (autoPauseTimeoutRef.current !== null) {
+      window.clearTimeout(autoPauseTimeoutRef.current);
+      autoPauseTimeoutRef.current = null;
+    }
+
+    // reset progress for the new story
+    setProgress(0);
 
     // Start progress animation
-    progressIntervalRef.current = setInterval(() => {
+    progressIntervalRef.current = window.setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 100) {
-          return 100;
-        }
-        return prev + (100 / (duration * 10)); // 10ms interval for smooth animation
+        if (prev >= 100) return 100;
+        return prev + 100 / (duration * 10); // 10ms interval for smooth animation
       });
     }, 10);
 
     // Auto-advance when story ends
-    autoPauseTimeoutRef.current = setTimeout(() => {
+    autoPauseTimeoutRef.current = window.setTimeout(() => {
       if (currentIndex < stories.length - 1) {
         setCurrentIndex(currentIndex + 1);
       } else {
@@ -139,8 +145,14 @@ export default function StoryViewer({
     }, duration * 1000);
 
     return () => {
-      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-      if (autoPauseTimeoutRef.current) clearTimeout(autoPauseTimeoutRef.current);
+      if (progressIntervalRef.current !== null) {
+        window.clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+      if (autoPauseTimeoutRef.current !== null) {
+        window.clearTimeout(autoPauseTimeoutRef.current);
+        autoPauseTimeoutRef.current = null;
+      }
     };
   }, [currentStory, currentIndex, stories.length, duration, loading, onClose]);
 
@@ -214,11 +226,16 @@ export default function StoryViewer({
       {/* Story header - Profile info */}
       <div className="absolute top-12 left-4 right-4 flex items-center gap-3 z-10">
         {currentStory.profile_image_url ? (
-          <img
-            src={currentStory.profile_image_url}
-            alt={currentStory.username}
-            className="w-10 h-10 rounded-full object-cover"
-          />
+          <div className="w-10 h-10 rounded-full overflow-hidden">
+            <Image
+              unoptimized
+              src={currentStory.profile_image_url}
+              alt={currentStory.username}
+              width={40}
+              height={40}
+              className="object-cover"
+            />
+          </div>
         ) : (
           <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center text-white font-semibold">
             {currentStory.username.charAt(0).toUpperCase()}
@@ -238,12 +255,15 @@ export default function StoryViewer({
       {/* Story content */}
       <div className="relative w-full max-w-md aspect-[9/16] overflow-hidden rounded-2xl">
         {currentStory.media_type === 'image' ? (
-          <img
-            ref={imageRef}
-            src={currentStory.media_url}
-            alt="storia"
-            className="w-full h-full object-cover"
-          />
+          <div className="relative w-full h-full">
+            <Image
+              unoptimized
+              src={currentStory.media_url}
+              alt="storia"
+              fill
+              className="object-cover"
+            />
+          </div>
         ) : (
           <video
             ref={videoRef}

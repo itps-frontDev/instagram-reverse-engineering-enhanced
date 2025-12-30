@@ -105,19 +105,6 @@ export default function Stories() {
   }
 
   return (
-<<<<<<< Updated upstream
-    <div className="bg-[var(--bg-primary)] rounded-lg p-4 mb-6 relative group">
-      {/* Left Arrow */}
-      {currentPage > 0 && (
-        <button
-          onClick={goToPreviousPage}
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white dark:bg-[#262626] rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-          aria-label="Pagina precedente"
-        >
-          <ChevronLeft className="w-5 h-5 text-[var(--text-primary)]" />
-        </button>
-      )}
-=======
     <>
       <div className="bg-[var(--bg-primary)] rounded-lg py-4 px-2 mb-6 relative group">
         {/* Left Arrow */}
@@ -130,7 +117,6 @@ export default function Stories() {
             <ChevronLeft className="w-5 h-5 text-[var(--text-primary)]" />
           </button>
         )}
->>>>>>> Stashed changes
 
         {/* Right Arrow */}
         {currentPage < totalPages - 1 && (
@@ -143,24 +129,6 @@ export default function Stories() {
           </button>
         )}
 
-<<<<<<< Updated upstream
-      {/* Stories Container */}
-      <div className="overflow-hidden pl-8 pr-14">
-        <div className="flex gap-[20px] justify-start">
-          {visibleStories.map((item, index) => (
-            <div key={startIndex + index} className="flex flex-col items-center gap-2 flex-shrink-0">
-              <div className="w-[82px] h-[82px] rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[2.5px] cursor-pointer hover:scale-105 transition-transform">
-                <div className="w-full h-full rounded-full bg-white dark:bg-[#0c1014] p-[2.5px]">
-                  {item.profile_image_url ? (
-                    <img
-                      src={item.profile_image_url}
-                      alt={item.username}
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-white font-semibold">
-                      {item.username.charAt(0).toUpperCase()}
-=======
         {/* Stories Container */}
         <div className="overflow-hidden pl-8 pr-14">
           <div className="flex gap-4 justify-start">
@@ -185,7 +153,6 @@ export default function Stories() {
                           {item.username.charAt(0).toUpperCase()}
                         </div>
                       )}
->>>>>>> Stashed changes
                     </div>
                   </div>
                 </div>
