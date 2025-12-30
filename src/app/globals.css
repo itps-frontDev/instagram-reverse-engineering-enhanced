@@ -1,27 +1,61 @@
 @import "tailwindcss";
 
 :root {
-  /* Light mode colors */
-  --bg-primary: #ffffff;
-  --bg-secondary: #fafafa;
-  --bg-tertiary: #f3f4f6;
-  --text-primary: #262626;
-  --text-secondary: #737373;
-  --border-primary: #e5e7eb;
-  --border-secondary: #d1d5db;
+  /* Instagram Design System Colors - Light Mode */
+  --color-primary: #0095F6;
+  --color-primary-hover: #1877F2;
+  --color-primary-pressed: #004C8B;
+
+  /* Text Colors */
+  --color-text-primary: #262626;
+  --color-text-secondary: #8E8E8E;
+  --color-text-tertiary: #A8A8A8;
+
+  /* Background Colors */
+  --color-bg-primary: #FFFFFF;
+  --color-bg-secondary: #FFFFFF;
+  --color-bg-tertiary: #F2F2F2;
+
+  /* Border Colors */
+  --color-border: #DBDBDB;
+
+  /* Interactive Colors */
+  --color-like: #ED4956;
+  --color-error: #ED4956;
+  --color-success: #00C26F;
+
+  /* Legacy compatibility (backwards compatibility with existing code) */
+  --bg-primary: var(--color-bg-primary);
+  --bg-secondary: var(--color-bg-secondary);
+  --bg-tertiary: var(--color-bg-tertiary);
+  --text-primary: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
+  --border-primary: var(--color-border);
+  --border-secondary: var(--color-border);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    /* Dark mode colors */
-    --bg-primary: #0c1014;
-    --bg-secondary: #0c1014;
-    --bg-tertiary: #1f2937;
-    --text-primary: #fafafa;
-    --text-secondary: #a8a8a8;
-    --border-primary: #1f2937;
-    --border-secondary: #374151;
-    
+    /* Dark Mode Colors */
+    --color-text-primary: #FAFAFA;
+    --color-text-secondary: #A8A8A8;
+    --color-text-tertiary: #8E8E8E;
+
+    --color-bg-primary: #000000;
+    --color-bg-secondary: #0C1014;
+    --color-bg-tertiary: #121212;
+
+    --color-border: #262626;
+
+    /* Legacy compatibility */
+    --bg-primary: var(--color-bg-primary);
+    --bg-secondary: var(--color-bg-secondary);
+    --bg-tertiary: var(--color-bg-tertiary);
+    --text-primary: var(--color-text-primary);
+    --text-secondary: var(--color-text-secondary);
+    --border-primary: var(--color-border);
+    --border-secondary: var(--color-border);
+
     color-scheme: dark;
   }
 }
@@ -46,4 +80,44 @@ body {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* Instagram Component Utility Classes */
+@layer components {
+  /* Button Styles */
+  .btn-instagram-primary {
+    @apply bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)]
+           text-white font-semibold rounded-lg px-4 py-2
+           transition-colors disabled:opacity-70;
+  }
+
+  .btn-instagram-secondary {
+    @apply bg-[#efefef] dark:bg-[#363636]
+           hover:bg-[#dbdbdb] dark:hover:bg-[#262626]
+           font-semibold rounded-lg px-4 py-2
+           transition-colors;
+  }
+
+  /* Text Utilities */
+  .text-instagram-primary {
+    @apply text-[var(--color-text-primary)];
+  }
+
+  .text-instagram-secondary {
+    @apply text-[var(--color-text-secondary)];
+  }
+
+  /* Background Utilities */
+  .bg-instagram-primary {
+    @apply bg-[var(--color-bg-primary)];
+  }
+
+  .bg-instagram-secondary {
+    @apply bg-[var(--color-bg-secondary)];
+  }
+
+  /* Border Utilities */
+  .border-instagram {
+    @apply border-[var(--color-border)];
+  }
 }

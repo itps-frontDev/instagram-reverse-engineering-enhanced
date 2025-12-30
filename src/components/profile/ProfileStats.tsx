@@ -67,55 +67,19 @@ export default function ProfileStats({
   followersCount,
   followingCount,
 }: ProfileStatsProps) {
-  const statStyle = {
-    fontFamily: 'apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif',
-    fontSize: '14px',
-    fontWeight: 400,
-    height: '18px',
-    lineHeight: '18px',
-    listStyleType: 'none',
-    marginBottom: 0,
-    marginInlineEnd: 0,
-    marginInlineStart: 0,
-    marginTop: 0,
-    maxWidth: '100%',
-    minWidth: 0,
-    overflowWrap: 'break-word',
-    overflowX: 'visible',
-    overflowY: 'visible',
-    position: 'relative',
-    textAlign: 'start',
-    wordBreak: 'break-word',
-    WebkitTapHighlightColor: 'rgba(0,0,0,0)',
-    MozTextSizeAdjust: '100%',
-    WebkitTextSizeAdjust: '100%',
-    whiteSpace: 'nowrap',
-    unicodeBidi: 'isolate',
-    cursor: 'pointer',
-    direction: 'ltr',
-  };
   return (
     <ul className="flex items-center gap-8 mb-5">
       {/* Posts */}
-      <li
-        style={statStyle}
-        className="text-black dark:text-[rgb(245,245,245)]"
-      >
-        <span style={{ fontWeight: 600 }}>{formatCount(postsCount)}</span> post
+      <li className="text-sm leading-[18px] whitespace-nowrap cursor-pointer text-instagram-primary">
+        <span className="font-semibold">{formatCount(postsCount)}</span> post
       </li>
       {/* Followers */}
-      <li
-        style={statStyle}
-        className="text-black dark:text-[rgb(245,245,245)]"
-      >
-        <span style={{ fontWeight: 600 }}>{formatCount(followersCount)}</span> follower
+      <li className="text-sm leading-[18px] whitespace-nowrap cursor-pointer text-instagram-primary">
+        <span className="font-semibold">{formatCount(followersCount)}</span> follower
       </li>
       {/* Following */}
-      <li
-        style={statStyle}
-        className="text-black dark:text-[rgb(245,245,245)]"
-      >
-        <span style={{ fontWeight: 600 }}>{formatCount(followingCount)}</span> seguiti
+      <li className="text-sm leading-[18px] whitespace-nowrap cursor-pointer text-instagram-primary">
+        <span className="font-semibold">{formatCount(followingCount)}</span> seguiti
       </li>
     </ul>
   );

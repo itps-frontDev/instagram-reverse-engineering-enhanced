@@ -49,16 +49,8 @@ export default function ProfileHeader({
                   priority
                 />
               ) : (
-                <div
-                  className="w-full h-full rounded-full flex items-center justify-center"
-                  style={{
-                    backgroundColor: 'rgba(85,85,85,0.7)',
-                    color: '#f5f5f5',
-                    fontFamily: 'apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-                    fontSize: '14px',
-                  }}
-                >
-                  <Camera className="w-10 h-10 md:w-16 md:h-16" strokeWidth={1.5} style={{color: '#f5f5f5'}} />
+                <div className="w-full h-full rounded-full flex items-center justify-center bg-gray-600/70 text-white">
+                  <Camera className="w-10 h-10 md:w-16 md:h-16 text-white" strokeWidth={1.5} />
                 </div>
               )}
             </div>
@@ -69,22 +61,7 @@ export default function ProfileHeader({
             {/* Username + Badge Row */}
             <div className="flex items-center gap-1.5 mb-5">
               <h1
-                className="block font-bold text-[24px] leading-[30px] h-[30px] max-w-full overflow-hidden text-ellipsis whitespace-nowrap cursor-pointer text-[rgb(12,16,20)] dark:text-[rgb(245,245,245)]"
-                style={{
-                  fontFamily: 'apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif',
-                  fontWeight: 700,
-                  direction: 'ltr',
-                  listStyleType: 'none',
-                  overflowWrap: 'break-word',
-                  textAlign: 'start',
-                  textOverflow: 'ellipsis',
-                  width: '163.312px',
-                  wordBreak: 'break-word',
-                  WebkitTapHighlightColor: 'rgba(0,0,0,0)',
-                  MozTextSizeAdjust: '100%',
-                  WebkitTextSizeAdjust: '100%',
-                  whiteSpace: 'nowrap',
-                }}
+                className="text-2xl font-bold leading-[30px] h-[30px] truncate cursor-pointer text-instagram-primary"
                 tabIndex={0}
               >
                 {profile.username}

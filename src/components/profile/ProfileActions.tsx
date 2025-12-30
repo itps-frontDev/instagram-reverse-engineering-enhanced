@@ -59,60 +59,12 @@ export default function ProfileActions({
     return (
       <div className="flex items-center gap-4 w-full mt-4 mb-6">
         <button
-          className="flex-1 h-[44px] px-5 rounded-[12px] bg-[rgb(240,242,245)] text-[rgb(12,16,20)] font-semibold text-[14px] flex items-center justify-center select-none border-none outline-none shadow-none transition-colors cursor-pointer dark:bg-[#25292e] dark:text-white"
-          style={{
-            fontFamily: 'apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-            lineHeight: '18px',
-            minWidth: 0,
-            minHeight: 0,
-            width: '329.125px',
-            boxSizing: 'border-box',
-            appearance: 'none',
-            WebkitTapHighlightColor: 'rgba(0,0,0,0)',
-            outlineColor: 'rgb(12,16,20)',
-            textDecorationLine: 'none',
-            textDecorationColor: 'rgb(12,16,20)',
-            textDecorationStyle: 'solid',
-            textDecorationThickness: 'auto',
-            textOverflow: 'ellipsis',
-            userSelect: 'none',
-            touchAction: 'manipulation',
-            marginBottom: 0,
-            marginInlineEnd: 0,
-            marginInlineStart: 0,
-            marginTop: 0,
-            borderRadius: '12px',
-          }}
+          className="btn-instagram-secondary flex-1 h-11 text-sm"
           onClick={() => (window.location.href = '/accounts/edit')}
         >
           Modifica profilo
         </button>
-        <button
-          className="flex-1 h-[44px] px-5 rounded-[12px] bg-[rgb(240,242,245)] text-[rgb(12,16,20)] font-semibold text-[14px] flex items-center justify-center select-none border-none outline-none shadow-none transition-colors cursor-pointer dark:bg-[#25292e] dark:text-white"
-          style={{
-            fontFamily: 'apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-            lineHeight: '18px',
-            minWidth: 0,
-            minHeight: 0,
-            width: '329.125px',
-            boxSizing: 'border-box',
-            appearance: 'none',
-            WebkitTapHighlightColor: 'rgba(0,0,0,0)',
-            outlineColor: 'rgb(12,16,20)',
-            textDecorationLine: 'none',
-            textDecorationColor: 'rgb(12,16,20)',
-            textDecorationStyle: 'solid',
-            textDecorationThickness: 'auto',
-            textOverflow: 'ellipsis',
-            userSelect: 'none',
-            touchAction: 'manipulation',
-            marginBottom: 0,
-            marginInlineEnd: 0,
-            marginInlineStart: 0,
-            marginTop: 0,
-            borderRadius: '12px',
-          }}
-        >
+        <button className="btn-instagram-secondary flex-1 h-11 text-sm">
           Visualizza archivio
         </button>
       </div>

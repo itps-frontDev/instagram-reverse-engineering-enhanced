@@ -106,7 +106,7 @@ export default function Stories() {
 
   return (
     <>
-      <div className="bg-[var(--bg-primary)] rounded-lg py-4 px-2 mb-6 relative group">
+      <div className="border border-[#dbdbdb] dark:border-[#262626] rounded-lg py-4 px-2 mb-4 relative group">
         {/* Left Arrow */}
         {currentPage > 0 && (
           <button

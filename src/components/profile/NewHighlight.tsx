@@ -11,35 +11,22 @@ import { Plus } from 'lucide-react';
 
 export default function NewHighlight() {
   return (
-    <div className="flex flex-col items-center gap-1" style={{ padding: 15 }}>
+    <div className="flex flex-col items-center gap-1 p-[15px]">
       {/* Circle Button con doppio cerchio: bordo e interno */}
       <button
-        className="w-[87px] h-[87px] rounded-full flex items-center justify-center p-0 border-0 bg-transparent relative group"
+        className="w-[87px] h-[87px] rounded-full flex items-center justify-center border-0 bg-transparent relative group"
         aria-label="Nuova storia in evidenza"
         tabIndex={0}
       >
         {/* Outer border effetto canvas con border-bottom custom */}
-        <span
-          className="absolute inset-0 rounded-full border-4"
-          style={{
-            zIndex: 1,
-            borderColor: 'rgba(43,48,54,0.8)'
-          }}
-        />
+        <span className="absolute inset-0 rounded-full border-4 border-[#efefef] dark:border-gray-700/80 z-[1]" />
         {/* Inner cerchio grigio */}
-        <span
-          className="relative w-[72px] h-[72px] rounded-full flex items-center justify-center"
-          style={{
-            zIndex: 2,
-            backgroundColor: 'rgba(43,48,54,0.8)',
-            color: 'rgb(12,16,20)',
-          }}
-        >
+        <span className="relative w-[72px] h-[72px] rounded-full flex items-center justify-center bg-[#efefef] dark:bg-gray-700/80 z-[2]">
           <Plus className="w-10 h-10 text-gray-400 dark:text-gray-500" strokeWidth={1.5} />
         </span>
       </button>
       {/* Label */}
-      <span className="text-xs font-normal text-black dark:text-white">
+      <span className="text-xs text-instagram-primary">
         Nuova
       </span>
     </div>

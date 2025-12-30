@@ -135,7 +135,7 @@ export default function FeedContainer() {
 
   if (loading && posts.length === 0) {
     return (
-      <div className="space-y-3 mt-4">
+      <div className="space-y-3">
         {Array(3)
           .fill(null)
           .map((_, i) => (
@@ -152,7 +152,7 @@ export default function FeedContainer() {
 
   if (error) {
     return (
-      <div className="mt-4 p-8 text-center max-w-[470px] mx-auto">
+      <div className="p-8 text-center max-w-[470px] mx-auto">
         <p className="text-[#ED4956]">{error}</p>
         <button
           onClick={() => fetchPosts(0)}
@@ -166,7 +166,7 @@ export default function FeedContainer() {
 
   if (posts.length === 0) {
     return (
-      <div className="mt-4 p-8 text-center text-[#8E8E8E] dark:text-[#A8A8A8] max-w-[470px] mx-auto">
+      <div className="p-8 text-center text-[#8E8E8E] dark:text-[#A8A8A8] max-w-[470px] mx-auto">
         <p>Nessun post da mostrare.</p>
         <p className="text-sm mt-2">Inizia a seguire qualcuno per vedere i loro post!</p>
       </div>
@@ -174,7 +174,7 @@ export default function FeedContainer() {
   }
 
   return (
-    <div className="space-y-3 mt-4">
+    <div className="space-y-3">
       {posts.map((post) => (
         <Post
           key={post.id}
