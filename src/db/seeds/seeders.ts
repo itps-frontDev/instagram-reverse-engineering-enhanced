@@ -12,6 +12,7 @@ import {
   TEST_POSTS,
   POST_ASSIGNMENTS,
   TEST_FOLLOWS,
+  TEST_STORIES,
 } from './data';
 
 // ============================================================================
@@ -164,5 +165,38 @@ export async function seedFollows(profileIds: number[]) {
     console.log(
       `   ✓ @${TEST_PROFILES[i].username}: ${followersCount} followers, ${followingCount} following`
     );
+  }
+}
+
+// ============================================================================
+// STORIES
+// ============================================================================
+
+export async function seedStories(profileIds: number[]) {
+  console.log('\n🌱 Seeding stories...');
+
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24h from now
+  const createdAt = now.toISOString();
+  const expiresAtStr = expiresAt.toISOString();
+
+  for (const story of TEST_STORIES) {
+    const profileId = profileIds[story.profileIndex];
+    const profileUsername = TEST_PROFILES[story.profileIndex].username;
+
+    const result = await execute(
+      `INSERT INTO stories (profile_id, media_url, media_type, duration_seconds, created_at, expires_at)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        profileId,
+        story.media_url,
+        story.media_type,
+        story.duration_seconds,
+        createdAt,
+        expiresAtStr,
+      ]
+    );
+
+    console.log(`   ✓ Created story for @${profileUsername} (ID: ${result.lastID})`);
   }
 }

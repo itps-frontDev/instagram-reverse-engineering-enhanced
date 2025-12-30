@@ -6,7 +6,7 @@
  */
 
 import { queryOne } from '@/lib/db';
-import { seedUsers, seedProfiles, seedPosts, seedFollows } from './seeds/seeders';
+import { seedUsers, seedProfiles, seedPosts, seedFollows, seedStories } from './seeds/seeders';
 
 async function main() {
   console.log('\n📦 Instagram Clone - Database Seeding\n');
@@ -26,14 +26,15 @@ async function main() {
     const profileIds = await seedProfiles(userIds);
     await seedPosts(profileIds);
     await seedFollows(profileIds);
+    await seedStories(profileIds);
 
     console.log('\n' + '─'.repeat(50));
     console.log('\n🎉 Seeding complete!\n');
     console.log('Test accounts created:');
-    console.log('  • @johndoe (public, verified) - 6 posts');
-    console.log('  • @janedoe (public) - 4 posts');
-    console.log('  • @mikeprivate (private) - 0 posts');
-    console.log('  • @sarahpublic (public, verified) - 4 posts');
+    console.log('  • @johndoe (public, verified) - 6 posts, 3 stories');
+    console.log('  • @janedoe (public) - 4 posts, 3 stories');
+    console.log('  • @mikeprivate (private) - 0 posts, 0 stories');
+    console.log('  • @sarahpublic (public, verified) - 4 posts, 3 stories');
     console.log('\nAll test accounts use password: password123');
     console.log('\nLogin with:');
     console.log('  Email: john@example.com | Username: johndoe');

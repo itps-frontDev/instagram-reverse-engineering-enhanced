@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { getCurrentProfile } from '@/lib/auth';
-import { queryAll } from '@/lib/db';
+import { queryAll, queryOne, execute } from '@/lib/db';
 
 // GET /api/stories
 // Returns active stories for the current user: own stories + stories from followed profiles
@@ -8,16 +8,12 @@ export async function GET() {
   try {
     const currentProfile = await getCurrentProfile();
 
-    // If not authenticated, return public recent stories (limit 20)
-    const profileCondition = currentProfile
-      ? `(
-          s.profile_id IN (
-            SELECT following_profile_id FROM follows WHERE follower_profile_id = ${currentProfile.id} AND deleted_at IS NULL AND status = 'accepted'
-          )
-          OR s.profile_id = ${currentProfile.id}
-        )`
-      : '1=1';
+    // If not authenticated, return empty list
+    if (!currentProfile) {
+      return NextResponse.json({ stories: [] });
+    }
 
+    // Only show stories from followed profiles (not own stories)
     const sql = `
       SELECT
         s.id,
@@ -32,7 +28,12 @@ export async function GET() {
         s.expires_at
       FROM stories s
       JOIN profiles p ON p.id = s.profile_id
-      WHERE ${profileCondition}
+      WHERE s.profile_id IN (
+        SELECT following_profile_id FROM follows 
+        WHERE follower_profile_id = ${currentProfile.id} 
+          AND deleted_at IS NULL 
+          AND status = 'accepted'
+      )
         AND s.deleted_at IS NULL
         AND s.expires_at > datetime('now')
       ORDER BY s.created_at DESC
@@ -47,3 +48,86 @@ export async function GET() {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+// POST /api/stories
+// Record a story view
+export async function POST(request: NextRequest) {
+  try {
+    const currentProfile = await getCurrentProfile();
+
+    if (!currentProfile) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const { story_id } = await request.json();
+
+    if (!story_id) {
+      return NextResponse.json(
+        { error: 'Missing story_id' },
+        { status: 400 }
+      );
+    }
+
+    // Verify story exists and is accessible
+    const story = await queryOne<{ id: number; profile_id: number }>(
+      `SELECT s.id, s.profile_id FROM stories s
+       WHERE s.id = ? 
+         AND s.deleted_at IS NULL
+         AND s.expires_at > datetime('now')
+         AND (
+           s.profile_id IN (
+             SELECT following_profile_id FROM follows 
+             WHERE follower_profile_id = ? 
+               AND deleted_at IS NULL 
+               AND status = 'accepted'
+           )
+           OR s.profile_id = ?
+         )`,
+      [story_id, currentProfile.id, currentProfile.id]
+    );
+
+    if (!story) {
+      return NextResponse.json(
+        { error: 'Story not found or not accessible' },
+        { status: 404 }
+      );
+    }
+
+    // Check if already viewed
+    const existingView = await queryOne(
+      `SELECT id FROM story_views 
+       WHERE story_id = ? AND viewer_profile_id = ?`,
+      [story_id, currentProfile.id]
+    );
+
+    if (!existingView) {
+      // Record the view
+      await execute(
+        `INSERT INTO story_views (story_id, viewer_profile_id, viewed_at)
+         VALUES (?, ?, datetime('now'))`,
+        [story_id, currentProfile.id]
+      );
+
+      // Increment views count
+      await execute(
+        `UPDATE stories SET views_count = views_count + 1 WHERE id = ?`,
+        [story_id]
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Story view recorded',
+    });
+  } catch (error) {
+    console.error('[api/stories] POST error', error);
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
+  }
+}
+
