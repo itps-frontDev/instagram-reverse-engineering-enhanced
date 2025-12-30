@@ -35,7 +35,7 @@ export default function ProfileHeader({
   return (
     <header className="px-4 py-8 md:py-12 border-b border-gray-200 dark:border-gray-800">
       <div className="max-w-5xl mx-auto">
-        <div className="flex flex-col md:flex-row gap-6 md:gap-12">
+        <div className="flex flex-col md:flex-row gap-6 md:gap-12 items-center">
           {/* Profile Picture */}
           <div className="flex justify-center md:justify-start flex-shrink-0">
             <div className="relative w-[77px] h-[77px] md:w-[150px] md:h-[150px]">
