@@ -63,9 +63,9 @@ export default function ProfileTabs({
   }
 
   return (
-    <div className="relative">
+    <div className="relative -mx-8">
       {/* Tabs - Icons with bottom border */}
-      <div className="flex h-12 border-b border-[#dbdbdb] dark:border-[#262626] bg-transparent">
+      <div className="flex h- border-b-2 border-[#2b3036] bg-transparent px-99">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
@@ -82,7 +82,7 @@ export default function ProfileTabs({
                 {tab.icon(isActive)}
               </span>
               {isActive && (
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-[2px] rounded bg-[#262626] dark:bg-white" />
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-[2px] rounded bg-[#262626] dark:bg-white" />
               )}
             </button>
           );

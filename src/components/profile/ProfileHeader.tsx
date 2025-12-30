@@ -34,8 +34,8 @@ export default function ProfileHeader({
 }: ProfileHeaderProps) {
   return (
     <header className="px-4 py-4 md:py-6">
-      <div className="max-w-5xl mx-auto">
-        <div className="flex flex-col md:flex-row gap-6 md:gap-12 items-center">
+      <div className="max-w-[693px] mx-auto">
+        <div className="flex flex-col md:flex-row gap-6 md:gap-7 items-center">
           {/* Profile Picture */}
           <div className="flex justify-center md:justify-start flex-shrink-0">
             <div className="relative w-[77px] h-[77px] md:w-[150px] md:h-[150px]">

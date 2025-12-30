@@ -348,8 +348,8 @@ export default function ProfilePage({
         </div>
 
         {/* Content blocco */}
-        <div className="w-full flex justify-center px-4 mt-4">
-          <div className="w-full max-w-3xl">
+        <div className="w-full flex justify-center px-4">
+          <div className="w-full max-w-[935px]">
             {canView ? (
               <ProfileGrid
                 posts={posts}
