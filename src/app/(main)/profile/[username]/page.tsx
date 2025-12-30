@@ -309,7 +309,16 @@ export default function ProfilePage({
 
   return (
     <div className="w-full flex flex-col items-center pb-12 max-w-7xl mx-auto">
-      <div className="w-full flex flex-col items-center">
+      <div
+        style={{
+          marginLeft: '159.531px',
+          marginRight: '159.531px',
+          paddingLeft: '20px',
+          paddingRight: '20px',
+          paddingTop: '16px',
+        }}
+        className="w-full flex flex-col items-center"
+      >
         {/* Header blocco */}
         <div className="w-full pb-2">
           <ProfileHeader
