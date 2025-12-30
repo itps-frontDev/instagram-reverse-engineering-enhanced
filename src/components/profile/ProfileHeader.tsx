@@ -33,7 +33,7 @@ export default function ProfileHeader({
   isLoading = false,
 }: ProfileHeaderProps) {
   return (
-    <header className="px-4 py-8 md:py-12">
+    <header className="px-4 py-4 md:py-6">
       <div className="max-w-5xl mx-auto">
         <div className="flex flex-col md:flex-row gap-6 md:gap-12 items-center">
           {/* Profile Picture */}
