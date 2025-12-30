@@ -141,7 +141,7 @@ export default function ProfileHeader({
 
         {/* Story Highlights - Only on Own Profile */}
         {followStatus.isOwnProfile && (
-          <div className="mt-5 flex gap-4 overflow-x-auto scrollbar-hide">
+          <div className="mt-8 flex gap-4 overflow-x-auto scrollbar-hide">
             <NewHighlight />
           </div>
         )}
