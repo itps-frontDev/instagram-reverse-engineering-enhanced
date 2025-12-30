@@ -19,9 +19,9 @@ export default function NewHighlight() {
         tabIndex={0}
       >
         {/* Outer border effetto canvas con border-bottom custom */}
-        <span className="absolute inset-0 rounded-full border-4 border-[#efefef] dark:border-gray-700/80 z-[1]" />
+        <span className="absolute inset-0 rounded-full border-4 border-[#efefef] dark:border-[#363636] z-[1]" />
         {/* Inner cerchio grigio */}
-        <span className="relative w-[72px] h-[72px] rounded-full flex items-center justify-center bg-[#efefef] dark:bg-gray-700/80 z-[2]">
+        <span className="relative w-[72px] h-[72px] rounded-full flex items-center justify-center bg-[#efefef] dark:bg-[#363636] z-[2]">
           <Plus className="w-10 h-10 text-gray-400 dark:text-gray-500" strokeWidth={1.5} />
         </span>
       </button>

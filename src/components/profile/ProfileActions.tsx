@@ -122,15 +122,17 @@ export default function ProfileActions({
         </div>
 
         {/* Message Button */}
-        <button className="px-4 h-8 rounded-lg bg-[#efefef] dark:bg-[#363636] hover:bg-[#dbdbdb] dark:hover:bg-[#262626] font-semibold text-sm transition-colors">
+        <button className="btn-instagram-secondary px-4 h-8 text-sm">
           Messaggio
         </button>
 
         {/* Add Person Button */}
         <button className="w-8 h-8 rounded-lg bg-[#efefef] dark:bg-[#363636] hover:bg-[#dbdbdb] dark:hover:bg-[#262626] font-semibold text-sm transition-colors flex items-center justify-center">
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-          </svg>
+          <button className="btn-instagram-secondary w-8 h-8 flex items-center justify-center text-sm">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+          </button>
         </button>
       </div>
     );
@@ -141,13 +143,13 @@ export default function ProfileActions({
     return (
       <div className="flex items-center gap-2">
         <button
-          className="px-4 h-8 rounded-lg bg-[#efefef] dark:bg-[#363636] hover:bg-[#dbdbdb] dark:hover:bg-[#262626] font-semibold text-sm transition-colors"
+          className="btn-instagram-secondary px-4 h-8 text-sm"
           onClick={handleUnfollow}
           disabled={actionLoading}
         >
           {actionLoading ? 'Annullamento...' : 'Richiesta effettuata'}
         </button>
-        <button className="px-4 h-8 rounded-lg bg-[#efefef] dark:bg-[#363636] hover:bg-[#dbdbdb] dark:hover:bg-[#262626] font-semibold text-sm transition-colors">
+        <button className="btn-instagram-secondary px-4 h-8 text-sm">
           Messaggio
         </button>
       </div>
@@ -158,16 +160,14 @@ export default function ProfileActions({
   return (
     <div className={`flex items-center gap-2 ${isPrivate ? 'w-full' : ''}`}>
       <button
-        className={`h-8 rounded-lg bg-[#0095f6] hover:bg-[#1877f2] text-white font-semibold text-sm transition-colors disabled:opacity-70 ${
-          isPrivate ? 'flex-1 px-6' : 'px-4'
-        }`}
+        className={`btn-instagram-primary h-8 text-sm ${isPrivate ? 'flex-1 px-6' : 'px-4'}`}
         onClick={handleFollow}
         disabled={actionLoading || isLoading}
       >
         {actionLoading ? 'Caricamento...' : 'Segui'}
       </button>
       {!isPrivate && (
-        <button className="px-4 h-8 rounded-lg bg-[#efefef] dark:bg-[#363636] hover:bg-[#dbdbdb] dark:hover:bg-[#262626] font-semibold text-sm transition-colors">
+        <button className="btn-instagram-secondary px-4 h-8 text-sm">
           Messaggio
         </button>
       )}
