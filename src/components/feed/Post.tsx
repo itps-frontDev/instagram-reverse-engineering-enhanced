@@ -197,3 +197,4 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
     </article>
   );
 }
+
