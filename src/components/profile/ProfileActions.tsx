@@ -59,12 +59,12 @@ export default function ProfileActions({
     return (
       <div className="flex items-center gap-4 w-full mt-4 mb-6">
         <button
-          className="btn-instagram-secondary flex-1 h-11 text-sm"
+          className="btn-instagram-secondary flex-1"
           onClick={() => (window.location.href = '/accounts/edit')}
         >
           Modifica profilo
         </button>
-        <button className="btn-instagram-secondary flex-1 h-11 text-sm">
+        <button className="btn-instagram-secondary flex-1">
           Visualizza archivio
         </button>
       </div>

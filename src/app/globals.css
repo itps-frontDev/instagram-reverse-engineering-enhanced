@@ -93,12 +93,17 @@ body {
 
   .btn-instagram-secondary {
     background-color: rgb(240, 242, 245);
-    border-bottom: 1px solid rgba(43, 48, 54, 0);
-    @apply font-semibold rounded-lg px-4 py-2 transition-colors;
+    color: rgb(12, 16, 20);
+    border: 1px solid rgba(43, 48, 54, 0);
+    @apply font-semibold rounded-xl px-5 py-0 h-11 transition-colors;
   }
-  .dark .btn-instagram-secondary {
-    background-color: rgb(37, 41, 46);
-    border-bottom: 1px solid rgba(43, 48, 54, 0.8);
+
+  @media (prefers-color-scheme: dark) {
+    .btn-instagram-secondary {
+      background-color: rgb(37, 41, 46);
+      color: rgb(245, 245, 245);
+      border: 1px solid rgba(43, 48, 54, 0.8);
+    }
   }
 
   /* Text Utilities */
