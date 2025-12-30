@@ -18,6 +18,7 @@ import {
   MoreHorizontal,
 } from 'lucide-react';
 import type { FeedPost } from '@/lib/types/feed';
+import PostModal from './PostModal';
 
 interface PostProps {
   post: FeedPost;
@@ -29,6 +30,7 @@ interface PostProps {
 export default function Post({ post, onLike, onSave, onComment }: PostProps) {
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleCommentSubmit = async () => {
     if (!commentText.trim() || isSubmitting) return;
@@ -101,7 +103,10 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
 
       {/* Post Media */}
       {post.media.length > 0 && (
-        <div className="relative w-full aspect-square rounded-xl border border-[#23272d] dark:border-[#23272d] bg-gray-100 dark:bg-gray-800 overflow-hidden mt-2 mb-2">
+        <div 
+          className="relative w-full aspect-square rounded-xl border border-[#23272d] dark:border-[#23272d] bg-gray-100 dark:bg-gray-800 overflow-hidden mt-2 mb-2"
+          onDoubleClick={() => onLike(post.id)}
+        >
           <Image
             src={post.media[0].media_url}
             alt={post.caption || 'Post image'}
@@ -128,7 +133,10 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
                 <span className="text-xs font-semibold text-[#262626] dark:text-[#FAFAFA] ml-1">{formatLikesCount(post.likes_count)}</span>
               )}
             </button>
-            <button className="hover:opacity-50 transition-opacity flex items-center gap-1">
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="hover:opacity-50 transition-opacity flex items-center gap-1"
+            >
               <MessageCircle className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA]" />
               {post.comments_count > 0 && (
                 <span className="text-xs font-semibold text-[#262626] dark:text-[#FAFAFA] ml-1">{post.comments_count}</span>
@@ -176,6 +184,16 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
         )}
 
       </div>
+
+      {/* Post Modal */}
+      <PostModal
+        post={post}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onLike={onLike}
+        onSave={onSave}
+        onComment={onComment}
+      />
     </article>
   );
 }
