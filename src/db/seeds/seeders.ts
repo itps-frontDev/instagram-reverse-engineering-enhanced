@@ -1,3 +1,61 @@
+// ============================================================================
+// POSTS
+// ============================================================================
+
+export async function seedPosts(profileIds: number[]) {
+  console.log('\n🌱 Seeding posts...');
+
+  let postIndex = 0;
+  for (const assignment of POST_ASSIGNMENTS) {
+    const profileId = profileIds[assignment.profileIndex];
+    const profileUsername = TEST_PROFILES[assignment.profileIndex].username;
+    for (let i = 0; i < assignment.count; i++) {
+      const post = TEST_POSTS[postIndex];
+      const result = await execute(
+        `INSERT INTO posts (profile_id, caption, likes_count, comments_count)
+         VALUES (?, ?, ?, ?)`,
+        [profileId, post.caption, post.likes, post.comments]
+      );
+      await execute(
+        `INSERT INTO post_media (post_id, media_url, media_type, position)
+         VALUES (?, ?, 'image', 0)`,
+        [result.lastID, `https://picsum.photos/seed/post${result.lastID}/1080/1350`]
+      );
+      console.log(`   ✓ Created post: "${post.caption}" for @${profileUsername}`);
+      postIndex++;
+    }
+    // Aggiorna posts_count per il profilo
+    await execute(
+      'UPDATE profiles SET posts_count = ? WHERE id = ?',
+      [assignment.count, profileId]
+    );
+  }
+
+  // --- Extra generated posts per profilo ---
+  console.log('\n🌱 Seeding extra generated posts for each profile...');
+  for (let i = 0; i < profileIds.length; i++) {
+    const profileId = profileIds[i];
+    const username = TEST_PROFILES[i]?.username ?? `user${i}`;
+    for (let k = 0; k < 3; k++) {
+      const res = await execute(
+        `INSERT INTO posts (profile_id, caption, likes_count, comments_count)
+         VALUES (?, ?, ?, ?)`,
+        [profileId, `Seeded post ${k + 1} for @${username}`, Math.floor(Math.random() * 200), Math.floor(Math.random() * 30)]
+      );
+      await execute(
+        `INSERT INTO post_media (post_id, media_url, media_type, position)
+         VALUES (?, ?, 'image', 0)`,
+        [res.lastID, `https://picsum.photos/seed/extra${res.lastID}/1080/1350`]
+      );
+    }
+    // Aggiorna posts_count (aggiungi 3)
+    await execute(
+      `UPDATE profiles SET posts_count = posts_count + 3 WHERE id = ?`,
+      [profileId]
+    );
+    console.log(`   ✓ Added 3 extra posts for @${username}`);
+  }
+}
 /**
  * @fileoverview Seed functions
  *
@@ -71,78 +129,9 @@ export async function seedProfiles(userIds: number[]) {
     );
 
     profileIds.push(result.lastID);
-    console.log(`   ✓ Created profile: @${profile.username} (ID: ${result.lastID})`);
   }
 
   return profileIds;
-}
-
-// ============================================================================
-// POSTS
-// ============================================================================
-
-export async function seedPosts(profileIds: number[]) {
-  console.log('\n🌱 Seeding posts...');
-
-  let postIndex = 0;
-
-  for (const assignment of POST_ASSIGNMENTS) {
-    const profileId = profileIds[assignment.profileIndex];
-    const profileUsername = TEST_PROFILES[assignment.profileIndex].username;
-
-    for (let i = 0; i < assignment.count; i++) {
-      const post = TEST_POSTS[postIndex++];
-
-      const result = await execute(
-        `INSERT INTO posts (profile_id, caption, likes_count, comments_count)
-         VALUES (?, ?, ?, ?)`,
-        [profileId, post.caption, post.likes, post.comments]
-      );
-
-      // Add dummy media
-      await execute(
-        `INSERT INTO post_media (post_id, media_url, media_type, position)
-         VALUES (?, ?, 'image', 0)`,
-        [result.lastID, `https://picsum.photos/seed/post${result.lastID}/1080/1350`]
-      );
-
-      console.log(`   ✓ Created post: "${post.caption}" for @${profileUsername}`);
-    }
-
-    // Update profile's posts_count
-    await execute(
-      'UPDATE profiles SET posts_count = ? WHERE id = ?',
-      [assignment.count, profileId]
-    );
-  }
-
-  // --- Extra generated posts for richer dataset ---
-  console.log('\n🌱 Seeding extra generated posts for each profile...');
-  for (let i = 0; i < profileIds.length; i++) {
-    const profileId = profileIds[i];
-    const username = TEST_PROFILES[i]?.username ?? `user${i}`;
-    // create 3 extra posts per profile
-    for (let k = 0; k < 3; k++) {
-      const res = await execute(
-        `INSERT INTO posts (profile_id, caption, likes_count, comments_count)
-         VALUES (?, ?, ?, ?)`,
-        [profileId, `Seeded post ${k + 1} for @${username}`, Math.floor(Math.random() * 200), Math.floor(Math.random() * 30)]
-      );
-
-      await execute(
-        `INSERT INTO post_media (post_id, media_url, media_type, position)
-         VALUES (?, ?, 'image', 0)`,
-        [res.lastID, `https://picsum.photos/seed/extra${res.lastID}/1080/1350`]
-      );
-    }
-
-    // update posts_count (add 3)
-    await execute(
-      `UPDATE profiles SET posts_count = posts_count + 3 WHERE id = ?`,
-      [profileId]
-    );
-    console.log(`   ✓ Added 3 extra posts for @${username}`);
-  }
 }
 
 // ============================================================================
@@ -222,7 +211,8 @@ export async function seedStories(profileIds: number[]) {
   console.log('\n🌱 Seeding stories...');
 
   const now = new Date();
-  const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24h from now
+  // Scadenza fissata al 28 febbraio 2027
+  const expiresAt = new Date('2027-02-28T23:59:59.000Z');
   const createdAt = now.toISOString();
   const expiresAtStr = expiresAt.toISOString();
 
@@ -264,35 +254,3 @@ export async function seedStories(profileIds: number[]) {
   }
 }
 
-// ============================================================================
-// STORIES
-// ============================================================================
-
-export async function seedStories(profileIds: number[]) {
-  console.log('\n🌱 Seeding stories...');
-
-  const now = new Date();
-  const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24h from now
-  const createdAt = now.toISOString();
-  const expiresAtStr = expiresAt.toISOString();
-
-  for (const story of TEST_STORIES) {
-    const profileId = profileIds[story.profileIndex];
-    const profileUsername = TEST_PROFILES[story.profileIndex].username;
-
-    const result = await execute(
-      `INSERT INTO stories (profile_id, media_url, media_type, duration_seconds, created_at, expires_at)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [
-        profileId,
-        story.media_url,
-        story.media_type,
-        story.duration_seconds,
-        createdAt,
-        expiresAtStr,
-      ]
-    );
-
-    console.log(`   ✓ Created story for @${profileUsername} (ID: ${result.lastID})`);
-  }
-}

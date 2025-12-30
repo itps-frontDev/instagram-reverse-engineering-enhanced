@@ -39,7 +39,14 @@ export async function GET() {
       ORDER BY s.created_at DESC
       LIMIT 200
     `;
-
+    /**
+            WHERE follower_profile_id = ${currentProfile.id} 
+          AND deleted_at IS NULL 
+          AND status = 'accepted'
+      )
+        AND s.deleted_at IS NULL
+     
+     */
     const rows = await queryAll(sql, [currentProfile.id]);
 
     return NextResponse.json({ stories: rows });
