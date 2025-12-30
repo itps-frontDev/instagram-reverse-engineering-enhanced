@@ -135,7 +135,20 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
               )}
             </button>
             <button className="hover:opacity-50 transition-opacity">
-              <Send className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA]" />
+              <svg
+                className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA]"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                style={{ transform: 'rotate(13deg)' }}
+              >
+                <path d="M21.5 2.5Q16 8 11 13"/>
+                <path d="M21.5 2.5Q18 12 15.5 20Q15 21.5 14 21Q12.5 17 11 13Q7 11.5 3 10Q2 9 2.5 8.5Q11 5.5 21.5 2.5Z"/>
+              </svg>
             </button>
           </div>
           <button onClick={() => onSave(post.id)} className="hover:opacity-50 transition-opacity">

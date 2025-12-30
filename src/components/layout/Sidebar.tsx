@@ -23,11 +23,11 @@ import {
 } from 'lucide-react';
 
 const navItems = [
-  { icon: Home, label: 'Home', href: '/' },
-  { icon: Search, label: 'Cerca', href: '/search' },
-  { icon: Compass, label: 'Esplora', href: '/explore' },
-  { icon: Film, label: 'Reels', href: '/reels' },
-  { icon: MessageCircle, label: 'Messaggi', href: '/direct' },
+  { icon: 'custom-home', label: 'Home', href: '/' },
+  { icon: 'custom-search', label: 'Cerca', href: '/search' },
+  { icon: 'custom-explore', label: 'Esplora', href: '/explore' },
+  { icon: 'custom-reels', label: 'Reels', href: '/reels' },
+  { icon: 'custom-message', label: 'Messaggi', href: '/direct' },
   { icon: Heart, label: 'Notifiche', href: '/notifications' },
   { icon: 'custom-create', label: 'Crea', href: '/create' },
 ];
@@ -85,7 +85,38 @@ export default function Sidebar() {
                   : 'font-normal hover:bg-[var(--bg-tertiary)]'
               }`}
             >
-              {item.icon === 'custom-create' ? (
+              {item.icon === 'custom-home' ? (
+                <svg
+                  className={`w-[26px] h-[26px] text-[#262626] dark:text-white`}
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  {isActive ? (
+                    <>
+                      <path d="M12 2.5 L2 10 L2 21 Q2 22 3 22 L9.5 22 L9.5 14.5 Q9.5 13 12 13 Q14.5 13 14.5 14.5 L14.5 22 L21 22 Q22 22 22 21 L22 10 L12 2.5 Z" fill="currentColor"/>
+                      <path d="M9.5 14.5 L9.5 22.5 L14.5 22.5 L14.5 14.5 Q14.5 13 12 13 Q9.5 13 9.5 14.5 Z" fill="var(--bg-primary)"/>
+                    </>
+                  ) : (
+                    <>
+                      <path d="M12 2.5 L2 10 L2 21 Q2 22 3 22 L9.5 22 L9.5 14.5 Q9.5 13 12 13 Q14.5 13 14.5 14.5 L14.5 22 L21 22 Q22 22 22 21 L22 10 L12 2.5 Z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
+                    </>
+                  )}
+                </svg>
+              ) : item.icon === 'custom-search' ? (
+                <svg
+                  className={`w-[26px] h-[26px] text-[#262626] dark:text-white`}
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={isActive ? "3" : "2"}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="M21 21l-4.35-4.35"/>
+                </svg>
+              ) : item.icon === 'custom-create' ? (
                 <svg
                   className={`w-[26px] h-[26px] text-[#262626] dark:text-white`}
                   fill="currentColor"
@@ -97,19 +128,66 @@ export default function Sidebar() {
               ) : item.icon === 'custom-message' ? (
                 <svg
                   className={`w-[26px] h-[26px] text-[#262626] dark:text-white`}
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                  style={{ transform: 'rotate(13deg)' }}
+                >
+                  {isActive ? (
+                    <>
+                      <path d="M21.5 2.5Q18 12 15.5 20Q15 21.5 14 21Q12.5 17 11 13Q7 11.5 3 10Q2 9 2.5 8.5Q11 5.5 21.5 2.5Z" fill="currentColor"/>
+                      <path d="M16 7Q14 9.5 11.5 11.5" stroke="#000000" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                    </>
+                  ) : (
+                    <>
+                      <path d="M21.5 2.5Q16 8 11 13" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M21.5 2.5Q18 12 15.5 20Q15 21.5 14 21Q12.5 17 11 13Q7 11.5 3 10Q2 9 2.5 8.5Q11 5.5 21.5 2.5Z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                    </>
+                  )}
+                </svg>
+              ) : item.icon === 'custom-reels' ? (
+                <svg
+                  className={`w-[26px] h-[26px] text-[#262626] dark:text-white`}
                   viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <path d="M13.973 20.046 21.77 6.928C22.8 5.195 21.55 3 19.535 3H4.466C2.138 3 .984 5.825 2.646 7.456l4.842 4.752 1.723 7.121c.548 2.266 3.571 2.721 4.762.717Z" />
+                  {isActive ? (
+                    <>
+                      <rect x="3" y="3" width="18" height="18" rx="4" ry="4" fill="currentColor"/>
+                      <path d="M9 8 Q9.5 8 10 8.5 L16 11.5 Q16.5 12 16.5 12 Q16.5 12 16 12.5 L10 15.5 Q9.5 16 9 16 Q9 16 9 15.5 L9 8.5 Q9 8 9 8" fill="var(--bg-primary)"/>
+                    </>
+                  ) : (
+                    <>
+                      <rect x="3" y="3" width="18" height="18" rx="4" ry="4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M9 8 Q9.5 8 10 8.5 L16 11.5 Q16.5 12 16.5 12 Q16.5 12 16 12.5 L10 15.5 Q9.5 16 9 16 Q9 16 9 15.5 L9 8.5 Q9 8 9 8" fill="none" stroke="currentColor" strokeWidth="2"/>
+                    </>
+                  )}
+                </svg>
+              ) : item.icon === 'custom-explore' ? (
+                <svg
+                  className={`w-[26px] h-[26px] text-[#262626] dark:text-white`}
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  {isActive ? (
+                    <>
+                      <circle cx="12" cy="12" r="10" fill="currentColor"/>
+                      <polygon points="16.24 7.76 14.12 14.12 12 12 9.88 9.88 16.24 7.76" fill="none" stroke="var(--bg-primary)" strokeWidth="2"/>
+                      <polygon points="12 12 15 15 7.76 16.24 9 9 12 12" fill="var(--bg-primary)" stroke="none"/>
+                    </>
+                  ) : (
+                    <>
+                      <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2"/>
+                      <polygon points="16.24 7.76 14.12 14.12 12 12 9.88 9.88 16.24 7.76" fill="none" stroke="currentColor" strokeWidth="2"/>
+                      <polygon points="12 12 15 15 7.76 16.24 9 9 12 12" fill="currentColor" stroke="none"/>
+                    </>
+                  )}
                 </svg>
               ) : (
                 <item.icon
                   className={`w-[26px] h-[26px] ${
-                    isActive ? 'stroke-[2.5]' : 'stroke-2'
+                    isActive ? 'fill-current' : ''
                   } text-[#262626] dark:text-white`}
+                  fill={isActive ? 'currentColor' : 'none'}
                 />
               )}
               <span className="hidden xl:block text-base text-[#262626] dark:text-white">{item.label}</span>

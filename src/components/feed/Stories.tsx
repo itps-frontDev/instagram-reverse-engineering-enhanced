@@ -35,7 +35,7 @@ export default function Stories() {
   };
 
   return (
-    <div className="bg-[var(--bg-primary)] rounded-lg py-10 px-2 mb-6 relative group">
+    <div className="bg-[var(--bg-primary)] rounded-lg p-4 mb-6 relative group">
       {/* Left Arrow */}
       {currentPage > 0 && (
         <button
@@ -59,16 +59,16 @@ export default function Stories() {
       )}
 
       {/* Stories Container */}
-      <div className="overflow-hidden pl-8 pr-14">
-        <div className="flex gap-[20px] justify-start">
+      <div className="overflow-hidden">
+        <div className="flex gap-4">
           {visibleStories.map((_, index) => (
             <div key={startIndex + index} className="flex flex-col items-center gap-2 flex-shrink-0">
-              <div className="w-[82px] h-[82px] rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[2.5px] cursor-pointer hover:scale-105 transition-transform">
+              <div className="w-[84px] h-[84px] rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[2.5px] cursor-pointer">
                 <div className="w-full h-full rounded-full bg-white dark:bg-[#0c1014] p-[2.5px]">
                   <div className="w-full h-full rounded-full bg-gray-200 dark:bg-gray-700" />
                 </div>
               </div>
-              <span className="text-xs truncate w-[82px] text-center text-[var(--text-primary)] font-normal">
+              <span className="text-xs truncate w-[84px] text-center text-[var(--text-primary)] font-normal">
                 username{startIndex + index}
               </span>
             </div>
