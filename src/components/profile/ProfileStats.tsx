@@ -67,36 +67,55 @@ export default function ProfileStats({
   followersCount,
   followingCount,
 }: ProfileStatsProps) {
+  const statStyle = {
+    fontFamily: 'apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif',
+    fontSize: '14px',
+    fontWeight: 400,
+    height: '18px',
+    lineHeight: '18px',
+    listStyleType: 'none',
+    marginBottom: 0,
+    marginInlineEnd: 0,
+    marginInlineStart: 0,
+    marginTop: 0,
+    maxWidth: '100%',
+    minWidth: 0,
+    overflowWrap: 'break-word',
+    overflowX: 'visible',
+    overflowY: 'visible',
+    position: 'relative',
+    textAlign: 'start',
+    wordBreak: 'break-word',
+    WebkitTapHighlightColor: 'rgba(0,0,0,0)',
+    MozTextSizeAdjust: '100%',
+    WebkitTextSizeAdjust: '100%',
+    whiteSpace: 'nowrap',
+    unicodeBidi: 'isolate',
+    cursor: 'pointer',
+    direction: 'ltr',
+  };
   return (
-    <ul className="flex items-center gap-4 md:gap-10 mb-5">
+    <ul className="flex items-center gap-8 mb-5">
       {/* Posts */}
-      <li className="flex items-center gap-1">
-        <span className="font-semibold text-sm">{formatCount(postsCount)}</span>
-        <span className="text-sm">post</span>
+      <li
+        style={statStyle}
+        className="text-black dark:text-[rgb(245,245,245)]"
+      >
+        <span style={{ fontWeight: 600 }}>{formatCount(postsCount)}</span> post
       </li>
-
       {/* Followers */}
-      <li className="flex items-center gap-1">
-        <button
-          type="button"
-          className="font-semibold text-sm hover:opacity-50 transition-opacity"
-          aria-label="Visualizza follower"
-        >
-          {formatCount(followersCount)}
-        </button>
-        <span className="text-sm">follower</span>
+      <li
+        style={statStyle}
+        className="text-black dark:text-[rgb(245,245,245)]"
+      >
+        <span style={{ fontWeight: 600 }}>{formatCount(followersCount)}</span> follower
       </li>
-
       {/* Following */}
-      <li className="flex items-center gap-1">
-        <button
-          type="button"
-          className="font-semibold text-sm hover:opacity-50 transition-opacity"
-          aria-label="Visualizza seguiti"
-        >
-          {formatCount(followingCount)}
-        </button>
-        <span className="text-sm">seguiti</span>
+      <li
+        style={statStyle}
+        className="text-black dark:text-[rgb(245,245,245)]"
+      >
+        <span style={{ fontWeight: 600 }}>{formatCount(followingCount)}</span> seguiti
       </li>
     </ul>
   );

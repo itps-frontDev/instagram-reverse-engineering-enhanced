@@ -69,9 +69,8 @@ export default function ProfileHeader({
             {/* Username + Badge Row */}
             <div className="flex items-center gap-1.5 mb-5">
               <h1
-                className="block font-bold text-[24px] leading-[30px] h-[30px] max-w-full overflow-hidden text-ellipsis whitespace-nowrap cursor-pointer"
+                className="block font-bold text-[24px] leading-[30px] h-[30px] max-w-full overflow-hidden text-ellipsis whitespace-nowrap cursor-pointer text-[rgb(12,16,20)] dark:text-[rgb(245,245,245)]"
                 style={{
-                  color: 'rgb(245,245,245)',
                   fontFamily: 'apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif',
                   fontWeight: 700,
                   direction: 'ltr',
