@@ -68,7 +68,28 @@ export default function ProfileHeader({
           <div className="flex-1 min-w-0">
             {/* Username + Badge Row */}
             <div className="flex items-center gap-1.5 mb-5">
-              <h1 className="text-xl font-normal truncate">{profile.username}</h1>
+              <h1
+                className="block font-bold text-[24px] leading-[30px] h-[30px] max-w-full overflow-hidden text-ellipsis whitespace-nowrap cursor-pointer"
+                style={{
+                  color: 'rgb(245,245,245)',
+                  fontFamily: 'apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif',
+                  fontWeight: 700,
+                  direction: 'ltr',
+                  listStyleType: 'none',
+                  overflowWrap: 'break-word',
+                  textAlign: 'start',
+                  textOverflow: 'ellipsis',
+                  width: '163.312px',
+                  wordBreak: 'break-word',
+                  WebkitTapHighlightColor: 'rgba(0,0,0,0)',
+                  MozTextSizeAdjust: '100%',
+                  WebkitTextSizeAdjust: '100%',
+                  whiteSpace: 'nowrap',
+                }}
+                tabIndex={0}
+              >
+                {profile.username}
+              </h1>
               {profile.is_verified && (
                 <BadgeCheck className="w-[18px] h-[18px] text-[#0095f6] fill-[#0095f6] flex-shrink-0" />
               )}
