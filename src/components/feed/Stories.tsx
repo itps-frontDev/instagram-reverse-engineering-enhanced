@@ -130,8 +130,8 @@ export default function Stories() {
         )}
 
         {/* Stories Container */}
-        <div className="overflow-hidden pl-8 pr-14">
-          <div className="flex gap-4 justify-start">
+        <div className="overflow-visible px-0">
+          <div className="flex gap-4 justify-start w-full">
             {visibleStories.map((item) => (
               <button
                 key={item.id}
