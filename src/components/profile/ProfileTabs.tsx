@@ -65,25 +65,24 @@ export default function ProfileTabs({
   return (
     <div className="relative">
       {/* Tabs - Icons with bottom border */}
-      <div className="flex justify-center items-center h-12 border-b border-[#dbdbdb] dark:border-[#262626] bg-transparent">
-        {tabs.map((tab, idx) => {
+      <div className="flex h-12 border-b border-[#dbdbdb] dark:border-[#262626] bg-transparent">
+        {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
               className={
-                `relative flex items-center justify-center cursor-pointer appearance-none outline-none border-none bg-transparent flex-1 h-12 max-w-[193px] px-6 transition-colors ` +
-                (!isActive
-                  ? 'hover:bg-[#f5f5f5] dark:hover:bg-[#181c20]'
-                  : '')
+                `relative flex-1 flex items-center justify-center cursor-pointer appearance-none outline-none border-none bg-transparent h-12 transition-colors ` +
+                (!isActive ? 'hover:bg-[#f5f5f5] dark:hover:bg-[#181c20]' : '')
               }
-              style={{ marginLeft: idx !== 0 ? 16 : 0 }}
+              style={{ minWidth: 0 }}
             >
-              {tab.icon(isActive)}
-              {/* Active indicator - positioned at bottom */}
+              <span className="flex items-center justify-center h-12 w-12">
+                {tab.icon(isActive)}
+              </span>
               {isActive && (
-                <div className="absolute bottom-0 left-4 right-4 h-[2.5px] rounded bg-[#262626] dark:bg-white" />
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-[2px] rounded bg-[#262626] dark:bg-white" />
               )}
             </button>
           );
