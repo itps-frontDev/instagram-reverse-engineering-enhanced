@@ -93,7 +93,7 @@ export default function Stories() {
       {/* Stories Container */}
       <div className="overflow-hidden pl-8 pr-14">
         <div className="flex gap-[20px] justify-start">
-          {visibleStories.map((_, index) => (
+          {visibleStories.map((item, index) => (
             <div key={startIndex + index} className="flex flex-col items-center gap-2 flex-shrink-0">
               <div className="w-[82px] h-[82px] rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[2.5px] cursor-pointer hover:scale-105 transition-transform">
                 <div className="w-full h-full rounded-full bg-white dark:bg-[#0c1014] p-[2.5px]">
@@ -111,7 +111,7 @@ export default function Stories() {
                 </div>
               </div>
               <span className="text-xs truncate w-[82px] text-center text-[var(--text-primary)] font-normal">
-                username{startIndex + index}
+                {item.username}
               </span>
             </div>
           ))}
