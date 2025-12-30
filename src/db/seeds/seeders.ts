@@ -180,13 +180,11 @@ export async function seedFollows(profileIds: number[]) {
   // Update followers/following counts
   console.log('\n📊 Updating follow counts...');
 
-  // Add extra deterministic follows to increase connectivity
-  console.log('\n🌱 Generating extra deterministic follows across profiles...');
+  // Generate follows so each profile can see stories from all others
+  console.log('\n🌱 Ensuring all profiles follow each other (for stories visibility)...');
   for (let i = 0; i < profileIds.length; i++) {
     for (let j = 0; j < profileIds.length; j++) {
-      if (i === j) continue;
-      // deterministic pattern: create follow when (i + j) % 3 == 0
-      if ((i + j) % 3 !== 0) continue;
+      if (i === j) continue; // Don't follow yourself
       const followerProfileId = profileIds[i];
       const followingProfileId = profileIds[j];
       try {
@@ -196,7 +194,7 @@ export async function seedFollows(profileIds: number[]) {
           [followerProfileId, followingProfileId]
         );
       } catch (e) {
-        // ignore unique constraint errors
+        // ignore unique constraint errors (follow already exists)
       }
     }
   }
