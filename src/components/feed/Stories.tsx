@@ -17,6 +17,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRef, useState, useEffect } from 'react';
 import StoryViewer from './StoryViewer';
+import StoriesSkeleton from '@/components/common/skeletons/StoriesSkeleton';
 
 interface StoryItem {
   id: number;
@@ -100,7 +101,11 @@ export default function Stories() {
     setSelectedStoryId(undefined);
   };
 
-  if (loading || stories.length === 0) {
+  if (loading) {
+    return <StoriesSkeleton />;
+  }
+
+  if (stories.length === 0) {
     return null;
   }
 

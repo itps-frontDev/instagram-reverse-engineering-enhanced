@@ -8,6 +8,7 @@
 
 import { useState, useEffect } from 'react';
 import Post from './Post';
+import FeedPostSkeleton from '@/components/common/skeletons/FeedPostSkeleton';
 import type { FeedPost } from '@/lib/types/feed';
 
 export default function FeedContainer() {
@@ -139,12 +140,7 @@ export default function FeedContainer() {
         {Array(3)
           .fill(null)
           .map((_, i) => (
-            <div
-              key={i}
-              className="bg-white dark:bg-black border border-[#DBDBDB] dark:border-[#262626] p-4 animate-pulse"
-            >
-              <div className="h-64 bg-[#EFEFEF] dark:bg-[#262626] rounded" />
-            </div>
+            <FeedPostSkeleton key={i} />
           ))}
       </div>
     );

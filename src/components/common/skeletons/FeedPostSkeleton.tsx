@@ -7,7 +7,7 @@
 
 export default function FeedPostSkeleton() {
   return (
-    <article className="w-full max-w-[470px] mx-auto bg-white dark:bg-black border border-[#dbdbdb] dark:border-[#262626] rounded-xl animate-pulse">
+    <article className="w-full bg-white dark:bg-black border border-[#dbdbdb] dark:border-[#262626] rounded-xl animate-pulse">
       {/* Post Header */}
       <div className="flex items-center gap-3 px-4 py-3">
         <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700" />

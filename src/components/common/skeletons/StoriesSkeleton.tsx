@@ -7,8 +7,8 @@
 
 export default function StoriesSkeleton() {
   return (
-    <div className="bg-white dark:bg-[#0c1014] border border-[#dbdbdb] dark:border-[#262626] rounded-lg py-4 px-2">
-      <div className="flex gap-4 justify-start w-full overflow-hidden animate-pulse">
+    <div className="rounded-lg py-4 mb-4 mt-20 relative w-full animate-pulse">
+      <div className="flex gap-4 justify-start w-full overflow-hidden">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="flex flex-col items-center gap-2 flex-shrink-0">
             {/* Story circle */}
