@@ -129,3 +129,23 @@ body {
     @apply border-[var(--color-border)];
   }
 }
+
+/* Like Animation */
+@keyframes like-bump {
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.2);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.like-animation {
+  animation: like-bump 0.4s ease-in-out;
+}

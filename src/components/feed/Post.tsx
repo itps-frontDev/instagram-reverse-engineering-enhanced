@@ -32,6 +32,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLikeAnimating, setIsLikeAnimating] = useState(false);
 
   const handleCommentSubmit = async () => {
     if (!commentText.trim() || isSubmitting) return;
@@ -40,6 +41,14 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
     await onComment(post.id, commentText);
     setCommentText('');
     setIsSubmitting(false);
+  };
+
+  const handleLike = () => {
+    if (!post.is_liked_by_current_user) {
+      setIsLikeAnimating(true);
+      setTimeout(() => setIsLikeAnimating(false), 400);
+    }
+    onLike(post.id);
   };
 
   const formatLikesCount = (count: number) => {
@@ -98,7 +107,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
       {post.media.length > 0 && (
         <div
           className="relative w-full aspect-square rounded-xl bg-gray-100 dark:bg-gray-800 overflow-hidden mt-2 mb-2"
-          onDoubleClick={() => onLike(post.id)}
+          onDoubleClick={handleLike}
         >
           <Image
             src={post.media[0].media_url}
@@ -114,13 +123,13 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
       <div className="px-4 pb-4">
         <div className="flex items-center justify-between pt-1 pb-2">
           <div className="flex items-center gap-4">
-            <button onClick={() => onLike(post.id)} className="flex items-center gap-1">
+            <button onClick={handleLike} className="flex items-center gap-1">
               <Heart
                 className={`w-6 h-6 hover:scale-110 transition-transform ${
                   post.is_liked_by_current_user
                     ? 'fill-[#ED4956] text-[#ED4956]'
                     : 'text-[#262626] dark:text-[#FAFAFA]'
-                }`}
+                } ${isLikeAnimating ? 'like-animation' : ''}`}
               />
               {!post.is_likes_hidden && post.likes_count > 0 && (
                 <span className="text-xs font-semibold text-[#262626] dark:text-[#FAFAFA] ml-1">{formatLikesCount(post.likes_count)}</span>
