@@ -9,6 +9,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import ProfilePicture from '@/components/ProfilePicture';
+import VerifiedBadge from '@/components/common/VerifiedBadge';
 import Link from 'next/link';
 import {
   Heart,
@@ -82,15 +83,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
             >
               {post.profile_username}
             </Link>
-            {post.profile_is_verified && (
-              <svg
-                className="w-3.5 h-3.5 text-blue-500"
-                viewBox="0 0 40 40"
-                fill="currentColor"
-              >
-                <path d="M19.998 3.094l2.124 3.217a3 3 0 0 0 2.135 1.313l3.85.557a3 3 0 0 1 1.657 5.117l-2.786 2.721a3 3 0 0 0-.862 2.656l.658 3.834a3 3 0 0 1-4.354 3.162l-3.446-1.813a3 3 0 0 0-2.788 0l-3.446 1.813a3 3 0 0 1-4.354-3.162l.658-3.834a3 3 0 0 0-.862-2.656L4.395 13.3a3 3 0 0 1 1.657-5.117l3.85-.557a3 3 0 0 0 2.135-1.313L14.158 3.1a3 3 0 0 1 5.84-.007z" />
-              </svg>
-            )}
+            {post.profile_is_verified && <VerifiedBadge size={12} />}
             <span className="text-[#8E8E8E] dark:text-[#A8A8A8] text-sm">
               • {formatTimeAgo(post.created_at)}
             </span>
