@@ -156,24 +156,16 @@ body {
     transform: translate(-50%, -50%) scale(0);
     opacity: 0;
   }
-  15% {
-    transform: translate(-50%, -50%) scale(1.2);
-    opacity: 0.9;
-  }
-  30% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
-  }
-  70% {
-    transform: translate(-50%, -60%) scale(1);
+  20% {
+    transform: translate(-50%, -50%) scale(1.1);
     opacity: 1;
   }
   100% {
-    transform: translate(-50%, -80%) scale(0.8);
+    transform: translate(-50%, -250%) scale(0.8);
     opacity: 0;
   }
 }
 
 .like-explode-animation {
-  animation: like-explode 1s ease-out forwards;
+  animation: like-explode 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }

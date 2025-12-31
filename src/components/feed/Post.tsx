@@ -135,7 +135,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
           {showExplodingHeart && (
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
               <Heart
-                className="absolute top-1/2 left-1/2 w-24 h-24 fill-white text-white like-explode-animation"
+                className="absolute top-1/2 left-1/2 w-24 h-24 fill-[#ED4956] text-[#ED4956] like-explode-animation"
                 style={{ filter: 'drop-shadow(0 0 10px rgba(0, 0, 0, 0.3))' }}
               />
             </div>
