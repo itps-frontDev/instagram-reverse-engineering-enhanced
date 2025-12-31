@@ -96,8 +96,8 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
 
       {/* Post Media */}
       {post.media.length > 0 && (
-        <div 
-          className="relative w-full aspect-square rounded-xl border border-[#23272d] dark:border-[#23272d] bg-gray-100 dark:bg-gray-800 overflow-hidden mt-2 mb-2"
+        <div
+          className="relative w-full aspect-square rounded-xl bg-gray-100 dark:bg-gray-800 overflow-hidden mt-2 mb-2"
           onDoubleClick={() => onLike(post.id)}
         >
           <Image
