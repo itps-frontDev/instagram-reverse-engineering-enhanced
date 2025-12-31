@@ -74,31 +74,25 @@ export default function ProfileTabs({
   }
 
   return (
-    <div className="relative -mx-8">
-      {/* Tabs - Icons with bottom border */}
-      <div className="flex h- border-b-2 border-[#2b3036] bg-transparent px-99">
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => onTabChange(tab.id)}
-              className={
-                `relative flex-1 flex items-center justify-center cursor-pointer appearance-none outline-none border-none bg-transparent h-12 transition-colors ` +
-                (!isActive ? 'hover:bg-[#f5f5f5] dark:hover:bg-[#181c20]' : '')
-              }
-              style={{ minWidth: 0 }}
-            >
-              <span className="flex items-center justify-center h-12 w-12">
-                {tab.icon(isActive)}
-              </span>
-              {isActive && (
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-[2px] rounded bg-[#262626] dark:bg-white" />
-              )}
-            </button>
-          );
-        })}
-      </div>
+    <div className="w-full flex justify-center gap-1 border-b border-[#DBDBDB] dark:border-[#2b3036]">
+      {tabs.map((tab) => {
+        const isActive = activeTab === tab.id;
+        return (
+          <button
+            key={tab.id}
+            onClick={() => onTabChange(tab.id)}
+            className="relative flex items-center justify-center cursor-pointer appearance-none outline-none border-none bg-transparent h-11 px-5"
+            style={{ minWidth: 0 }}
+          >
+            <span className="flex items-center justify-center h-11 w-11">
+              {tab.icon(isActive)}
+            </span>
+            {isActive && (
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-[1px] bg-[#262626] dark:bg-white" />
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }

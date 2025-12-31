@@ -338,14 +338,12 @@ export default function ProfilePage({
         )}
 
         {/* Tabs blocco */}
-        <div className="w-full flex flex-col items-center bg-transparent">
-          <ProfileTabs
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-            postsCount={profile.posts_count}
-            showTagged={followStatus.isOwnProfile}
-          />
-        </div>
+        <ProfileTabs
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          postsCount={profile.posts_count}
+          showTagged={followStatus.isOwnProfile}
+        />
 
         {/* Content blocco */}
         <div className="w-full flex justify-center px-4">
