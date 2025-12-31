@@ -88,7 +88,7 @@ export default function ProfileTabs({
               {tab.icon(isActive)}
             </span>
             {isActive && (
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-[1px] bg-[#262626] dark:bg-white" />
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-[2px] bg-[#262626] dark:bg-white" />
             )}
           </button>
         );
