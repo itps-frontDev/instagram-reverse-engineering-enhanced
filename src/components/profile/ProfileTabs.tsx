@@ -81,8 +81,8 @@ export default function ProfileTabs({
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
-            className="relative flex items-center justify-center cursor-pointer appearance-none outline-none border-none bg-transparent h-11 px-5"
-            style={{ minWidth: 0 }}
+            className="relative flex items-center justify-center cursor-pointer appearance-none outline-none border-none bg-transparent h-11 flex-1"
+            style={{ flexBasis: 0, maxWidth: '193px', width: '193px' }}
           >
             <span className="flex items-center justify-center h-11 w-11">
               {tab.icon(isActive)}
