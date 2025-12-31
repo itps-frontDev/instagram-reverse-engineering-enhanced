@@ -114,9 +114,9 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
       <div className="px-4 pb-4">
         <div className="flex items-center justify-between pt-1 pb-2">
           <div className="flex items-center gap-4">
-            <button onClick={() => onLike(post.id)} className="hover:opacity-50 transition-opacity flex items-center gap-1">
+            <button onClick={() => onLike(post.id)} className="flex items-center gap-1">
               <Heart
-                className={`w-6 h-6 ${
+                className={`w-6 h-6 hover:scale-110 transition-transform ${
                   post.is_liked_by_current_user
                     ? 'fill-[#ED4956] text-[#ED4956]'
                     : 'text-[#262626] dark:text-[#FAFAFA]'
@@ -126,18 +126,18 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
                 <span className="text-xs font-semibold text-[#262626] dark:text-[#FAFAFA] ml-1">{formatLikesCount(post.likes_count)}</span>
               )}
             </button>
-            <button 
+            <button
               onClick={() => setIsModalOpen(true)}
-              className="hover:opacity-50 transition-opacity flex items-center gap-1"
+              className="flex items-center gap-1"
             >
-              <MessageCircle className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA]" />
+              <MessageCircle className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA] hover:scale-110 transition-transform" />
               {post.comments_count > 0 && (
                 <span className="text-xs font-semibold text-[#262626] dark:text-[#FAFAFA] ml-1">{post.comments_count}</span>
               )}
             </button>
-            <button className="hover:opacity-50 transition-opacity">
+            <button>
               <svg
-                className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA]"
+                className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA] hover:scale-110 transition-transform"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
@@ -152,9 +152,9 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
               </svg>
             </button>
           </div>
-          <button onClick={() => onSave(post.id)} className="hover:opacity-50 transition-opacity">
+          <button onClick={() => onSave(post.id)}>
             <Bookmark
-              className={`w-6 h-6 ${
+              className={`w-6 h-6 hover:scale-110 transition-transform ${
                 post.is_saved_by_current_user
                   ? 'fill-[#262626] dark:fill-[#FAFAFA] text-[#262626] dark:text-[#FAFAFA]'
                   : 'text-[#262626] dark:text-[#FAFAFA]'
