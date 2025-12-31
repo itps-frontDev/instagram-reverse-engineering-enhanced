@@ -33,6 +33,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLikeAnimating, setIsLikeAnimating] = useState(false);
+  const [showExplodingHeart, setShowExplodingHeart] = useState(false);
 
   const handleCommentSubmit = async () => {
     if (!commentText.trim() || isSubmitting) return;
@@ -44,6 +45,20 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
   };
 
   const handleLike = () => {
+    // Always show the exploding heart animation on double-click
+    setShowExplodingHeart(true);
+    setTimeout(() => setShowExplodingHeart(false), 1000);
+
+    // Only add like if not already liked (don't remove on double-click)
+    if (!post.is_liked_by_current_user) {
+      setIsLikeAnimating(true);
+      setTimeout(() => setIsLikeAnimating(false), 400);
+      onLike(post.id);
+    }
+  };
+
+  const handleButtonLike = () => {
+    // Button click can toggle like on/off
     if (!post.is_liked_by_current_user) {
       setIsLikeAnimating(true);
       setTimeout(() => setIsLikeAnimating(false), 400);
@@ -116,6 +131,15 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
             className="object-cover rounded-xl"
             sizes="(max-width: 768px) 100vw, 600px"
           />
+          {/* Exploding Heart Animation */}
+          {showExplodingHeart && (
+            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+              <Heart
+                className="absolute top-1/2 left-1/2 w-24 h-24 fill-white text-white like-explode-animation"
+                style={{ filter: 'drop-shadow(0 0 10px rgba(0, 0, 0, 0.3))' }}
+              />
+            </div>
+          )}
         </div>
       )}
 
@@ -123,7 +147,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
       <div className="px-4 pb-4">
         <div className="flex items-center justify-between pt-1 pb-2">
           <div className="flex items-center gap-4">
-            <button onClick={handleLike} className="flex items-center gap-1">
+            <button onClick={handleButtonLike} className="flex items-center gap-1">
               <Heart
                 className={`w-6 h-6 hover:scale-110 transition-transform ${
                   post.is_liked_by_current_user
