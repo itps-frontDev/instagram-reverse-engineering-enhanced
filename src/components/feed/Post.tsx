@@ -10,13 +10,13 @@ import { useState } from 'react';
 import Image from 'next/image';
 import ProfilePicture from '@/components/ProfilePicture';
 import VerifiedBadge from '@/components/common/VerifiedBadge';
+import MoreOptionsIcon from '@/components/common/MoreOptionsIcon';
 import Link from 'next/link';
 import {
   Heart,
   MessageCircle,
   Send,
   Bookmark,
-  MoreHorizontal,
 } from 'lucide-react';
 import type { FeedPost } from '@/lib/types/feed';
 import PostModal from './PostModal';
@@ -89,8 +89,8 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
             </span>
           </div>
         </div>
-        <button type="button" className="hover:opacity-50 transition-opacity">
-          <MoreHorizontal className="w-6 h-6" />
+        <button type="button" className="hover:scale-110 transition-transform">
+          <MoreOptionsIcon size={24} />
         </button>
       </div>
 
