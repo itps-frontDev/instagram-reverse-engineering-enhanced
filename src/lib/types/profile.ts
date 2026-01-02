@@ -176,7 +176,6 @@ export interface ProfileBioProps {
   fullName: string | null;
   bio: string | null;
   websiteUrl: string | null;
-  isVerified: boolean;
 }
 
 /**
@@ -205,7 +204,7 @@ export interface ProfileTabsProps {
 /**
  * Profile tab options
  */
-export type ProfileTab = 'posts' | 'reels' | 'tagged';
+export type ProfileTab = 'posts' | 'reels' | 'saved' | 'tagged';
 
 /**
  * Props for ProfileGrid component
@@ -215,6 +214,8 @@ export interface ProfileGridProps {
   isLoading: boolean;
   onLoadMore?: () => void;
   hasMore?: boolean;
+  tab?: ProfileTab;
+  isOwnProfile?: boolean;
 }
 
 /**

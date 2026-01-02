@@ -10,7 +10,6 @@
 'use client';
 
 import Link from 'next/link';
-import { BadgeCheck } from 'lucide-react';
 import { ProfileBioProps } from '@/lib/types/profile';
 
 /**
@@ -58,17 +57,13 @@ export default function ProfileBio({
   fullName,
   bio,
   websiteUrl,
-  isVerified,
 }: ProfileBioProps) {
   return (
     <div className="text-sm">
-      {/* Full Name with Verified Badge */}
+      {/* Full Name */}
       {fullName && (
-        <div className="flex items-center gap-1 font-semibold mb-1">
-          <span>{fullName}</span>
-          {isVerified && (
-            <BadgeCheck className="w-4 h-4 text-[#0095f6] fill-[#0095f6]" />
-          )}
+        <div className="font-semibold mb-1">
+          {fullName}
         </div>
       )}
 

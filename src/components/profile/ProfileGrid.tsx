@@ -10,12 +10,15 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Heart, MessageCircle, Layers } from 'lucide-react';
 import { ProfileGridProps } from '@/lib/types/profile';
+import ProfileEmptyState from './ProfileEmptyState';
 
 export default function ProfileGrid({
   posts,
   isLoading,
   onLoadMore,
   hasMore = false,
+  tab = 'posts',
+  isOwnProfile = false,
 }: ProfileGridProps) {
   if (isLoading && posts.length === 0) {
     return (
@@ -31,11 +34,7 @@ export default function ProfileGrid({
   }
 
   if (posts.length === 0) {
-    return (
-      <div className="py-16 text-center">
-        <div className="text-gray-400 text-sm">No posts yet</div>
-      </div>
-    );
+    return <ProfileEmptyState tab={tab} isOwnProfile={isOwnProfile} />;
   }
 
   return (

@@ -68,36 +68,18 @@ export default function ProfileStats({
   followingCount,
 }: ProfileStatsProps) {
   return (
-    <ul className="flex items-center gap-4 md:gap-10 mb-5">
+    <ul className="flex items-center gap-8 mb-5">
       {/* Posts */}
-      <li className="flex items-center gap-1">
-        <span className="font-semibold text-sm">{formatCount(postsCount)}</span>
-        <span className="text-sm hidden md:inline">posts</span>
-        <span className="text-sm md:hidden">posts</span>
+      <li className="text-sm leading-[18px] whitespace-nowrap cursor-pointer text-instagram-primary">
+        <span className="font-semibold">{formatCount(postsCount)}</span> post
       </li>
-
       {/* Followers */}
-      <li className="flex items-center gap-1">
-        <button
-          type="button"
-          className="font-semibold text-sm hover:opacity-50 transition-opacity"
-          aria-label="View followers"
-        >
-          {formatCount(followersCount)}
-        </button>
-        <span className="text-sm">followers</span>
+      <li className="text-sm leading-[18px] whitespace-nowrap cursor-pointer text-instagram-primary">
+        <span className="font-semibold">{formatCount(followersCount)}</span> follower
       </li>
-
       {/* Following */}
-      <li className="flex items-center gap-1">
-        <button
-          type="button"
-          className="font-semibold text-sm hover:opacity-50 transition-opacity"
-          aria-label="View following"
-        >
-          {formatCount(followingCount)}
-        </button>
-        <span className="text-sm">following</span>
+      <li className="text-sm leading-[18px] whitespace-nowrap cursor-pointer text-instagram-primary">
+        <span className="font-semibold">{formatCount(followingCount)}</span> seguiti
       </li>
     </ul>
   );

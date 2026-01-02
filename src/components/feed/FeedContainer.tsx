@@ -8,6 +8,7 @@
 
 import { useState, useEffect } from 'react';
 import Post from './Post';
+import FeedPostSkeleton from '@/components/common/skeletons/FeedPostSkeleton';
 import type { FeedPost } from '@/lib/types/feed';
 
 export default function FeedContainer() {
@@ -135,16 +136,11 @@ export default function FeedContainer() {
 
   if (loading && posts.length === 0) {
     return (
-      <div className="space-y-3 mt-4">
+      <div className="space-y-3">
         {Array(3)
           .fill(null)
           .map((_, i) => (
-            <div
-              key={i}
-              className="bg-white dark:bg-black border border-[#DBDBDB] dark:border-[#262626] max-w-[470px] mx-auto p-4 animate-pulse"
-            >
-              <div className="h-64 bg-[#EFEFEF] dark:bg-[#262626] rounded" />
-            </div>
+            <FeedPostSkeleton key={i} />
           ))}
       </div>
     );
@@ -152,7 +148,7 @@ export default function FeedContainer() {
 
   if (error) {
     return (
-      <div className="mt-4 p-8 text-center max-w-[470px] mx-auto">
+      <div className="p-8 text-center">
         <p className="text-[#ED4956]">{error}</p>
         <button
           onClick={() => fetchPosts(0)}
@@ -166,7 +162,7 @@ export default function FeedContainer() {
 
   if (posts.length === 0) {
     return (
-      <div className="mt-4 p-8 text-center text-[#8E8E8E] dark:text-[#A8A8A8] max-w-[470px] mx-auto">
+      <div className="p-8 text-center text-[#8E8E8E] dark:text-[#A8A8A8]">
         <p>Nessun post da mostrare.</p>
         <p className="text-sm mt-2">Inizia a seguire qualcuno per vedere i loro post!</p>
       </div>
@@ -174,7 +170,7 @@ export default function FeedContainer() {
   }
 
   return (
-    <div className="space-y-3 mt-4">
+    <div className="space-y-3">
       {posts.map((post) => (
         <Post
           key={post.id}
@@ -186,7 +182,7 @@ export default function FeedContainer() {
       ))}
 
       {hasMore && (
-        <div className="max-w-[470px] mx-auto pt-4">
+        <div className="pt-4">
           <button
             onClick={() => fetchPosts(offset)}
             disabled={loading}
@@ -199,3 +195,4 @@ export default function FeedContainer() {
     </div>
   );
 }
+

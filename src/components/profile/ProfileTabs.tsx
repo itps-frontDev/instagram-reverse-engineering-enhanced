@@ -2,9 +2,11 @@
  * @fileoverview Profile tabs navigation
  */
 
-'use client';
 
-import { Grid3x3, Film, UserSquare2 } from 'lucide-react';
+'use client';
+import React from 'react';
+
+import { Grid3x3, Film, UserSquare2, Bookmark } from 'lucide-react';
 import { ProfileTabsProps, ProfileTab } from '@/lib/types/profile';
 
 export default function ProfileTabs({
@@ -13,32 +15,78 @@ export default function ProfileTabs({
   postsCount,
   showTagged,
 }: ProfileTabsProps) {
-  const tabs: { id: ProfileTab; label: string; icon: React.ReactNode }[] = [
-    { id: 'posts', label: 'POSTS', icon: <Grid3x3 className="w-3 h-3" /> },
-    { id: 'reels', label: 'REELS', icon: <Film className="w-3 h-3" /> },
+  const tabs: { id: ProfileTab; icon: (active: boolean) => React.ReactNode }[] = [
+    {
+      id: 'posts',
+      icon: (active) => (
+        <Grid3x3
+          className={`w-6 h-6 ${
+            active
+              ? 'text-[#262626] dark:text-[#F5F5F5]'
+              : 'text-[#8E8E8E]'
+          }`}
+          strokeWidth={2}
+        />
+      ),
+    },
   ];
 
   if (showTagged) {
-    tabs.push({ id: 'tagged', label: 'TAGGED', icon: <UserSquare2 className="w-3 h-3" /> });
+    tabs.push(
+      {
+        id: 'saved',
+        icon: (active) => (
+          <Bookmark
+            className={`w-6 h-6 ${
+              active
+                ? 'text-[#262626] dark:text-[#F5F5F5]'
+                : 'text-[#8E8E8E]'
+            }`}
+            strokeWidth={2}
+          />
+        ),
+      },
+      {
+        id: 'tagged',
+        icon: (active) => (
+          <UserSquare2
+            className={`w-6 h-6 ${
+              active
+                ? 'text-[#262626] dark:text-[#F5F5F5]'
+                : 'text-[#8E8E8E]'
+            }`}
+            strokeWidth={2}
+          />
+        ),
+      }
+    );
   }
 
   return (
-    <div className="border-t border-gray-200 dark:border-gray-800">
-      <div className="max-w-4xl mx-auto flex justify-center gap-16">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => onTabChange(tab.id)}
-            className={`flex items-center gap-1.5 py-4 text-xs font-semibold tracking-wider transition-colors ${
-              activeTab === tab.id
-                ? 'text-black dark:text-white border-t border-black dark:border-white -mt-[1px]'
-                : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
-            }`}
-          >
-            {tab.icon}
-            {tab.label}
-          </button>
-        ))}
+    <div className="relative -mx-8">
+      {/* Tabs - Icons with bottom border */}
+      <div className="flex h- border-b-2 border-[#2b3036] bg-transparent px-99">
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => onTabChange(tab.id)}
+              className={
+                `relative flex-1 flex items-center justify-center cursor-pointer appearance-none outline-none border-none bg-transparent h-12 transition-colors ` +
+                (!isActive ? 'hover:bg-[#f5f5f5] dark:hover:bg-[#181c20]' : '')
+              }
+              style={{ minWidth: 0 }}
+            >
+              <span className="flex items-center justify-center h-12 w-12">
+                {tab.icon(isActive)}
+              </span>
+              {isActive && (
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-[2px] rounded bg-[#262626] dark:bg-white" />
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

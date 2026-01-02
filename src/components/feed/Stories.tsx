@@ -17,6 +17,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRef, useState, useEffect } from 'react';
 import StoryViewer from './StoryViewer';
+import StoriesSkeleton from '@/components/common/skeletons/StoriesSkeleton';
 
 interface StoryItem {
   id: number;
@@ -37,6 +38,7 @@ export default function Stories() {
   const [loading, setLoading] = useState(true);
   const [selectedUsername, setSelectedUsername] = useState<string | null>(null);
   const [selectedStoryId, setSelectedStoryId] = useState<number>();
+  const [selectedUserIndex, setSelectedUserIndex] = useState<number>(0);
   const storiesPerPage = 6;
 
   // Fetch stories from API
@@ -91,6 +93,8 @@ export default function Stories() {
   };
 
   const handleStoryClick = (story: StoryItem) => {
+    const userIndex = stories.findIndex(s => s.username === story.username);
+    setSelectedUserIndex(userIndex);
     setSelectedUsername(story.username);
     setSelectedStoryId(story.id);
   };
@@ -100,13 +104,27 @@ export default function Stories() {
     setSelectedStoryId(undefined);
   };
 
-  if (loading || stories.length === 0) {
+  const handleUserChange = (newIndex: number) => {
+    if (newIndex >= 0 && newIndex < stories.length) {
+      setSelectedUserIndex(newIndex);
+      setSelectedUsername(stories[newIndex].username);
+      setSelectedStoryId(stories[newIndex].id);
+    } else {
+      handleCloseViewer();
+    }
+  };
+
+  if (loading) {
+    return <StoriesSkeleton />;
+  }
+
+  if (stories.length === 0) {
     return null;
   }
 
   return (
     <>
-      <div className="bg-[var(--bg-primary)] rounded-lg py-4 px-2 mb-6 relative group">
+      <div className="rounded-lg py-4 mb-4 mt-20 relative group w-full">
         {/* Left Arrow */}
         {currentPage > 0 && (
           <button
@@ -130,8 +148,8 @@ export default function Stories() {
         )}
 
         {/* Stories Container */}
-        <div className="overflow-hidden pl-8 pr-14">
-          <div className="flex gap-4 justify-start">
+        <div className="overflow-visible px-0">
+          <div className="flex gap-4 justify-start w-full">
             {visibleStories.map((item) => (
               <button
                 key={item.id}
@@ -140,7 +158,7 @@ export default function Stories() {
               >
                 {/* Story Avatar with Gradient Border */}
                 <div className="relative group/story">
-                  <div className="w-[82px] h-[82px] rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[2.5px] cursor-pointer hover:scale-110 transition-transform">
+                  <div className="w-[82px] h-[82px] rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[2.5px] cursor-pointer transition-transform">
                     <div className="w-full h-full rounded-full bg-white dark:bg-[#0c1014] p-[2.5px]">
                       {item.profile_image_url ? (
                         <img
@@ -191,8 +209,12 @@ export default function Stories() {
           profileUsername={selectedUsername}
           onClose={handleCloseViewer}
           initialStoryId={selectedStoryId}
+          allUsernames={stories.map(s => s.username)}
+          currentUserIndex={selectedUserIndex}
+          onUserChange={handleUserChange}
         />
       )}
     </>
   );
 }
+

@@ -19,12 +19,12 @@ export default function ProfilePrivateLock({
         <Lock className="w-10 h-10" />
       </div>
 
-      <h2 className="text-xl font-semibold mb-2">This Account is Private</h2>
+      <h2 className="text-xl font-semibold mb-2">Questo account è privato</h2>
 
       <p className="text-sm text-gray-500 dark:text-gray-400">
         {isPending
-          ? `Follow request sent. Once ${username} approves your request, you'll be able to see their photos and videos.`
-          : `Follow ${username} to see their photos and videos.`}
+          ? `Segui questa persona per vedere le sue foto e i suoi video.`
+          : `Segui questa persona per vedere le sue foto e i suoi video.`}
       </p>
     </div>
   );

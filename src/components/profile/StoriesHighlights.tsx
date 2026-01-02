@@ -18,15 +18,15 @@ export default function StoriesHighlights({
   }
 
   return (
-    <div className="px-4 py-6 border-b border-gray-200 dark:border-gray-800">
-      <div className="max-w-4xl mx-auto overflow-x-auto scrollbar-hide">
+    <div className="px-4 py-0">
+      <div className="max-w-5xl mx-auto overflow-x-auto scrollbar-hide">
         <div className="flex gap-6">
           {highlights.map((highlight) => (
             <button
               key={highlight.id}
               className="flex flex-col items-center flex-shrink-0"
             >
-              <div className="w-[77px] h-[77px] rounded-full border border-gray-200 dark:border-gray-700 p-0.5 mb-2">
+              <div className="w-[77px] h-[77px] rounded-full p-0.5 mb-2">
                 <div className="relative w-full h-full rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800">
                   {highlight.cover_image_url && (
                     <Image
