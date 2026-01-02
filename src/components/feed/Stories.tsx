@@ -38,6 +38,7 @@ export default function Stories() {
   const [loading, setLoading] = useState(true);
   const [selectedUsername, setSelectedUsername] = useState<string | null>(null);
   const [selectedStoryId, setSelectedStoryId] = useState<number>();
+  const [selectedUserIndex, setSelectedUserIndex] = useState<number>(0);
   const storiesPerPage = 6;
 
   // Fetch stories from API
@@ -92,6 +93,8 @@ export default function Stories() {
   };
 
   const handleStoryClick = (story: StoryItem) => {
+    const userIndex = stories.findIndex(s => s.username === story.username);
+    setSelectedUserIndex(userIndex);
     setSelectedUsername(story.username);
     setSelectedStoryId(story.id);
   };
@@ -99,6 +102,16 @@ export default function Stories() {
   const handleCloseViewer = () => {
     setSelectedUsername(null);
     setSelectedStoryId(undefined);
+  };
+
+  const handleUserChange = (newIndex: number) => {
+    if (newIndex >= 0 && newIndex < stories.length) {
+      setSelectedUserIndex(newIndex);
+      setSelectedUsername(stories[newIndex].username);
+      setSelectedStoryId(stories[newIndex].id);
+    } else {
+      handleCloseViewer();
+    }
   };
 
   if (loading) {
@@ -196,6 +209,9 @@ export default function Stories() {
           profileUsername={selectedUsername}
           onClose={handleCloseViewer}
           initialStoryId={selectedStoryId}
+          allUsernames={stories.map(s => s.username)}
+          currentUserIndex={selectedUserIndex}
+          onUserChange={handleUserChange}
         />
       )}
     </>
