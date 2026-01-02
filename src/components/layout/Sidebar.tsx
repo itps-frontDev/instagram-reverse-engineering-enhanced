@@ -34,11 +34,7 @@ const navItems = [
   { icon: 'custom-create', label: 'Crea', href: '/create' },
 ];
 
-interface SidebarProps {
-  collapsed?: boolean;
-}
-
-export default function Sidebar({ collapsed = false }: SidebarProps) {
+export default function Sidebar() {
   const pathname = usePathname();
   const { profile, isLoading, logout } = useAuth();
   const [showMore, setShowMore] = useState(false);
@@ -47,6 +43,8 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
   const moreButtonRef = useRef<HTMLButtonElement>(null);
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const isDirectPage = pathname.startsWith('/direct');
+  const isCollapsed = isDirectPage;
 
   useEffect(() => {
     setMounted(true);
@@ -66,7 +64,9 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
 
   return (
     <>
-      <aside className={`hidden lg:flex fixed left-0 top-0 h-screen flex-col border-r border-[#DBDBDB] dark:border-[#262626] bg-[var(--bg-primary)] py-8 px-3 transition-all duration-300 ${collapsed ? 'w-[80px]' : 'lg:w-[80px] xl:w-[336px]'}`}> 
+      <aside className={`hidden lg:flex fixed left-0 top-0 h-screen flex-col border-r border-[#DBDBDB] dark:border-[#262626] bg-[var(--bg-primary)] py-8 px-3 transition-all duration-300 ${
+        isCollapsed ? 'w-[80px]' : 'lg:w-[80px] xl:w-[336px]'
+      }`}>
       {/* Instagram Logo */}
       <div className="mb-8 px-3 pt-2">
         <Link href="/" className="flex items-center justify-center xl:justify-start">
@@ -216,7 +216,9 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
                   fill={isActive ? 'currentColor' : 'none'}
                 />
               )}
-              <span className="hidden xl:block text-base text-[#262626] dark:text-white">{item.label}</span>
+              {!isCollapsed && (
+                <span className="hidden xl:block text-base text-[#262626] dark:text-white">{item.label}</span>
+              )}
             </Link>
           );
         })}
@@ -238,7 +240,9 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
                 size={26}
               />
             </div>
-            <span className="hidden xl:block text-base text-[#262626] dark:text-white">Profilo</span>
+            {!isCollapsed && (
+              <span className="hidden xl:block text-base text-[#262626] dark:text-white">Profilo</span>
+            )}
           </Link>
         )}
       </nav>
@@ -253,7 +257,9 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
           aria-expanded={showMore}
         >
           <Menu className="w-[26px] h-[26px] text-[#262626] dark:text-white" />
-          <span className="hidden xl:block text-base text-[#262626] dark:text-white">Altro</span>
+          {!isCollapsed && (
+            <span className="hidden xl:block text-base text-[#262626] dark:text-white">Altro</span>
+          )}
         </button>
 
         {/* Popup Menu */}

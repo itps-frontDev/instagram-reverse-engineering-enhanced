@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 import MessageList, { MessageItem } from "@/components/direct/MessageList";
 import MessageInput from "@/components/direct/MessageInput";
 import { useAuth } from "@/contexts/AuthContext";
-import Sidebar from "@/components/layout/Sidebar";
 import ChatContactList, { ChatContact } from "@/components/direct/ChatContactList";
 
 export default function DirectPage() {
@@ -110,27 +109,29 @@ export default function DirectPage() {
     }
   };
 
-  // Layout a 3 colonne: Sidebar compressa, colonna chat, colonna messaggi
+  // Layout: Sidebar collassata, colonna chat, colonna messaggi
+  // Usiamo -ml per compensare il margin aggiunto dal layout principale
   return (
-    <div className="flex h-screen w-full bg-[#101012]">
-      {/* Sidebar compressa */}
-      <Sidebar collapsed={true} />
-      {/* Colonna chat */}
-      <div className="w-[350px] border-r border-[#232323] bg-[#18191a] h-full flex flex-col">
-        <div className="p-4 border-b border-[#232323]">
-          <h2 className="text-lg font-semibold text-white">Messaggi</h2>
+    <div className="flex h-screen w-full bg-white dark:bg-[#000000] -ml-[80px] xl:-ml-[336px]">
+      {/* Container principale */}
+      <div className="flex flex-1 h-full ml-[80px]">
+        {/* Colonna chat - senza storie */}
+        <div className="w-[400px] border-r border-[#E5E5E5] dark:border-[#262626] bg-white dark:bg-[#000000] h-full flex flex-col overflow-hidden">
+          <div className="p-4 border-b border-[#E5E5E5] dark:border-[#262626]">
+            <h2 className="text-lg font-semibold text-[#262626] dark:text-white">Messaggi</h2>
+          </div>
+          {/* Lista contatti */}
+          <div className="flex-1 overflow-y-auto">
+            <ChatContactList contacts={contacts} onSelect={setSelectedId} selectedId={selectedId} />
+          </div>
         </div>
-        <div className="flex-1 overflow-y-auto">
-          <ChatContactList contacts={contacts} onSelect={setSelectedId} selectedId={selectedId} />
-        </div>
-      </div>
-      {/* Colonna messaggi */}
-      <div className="flex-1 flex flex-col h-full bg-[#101012]">
+        {/* Colonna messaggi espansa */}
+        <div className="flex-1 flex flex-col h-full bg-white dark:bg-[#000000] min-w-0">
         {selectedId ? (
           <>
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col overflow-hidden">
               {loadingMessages ? (
-                <div className="flex-1 flex items-center justify-center text-gray-500">Caricamento...</div>
+                <div className="flex-1 flex items-center justify-center text-[#A8A8A8]">Caricamento...</div>
               ) : (
                 <MessageList messages={messages} currentProfileId={profile?.id || 0} />
               )}
@@ -138,8 +139,9 @@ export default function DirectPage() {
             <MessageInput onSend={handleSend} disabled={sending} />
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-gray-500">Seleziona una chat</div>
+          <div className="flex-1 flex items-center justify-center text-[#A8A8A8]">Seleziona una chat</div>
         )}
+        </div>
       </div>
     </div>
   );
