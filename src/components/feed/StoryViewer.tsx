@@ -59,6 +59,9 @@ export default function StoryViewer({
   const [messageText, setMessageText] = useState('');
   const [prevUserPreviews, setPrevUserPreviews] = useState<Story[]>([]);
   const [nextUserPreviews, setNextUserPreviews] = useState<Story[]>([]);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [transitionDirection, setTransitionDirection] = useState<'left' | 'right' | null>(null);
+  const [isReturning, setIsReturning] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const progressIntervalRef = useRef<number | null>(null);
   const autoPauseTimeoutRef = useRef<number | null>(null);
@@ -172,8 +175,23 @@ export default function StoryViewer({
     } else {
       // Prima storia di questo utente
       if (allUsernames.length > 0 && onUserChange && currentUserIndex > 0) {
-        // Torna all'utente precedente
-        onUserChange(currentUserIndex - 1);
+        // Attiva transizione verso destra
+        setIsTransitioning(true);
+        setTransitionDirection('right');
+        // Cambia utente alla fine della transizione
+        setTimeout(() => {
+          onUserChange(currentUserIndex - 1);
+          // Attiva fase di ritorno
+          setIsReturning(true);
+          setIsTransitioning(false);
+          // Dopo un frame, disattiva ritorno per animare verso centro
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              setIsReturning(false);
+              setTransitionDirection(null);
+            });
+          });
+        }, 500);
       } else {
         // Chiudi se non ci sono utenti precedenti
         onClose();
@@ -187,8 +205,23 @@ export default function StoryViewer({
     } else {
       // Fine delle storie di questo utente
       if (allUsernames.length > 0 && onUserChange && currentUserIndex < allUsernames.length - 1) {
-        // Passa al prossimo utente
-        onUserChange(currentUserIndex + 1);
+        // Attiva transizione verso sinistra
+        setIsTransitioning(true);
+        setTransitionDirection('left');
+        // Cambia utente alla fine della transizione
+        setTimeout(() => {
+          onUserChange(currentUserIndex + 1);
+          // Attiva fase di ritorno
+          setIsReturning(true);
+          setIsTransitioning(false);
+          // Dopo un frame, disattiva ritorno per animare verso centro
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              setIsReturning(false);
+              setTransitionDirection(null);
+            });
+          });
+        }, 500);
       } else {
         // Chiudi se non ci sono altri utenti
         onClose();
@@ -300,8 +333,17 @@ export default function StoryViewer({
         <button
           key={`prev-${index}`}
           onClick={goToPrevious}
-          className="absolute top-1/2 -translate-y-1/2 w-[277px] h-[490px] rounded-lg overflow-hidden hover:scale-105 transition-transform z-20"
-          style={{ left: `${520 - index * 357}px` }}
+          className={`absolute top-1/2 -translate-y-1/2 w-[277px] h-[490px] rounded-lg overflow-hidden transition-all ${
+            isTransitioning && transitionDirection === 'right' && index === 0
+              ? 'duration-500 ease-out z-30'
+              : 'duration-300 z-20 hover:scale-105'
+          }`}
+          style={{ 
+            left: `${520 - index * 357}px`,
+            transform: isTransitioning && transitionDirection === 'right' && index === 0
+              ? 'translateX(500px) scale(2.49)'
+              : undefined
+          }}
         >
           {/* Preview Image */}
           <div className="relative w-full h-full">
@@ -310,7 +352,11 @@ export default function StoryViewer({
               src={preview.media_url || ''}
               alt={`Previous user ${index + 1}`}
               fill
-              className="object-cover opacity-40"
+              className={`object-cover ${
+                isTransitioning && transitionDirection === 'right' && index === 0
+                  ? 'opacity-100'
+                  : 'opacity-40'
+              }`}
             />
           </div>
           
@@ -341,7 +387,21 @@ export default function StoryViewer({
       ))}
 
       {/* Story content */}
-      <div className="relative w-full max-w-[690px] h-[96vh] overflow-hidden rounded-lg">
+      <div className={`relative w-full max-w-[690px] h-[96vh] overflow-hidden rounded-lg z-20 ${
+        isTransitioning || isReturning
+          ? 'transition-all duration-500 ease-out' 
+          : ''
+      } ${
+        isReturning && transitionDirection === 'left'
+          ? 'translate-x-[-465px] scale-[2.49]'
+          : isReturning && transitionDirection === 'right'
+          ? 'translate-x-[465px] scale-[2.49]'
+          : isTransitioning && transitionDirection === 'left' 
+          ? 'translate-x-[-465px] scale-[0.402] opacity-0' 
+          : isTransitioning && transitionDirection === 'right' 
+          ? 'translate-x-[465px] scale-[0.402] opacity-0' 
+          : 'translate-x-0 scale-100 opacity-100'
+      }`}>
         {/* Gradient overlay - Top */}
         <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-black/70 to-transparent z-10 pointer-events-none" />
         
@@ -472,8 +532,17 @@ export default function StoryViewer({
         <button
           key={`next-${index}`}
           onClick={goToNext}
-          className="absolute top-1/2 -translate-y-1/2 w-[277px] h-[490px] rounded-lg overflow-hidden hover:scale-105 transition-transform z-20"
-          style={{ right: `${520 - index * 357}px` }}
+          className={`absolute top-1/2 -translate-y-1/2 w-[277px] h-[490px] rounded-lg overflow-hidden transition-all ${
+            isTransitioning && transitionDirection === 'left' && index === 0
+              ? 'duration-500 ease-out z-30'
+              : 'duration-300 z-20 hover:scale-105'
+          }`}
+          style={{ 
+            right: `${520 - index * 357}px`,
+            transform: isTransitioning && transitionDirection === 'left' && index === 0
+              ? 'translateX(-465px) scale(2.49)'
+              : undefined
+          }}
         >
           {/* Preview Image */}
           <div className="relative w-full h-full">
@@ -482,7 +551,11 @@ export default function StoryViewer({
               src={preview.media_url || ''}
               alt={`Next user ${index + 1}`}
               fill
-              className="object-cover opacity-40"
+              className={`object-cover ${
+                isTransitioning && transitionDirection === 'left' && index === 0
+                  ? 'opacity-100'
+                  : 'opacity-40'
+              }`}
             />
           </div>
           
