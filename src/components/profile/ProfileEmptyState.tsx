@@ -6,8 +6,9 @@
 
 'use client';
 
-import { Camera, Bookmark, UserSquare2 } from 'lucide-react';
+import { Camera, Bookmark } from 'lucide-react';
 import { ProfileTab } from '@/lib/types/profile';
+import TaggedEmptyIcon from './icons/TaggedEmptyIcon';
 
 export interface ProfileEmptyStateProps {
   tab: ProfileTab;
@@ -21,7 +22,7 @@ export default function ProfileEmptyState({
   // Different empty states for different tabs
   const emptyStates = {
     posts: {
-      icon: <Camera className="w-16 h-16 md:w-24 md:h-24 stroke-[1px]" />,
+      icon: <Camera className="w-16 h-16 stroke-[1px]" />,
       title: isOwnProfile ? 'Condividi foto' : 'Nessuna foto ancora',
       message: isOwnProfile
         ? 'Quando condividi le foto, saranno visualizzate sul tuo profilo.'
@@ -33,7 +34,7 @@ export default function ProfileEmptyState({
       ) : null,
     },
     reels: {
-      icon: <Camera className="w-16 h-16 md:w-24 md:h-24 stroke-[1px]" />,
+      icon: <Camera className="w-16 h-16 stroke-[1px]" />,
       title: isOwnProfile ? 'Condividi reel' : 'Nessun reel ancora',
       message: isOwnProfile
         ? 'Quando condividi i reel, saranno visualizzati sul tuo profilo.'
@@ -41,14 +42,14 @@ export default function ProfileEmptyState({
       action: null,
     },
     saved: {
-      icon: <Bookmark className="w-16 h-16 md:w-24 md:h-24 stroke-[1px]" />,
+      icon: <Bookmark className="w-16 h-16 stroke-[1px]" />,
       title: 'Salva',
       message:
         'Salva le foto e i video che desideri rivedere. Nessuno riceverà una notifica e solo tu potrai vedere cosa hai salvato.',
       action: null,
     },
     tagged: {
-      icon: <UserSquare2 className="w-16 h-16 md:w-24 md:h-24 stroke-[1px]" />,
+      icon: <TaggedEmptyIcon />,
       title: 'Foto in cui ci sei tu',
       message: isOwnProfile
         ? 'Quando le persone ti taggano nelle foto, saranno visualizzate qui.'
@@ -64,17 +65,17 @@ export default function ProfileEmptyState({
   }
 
   return (
-    <div className="py-16 flex flex-col items-center justify-center text-center max-w-md mx-auto">
-      {/* Icon Circle */}
-      <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-2 border-black dark:border-white flex items-center justify-center mb-6">
+    <div className="py-16 flex flex-col items-center justify-center text-center mx-auto" style={{ maxWidth: '350px' }}>
+      {/* Icon */}
+      <div className="mb-6 flex items-center justify-center">
         {state.icon}
       </div>
 
       {/* Title */}
-      <h2 className="text-2xl md:text-3xl font-light mb-4">{state.title}</h2>
+      <h2 className="text-3xl font-light mb-4 leading-9">{state.title}</h2>
 
       {/* Message */}
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-sm">
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 leading-[18px]">
         {state.message}
       </p>
 
