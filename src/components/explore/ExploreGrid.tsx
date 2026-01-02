@@ -25,7 +25,21 @@ export default function ExploreGrid({
   onSave,
   onComment,
 }: ExploreGridProps) {
-  const [selectedPost, setSelectedPost] = useState<FeedPost | null>(null);
+  const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
+
+  const selectedPost = selectedPostIndex !== null ? posts[selectedPostIndex] : null;
+
+  const handleNext = () => {
+    if (selectedPostIndex !== null && selectedPostIndex < posts.length - 1) {
+      setSelectedPostIndex(selectedPostIndex + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (selectedPostIndex !== null && selectedPostIndex > 0) {
+      setSelectedPostIndex(selectedPostIndex - 1);
+    }
+  };
 
   const formatCount = (count: number) => {
     if (count >= 1000000) {
@@ -40,7 +54,7 @@ export default function ExploreGrid({
   return (
     <>
       <div className="grid grid-cols-3 gap-1 md:gap-2">
-        {posts.map((post) => {
+        {posts.map((post, index) => {
           const firstMedia = post.media[0];
           if (!firstMedia) return null;
 
@@ -49,7 +63,7 @@ export default function ExploreGrid({
           return (
             <button
               key={post.id}
-              onClick={() => setSelectedPost(post)}
+              onClick={() => setSelectedPostIndex(index)}
               className="group relative aspect-square bg-gray-100 overflow-hidden cursor-pointer"
             >
               {/* Image/Video */}
@@ -114,14 +128,18 @@ export default function ExploreGrid({
       </div>
 
       {/* Post Modal */}
-      {selectedPost && (
+      {selectedPost && selectedPostIndex !== null && (
         <PostModal
           post={selectedPost}
           isOpen={true}
-          onClose={() => setSelectedPost(null)}
+          onClose={() => setSelectedPostIndex(null)}
           onLike={onLike}
           onSave={onSave}
           onComment={onComment}
+          onNext={handleNext}
+          onPrev={handlePrev}
+          hasNext={selectedPostIndex < posts.length - 1}
+          hasPrev={selectedPostIndex > 0}
         />
       )}
     </>
