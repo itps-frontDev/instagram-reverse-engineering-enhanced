@@ -9,13 +9,14 @@
 
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import ProfileTabs from '@/components/profile/ProfileTabs';
 import ProfileGrid from '@/components/profile/ProfileGrid';
 import ProfilePrivateLock from '@/components/profile/ProfilePrivateLock';
 import StoriesHighlights from '@/components/profile/StoriesHighlights';
+import Footer from '@/components/common/Footer';
 import {
   Profile,
   Post,
@@ -54,6 +55,10 @@ export default function ProfilePage({
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(0);
   const [error, setError] = useState<string | null>(null);
+
+  // Refs for file inputs
+  const profileImageInputRef = useRef<HTMLInputElement>(null);
+  const createPostInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch profile data on mount
   useEffect(() => {
@@ -278,6 +283,45 @@ export default function ProfilePage({
     }
   }
 
+  /**
+   * Handle profile image click - opens file picker
+   */
+  function handleProfileImageClick() {
+    profileImageInputRef.current?.click();
+  }
+
+  /**
+   * Handle profile image upload
+   */
+  async function handleProfileImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // TODO: Implement profile image upload logic
+    console.log('Profile image selected:', file);
+    // Here you would upload the image to your server
+    // For now, we just log it
+  }
+
+  /**
+   * Handle create post click - opens file picker
+   */
+  function handleCreatePostClick() {
+    createPostInputRef.current?.click();
+  }
+
+  /**
+   * Handle create post file selection
+   */
+  async function handleCreatePostUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // TODO: Implement create post logic (open modal with image)
+    console.log('Post image selected:', file);
+    // Here you would open a modal to create the post with the selected image
+  }
+
   // Loading state
   if (isLoading) {
     return (
@@ -308,64 +352,87 @@ export default function ProfilePage({
   }
 
   return (
-    <div className="w-full flex flex-col items-center pb-12 max-w-7xl mx-auto">
-      <div
-        style={{
-          marginLeft: '159.531px',
-          marginRight: '159.531px',
-          paddingLeft: '20px',
-          paddingRight: '20px',
-          paddingTop: '16px',
-        }}
-        className="w-full flex flex-col items-center"
-      >
-        {/* Header blocco */}
-        <div className="w-full pb-2">
-          <ProfileHeader
-            profile={profile}
-            followStatus={followStatus}
-            onFollow={handleFollow}
-            onUnfollow={handleUnfollow}
-          />
-        </div>
-
-        {/* Pulsanti blocco (già inclusi in ProfileHeader, ma separati visivamente) */}
-        {/* Highlights blocco */}
-        {followStatus.isOwnProfile && highlights.length > 0 && (
-          <div className="w-full flex justify-center">
-            <StoriesHighlights highlights={highlights} profileId={profile.id} />
-          </div>
-        )}
-
-        {/* Tabs blocco */}
-        <ProfileTabs
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          postsCount={profile.posts_count}
-          showTagged={followStatus.isOwnProfile}
+    <>
+      <div className="w-full flex flex-col items-center pb-12 max-w-7xl mx-auto flex-1">
+        {/* Hidden file inputs */}
+        <input
+          ref={profileImageInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleProfileImageUpload}
+        />
+        <input
+          ref={createPostInputRef}
+          type="file"
+          accept="image/*,video/*"
+          className="hidden"
+          onChange={handleCreatePostUpload}
         />
 
-        {/* Content blocco */}
-        <div className="w-full flex justify-center px-4">
-          <div className="w-full max-w-[935px]">
-            {canView ? (
-              <ProfileGrid
-                posts={posts}
-                isLoading={isLoadingPosts}
-                onLoadMore={handleLoadMore}
-                hasMore={hasMore}
-                tab={activeTab}
-                isOwnProfile={followStatus.isOwnProfile}
-              />
-            ) : (
-              <ProfilePrivateLock
-                username={profile.username}
-                isPending={followStatus.isPending}
-              />
-            )}
+        <div
+          style={{
+            marginLeft: '159.531px',
+            marginRight: '159.531px',
+            paddingLeft: '20px',
+            paddingRight: '20px',
+            paddingTop: '16px',
+          }}
+          className="w-full flex flex-col items-center"
+        >
+          {/* Header blocco */}
+          <div className="w-full pb-2">
+            <ProfileHeader
+              profile={profile}
+              followStatus={followStatus}
+              onFollow={handleFollow}
+              onUnfollow={handleUnfollow}
+              onProfileImageClick={handleProfileImageClick}
+            />
+          </div>
+
+          {/* Pulsanti blocco (già inclusi in ProfileHeader, ma separati visivamente) */}
+          {/* Highlights blocco */}
+          {followStatus.isOwnProfile && highlights.length > 0 && (
+            <div className="w-full flex justify-center">
+              <StoriesHighlights highlights={highlights} profileId={profile.id} />
+            </div>
+          )}
+
+          {/* Tabs blocco */}
+          <ProfileTabs
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            postsCount={profile.posts_count}
+            showTagged={followStatus.isOwnProfile}
+          />
+
+          {/* Content blocco */}
+          <div className="w-full flex justify-center px-4">
+            <div className="w-full max-w-[935px]">
+              {canView ? (
+                <ProfileGrid
+                  posts={posts}
+                  isLoading={isLoadingPosts}
+                  onLoadMore={handleLoadMore}
+                  hasMore={hasMore}
+                  tab={activeTab}
+                  isOwnProfile={followStatus.isOwnProfile}
+                  onCreatePost={handleCreatePostClick}
+                />
+              ) : (
+                <ProfilePrivateLock
+                  username={profile.username}
+                  isPending={followStatus.isPending}
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Footer */}
+      <Footer />
+    </>
   );
 }

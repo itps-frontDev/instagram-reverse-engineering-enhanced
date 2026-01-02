@@ -31,6 +31,7 @@ export default function ProfileHeader({
   onFollow,
   onUnfollow,
   isLoading = false,
+  onProfileImageClick,
 }: ProfileHeaderProps) {
   return (
     <header className="px-4 py-4 md:py-6">
@@ -38,7 +39,14 @@ export default function ProfileHeader({
         <div className="flex flex-col md:flex-row gap-6 md:gap-7 items-center">
           {/* Profile Picture */}
           <div className="flex justify-center md:justify-start flex-shrink-0">
-            <div className="relative w-[77px] h-[77px] md:w-[150px] md:h-[150px]">
+            <div
+              className={`relative w-[77px] h-[77px] md:w-[150px] md:h-[150px] ${
+                followStatus.isOwnProfile ? 'cursor-pointer' : ''
+              }`}
+              onClick={followStatus.isOwnProfile ? onProfileImageClick : undefined}
+              role={followStatus.isOwnProfile ? 'button' : undefined}
+              tabIndex={followStatus.isOwnProfile ? 0 : undefined}
+            >
               <Image
                 src={profile.profile_image_url || '/images/default-pfp.jpg'}
                 alt={profile.username}

@@ -158,6 +158,7 @@ export interface ProfileHeaderProps {
   onFollow: () => Promise<void>;
   onUnfollow: () => Promise<void>;
   isLoading?: boolean;
+  onProfileImageClick?: () => void;
 }
 
 /**
@@ -216,6 +217,7 @@ export interface ProfileGridProps {
   hasMore?: boolean;
   tab?: ProfileTab;
   isOwnProfile?: boolean;
+  onCreatePost?: () => void;
 }
 
 /**
