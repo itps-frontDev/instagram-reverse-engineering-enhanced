@@ -16,6 +16,7 @@ import ProfileTabs from '@/components/profile/ProfileTabs';
 import ProfileGrid from '@/components/profile/ProfileGrid';
 import ProfilePrivateLock from '@/components/profile/ProfilePrivateLock';
 import StoriesHighlights from '@/components/profile/StoriesHighlights';
+import Footer from '@/components/common/Footer';
 import {
   Profile,
   Post,
@@ -427,6 +428,9 @@ export default function ProfilePage({
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
