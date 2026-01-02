@@ -352,85 +352,87 @@ export default function ProfilePage({
   }
 
   return (
-    <div className="w-full flex flex-col items-center pb-12 max-w-7xl mx-auto">
-      {/* Hidden file inputs */}
-      <input
-        ref={profileImageInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleProfileImageUpload}
-      />
-      <input
-        ref={createPostInputRef}
-        type="file"
-        accept="image/*,video/*"
-        className="hidden"
-        onChange={handleCreatePostUpload}
-      />
-
-      <div
-        style={{
-          marginLeft: '159.531px',
-          marginRight: '159.531px',
-          paddingLeft: '20px',
-          paddingRight: '20px',
-          paddingTop: '16px',
-        }}
-        className="w-full flex flex-col items-center"
-      >
-        {/* Header blocco */}
-        <div className="w-full pb-2">
-          <ProfileHeader
-            profile={profile}
-            followStatus={followStatus}
-            onFollow={handleFollow}
-            onUnfollow={handleUnfollow}
-            onProfileImageClick={handleProfileImageClick}
-          />
-        </div>
-
-        {/* Pulsanti blocco (già inclusi in ProfileHeader, ma separati visivamente) */}
-        {/* Highlights blocco */}
-        {followStatus.isOwnProfile && highlights.length > 0 && (
-          <div className="w-full flex justify-center">
-            <StoriesHighlights highlights={highlights} profileId={profile.id} />
-          </div>
-        )}
-
-        {/* Tabs blocco */}
-        <ProfileTabs
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          postsCount={profile.posts_count}
-          showTagged={followStatus.isOwnProfile}
+    <>
+      <div className="w-full flex flex-col items-center pb-12 max-w-7xl mx-auto flex-1">
+        {/* Hidden file inputs */}
+        <input
+          ref={profileImageInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleProfileImageUpload}
+        />
+        <input
+          ref={createPostInputRef}
+          type="file"
+          accept="image/*,video/*"
+          className="hidden"
+          onChange={handleCreatePostUpload}
         />
 
-        {/* Content blocco */}
-        <div className="w-full flex justify-center px-4">
-          <div className="w-full max-w-[935px]">
-            {canView ? (
-              <ProfileGrid
-                posts={posts}
-                isLoading={isLoadingPosts}
-                onLoadMore={handleLoadMore}
-                hasMore={hasMore}
-                tab={activeTab}
-                isOwnProfile={followStatus.isOwnProfile}
-                onCreatePost={handleCreatePostClick}
-              />
-            ) : (
-              <ProfilePrivateLock
-                username={profile.username}
-                isPending={followStatus.isPending}
-              />
-            )}
+        <div
+          style={{
+            marginLeft: '159.531px',
+            marginRight: '159.531px',
+            paddingLeft: '20px',
+            paddingRight: '20px',
+            paddingTop: '16px',
+          }}
+          className="w-full flex flex-col items-center"
+        >
+          {/* Header blocco */}
+          <div className="w-full pb-2">
+            <ProfileHeader
+              profile={profile}
+              followStatus={followStatus}
+              onFollow={handleFollow}
+              onUnfollow={handleUnfollow}
+              onProfileImageClick={handleProfileImageClick}
+            />
+          </div>
+
+          {/* Pulsanti blocco (già inclusi in ProfileHeader, ma separati visivamente) */}
+          {/* Highlights blocco */}
+          {followStatus.isOwnProfile && highlights.length > 0 && (
+            <div className="w-full flex justify-center">
+              <StoriesHighlights highlights={highlights} profileId={profile.id} />
+            </div>
+          )}
+
+          {/* Tabs blocco */}
+          <ProfileTabs
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            postsCount={profile.posts_count}
+            showTagged={followStatus.isOwnProfile}
+          />
+
+          {/* Content blocco */}
+          <div className="w-full flex justify-center px-4">
+            <div className="w-full max-w-[935px]">
+              {canView ? (
+                <ProfileGrid
+                  posts={posts}
+                  isLoading={isLoadingPosts}
+                  onLoadMore={handleLoadMore}
+                  hasMore={hasMore}
+                  tab={activeTab}
+                  isOwnProfile={followStatus.isOwnProfile}
+                  onCreatePost={handleCreatePostClick}
+                />
+              ) : (
+                <ProfilePrivateLock
+                  username={profile.username}
+                  isPending={followStatus.isPending}
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Footer */}
       <Footer />
-    </div>
+    </>
   );
 }

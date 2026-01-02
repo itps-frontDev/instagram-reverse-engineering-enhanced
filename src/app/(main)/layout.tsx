@@ -19,7 +19,7 @@ export default function MainLayout({
       <Sidebar />
 
       {/* Main Content Area */}
-      <main className="flex-1 lg:ml-[80px] xl:ml-[336px] pb-16 lg:pb-0 min-h-screen transition-all duration-300">
+      <main className="flex-1 lg:ml-[80px] xl:ml-[336px] pb-16 lg:pb-0 min-h-screen transition-all duration-300 flex flex-col">
         {children}
       </main>
 
