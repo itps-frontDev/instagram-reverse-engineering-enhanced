@@ -6,19 +6,21 @@
 
 'use client';
 
-import { Bookmark } from 'lucide-react';
 import { ProfileTab } from '@/lib/types/profile';
 import PostsEmptyIcon from './icons/PostsEmptyIcon';
 import TaggedEmptyIcon from './icons/TaggedEmptyIcon';
+import SavedEmptyIcon from './icons/SavedEmptyIcon';
 
 export interface ProfileEmptyStateProps {
   tab: ProfileTab;
   isOwnProfile: boolean;
+  onCreatePost?: () => void;
 }
 
 export default function ProfileEmptyState({
   tab,
   isOwnProfile,
+  onCreatePost,
 }: ProfileEmptyStateProps) {
   // Different empty states for different tabs
   const emptyStates = {
@@ -29,7 +31,10 @@ export default function ProfileEmptyState({
         ? 'Quando condividi le foto, saranno visualizzate sul tuo profilo.'
         : 'Quando questa persona condividerà foto, le vedrai qui.',
       action: isOwnProfile ? (
-        <button className="text-[#0095f6] font-semibold text-sm hover:opacity-70 transition-opacity">
+        <button
+          onClick={onCreatePost}
+          className="text-[rgb(133,161,255)] font-semibold text-sm hover:underline transition-all"
+        >
           Condividi la tua prima foto
         </button>
       ) : null,
@@ -43,7 +48,7 @@ export default function ProfileEmptyState({
       action: null,
     },
     saved: {
-      icon: <Bookmark className="w-16 h-16 stroke-[1px]" />,
+      icon: <SavedEmptyIcon />,
       title: 'Salva',
       message:
         'Salva le foto e i video che desideri rivedere. Nessuno riceverà una notifica e solo tu potrai vedere cosa hai salvato.',
@@ -65,10 +70,55 @@ export default function ProfileEmptyState({
     return null;
   }
 
+  // Special layout for saved tab
+  if (tab === 'saved') {
+    return (
+      <div className="flex flex-col items-center w-full">
+        {/* Saved Header */}
+        <div className="w-full max-w-[938px] flex flex-col items-center mb-6">
+          <div className="w-full flex items-center justify-center mb-4">
+            <span className="text-xs leading-4 text-[#0C1014] dark:text-[#F5F5F5]">
+              Solo tu puoi vedere gli elementi che hai salvato
+            </span>
+          </div>
+          <button className="text-[rgb(133,161,255)] font-semibold text-sm hover:underline transition-all">
+            + Nuova raccolta
+          </button>
+        </div>
+
+        {/* Empty State */}
+        <div className="flex flex-col items-center justify-center text-center mx-auto max-w-[350px]">
+          {/* Icon */}
+          <div className="mb-6 flex items-center justify-center">
+            {state.icon}
+          </div>
+
+          {/* Title */}
+          <h1 className="text-[30px] font-extrabold leading-9 text-center break-words text-[#0C1014] dark:text-[#F5F5F5] mb-4">
+            {state.title}
+          </h1>
+
+          {/* Message */}
+          <span className="text-sm font-normal leading-[18px] text-center break-words text-[#0C1014] dark:text-[#F5F5F5] w-[350px] mb-4 block">
+            {state.message}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // Default layout for other tabs
   return (
     <div className="py-16 flex flex-col items-center justify-center text-center mx-auto max-w-[350px]">
       {/* Icon */}
-      <div className="mb-6 flex items-center justify-center">
+      <div
+        className={`mb-6 flex items-center justify-center ${
+          isOwnProfile && tab === 'posts' ? 'cursor-pointer' : ''
+        }`}
+        onClick={isOwnProfile && tab === 'posts' ? onCreatePost : undefined}
+        role={isOwnProfile && tab === 'posts' ? 'button' : undefined}
+        tabIndex={isOwnProfile && tab === 'posts' ? 0 : undefined}
+      >
         {state.icon}
       </div>
 
