@@ -75,12 +75,10 @@ export default function ProfileEmptyState({
     return (
       <div className="flex flex-col items-center w-full">
         {/* Saved Header */}
-        <div className="w-full max-w-[938px] flex flex-col items-center mb-6">
-          <div className="w-full flex items-center justify-center mb-4">
-            <span className="text-xs leading-4 text-[#0C1014] dark:text-[#F5F5F5]">
-              Solo tu puoi vedere gli elementi che hai salvato
-            </span>
-          </div>
+        <div className="w-full max-w-[938px] flex items-center justify-between my-8">
+          <span className="text-xs leading-4 text-[rgb(168,168,168)]">
+            Solo tu puoi vedere gli elementi che hai salvato
+          </span>
           <button className="text-[rgb(133,161,255)] font-semibold text-sm hover:underline transition-all">
             + Nuova raccolta
           </button>

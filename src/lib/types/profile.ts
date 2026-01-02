@@ -158,6 +158,7 @@ export interface ProfileHeaderProps {
   onFollow: () => Promise<void>;
   onUnfollow: () => Promise<void>;
   isLoading?: boolean;
+  onProfileImageClick?: () => void;
 }
 
 /**
