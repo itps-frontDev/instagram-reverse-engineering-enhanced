@@ -18,7 +18,7 @@ import {
   MoreHorizontal,
   X,
 } from 'lucide-react';
-import type { FeedPost, Comment } from '@/lib/types/feed';
+import type { FeedPost, Comment, GetCommentsResponse } from '@/lib/types/feed';
 
 interface PostModalProps {
   post: FeedPost;
@@ -39,10 +39,13 @@ export default function PostModal({
 }: PostModalProps) {
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      fetchComments();
     } else {
       document.body.style.overflow = 'unset';
     }
@@ -50,15 +53,53 @@ export default function PostModal({
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen]);
+  }, [isOpen, post.id]);
+
+  const fetchComments = async () => {
+    try {
+      setIsLoadingComments(true);
+      const response = await fetch(`/api/feed/comments?postId=${post.id}&limit=50`);
+      
+      if (!response.ok) throw new Error('Failed to fetch comments');
+      
+      const data: GetCommentsResponse = await response.json();
+      setComments(data.comments);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    } finally {
+      setIsLoadingComments(false);
+    }
+  };
 
   const handleCommentSubmit = async () => {
     if (!commentText.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
-    await onComment(post.id, commentText);
-    setCommentText('');
-    setIsSubmitting(false);
+    try {
+      const response = await fetch('/api/feed/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId: post.id, text: commentText }),
+      });
+
+      if (!response.ok) throw new Error('Failed to comment');
+
+      const data = await response.json();
+      
+      // Aggiungere il nuovo commento in testa alla lista
+      setComments([data.comment, ...comments]);
+      
+      // Non chiamare onComment perché inserirebbe di nuovo il commento!
+      // L'API ha già incrementato il contatore nel DB
+      // Dobbiamo solo dire al parent di aggiornare il contatore locale
+      // Ma la funzione onComment del parent fa un POST, quindi NON usarla
+      
+      setCommentText('');
+    } catch (error) {
+      console.error('Error submitting comment:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const formatLikesCount = (count: number) => {
@@ -183,10 +224,58 @@ export default function PostModal({
             )}
 
             {/* Comments List */}
-            {post.comments_count > 0 ? (
+            {isLoadingComments ? (
               <div className="text-center text-[#8E8E8E] dark:text-[#A8A8A8] text-sm py-8">
-                Visualizza tutti i {post.comments_count} commenti
+                Caricamento commenti...
               </div>
+            ) : comments.length > 0 ? (
+              comments.map((comment) => (
+                <div key={comment.id} className="flex gap-3 mb-4">
+                  <Link href={`/profile/${comment.profile_username}`}>
+                    <ProfilePicture
+                      src={comment.profile_image_url}
+                      alt={comment.profile_username || 'Profile picture'}
+                      size={32}
+                    />
+                  </Link>
+                  <div className="flex-1">
+                    <div className="text-sm">
+                      <Link
+                        href={`/profile/${comment.profile_username}`}
+                        className="font-semibold text-[#262626] dark:text-[#FAFAFA] hover:opacity-50 mr-2"
+                      >
+                        {comment.profile_username}
+                      </Link>
+                      {comment.profile_is_verified && (
+                        <svg
+                          className="inline w-3 h-3 text-blue-500 mr-1"
+                          viewBox="0 0 40 40"
+                          fill="currentColor"
+                        >
+                          <path d="M19.998 3.094l2.124 3.217a3 3 0 0 0 2.135 1.313l3.85.557a3 3 0 0 1 1.657 5.117l-2.786 2.721a3 3 0 0 0-.862 2.656l.658 3.834a3 3 0 0 1-4.354 3.162l-3.446-1.813a3 3 0 0 0-2.788 0l-3.446 1.813a3 3 0 0 1-4.354-3.162l.658-3.834a3 3 0 0 0-.862-2.656L4.395 13.3a3 3 0 0 1 1.657-5.117l3.85-.557a3 3 0 0 0 2.135-1.313L14.158 3.1a3 3 0 0 1 5.84-.007z" />
+                        </svg>
+                      )}
+                      <span className="text-[#262626] dark:text-[#FAFAFA]">
+                        {comment.text}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-[#8E8E8E] dark:text-[#A8A8A8] mt-1">
+                      <span>{formatTimeAgo(comment.created_at)}</span>
+                      {comment.likes_count > 0 && (
+                        <span className="font-semibold">
+                          {comment.likes_count} {comment.likes_count === 1 ? 'Mi piace' : 'Mi piace'}
+                        </span>
+                      )}
+                      <button className="font-semibold hover:opacity-50">Rispondi</button>
+                    </div>
+                  </div>
+                  <button className="hover:opacity-50 transition-opacity self-start">
+                    <Heart
+                      className={`w-3 h-3 ${comment.is_liked_by_current_user ? 'fill-[#ED4956] text-[#ED4956]' : 'text-[#8E8E8E] dark:text-[#A8A8A8]'}`}
+                    />
+                  </button>
+                </div>
+              ))
             ) : (
               <div className="text-center text-[#8E8E8E] dark:text-[#A8A8A8] text-sm py-8">
                 Nessun commento ancora
@@ -210,10 +299,12 @@ export default function PostModal({
                     }`}
                   />
                 </button>
-                <MessageCircle className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA]" />
-                <button className="hover:opacity-50 transition-opacity">
+                <button className="hover:opacity-50 transition-opacity cursor-pointer">
+                  <MessageCircle className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA]" />
+                </button>
+                <button className="hover:opacity-50 transition-opacity -translate-y-0.5">
                   <svg
-                    className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA]"
+                    className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA] rotate-[60deg]"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"

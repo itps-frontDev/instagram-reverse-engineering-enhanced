@@ -192,10 +192,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create comment
+    // Create comment with local timezone
     const result = await execute(
-      `INSERT INTO comments (post_id, profile_id, parent_id, text)
-       VALUES (?, ?, ?, ?)`,
+      `INSERT INTO comments (post_id, profile_id, parent_id, text, created_at)
+       VALUES (?, ?, ?, ?, datetime('now', 'localtime'))`,
       [postId, currentProfile.id, parentId || null, text.trim()]
     );
 
