@@ -5,56 +5,80 @@
 export async function seedPosts(profileIds: number[]) {
   console.log('\n🌱 Seeding posts...');
 
-  let postIndex = 0;
-  for (const assignment of POST_ASSIGNMENTS) {
-    const profileId = profileIds[assignment.profileIndex];
-    const profileUsername = TEST_PROFILES[assignment.profileIndex].username;
-    for (let i = 0; i < assignment.count; i++) {
-      const post = TEST_POSTS[postIndex];
-      const result = await execute(
-        `INSERT INTO posts (profile_id, caption, likes_count, comments_count)
-         VALUES (?, ?, ?, ?)`,
-        [profileId, post.caption, post.likes, post.comments]
-      );
-      await execute(
-        `INSERT INTO post_media (post_id, media_url, media_type, position)
-         VALUES (?, ?, 'image', 0)`,
-        [result.lastID, `https://picsum.photos/seed/post${result.lastID}/1080/1350`]
-      );
-      console.log(`   ✓ Created post: "${post.caption}" for @${profileUsername}`);
-      postIndex++;
-    }
-    // Aggiorna posts_count per il profilo
-    await execute(
-      'UPDATE profiles SET posts_count = ? WHERE id = ?',
-      [assignment.count, profileId]
-    );
-  }
+  const POST_CAPTIONS = [
+    'Another beautiful day ☀️',
+    'Living for moments like these',
+    'Grateful for this view',
+    'Can\'t believe this is real 😍',
+    'Just vibing ✨',
+    'Weekend mood',
+    'Making memories',
+    'Good times with great people',
+    'Chasing sunsets',
+    'Adventure awaits',
+    'Feeling blessed',
+    'Life is beautiful',
+    'Creating my own sunshine',
+    'Just because',
+    'No filter needed',
+    'Capturing the moment',
+    'Living my truth',
+    'Here\'s to the good times',
+    'Happiness looks good on me',
+    'Throwback to this amazing day',
+  ];
 
-  // --- Extra generated posts per profilo ---
-  console.log('\n🌱 Seeding extra generated posts for each profile...');
+  const allPostIds: number[] = [];
+  let totalPosts = 0;
+
   for (let i = 0; i < profileIds.length; i++) {
     const profileId = profileIds[i];
     const username = TEST_PROFILES[i]?.username ?? `user${i}`;
-    for (let k = 0; k < 3; k++) {
-      const res = await execute(
+    const numPosts = POST_ASSIGNMENTS[i].count;
+
+    for (let j = 0; j < numPosts; j++) {
+      const caption = POST_CAPTIONS[Math.floor(Math.random() * POST_CAPTIONS.length)];
+      const likesCount = Math.floor(Math.random() * 491) + 10; // 10-500
+      const commentsCount = Math.floor(Math.random() * 51); // 0-50
+      const hasMultipleMedia = Math.random() < 0.3; // 30% chance of multiple images
+      const mediaCount = hasMultipleMedia ? Math.floor(Math.random() * 4) + 2 : 1; // 2-5 images or 1
+
+      const result = await execute(
         `INSERT INTO posts (profile_id, caption, likes_count, comments_count)
          VALUES (?, ?, ?, ?)`,
-        [profileId, `Seeded post ${k + 1} for @${username}`, Math.floor(Math.random() * 200), Math.floor(Math.random() * 30)]
+        [profileId, caption, likesCount, commentsCount]
       );
-      await execute(
-        `INSERT INTO post_media (post_id, media_url, media_type, position)
-         VALUES (?, ?, 'image', 0)`,
-        [res.lastID, `https://picsum.photos/seed/extra${res.lastID}/1080/1350`]
-      );
+
+      const postId = result.lastID;
+      allPostIds.push(postId);
+
+      // Add media for this post
+      for (let k = 0; k < mediaCount; k++) {
+        const mediaUrl = `https://picsum.photos/seed/post${postId}img${k}/1080/1350`;
+        await execute(
+          `INSERT INTO post_media (post_id, media_url, media_type, position)
+           VALUES (?, ?, 'image', ?)`,
+          [postId, mediaUrl, k]
+        );
+      }
+
+      totalPosts++;
     }
-    // Aggiorna posts_count (aggiungi 3)
+
+    // Update posts_count
     await execute(
-      `UPDATE profiles SET posts_count = posts_count + 3 WHERE id = ?`,
-      [profileId]
+      'UPDATE profiles SET posts_count = ? WHERE id = ?',
+      [numPosts, profileId]
     );
-    console.log(`   ✓ Added 3 extra posts for @${username}`);
+
+    if ((i + 1) % 10 === 0) {
+      console.log(`   ✓ Generated posts for ${i + 1}/${profileIds.length} profiles...`);
+    }
   }
+
+  console.log(`   ✓ Created ${totalPosts} posts successfully!`);
+
+  return allPostIds; // Return post IDs for tagging
 }
 /**
  * @fileoverview Seed functions
@@ -139,68 +163,78 @@ export async function seedProfiles(userIds: number[]) {
 // ============================================================================
 
 export async function seedFollows(profileIds: number[]) {
-  console.log('\n🌱 Seeding follows...');
+  console.log('\n🌱 Seeding follows with complex social graph...');
 
-  const followerCounts: { [key: number]: number } = {};
-  const followingCounts: { [key: number]: number } = {};
+  const FOLLOW_PROBABILITY = 0.30; // 30% chance of following
+  const PENDING_REQUEST_PROBABILITY = 0.15; // 15% of follows to private accounts will be pending
 
-  for (const follow of TEST_FOLLOWS) {
-    const followerProfileId = profileIds[follow.followerIndex];
-    const followingProfileId = profileIds[follow.followingIndex];
-    const followerUsername = TEST_PROFILES[follow.followerIndex].username;
-    const followingUsername = TEST_PROFILES[follow.followingIndex].username;
+  let totalFollows = 0;
+  let totalPending = 0;
 
-    await execute(
-      `INSERT INTO follows (follower_profile_id, following_profile_id, status)
-       VALUES (?, ?, ?)`,
-      [followerProfileId, followingProfileId, follow.status]
-    );
-
-    const statusLabel = follow.status === 'pending' ? '(pending)' : '';
-    console.log(`   ✓ @${followerUsername} follows @${followingUsername} ${statusLabel}`);
-
-    // Count only accepted follows
-    if (follow.status === 'accepted') {
-      followingCounts[followerProfileId] = (followingCounts[followerProfileId] || 0) + 1;
-      followerCounts[followingProfileId] = (followerCounts[followingProfileId] || 0) + 1;
-    }
-  }
-
-  // Update followers/following counts
-  console.log('\n📊 Updating follow counts...');
-
-  // Generate follows so each profile can see stories from all others
-  console.log('\n🌱 Ensuring all profiles follow each other (for stories visibility)...');
+  // Generate follows between all profiles
   for (let i = 0; i < profileIds.length; i++) {
     for (let j = 0; j < profileIds.length; j++) {
       if (i === j) continue; // Don't follow yourself
+
+      // Random chance to follow
+      if (Math.random() > FOLLOW_PROBABILITY) continue;
+
       const followerProfileId = profileIds[i];
       const followingProfileId = profileIds[j];
+      const targetIsPrivate = TEST_PROFILES[j].is_private;
+
+      // If target is private, some follows will be pending
+      const isPending = targetIsPrivate && Math.random() < PENDING_REQUEST_PROBABILITY;
+      const status = isPending ? 'pending' : 'accepted';
+
       try {
         await execute(
           `INSERT INTO follows (follower_profile_id, following_profile_id, status)
-           VALUES (?, ?, 'accepted')`,
-          [followerProfileId, followingProfileId]
+           VALUES (?, ?, ?)`,
+          [followerProfileId, followingProfileId, status]
         );
+
+        if (status === 'pending') {
+          totalPending++;
+        } else {
+          totalFollows++;
+        }
       } catch (e) {
-        // ignore unique constraint errors (follow already exists)
+        // Ignore unique constraint errors
       }
+    }
+
+    if ((i + 1) % 10 === 0) {
+      console.log(`   ✓ Generated follows for ${i + 1}/${profileIds.length} profiles...`);
     }
   }
 
-  // Recompute counts from the DB to avoid mismatch
+  console.log(`   ✓ Created ${totalFollows} accepted follows and ${totalPending} pending requests!`);
+
+  // Update followers/following counts
+  console.log('\n📊 Updating follow counts...');
   for (let i = 0; i < profileIds.length; i++) {
     const profileId = profileIds[i];
     await execute(
-      `UPDATE profiles SET followers_count = (
-         SELECT COUNT(*) FROM follows WHERE following_profile_id = profiles.id AND deleted_at IS NULL AND status = 'accepted'
-       ), following_count = (
-         SELECT COUNT(*) FROM follows WHERE follower_profile_id = profiles.id AND deleted_at IS NULL AND status = 'accepted'
-       ) WHERE id = ?`,
-      [profileId]
+      `UPDATE profiles SET
+        followers_count = (
+          SELECT COUNT(*) FROM follows
+          WHERE following_profile_id = ? AND deleted_at IS NULL AND status = 'accepted'
+        ),
+        following_count = (
+          SELECT COUNT(*) FROM follows
+          WHERE follower_profile_id = ? AND deleted_at IS NULL AND status = 'accepted'
+        )
+      WHERE id = ?`,
+      [profileId, profileId, profileId]
     );
-    console.log(`   ✓ Updated counts for profile id ${profileId}`);
+
+    if ((i + 1) % 10 === 0) {
+      console.log(`   ✓ Updated counts for ${i + 1}/${profileIds.length} profiles...`);
+    }
   }
+
+  console.log('   ✓ All follow counts updated successfully!');
 }
 
 // ============================================================================
@@ -208,49 +242,83 @@ export async function seedFollows(profileIds: number[]) {
 // ============================================================================
 
 export async function seedStories(profileIds: number[]) {
-  console.log('\n🌱 Seeding stories...');
+  console.log('\n🌱 Seeding stories with extended expiration...');
 
   const now = new Date();
-  // Scadenza fissata al 28 febbraio 2027
-  const expiresAt = new Date('2027-02-28T23:59:59.000Z');
+  // Scadenza lunghissima: 31 dicembre 2030
+  const expiresAt = new Date('2030-12-31T23:59:59.000Z');
   const createdAt = now.toISOString();
   const expiresAtStr = expiresAt.toISOString();
 
-  for (const story of TEST_STORIES) {
-    const profileId = profileIds[story.profileIndex];
-    const profileUsername = TEST_PROFILES[story.profileIndex].username;
+  let totalStories = 0;
 
-    const result = await execute(
-      `INSERT INTO stories (profile_id, media_url, media_type, duration_seconds, created_at, expires_at)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [
-        profileId,
-        story.media_url,
-        story.media_type,
-        story.duration_seconds,
-        createdAt,
-        expiresAtStr,
-      ]
-    );
-
-    console.log(`   ✓ Created story for @${profileUsername} (ID: ${result.lastID})`);
-  }
-
-  // --- Generate extra stories per profile for richer dataset ---
-  console.log('\n🌱 Seeding extra generated stories for each profile...');
+  // Generate 3-6 stories per profile
   for (let i = 0; i < profileIds.length; i++) {
     const profileId = profileIds[i];
     const username = TEST_PROFILES[i]?.username ?? `user${i}`;
-    const extraCount = 2; // two extra stories each
-    for (let k = 0; k < extraCount; k++) {
-      const mediaUrl = `https://picsum.photos/seed/story${i}${k}/1080/1920`;
+    const numStories = Math.floor(Math.random() * 4) + 3; // 3-6 stories
+
+    for (let j = 0; j < numStories; j++) {
+      const mediaUrl = `https://picsum.photos/seed/story${profileId}img${j}/1080/1920`;
+      const mediaType = Math.random() < 0.85 ? 'image' : 'video'; // 85% images, 15% videos
+      const duration = mediaType === 'image' ? 5 : Math.floor(Math.random() * 21) + 10; // 10-30s for videos
+
       await execute(
         `INSERT INTO stories (profile_id, media_url, media_type, duration_seconds, created_at, expires_at)
-         VALUES (?, ?, 'image', ?, ?, ?)`,
-        [profileId, mediaUrl, 5, createdAt, expiresAtStr]
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [profileId, mediaUrl, mediaType, duration, createdAt, expiresAtStr]
       );
+
+      totalStories++;
     }
-    console.log(`   ✓ Added ${extraCount} stories for @${username}`);
+
+    if ((i + 1) % 10 === 0) {
+      console.log(`   ✓ Generated stories for ${i + 1}/${profileIds.length} profiles...`);
+    }
   }
+
+  console.log(`   ✓ Created ${totalStories} stories (expiring Dec 31, 2030)!`);
+}
+
+// ============================================================================
+// POST TAGS
+// ============================================================================
+
+export async function seedPostTags(allPostIds: number[], profileIds: number[]) {
+  console.log('\n🌱 Seeding post tags...');
+
+  const TAG_PROBABILITY = 0.4; // 40% of posts will have tags
+  let totalTags = 0;
+
+  for (const postId of allPostIds) {
+    if (Math.random() > TAG_PROBABILITY) continue; // Skip some posts
+
+    const numTags = Math.floor(Math.random() * 3) + 1; // 1-3 tags per post
+    const taggedProfiles = new Set<number>();
+
+    for (let i = 0; i < numTags; i++) {
+      const taggedProfileId = profileIds[Math.floor(Math.random() * profileIds.length)];
+
+      // Avoid tagging the same profile twice in one post
+      if (taggedProfiles.has(taggedProfileId)) continue;
+      taggedProfiles.add(taggedProfileId);
+
+      const xPosition = Math.random();
+      const yPosition = Math.random();
+
+      try {
+        await execute(
+          `INSERT INTO post_tags (post_id, tagged_profile_id, x_position, y_position)
+           VALUES (?, ?, ?, ?)`,
+          [postId, taggedProfileId, xPosition, yPosition]
+        );
+        totalTags++;
+      } catch (e) {
+        // Ignore unique constraint errors
+      }
+    }
+  }
+
+  console.log(`   ✓ Created ${totalTags} post tags successfully!`);
 }
 
