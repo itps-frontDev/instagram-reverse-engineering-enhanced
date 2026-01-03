@@ -6,8 +6,9 @@
 
 'use client';
 
-import { useState, useRef, DragEvent } from 'react';
+import { useState, useRef, DragEvent, useEffect } from 'react';
 import { X } from 'lucide-react';
+import ProfilePicture from '@/components/ProfilePicture';
 
 interface CreatePostModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ interface CreatePostModalProps {
 }
 
 export default function CreatePostModal({ isOpen, onClose, width = 855 }: CreatePostModalProps) {
+  const [phase, setPhase] = useState<'crop' | 'details'>('crop');
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -26,12 +28,33 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [caption, setCaption] = useState('');
+  const [currentProfile, setCurrentProfile] = useState<{ username: string; full_name: string | null; profile_image_url: string | null } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const multipleFileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchCurrentProfile();
+    }
+  }, [isOpen]);
+
+  const fetchCurrentProfile = async () => {
+    try {
+      const response = await fetch('/api/auth/me');
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentProfile(data.profile);
+      }
+    } catch (error) {
+      console.error('Error fetching current profile:', error);
+    }
+  };
 
   if (!isOpen) return null;
 
   const uploadedImage = uploadedImages[currentImageIndex] || null;
+  const modalWidth = phase === 'details' ? 1100 : width;
 
   const handleDragEnter = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -91,7 +114,9 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
   };
 
   const handleBack = () => {
-    if (uploadedImages.length > 0) {
+    if (phase === 'details') {
+      setPhase('crop');
+    } else if (uploadedImages.length > 0) {
       setShowDiscardModal(true);
     }
   };
@@ -102,7 +127,12 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
     setShowDiscardModal(false);
   };
 
-  const handleNext = async () => {
+  const handleNext = () => {
+    if (uploadedImages.length === 0) return;
+    setPhase('details');
+  };
+
+  const handleShare = async () => {
     if (uploadedImages.length === 0) return;
     
     setIsUploading(true);
@@ -115,8 +145,8 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
         },
         body: JSON.stringify({
           images: uploadedImages,
-          caption: '', // TODO: Add caption input field
-          location: '', // TODO: Add location input field
+          caption: caption.trim(),
+          location: '',
           isCommentsDisabled: false,
           isLikesHidden: false,
         }),
@@ -129,12 +159,11 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
         setUploadedImages([]);
         setCurrentImageIndex(0);
         setShowMediaManager(false);
+        setCaption('');
+        setPhase('crop');
         onClose();
         
-        // Optional: Show success message or redirect
         console.log('Post created successfully with ID:', data.postId);
-        
-        // Refresh the page to show the new post
         window.location.reload();
       } else {
         console.error('Failed to create post:', data.error);
@@ -230,8 +259,8 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
 
       {/* Modal */}
       <div 
-        className="relative z-10 bg-white dark:bg-[#262626] rounded-3xl w-full mx-4 overflow-hidden shadow-2xl"
-        style={{ maxWidth: width }}
+        className="relative z-10 bg-white dark:bg-[#262626] rounded-3xl w-full mx-4 overflow-hidden shadow-2xl transition-all duration-300"
+        style={{ maxWidth: modalWidth }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-[#363636] dark:bg-[#0c1014]">
@@ -256,14 +285,14 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
                 </svg>
               </button>
               <h2 className="text-base font-semibold text-[#262626] dark:text-white">
-                Ritaglia
+                {phase === 'crop' ? 'Ritaglia' : 'Crea nuovo post'}
               </h2>
               <button
-                onClick={handleNext}
+                onClick={phase === 'crop' ? handleNext : handleShare}
                 disabled={isUploading}
                 className="text-[#4165d4] hover:opacity-70 transition-opacity font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isUploading ? 'Caricamento...' : 'Avanti'}
+                {isUploading ? 'Caricamento...' : phase === 'crop' ? 'Avanti' : 'Condividi'}
               </button>
             </>
           ) : (
@@ -278,81 +307,130 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
 
         {/* Content */}
         {uploadedImage ? (
-          <div className="relative min-h-[850px] flex items-center justify-center dark:bg-[#25292e]">
-            <img 
-              src={uploadedImage} 
-              alt="Uploaded" 
-              className="max-h-[850px] w-auto object-contain"
-            />
-            
-            {/* Icona post multipli in basso a destra */}
-            <button 
-              onClick={() => setShowMediaManager(!showMediaManager)}
-              className="absolute bottom-4 right-4 p-2 bg-[#262626] rounded-full hover:bg-[#363636] transition-colors"
-            >
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </button>
+          phase === 'crop' ? (
+            // Crop Phase - solo immagine
+            <div className="relative min-h-[850px] flex items-center justify-center dark:bg-[#25292e]">
+              <img 
+                src={uploadedImage} 
+                alt="Uploaded" 
+                className="max-h-[850px] w-auto object-contain"
+              />
+              
+              {/* Icona post multipli in basso a destra */}
+              <button 
+                onClick={() => setShowMediaManager(!showMediaManager)}
+                className="absolute bottom-4 right-4 p-2 bg-[#262626] rounded-full hover:bg-[#363636] transition-colors"
+              >
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </button>
 
-            {/* Mini modale gestione media */}
-            {showMediaManager && (
-              <div className="absolute bottom-20 right-4 bg-white dark:bg-[#1c1d1e] rounded-lg shadow-2xl p-3 w-auto max-h-96 overflow-y-auto border border-gray-200 dark:border-[#363636]">
-                <div className="flex items-start gap-2">
-                  {uploadedImages.map((image, index) => (
-                    <div 
-                      key={index}
-                      onMouseDown={() => handleDragStart(index)}
-                      onMouseUp={handleDragEndImage}
-                      onMouseLeave={handleDragEndImage}
-                      onDragOver={(e) => handleDragOverImage(e, index)}
-                      onDrop={(e) => handleDropImage(e, index)}
-                      className={`relative w-25 h-25 rounded-lg overflow-hidden cursor-pointer select-none ${
-                        dragOverIndex === index && draggedIndex !== index ? 'opacity-50' : ''
-                      }`}
-                      onClick={() => setCurrentImageIndex(index)}
-                    >
-                      <img 
-                        src={image} 
-                        alt={`Media ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                      
-                      {/* Bottone elimina */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveImage(index);
-                        }}
-                        className="absolute top-0.5 right-0.5 bg-[#161616] text-white p-0.5 rounded-full hover:opacity-70"
+              {/* Mini modale gestione media */}
+              {showMediaManager && (
+                <div className="absolute bottom-20 right-4 bg-white dark:bg-[#1c1d1e] rounded-lg shadow-2xl p-3 w-auto max-h-96 overflow-y-auto border border-gray-200 dark:border-[#363636]">
+                  <div className="flex items-start gap-2">
+                    {uploadedImages.map((image, index) => (
+                      <div 
+                        key={index}
+                        onMouseDown={() => handleDragStart(index)}
+                        onMouseUp={handleDragEndImage}
+                        onMouseLeave={handleDragEndImage}
+                        onDragOver={(e) => handleDragOverImage(e, index)}
+                        onDrop={(e) => handleDropImage(e, index)}
+                        className={`relative w-25 h-25 rounded-lg overflow-hidden cursor-pointer select-none ${
+                          dragOverIndex === index && draggedIndex !== index ? 'opacity-50' : ''
+                        }`}
+                        onClick={() => setCurrentImageIndex(index)}
                       >
-                        <X size={15} />
-                      </button>
-                    </div>
-                  ))}
+                        <img 
+                          src={image} 
+                          alt={`Media ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        
+                        {/* Bottone elimina */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveImage(index);
+                          }}
+                          className="absolute top-0.5 right-0.5 bg-[#161616] text-white p-0.5 rounded-full hover:opacity-70"
+                        >
+                          <X size={15} />
+                        </button>
+                      </div>
+                    ))}
+                    
+                    {/* Bottone aggiungi */}
+                    <button
+                      onClick={handleAddMore}
+                      className="w-10 h-10 rounded-full border border-gray-300 dark:border-gray-600 hover:border-[#4150f7] dark:hover:border-[#4150f7] flex items-center justify-center transition-colors cursor-pointer"
+                    >
+                      <span className="text-xl leading-none text-gray-400 dark:text-gray-500">+</span>
+                    </button>
+                  </div>
                   
-                  {/* Bottone aggiungi */}
-                  <button
-                    onClick={handleAddMore}
-                    className="w-10 h-10 rounded-full border border-gray-300 dark:border-gray-600 hover:border-[#4150f7] dark:hover:border-[#4150f7] flex items-center justify-center transition-colors cursor-pointer"
-                  >
-                    <span className="text-xl leading-none text-gray-400 dark:text-gray-500">+</span>
-                  </button>
+                  {/* Input file nascosto per aggiungere più immagini */}
+                  <input
+                    ref={multipleFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handleFileSelect}
+                  />
                 </div>
-                
-                {/* Input file nascosto per aggiungere più immagini */}
-                <input
-                  ref={multipleFileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={handleFileSelect}
+              )}
+            </div>
+          ) : (
+            // Details Phase - immagine + form caption
+            <div className="flex min-h-[850px]">
+              {/* Immagine a sinistra */}
+              <div className="flex-1 flex items-center justify-center dark:bg-[#25292e] border-r border-gray-200 dark:border-[#363636]">
+                <img 
+                  src={uploadedImage} 
+                  alt="Uploaded" 
+                  className="max-h-[850px] w-auto object-contain"
                 />
               </div>
-            )}
-          </div>
+              
+              {/* Form dettagli a destra */}
+              <div className="w-[340px] flex flex-col bg-white dark:bg-[#262626]">
+                {/* Profilo */}
+                {currentProfile && (
+                  <div className="flex items-center gap-3 p-4 border-b border-gray-200 dark:border-[#363636]">
+                    <ProfilePicture
+                      src={currentProfile.profile_image_url}
+                      alt={currentProfile.username}
+                      size={28}
+                    />
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm text-[#262626] dark:text-white">
+                        {currentProfile.username}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Caption textarea */}
+                <div className="flex-1 p-4">
+                  <textarea
+                    value={caption}
+                    onChange={(e) => setCaption(e.target.value)}
+                    placeholder="Scrivi una didascalia..."
+                    className="w-full h-40 resize-none bg-transparent text-[#262626] dark:text-white placeholder-gray-400 focus:outline-none text-sm"
+                    maxLength={2200}
+                  />
+                  <div className="text-xs text-gray-400 text-right mt-2">
+                    {caption.length}/2200
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
         ) : (
+          // Initial upload view
           <div
             className={`flex flex-col items-center justify-center p-32 min-h-[850px] transition-colors ${
               isDragging ? 'bg-gray-50 dark:bg-[#1a1a1a]' : ''
