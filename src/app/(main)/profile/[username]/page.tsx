@@ -11,6 +11,7 @@
 
 import { use, useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import ProfileTabs from '@/components/profile/ProfileTabs';
 import ProfileGrid from '@/components/profile/ProfileGrid';
@@ -38,6 +39,7 @@ export default function ProfilePage({
   const { username } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { refreshProfile } = useAuth();
 
   // State
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -289,22 +291,8 @@ export default function ProfilePage({
    * Handle profile image click - opens modal
    */
   function handleProfileImageClick() {
-    // Se non c'è una pfp custom, apri l'esplora risorse, altrimenti apri il modale
-    if (!profile?.profile_image_url || profile.profile_image_url === '/images/default-pfp.jpg') {
-      // Trova l'input file per upload immagine profilo
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*';
-      input.onchange = (e: any) => {
-        const file = e.target.files?.[0];
-        if (file) {
-          handleProfileImageUpload(file);
-        }
-      };
-      input.click();
-    } else {
-      setShowProfileImageModal(true);
-    }
+    // Apri sempre il modale
+    setShowProfileImageModal(true);
   }
 
   /**
@@ -333,6 +321,9 @@ export default function ProfilePage({
 
       // Aggiorna lo stato del profilo con la nuova immagine
       setProfile(prev => prev ? { ...prev, profile_image_url: data.imageUrl } : null);
+      
+      // Aggiorna il profilo nell'AuthContext per aggiornare la sidebar
+      await refreshProfile();
 
     } catch (error) {
       console.error('Error uploading image:', error);
@@ -360,6 +351,9 @@ export default function ProfilePage({
 
       // Aggiorna lo stato del profilo rimuovendo l'immagine
       setProfile(prev => prev ? { ...prev, profile_image_url: null } : null);
+      
+      // Aggiorna il profilo nell'AuthContext per aggiornare la sidebar
+      await refreshProfile();
 
     } catch (error) {
       console.error('Error removing image:', error);
