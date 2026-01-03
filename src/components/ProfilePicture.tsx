@@ -15,9 +15,8 @@ export default function ProfilePicture({ src, alt = 'Profile picture', size = 32
       alt={alt}
       width={size}
       height={size}
-      className={`sidebar-pfp ${className}`}
+      className={`sidebar-pfp border-2 border-[rgb(12,16,20)] dark:border-[rgb(245,245,245)] rounded-full ${className}`}
       style={{
-        borderRadius: '50%',
         boxSizing: 'border-box',
         width: size,
         height: size,
