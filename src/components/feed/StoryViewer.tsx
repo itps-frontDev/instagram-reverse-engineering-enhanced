@@ -589,7 +589,8 @@ export default function StoryViewer({
       {(currentIndex > 0 || (allUsernames.length > 0 && currentUserIndex > 0)) && (
         <button
           onClick={goToPrevious}
-          className="absolute left-[837px] top-1/2 -translate-y-1/2 bg-gray-500 hover:bg-white p-0.25 rounded-full transition-all z-30"
+          className="fixed top-1/2 -translate-y-1/2 bg-gray-500 hover:bg-white p-0.25 rounded-full transition-all z-30"
+          style={{ left: 'calc(50% - 345px - 40px)' }}
           aria-label="Storia precedente"
         >
           <ChevronLeft className="w-5 h-5 text-black" />
@@ -600,7 +601,8 @@ export default function StoryViewer({
       {(currentIndex < stories.length - 1 || (allUsernames.length > 0 && currentUserIndex < allUsernames.length - 1)) && (
         <button
           onClick={goToNext}
-          className="absolute right-[837px] top-1/2 -translate-y-1/2 bg-gray-500 hover:bg-white p-0.25 rounded-full transition-all z-30"
+          className="fixed top-1/2 -translate-y-1/2 bg-gray-500 hover:bg-white p-0.25 rounded-full transition-all z-30"
+          style={{ right: 'calc(50% - 345px - 40px)' }}
           aria-label="Storia successiva"
         >
           <ChevronRight className="w-5 h-5 text-black" />
