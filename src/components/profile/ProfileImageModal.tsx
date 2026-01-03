@@ -46,7 +46,11 @@ export default function ProfileImageModal({
   if (!isOpen) return null;
 
   return (
-    <div role="dialog" className="modal-overlay" onClick={onClose}>
+    <div
+      role="dialog"
+      className="fixed inset-0 z-50 flex items-center justify-center overlay-bg"
+      onClick={onClose}
+    >
       <div className="modal-container" onClick={(e) => e.stopPropagation()}>
         {/* Header with title */}
         <h3 className="modal-title">Cambia immagine del profilo</h3>
