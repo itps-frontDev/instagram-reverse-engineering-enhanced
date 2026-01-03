@@ -25,6 +25,7 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
   const [showMediaManager, setShowMediaManager] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const multipleFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -101,9 +102,50 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
     setShowDiscardModal(false);
   };
 
-  const handleNext = () => {
-    // TODO: Implementare il passo successivo
-    console.log('Next step');
+  const handleNext = async () => {
+    if (uploadedImages.length === 0) return;
+    
+    setIsUploading(true);
+    
+    try {
+      const response = await fetch('/api/posts/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          images: uploadedImages,
+          caption: '', // TODO: Add caption input field
+          location: '', // TODO: Add location input field
+          isCommentsDisabled: false,
+          isLikesHidden: false,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Success! Close modal and reset state
+        setUploadedImages([]);
+        setCurrentImageIndex(0);
+        setShowMediaManager(false);
+        onClose();
+        
+        // Optional: Show success message or redirect
+        console.log('Post created successfully with ID:', data.postId);
+        
+        // Refresh the page to show the new post
+        window.location.reload();
+      } else {
+        console.error('Failed to create post:', data.error);
+        alert('Errore durante la creazione del post: ' + data.error);
+      }
+    } catch (error) {
+      console.error('Error creating post:', error);
+      alert('Errore durante la creazione del post. Riprova.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleAddMore = () => {
@@ -218,9 +260,10 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
               </h2>
               <button
                 onClick={handleNext}
-                className="text-[#4165d4] hover:opacity-70 transition-opacity font-semibold"
+                disabled={isUploading}
+                className="text-[#4165d4] hover:opacity-70 transition-opacity font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Avanti
+                {isUploading ? 'Caricamento...' : 'Avanti'}
               </button>
             </>
           ) : (
