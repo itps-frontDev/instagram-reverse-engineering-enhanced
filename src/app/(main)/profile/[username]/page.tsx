@@ -291,8 +291,23 @@ export default function ProfilePage({
    * Handle profile image click - opens modal
    */
   function handleProfileImageClick() {
-    // Apri sempre il modale
-    setShowProfileImageModal(true);
+    // Se non c'è una pfp custom, apri l'esplora risorse, altrimenti apri il modale
+    if (!profile?.profile_image_url || profile.profile_image_url === '/images/default-pfp.jpg') {
+      // Apri direttamente l'esplora file
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = (e: any) => {
+        const file = e.target.files?.[0];
+        if (file) {
+          handleProfileImageUpload(file);
+        }
+      };
+      input.click();
+    } else {
+      // Apri il modale se c'è già una pfp custom
+      setShowProfileImageModal(true);
+    }
   }
 
   /**
