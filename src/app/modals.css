@@ -1,23 +1,41 @@
+@media (prefers-color-scheme: dark) {
+  .modal-container {
+    background-color: rgb(33, 35, 40);
+  }
+  .modal-btn-primary,
+  .modal-btn-danger,
+  .modal-btn-cancel {
+    border-top: 1px solid rgb(43, 48, 54);
+  }
+}
 /**
  * Modal Components Styles
  * Shared styles for all modal dialogs across the application
  */
 
 /* Modal Container */
+
 .modal-container {
-  background-color: rgb(33, 35, 40);
+  background-color: rgb(255, 255, 255);
   border-radius: 24px;
   overflow: auto;
   width: 560px;
   max-height: 1231px;
 }
 
+@media (prefers-color-scheme: dark) {
+  .modal-container {
+    background-color: rgb(43, 48, 54);
+  }
+}
+
 /* Modal Title */
+
 .modal-title {
   font-size: 20px;
   line-height: 25px;
   font-weight: 400;
-  color: rgb(248, 249, 249);
+  color: rgb(12, 16, 20);
   text-align: center;
   max-width: 100%;
   word-break: break-word;
@@ -25,13 +43,20 @@
   padding: 32px 32px 16px 32px;
 }
 
+@media (prefers-color-scheme: dark) {
+  .modal-title {
+    color: rgb(248, 249, 249);
+  }
+}
+
 /* Modal Buttons - Base styles */
+
 .modal-btn-primary,
 .modal-btn-danger,
 .modal-btn-cancel {
   background-color: rgba(0, 0, 0, 0);
   border: none;
-  border-top: 1px solid rgb(43, 48, 54);
+  border-top: 1px solid rgb(219, 223, 228);
   font-size: 14px;
   height: 48px;
   min-height: 48px;
@@ -41,6 +66,14 @@
   text-align: center;
   width: 100%;
   display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  .modal-btn-primary,
+  .modal-btn-danger,
+  .modal-btn-cancel {
+    border-top: 1px solid rgb(43, 48, 54);
+  }
 }
 
 /* Primary action button (blue) */
@@ -56,9 +89,16 @@
 }
 
 /* Cancel button (white/light) */
+
 .modal-btn-cancel {
-  color: rgb(248, 249, 249);
+  color: rgb(12, 16, 20);
   font-weight: 400;
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .modal-btn-cancel {
+    color: rgb(248, 249, 249);
+  }
 }
