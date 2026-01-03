@@ -228,11 +228,21 @@ export default function Sidebar() {
             }`}
           >
             <div className="w-[26px] h-[26px] flex items-center justify-center">
-              <div className={pathname.startsWith(`/profile/${profile.username}`) ? 'border-2 border-[rgb(12,16,20)] dark:border-[rgb(245,245,245)] rounded-full' : ''}>
+              <div 
+                className={`rounded-full ${pathname.startsWith(`/profile/${profile.username}`) ? 'ring-2 ring-[rgb(12,16,20)] dark:ring-[rgb(245,245,245)]' : ''}`}
+                style={{
+                  width: '24px',
+                  height: '24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
                 <ProfilePicture
                   src={profile.profile_image_url}
                   alt={profile.username}
-                  size={26}
+                  size={24}
+                  className="sidebar-pfp"
                 />
               </div>
             </div>
