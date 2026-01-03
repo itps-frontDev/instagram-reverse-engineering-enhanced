@@ -34,6 +34,30 @@ export const TEST_USERS = [
     password: 'password123',
     date_of_birth: '1995-03-25',
   },
+  {
+    email: 'alex@example.com',
+    phone_number: '+1234567894',
+    password: 'password123',
+    date_of_birth: '1993-07-12',
+  },
+  {
+    email: 'emma@example.com',
+    phone_number: '+1234567895',
+    password: 'password123',
+    date_of_birth: '1996-09-08',
+  },
+  {
+    email: 'david@example.com',
+    phone_number: '+1234567896',
+    password: 'password123',
+    date_of_birth: '1991-02-28',
+  },
+  {
+    email: 'lisa@example.com',
+    phone_number: '+1234567897',
+    password: 'password123',
+    date_of_birth: '1994-12-05',
+  },
 ];
 
 // ============================================================================
@@ -70,6 +94,38 @@ export const TEST_PROFILES = [
     full_name: 'Sarah Public',
     bio: 'Fitness coach 💪\nHealthy lifestyle advocate\nDM for coaching',
     website_url: 'https://sarahfitness.com',
+    is_private: false,
+    is_verified: true,
+  },
+  {
+    username: 'alextravel',
+    full_name: 'Alex Rodriguez',
+    bio: 'World traveler 🌍\nAdventure seeker\n150+ countries visited',
+    website_url: 'https://alextravel.blog',
+    is_private: false,
+    is_verified: true,
+  },
+  {
+    username: 'emmafood',
+    full_name: 'Emma Wilson',
+    bio: 'Food blogger 🍕\nRecipe creator\nDM for collabs',
+    website_url: 'https://emmacooks.com',
+    is_private: false,
+    is_verified: false,
+  },
+  {
+    username: 'davidtech',
+    full_name: 'David Chen',
+    bio: 'Tech enthusiast 💻\nSoftware engineer\nBuilding the future',
+    website_url: 'https://davidchen.dev',
+    is_private: false,
+    is_verified: true,
+  },
+  {
+    username: 'lisamusic',
+    full_name: 'Lisa Anderson',
+    bio: 'Musician 🎵\nSinger-songwriter\nNew album out now!',
+    website_url: 'https://lisamusic.com',
     is_private: false,
     is_verified: true,
   },
@@ -137,7 +193,7 @@ export const TEST_STORIES = [
     duration_seconds: 5,
   },
 
-  // Jane's stories (3 stories)
+  // Jane's stories (4 stories)
   {
     profileIndex: 1,
     media_url: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1080&h=1920&fit=crop',
@@ -153,6 +209,26 @@ export const TEST_STORIES = [
   {
     profileIndex: 1,
     media_url: 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1080&h=1920&fit=crop',
+    media_type: 'image',
+    duration_seconds: 5,
+  },
+  {
+    profileIndex: 1,
+    media_url: 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=1080&h=1920&fit=crop',
+    media_type: 'image',
+    duration_seconds: 5,
+  },
+
+  // Mike's stories (2 stories - private account)
+  {
+    profileIndex: 2,
+    media_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=1080&h=1920&fit=crop',
+    media_type: 'image',
+    duration_seconds: 5,
+  },
+  {
+    profileIndex: 2,
+    media_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1080&h=1920&fit=crop',
     media_type: 'image',
     duration_seconds: 5,
   },
@@ -177,16 +253,94 @@ export const TEST_STORIES = [
     duration_seconds: 5,
   },
 
-  // Mike's stories (2 stories - private account)
+  // Alex's stories (4 stories)
   {
-    profileIndex: 2,
-    media_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=1080&h=1920&fit=crop',
+    profileIndex: 4,
+    media_url: 'https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=1080&h=1920&fit=crop',
     media_type: 'image',
     duration_seconds: 5,
   },
   {
-    profileIndex: 2,
-    media_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1080&h=1920&fit=crop',
+    profileIndex: 4,
+    media_url: 'https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=1080&h=1920&fit=crop',
+    media_type: 'image',
+    duration_seconds: 5,
+  },
+  {
+    profileIndex: 4,
+    media_url: 'https://images.unsplash.com/photo-1511593358241-7eea1f3c84e5?w=1080&h=1920&fit=crop',
+    media_type: 'image',
+    duration_seconds: 5,
+  },
+  {
+    profileIndex: 4,
+    media_url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1080&h=1920&fit=crop',
+    media_type: 'image',
+    duration_seconds: 5,
+  },
+
+  // Emma's stories (3 stories)
+  {
+    profileIndex: 5,
+    media_url: 'https://images.unsplash.com/photo-1502301197179-65228ab57f78?w=1080&h=1920&fit=crop',
+    media_type: 'image',
+    duration_seconds: 5,
+  },
+  {
+    profileIndex: 5,
+    media_url: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=1080&h=1920&fit=crop',
+    media_type: 'image',
+    duration_seconds: 5,
+  },
+  {
+    profileIndex: 5,
+    media_url: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=1080&h=1920&fit=crop',
+    media_type: 'image',
+    duration_seconds: 5,
+  },
+
+  // David's stories (4 stories)
+  {
+    profileIndex: 6,
+    media_url: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1080&h=1920&fit=crop',
+    media_type: 'image',
+    duration_seconds: 5,
+  },
+  {
+    profileIndex: 6,
+    media_url: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=1080&h=1920&fit=crop',
+    media_type: 'image',
+    duration_seconds: 5,
+  },
+  {
+    profileIndex: 6,
+    media_url: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1080&h=1920&fit=crop',
+    media_type: 'image',
+    duration_seconds: 5,
+  },
+  {
+    profileIndex: 6,
+    media_url: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1080&h=1920&fit=crop',
+    media_type: 'image',
+    duration_seconds: 5,
+  },
+
+  // Lisa's stories (3 stories)
+  {
+    profileIndex: 7,
+    media_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=1080&h=1920&fit=crop',
+    media_type: 'image',
+    duration_seconds: 5,
+  },
+  {
+    profileIndex: 7,
+    media_url: 'https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?w=1080&h=1920&fit=crop',
+    media_type: 'image',
+    duration_seconds: 5,
+  },
+  {
+    profileIndex: 7,
+    media_url: 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=1080&h=1920&fit=crop',
     media_type: 'image',
     duration_seconds: 5,
   },
@@ -200,16 +354,38 @@ export const TEST_FOLLOWS = [
   // John's follows
   { followerIndex: 0, followingIndex: 1, status: 'accepted' }, // John → Jane
   { followerIndex: 0, followingIndex: 3, status: 'accepted' }, // John → Sarah
+  { followerIndex: 0, followingIndex: 4, status: 'accepted' }, // John → Alex
+  { followerIndex: 0, followingIndex: 5, status: 'accepted' }, // John → Emma
   
   // Jane's follows
   { followerIndex: 1, followingIndex: 0, status: 'accepted' }, // Jane → John
   { followerIndex: 1, followingIndex: 3, status: 'accepted' }, // Jane → Sarah
   { followerIndex: 1, followingIndex: 2, status: 'pending' },  // Jane → Mike (pending)
+  { followerIndex: 1, followingIndex: 6, status: 'accepted' }, // Jane → David
   
   // Sarah's follows
   { followerIndex: 3, followingIndex: 0, status: 'accepted' }, // Sarah → John
   { followerIndex: 3, followingIndex: 1, status: 'accepted' }, // Sarah → Jane
+  { followerIndex: 3, followingIndex: 7, status: 'accepted' }, // Sarah → Lisa
   
   // Mike's follows
   { followerIndex: 2, followingIndex: 0, status: 'accepted' }, // Mike → John
+  
+  // Alex's follows
+  { followerIndex: 4, followingIndex: 0, status: 'accepted' }, // Alex → John
+  { followerIndex: 4, followingIndex: 1, status: 'accepted' }, // Alex → Jane
+  { followerIndex: 4, followingIndex: 5, status: 'accepted' }, // Alex → Emma
+  
+  // Emma's follows
+  { followerIndex: 5, followingIndex: 0, status: 'accepted' }, // Emma → John
+  { followerIndex: 5, followingIndex: 4, status: 'accepted' }, // Emma → Alex
+  { followerIndex: 5, followingIndex: 7, status: 'accepted' }, // Emma → Lisa
+  
+  // David's follows
+  { followerIndex: 6, followingIndex: 1, status: 'accepted' }, // David → Jane
+  { followerIndex: 6, followingIndex: 3, status: 'accepted' }, // David → Sarah
+  
+  // Lisa's follows
+  { followerIndex: 7, followingIndex: 3, status: 'accepted' }, // Lisa → Sarah
+  { followerIndex: 7, followingIndex: 5, status: 'accepted' }, // Lisa → Emma
 ];
