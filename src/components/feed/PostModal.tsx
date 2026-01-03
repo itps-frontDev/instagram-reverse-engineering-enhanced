@@ -202,7 +202,7 @@ export default function PostModal({
       {/* Close Button - Outside modal */}
       <button
         onClick={onClose}
-        className="absolute top-6 right-6 z-[60] text-white hover:opacity-70 transition-opacity bg-black/50 rounded-full p-2"
+        className="absolute top-6 right-6 z-[60] text-white hover:scale-105 transition-transform duration-150 rounded-full p-2"
       >
         <X className="w-8 h-8" />
       </button>
