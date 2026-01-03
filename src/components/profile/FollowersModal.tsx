@@ -103,37 +103,56 @@ export default function FollowersModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overlay-bg"
+      className="fixed inset-0 z-[9999] flex items-center justify-center"
+      style={{ backgroundColor: 'rgba(12, 16, 20, 0.7)' }}
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-[rgb(38,38,38)] rounded-xl w-[400px] h-[400px] flex flex-col"
+        className="bg-white dark:bg-[#212328] rounded-xl w-[400px] max-w-[90vw] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="border-b border-[#DBDBDB] dark:border-[#2b3036] h-[43px] flex items-center justify-between px-4">
-          <div className="w-6"></div>
-          <h2 className="font-semibold text-base text-instagram-primary">
-            {type === 'followers' ? 'Follower' : 'Seguiti'}
+        {/* Header con X chiusura */}
+        <div className="relative flex items-center justify-center py-8 px-8">
+          <h2 className="text-xl font-semibold text-center w-full text-[rgb(12,16,20)] dark:text-[rgb(248,249,249)]">
+            {type === 'followers' ? 'Follower' : 'Chi segui'}
           </h2>
-          <button
-            onClick={onClose}
-            className="text-2xl font-light text-instagram-primary leading-none hover:opacity-70"
-            aria-label="Chiudi"
-          >
-            ×
-          </button>
+          <div className="absolute right-6 top-1/2 -translate-y-1/2">
+            <button type="button" tabIndex={0} onClick={onClose} className="p-2 rounded-full hover:bg-[rgb(37,41,46)] transition-colors">
+              <div>
+                <svg aria-label="Chiudi" fill="currentColor" height="18" role="img" viewBox="0 0 24 24" width="18">
+                  <title>Chiudi</title>
+                  <polyline fill="none" points="20.643 3.357 12 12 3.353 20.647" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3"></polyline>
+                  <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" x1="20.649" x2="3.354" y1="20.649" y2="3.354"></line>
+                </svg>
+              </div>
+            </button>
+          </div>
         </div>
 
         {/* Search */}
-        <div className="p-2 border-b border-[#DBDBDB] dark:border-[#2b3036]">
+        <div className="px-4 pb-2 relative">
           <input
             type="text"
-            placeholder="Cerca"
+            placeholder=""
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2 bg-[#EFEFEF] dark:bg-[#262626] text-instagram-primary rounded-lg text-sm outline-none"
+            onFocus={e => e.target.style.backgroundColor = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgb(37,41,46)' : 'rgb(243,245,247)'}
+            onBlur={e => e.target.style.backgroundColor = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgb(54,54,54)' : 'rgb(239,239,239)'}
+            className="appearance-none border-none rounded-[25px] box-border text-[rgb(12,16,20)] dark:text-[rgb(248,249,249)] text-sm font-normal h-8 px-10 py-2 w-full outline-none bg-[rgb(239,239,239)] dark:bg-[rgb(54,54,54)]"
           />
+          {searchQuery === '' && (
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none search-placeholder">
+              <svg aria-label="Cerca" fill="currentColor" height="16" role="img" viewBox="0 0 24 24" width="16" className="text-[rgb(248,249,249)]">
+                <title>Cerca</title>
+                <path d="M19 10.5A8.5 8.5 0 1 1 10.5 2a8.5 8.5 0 0 1 8.5 8.5Z" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
+                <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="16.511" x2="22" y1="16.511" y2="22"></line>
+              </svg>
+              <span className="text-xs text-[rgb(248,249,249)]">Cerca</span>
+            </div>
+          )}
+          <style>{`
+            .input-focused + .search-placeholder { display: none !important; }
+          `}</style>
         </div>
 
         {/* User List */}
@@ -179,7 +198,7 @@ export default function FollowersModal({
                   </Link>
 
                   {/* Pulsante Rimuovi per followers, Segui già per following */}
-                  <button className="px-4 py-1.5 bg-[#EFEFEF] dark:bg-[#363636] rounded-lg text-sm font-semibold text-instagram-primary hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors flex-shrink-0">
+                  <button className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors flex-shrink-0 ${type === 'followers' ? 'bg-[#EFEFEF] dark:bg-[#363636] text-instagram-primary hover:bg-gray-200 dark:hover:bg-[#2a2a2a]' : user.is_following ? 'bg-[rgb(240,242,245)] dark:bg-[rgb(37,41,46)] text-instagram-primary' : 'bg-[#0095F6] text-white hover:bg-[#1877F2]'}`}>
                     {type === 'followers' ? 'Rimuovi' : user.is_following ? 'Segui già' : 'Segui'}
                   </button>
                 </div>
