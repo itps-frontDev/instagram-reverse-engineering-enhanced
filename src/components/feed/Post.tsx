@@ -9,14 +9,13 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import ProfilePicture from '@/components/ProfilePicture';
-import VerifiedBadge from '@/components/common/VerifiedBadge';
-import MoreOptionsIcon from '@/components/common/MoreOptionsIcon';
 import Link from 'next/link';
 import {
   Heart,
   MessageCircle,
   Send,
   Bookmark,
+  MoreHorizontal,
 } from 'lucide-react';
 import type { FeedPost } from '@/lib/types/feed';
 import PostModal from './PostModal';
@@ -32,8 +31,6 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLikeAnimating, setIsLikeAnimating] = useState(false);
-  const [showExplodingHeart, setShowExplodingHeart] = useState(false);
 
   const handleCommentSubmit = async () => {
     if (!commentText.trim() || isSubmitting) return;
@@ -42,28 +39,6 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
     await onComment(post.id, commentText);
     setCommentText('');
     setIsSubmitting(false);
-  };
-
-  const handleLike = () => {
-    // Always show the exploding heart animation on double-click
-    setShowExplodingHeart(true);
-    setTimeout(() => setShowExplodingHeart(false), 1000);
-
-    // Only add like if not already liked (don't remove on double-click)
-    if (!post.is_liked_by_current_user) {
-      setIsLikeAnimating(true);
-      setTimeout(() => setIsLikeAnimating(false), 400);
-      onLike(post.id);
-    }
-  };
-
-  const handleButtonLike = () => {
-    // Button click can toggle like on/off
-    if (!post.is_liked_by_current_user) {
-      setIsLikeAnimating(true);
-      setTimeout(() => setIsLikeAnimating(false), 400);
-    }
-    onLike(post.id);
   };
 
   const formatLikesCount = (count: number) => {
@@ -107,22 +82,30 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
             >
               {post.profile_username}
             </Link>
-            {post.profile_is_verified && <VerifiedBadge size={12} />}
+            {post.profile_is_verified && (
+              <svg
+                className="w-3.5 h-3.5 text-blue-500"
+                viewBox="0 0 40 40"
+                fill="currentColor"
+              >
+                <path d="M19.998 3.094l2.124 3.217a3 3 0 0 0 2.135 1.313l3.85.557a3 3 0 0 1 1.657 5.117l-2.786 2.721a3 3 0 0 0-.862 2.656l.658 3.834a3 3 0 0 1-4.354 3.162l-3.446-1.813a3 3 0 0 0-2.788 0l-3.446 1.813a3 3 0 0 1-4.354-3.162l.658-3.834a3 3 0 0 0-.862-2.656L4.395 13.3a3 3 0 0 1 1.657-5.117l3.85-.557a3 3 0 0 0 2.135-1.313L14.158 3.1a3 3 0 0 1 5.84-.007z" />
+              </svg>
+            )}
             <span className="text-[#8E8E8E] dark:text-[#A8A8A8] text-sm">
               • {formatTimeAgo(post.created_at)}
             </span>
           </div>
         </div>
-        <button type="button" className="hover:scale-110 transition-transform">
-          <MoreOptionsIcon size={24} />
+        <button type="button" className="hover:opacity-50 transition-opacity">
+          <MoreHorizontal className="w-6 h-6" />
         </button>
       </div>
 
       {/* Post Media */}
       {post.media.length > 0 && (
-        <div
-          className="relative w-full aspect-square rounded-xl bg-gray-100 dark:bg-gray-800 overflow-hidden mt-2 mb-2"
-          onDoubleClick={handleLike}
+        <div 
+          className="relative w-full aspect-square rounded-xl border border-[#23272d] dark:border-[#23272d] bg-gray-100 dark:bg-gray-800 overflow-hidden mt-2 mb-2"
+          onDoubleClick={() => onLike(post.id)}
         >
           <Image
             src={post.media[0].media_url}
@@ -131,15 +114,6 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
             className="object-cover rounded-xl"
             sizes="(max-width: 768px) 100vw, 600px"
           />
-          {/* Exploding Heart Animation */}
-          {showExplodingHeart && (
-            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-              <Heart
-                className="absolute top-1/2 left-1/2 w-24 h-24 fill-[#ED4956] text-[#ED4956] like-explode-animation"
-                style={{ filter: 'drop-shadow(0 0 10px rgba(0, 0, 0, 0.3))' }}
-              />
-            </div>
-          )}
         </div>
       )}
 
@@ -147,30 +121,30 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
       <div className="px-4 pb-4">
         <div className="flex items-center justify-between pt-1 pb-2">
           <div className="flex items-center gap-4">
-            <button onClick={handleButtonLike} className="flex items-center gap-1">
+            <button onClick={() => onLike(post.id)} className="hover:opacity-50 transition-opacity flex items-center gap-1">
               <Heart
-                className={`w-6 h-6 hover:scale-110 transition-transform ${
+                className={`w-6 h-6 ${
                   post.is_liked_by_current_user
                     ? 'fill-[#ED4956] text-[#ED4956]'
                     : 'text-[#262626] dark:text-[#FAFAFA]'
-                } ${isLikeAnimating ? 'like-animation' : ''}`}
+                }`}
               />
               {!post.is_likes_hidden && post.likes_count > 0 && (
                 <span className="text-xs font-semibold text-[#262626] dark:text-[#FAFAFA] ml-1">{formatLikesCount(post.likes_count)}</span>
               )}
             </button>
-            <button
+            <button 
               onClick={() => setIsModalOpen(true)}
-              className="flex items-center gap-1"
+              className="hover:opacity-50 transition-opacity flex items-center gap-1"
             >
-              <MessageCircle className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA] hover:scale-110 transition-transform" />
+              <MessageCircle className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA]" />
               {post.comments_count > 0 && (
                 <span className="text-xs font-semibold text-[#262626] dark:text-[#FAFAFA] ml-1">{post.comments_count}</span>
               )}
             </button>
-            <button>
+            <button className="hover:opacity-50 transition-opacity">
               <svg
-                className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA] hover:scale-110 transition-transform"
+                className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA]"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
@@ -185,9 +159,9 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
               </svg>
             </button>
           </div>
-          <button onClick={() => onSave(post.id)}>
+          <button onClick={() => onSave(post.id)} className="hover:opacity-50 transition-opacity">
             <Bookmark
-              className={`w-6 h-6 hover:scale-110 transition-transform ${
+              className={`w-6 h-6 ${
                 post.is_saved_by_current_user
                   ? 'fill-[#262626] dark:fill-[#FAFAFA] text-[#262626] dark:text-[#FAFAFA]'
                   : 'text-[#262626] dark:text-[#FAFAFA]'

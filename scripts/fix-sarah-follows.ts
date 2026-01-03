@@ -9,9 +9,9 @@ async function run() {
       console.error('Profiles not found');
       return;
     }
-    const sarahId = sarah[0].id as number;
-    const johnId = john[0].id as number;
-    const janeId = jane[0].id as number;
+    const sarahId = sarah[0].id;
+    const johnId = john[0].id;
+    const janeId = jane[0].id;
 
     async function ensureFollow(follower: number, following: number) {
       const existing = await queryAll(`SELECT id FROM follows WHERE follower_profile_id = ? AND following_profile_id = ?`, [follower, following]);

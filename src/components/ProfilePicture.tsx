@@ -15,13 +15,7 @@ export default function ProfilePicture({ src, alt = 'Profile picture', size = 32
       alt={alt}
       width={size}
       height={size}
-      className={`rounded-full ${className}`}
-      style={{
-        boxSizing: 'border-box',
-        width: size,
-        height: size,
-        display: 'block',
-      }}
+      className={`rounded-full object-cover ${className}`}
     />
   );
 }

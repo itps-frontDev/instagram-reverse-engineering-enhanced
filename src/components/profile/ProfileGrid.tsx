@@ -19,7 +19,6 @@ export default function ProfileGrid({
   hasMore = false,
   tab = 'posts',
   isOwnProfile = false,
-  onCreatePost,
 }: ProfileGridProps) {
   if (isLoading && posts.length === 0) {
     return (
@@ -35,7 +34,7 @@ export default function ProfileGrid({
   }
 
   if (posts.length === 0) {
-    return <ProfileEmptyState tab={tab} isOwnProfile={isOwnProfile} onCreatePost={onCreatePost} />;
+    return <ProfileEmptyState tab={tab} isOwnProfile={isOwnProfile} />;
   }
 
   return (

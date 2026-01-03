@@ -85,7 +85,7 @@ export async function generateToken(payload: Omit<TokenPayload, 'iat' | 'exp'>):
 export async function verifyToken(token: string): Promise<TokenPayload | null> {
   try {
     const { payload } = await jwtVerify(token, getSecretKey());
-    return payload as unknown as TokenPayload;
+    return payload as TokenPayload;
   } catch (error) {
     console.error('[JWT] Token verification failed:', error);
     return null;

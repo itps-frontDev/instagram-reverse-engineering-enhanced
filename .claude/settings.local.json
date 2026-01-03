@@ -10,8 +10,7 @@
       "Bash(curl:*)",
       "Bash(npm install:*)",
       "Bash(cat:*)",
-      "Bash(xargs cat:*)",
-      "Bash(pnpm run build:*)"
+      "Bash(xargs cat:*)"
     ]
   }
 }
