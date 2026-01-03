@@ -16,6 +16,7 @@ import ProfileTabs from '@/components/profile/ProfileTabs';
 import ProfileGrid from '@/components/profile/ProfileGrid';
 import ProfilePrivateLock from '@/components/profile/ProfilePrivateLock';
 import StoriesHighlights from '@/components/profile/StoriesHighlights';
+import ProfileImageModal from '@/components/profile/ProfileImageModal';
 import Footer from '@/components/common/Footer';
 import {
   Profile,
@@ -55,9 +56,10 @@ export default function ProfilePage({
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [showProfileImageModal, setShowProfileImageModal] = useState(false);
 
   // Refs for file inputs
-  const profileImageInputRef = useRef<HTMLInputElement>(null);
   const createPostInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch profile data on mount
@@ -284,23 +286,87 @@ export default function ProfilePage({
   }
 
   /**
-   * Handle profile image click - opens file picker
+   * Handle profile image click - opens modal
    */
   function handleProfileImageClick() {
-    profileImageInputRef.current?.click();
+    // Se non c'è una pfp custom, apri l'esplora risorse, altrimenti apri il modale
+    if (!profile?.profile_image_url || profile.profile_image_url === '/images/default-pfp.jpg') {
+      // Trova l'input file per upload immagine profilo
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = (e: any) => {
+        const file = e.target.files?.[0];
+        if (file) {
+          handleProfileImageUpload(file);
+        }
+      };
+      input.click();
+    } else {
+      setShowProfileImageModal(true);
+    }
   }
 
   /**
    * Handle profile image upload
    */
-  async function handleProfileImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+  async function handleProfileImageUpload(file: File) {
     if (!file) return;
 
-    // TODO: Implement profile image upload logic
-    console.log('Profile image selected:', file);
-    // Here you would upload the image to your server
-    // For now, we just log it
+    setIsUploadingImage(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const res = await fetch(`/api/profiles/${username}/upload-image`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Upload failed');
+      }
+
+      const data = await res.json();
+
+      // Aggiorna lo stato del profilo con la nuova immagine
+      setProfile(prev => prev ? { ...prev, profile_image_url: data.imageUrl } : null);
+
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert(error instanceof Error ? error.message : 'Errore durante il caricamento dell\'immagine');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  }
+
+  /**
+   * Handle profile image removal
+   */
+  async function handleProfileImageRemove() {
+    setIsUploadingImage(true);
+
+    try {
+      const res = await fetch(`/api/profiles/${username}/remove-image`, {
+        method: 'POST',
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to remove image');
+      }
+
+      // Aggiorna lo stato del profilo rimuovendo l'immagine
+      setProfile(prev => prev ? { ...prev, profile_image_url: null } : null);
+
+    } catch (error) {
+      console.error('Error removing image:', error);
+      alert(error instanceof Error ? error.message : 'Errore durante la rimozione dell\'immagine');
+    } finally {
+      setIsUploadingImage(false);
+    }
   }
 
   /**
@@ -354,14 +420,7 @@ export default function ProfilePage({
   return (
     <>
       <div className="w-full flex flex-col items-center pb-12 max-w-7xl mx-auto flex-1">
-        {/* Hidden file inputs */}
-        <input
-          ref={profileImageInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleProfileImageUpload}
-        />
+        {/* Hidden file input for create post */}
         <input
           ref={createPostInputRef}
           type="file"
@@ -388,6 +447,7 @@ export default function ProfilePage({
               onFollow={handleFollow}
               onUnfollow={handleUnfollow}
               onProfileImageClick={handleProfileImageClick}
+              isUploadingImage={isUploadingImage}
             />
           </div>
 
@@ -433,6 +493,17 @@ export default function ProfilePage({
 
       {/* Footer */}
       <Footer />
+
+      {/* Profile Image Modal */}
+      {profile && (
+        <ProfileImageModal
+          isOpen={showProfileImageModal}
+          onClose={() => setShowProfileImageModal(false)}
+          onUpload={handleProfileImageUpload}
+          onRemove={handleProfileImageRemove}
+          hasImage={!!profile.profile_image_url && profile.profile_image_url !== '/images/default-pfp.jpg'}
+        />
+      )}
     </>
   );
 }

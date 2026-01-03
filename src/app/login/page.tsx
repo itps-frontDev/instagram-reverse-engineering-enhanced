@@ -1,12 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Footer from '@/components/common/Footer';
 
-export default function LoginPage() {
+function LoginForm() {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -214,5 +214,17 @@ export default function LoginPage() {
       {/* Footer */}
       <Footer />
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#FAFAFA] dark:bg-[#0C1014] flex items-center justify-center">
+        <div className="text-[#8E8E8E]">Caricamento...</div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }

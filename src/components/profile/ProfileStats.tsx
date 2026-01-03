@@ -66,6 +66,8 @@ export default function ProfileStats({
   postsCount,
   followersCount,
   followingCount,
+  onFollowersClick,
+  onFollowingClick,
 }: ProfileStatsProps) {
   return (
     <ul className="flex items-center gap-8 mb-5">
@@ -74,11 +76,17 @@ export default function ProfileStats({
         <span className="font-semibold">{formatCount(postsCount)}</span> post
       </li>
       {/* Followers */}
-      <li className="text-sm leading-[18px] whitespace-nowrap cursor-pointer text-instagram-primary">
+      <li
+        className="text-sm leading-[18px] whitespace-nowrap cursor-pointer text-instagram-primary hover:opacity-70 transition-opacity"
+        onClick={onFollowersClick}
+      >
         <span className="font-semibold">{formatCount(followersCount)}</span> follower
       </li>
       {/* Following */}
-      <li className="text-sm leading-[18px] whitespace-nowrap cursor-pointer text-instagram-primary">
+      <li
+        className="text-sm leading-[18px] whitespace-nowrap cursor-pointer text-instagram-primary hover:opacity-70 transition-opacity"
+        onClick={onFollowingClick}
+      >
         <span className="font-semibold">{formatCount(followingCount)}</span> seguiti
       </li>
     </ul>
