@@ -1,8 +1,8 @@
 /* Sidebar Design Tokens & Styles */
 
 :root {
-  --sidebar-pfp-border-light: rgb(12, 16, 20);
-  --sidebar-pfp-border-dark: rgb(245, 245, 245);
+  --sidebar-pfp-border-light: rgb(12, 16, 20); /* nero per light mode */
+  --sidebar-pfp-border-dark: rgb(255, 255, 255); /* bianco per dark mode */
   --sidebar-pfp-color-light: rgb(65, 80, 247);
   --sidebar-pfp-color-dark: rgb(112, 141, 255);
   /* Aggiungi qui altre variabili sidebar se necessario */
@@ -11,20 +11,35 @@
 .sidebar-pfp {
   border-radius: 50%;
   box-sizing: border-box;
-  border-bottom: 2px solid var(--sidebar-pfp-border-light);
-  border-inline-end: 2px solid var(--sidebar-pfp-border-light);
-  border-inline-start: 2px solid var(--sidebar-pfp-border-light);
-  border-top: 2px solid var(--sidebar-pfp-border-light);
-  color: var(--sidebar-pfp-color-light);
+  border-bottom: 2px solid rgb(12, 16, 20);
+  border-inline-end: 2px solid rgb(12, 16, 20);
+  border-inline-start: 2px solid rgb(12, 16, 20);
+  border-top: 2px solid rgb(12, 16, 20);
+  color: rgb(65, 80, 247);
   background: none;
+  cursor: pointer;
+  direction: ltr;
+  display: block;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  height: 28px;
+  line-height: 18px;
+  list-style-type: none;
+  overflow-wrap: break-word;
+  text-align: start;
+  text-size-adjust: 100%;
+  unicode-bidi: isolate;
+  width: 28px;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+/* ...existing code... */
 }
 
 @media (prefers-color-scheme: dark) {
   .sidebar-pfp {
-    border-bottom: 2px solid var(--sidebar-pfp-border-dark);
-    border-inline-end: 2px solid var(--sidebar-pfp-border-dark);
-    border-inline-start: 2px solid var(--sidebar-pfp-border-dark);
-    border-top: 2px solid var(--sidebar-pfp-border-dark);
-    color: var(--sidebar-pfp-color-dark);
+    border-bottom: 2px solid rgb(245, 245, 245);
+    border-inline-end: 2px solid rgb(245, 245, 245);
+    border-inline-start: 2px solid rgb(245, 245, 245);
+    border-top: 2px solid rgb(245, 245, 245);
+    color: rgb(112, 141, 255);
   }
 }

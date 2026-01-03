@@ -1,7 +1,8 @@
-@import "./sidebar-pfp.css";
 @import "tailwindcss";
 @import "./overlay.css";
 @import "./modals.css";
+@import "./sidebar.css";
+
 
 :root {
   /* Instagram Design System Colors - Light Mode */
