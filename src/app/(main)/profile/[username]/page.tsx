@@ -289,7 +289,22 @@ export default function ProfilePage({
    * Handle profile image click - opens modal
    */
   function handleProfileImageClick() {
-    setShowProfileImageModal(true);
+    // Se non c'è una pfp custom, apri l'esplora risorse, altrimenti apri il modale
+    if (!profile?.profile_image_url || profile.profile_image_url === '/images/default-pfp.jpg') {
+      // Trova l'input file per upload immagine profilo
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = (e: any) => {
+        const file = e.target.files?.[0];
+        if (file) {
+          handleProfileImageUpload(file);
+        }
+      };
+      input.click();
+    } else {
+      setShowProfileImageModal(true);
+    }
   }
 
   /**

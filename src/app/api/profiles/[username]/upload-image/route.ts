@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentProfile } from '@/lib/auth';
-import { query, queryOne } from '@/lib/db';
+import { execute } from '@/lib/db';
 import { saveFile } from '@/lib/storage';
 
 export async function POST(
@@ -58,7 +58,7 @@ export async function POST(
     const result = saveFile(buffer, file.name, 'profiles', currentProfile.id);
 
     // 8. Aggiornare database
-    await query(
+    await execute(
       'UPDATE profiles SET profile_image_url = ?, updated_at = datetime("now") WHERE id = ?',
       [result.url, currentProfile.id]
     );

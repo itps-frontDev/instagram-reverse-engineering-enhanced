@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentProfile } from '@/lib/auth';
-import { query } from '@/lib/db';
+import { execute } from '@/lib/db';
 
 export async function POST(
   request: NextRequest,
@@ -30,7 +30,7 @@ export async function POST(
     }
 
     // 3. Aggiornare database (rimuovere URL)
-    await query(
+    await execute(
       'UPDATE profiles SET profile_image_url = NULL, updated_at = datetime("now") WHERE id = ?',
       [currentProfile.id]
     );
