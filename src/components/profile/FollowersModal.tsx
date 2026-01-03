@@ -47,6 +47,7 @@ export default function FollowersModal({
   const [suggestedUsers, setSuggestedUsers] = useState<SuggestedUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -112,12 +113,46 @@ export default function FollowersModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header con X chiusura */}
-        <div className="relative flex items-center justify-center py-8 px-8">
-          <h2 className="text-xl font-semibold text-center w-full text-[rgb(12,16,20)] dark:text-[rgb(248,249,249)]">
+        <div className="relative flex items-center justify-center border-b border-b-[rgb(219,223,228)] dark:border-b-0">
+          <h2 
+            className="text-center w-full text-[rgb(12,16,20)] dark:text-[rgb(248,249,249)] py-3"
+            style={{
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+              fontSize: '16px',
+              fontWeight: 600,
+              lineHeight: '20px',
+              display: 'block',
+              textAlign: 'center',
+              cursor: 'auto',
+              direction: 'ltr',
+              textSizeAdjust: '100%',
+              unicodeBidi: 'isolate',
+              pointerEvents: 'all',
+            }}
+          >
             {type === 'followers' ? 'Follower' : 'Chi segui'}
           </h2>
           <div className="absolute right-6 top-1/2 -translate-y-1/2">
-            <button type="button" tabIndex={0} onClick={onClose} className="p-2 rounded-full hover:bg-[rgb(37,41,46)] transition-colors">
+            <button 
+              type="button" 
+              tabIndex={0} 
+              onClick={onClose} 
+              className="text-[rgb(12,16,20)] dark:text-[rgb(248,249,249)]"
+              style={{
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+                fontSize: '16px',
+                fontWeight: 600,
+                height: '20px',
+                lineHeight: '20px',
+                display: 'block',
+                textAlign: 'center',
+                cursor: 'auto',
+                direction: 'ltr',
+                textSizeAdjust: '100%',
+                unicodeBidi: 'isolate',
+                pointerEvents: 'all',
+              }}
+            >
               <div>
                 <svg aria-label="Chiudi" fill="currentColor" height="18" role="img" viewBox="0 0 24 24" width="18">
                   <title>Chiudi</title>
@@ -130,29 +165,34 @@ export default function FollowersModal({
         </div>
 
         {/* Search */}
-        <div className="px-4 pb-2 relative">
+        <div className="px-4 py-2 relative">
           <input
             type="text"
             placeholder=""
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={e => e.target.style.backgroundColor = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgb(37,41,46)' : 'rgb(243,245,247)'}
-            onBlur={e => e.target.style.backgroundColor = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgb(54,54,54)' : 'rgb(239,239,239)'}
-            className="appearance-none border-none rounded-[25px] box-border text-[rgb(12,16,20)] dark:text-[rgb(248,249,249)] text-sm font-normal h-8 px-10 py-2 w-full outline-none bg-[rgb(239,239,239)] dark:bg-[rgb(54,54,54)]"
+            onFocus={(e) => {
+              setIsFocused(true);
+              e.target.style.backgroundColor = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgb(37,41,46)' : 'rgb(243,245,247)';
+            }}
+            onBlur={(e) => {
+              setIsFocused(false);
+              e.target.style.backgroundColor = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgb(54,54,54)' : 'rgb(239,239,239)';
+            }}
+            className="appearance-none border-none rounded-[25px] box-border text-[rgb(12,16,20)] dark:text-[rgb(248,249,249)] text-sm font-normal h-8 px-4 py-2 w-full outline-none bg-[rgb(239,239,239)] dark:bg-[rgb(54,54,54)]"
           />
           {searchQuery === '' && (
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none search-placeholder">
-              <svg aria-label="Cerca" fill="currentColor" height="16" role="img" viewBox="0 0 24 24" width="16" className="text-[rgb(248,249,249)]">
-                <title>Cerca</title>
-                <path d="M19 10.5A8.5 8.5 0 1 1 10.5 2a8.5 8.5 0 0 1 8.5 8.5Z" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
-                <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="16.511" x2="22" y1="16.511" y2="22"></line>
-              </svg>
-              <span className="text-xs text-[rgb(248,249,249)]">Cerca</span>
+            <div className="absolute left-8 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
+              {!isFocused && (
+                <svg aria-label="Cerca" fill="currentColor" height="16" role="img" viewBox="0 0 24 24" width="16" className="text-[rgb(142,142,142)] dark:text-[rgb(248,249,249)]">
+                  <title>Cerca</title>
+                  <path d="M19 10.5A8.5 8.5 0 1 1 10.5 2a8.5 8.5 0 0 1 8.5 8.5 Z" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
+                  <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="16.511" x2="22" y1="16.511" y2="22"></line>
+                </svg>
+              )}
+              <span className="text-xs text-[rgb(142,142,142)] dark:text-[rgb(248,249,249)]">Cerca</span>
             </div>
           )}
-          <style>{`
-            .input-focused + .search-placeholder { display: none !important; }
-          `}</style>
         </div>
 
         {/* User List */}
@@ -163,7 +203,7 @@ export default function FollowersModal({
             </div>
           ) : filteredUsers.length === 0 && searchQuery ? (
             <div className="flex items-center justify-center h-full text-gray-500">
-              Nessun utente trovato
+              Nessun risultato trovato.
             </div>
           ) : (
             <>
@@ -178,17 +218,56 @@ export default function FollowersModal({
                     className="flex items-center gap-3 flex-1 min-w-0"
                     onClick={onClose}
                   >
-                    <Image
-                      src={user.profile_image_url || '/images/default-pfp.jpg'}
-                      alt={user.username}
-                      width={44}
-                      height={44}
-                      className="rounded-full object-cover flex-shrink-0"
-                    />
+                    <div 
+                      className="rounded-full flex-shrink-0 relative"
+                      style={{
+                        width: '44px',
+                        height: '44px',
+                        border: '0px solid rgba(43, 48, 54, 0.8)',
+                        backgroundColor: 'rgb(243, 245, 247)',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <Image
+                        src={user.profile_image_url || '/images/default-pfp.jpg'}
+                        alt={user.username}
+                        width={44}
+                        height={44}
+                        className="rounded-full object-cover w-full h-full"
+                      />
+                    </div>
                     <div className="flex flex-col min-w-0">
-                      <span className="font-semibold text-sm text-instagram-primary truncate">
-                        {user.username}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className="font-semibold text-sm text-instagram-primary truncate">
+                          {user.username}
+                        </span>
+                        {user.is_verified && (
+                          <svg aria-label="Verificato" fill="rgb(0, 149, 246)" height="12" role="img" viewBox="0 0 40 40" width="12" className="flex-shrink-0">
+                            <title>Verificato</title>
+                            <path d="M19.998 3.094 14.638 0l-2.972 5.15H5.432v6.354L0 14.64 3.094 20 0 25.359l5.432 3.137v5.905h5.975L14.638 40l5.36-3.094L25.358 40l3.232-5.6h6.162v-6.01L40 25.359 36.905 20 40 14.641l-5.248-3.03v-6.46h-6.419L25.358 0l-5.36 3.094Zm7.415 11.225 2.254 2.287-11.43 11.5-6.835-6.93 2.244-2.258 4.587 4.581 9.18-9.18Z" fillRule="evenodd"></path>
+                          </svg>
+                        )}
+                        {(type === 'followers' && !Boolean(user.is_following)) && (
+                          <span 
+                            style={{
+                              display: 'block',
+                              color: 'rgb(65, 80, 247)',
+                              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              height: '16px',
+                              lineHeight: '16px',
+                              cursor: 'pointer',
+                              userSelect: 'none',
+                              textAlign: 'center',
+                              marginTop: '-2px',
+                              marginBottom: '-3px',
+                            }}
+                          >
+                            · Segui
+                          </span>
+                        )}
+                      </div>
                       {user.full_name && (
                         <span className="text-gray-500 text-sm truncate">
                           {user.full_name}
@@ -222,17 +301,36 @@ export default function FollowersModal({
                         className="flex items-center gap-3 flex-1 min-w-0"
                         onClick={onClose}
                       >
-                        <Image
-                          src={user.profile_image_url || '/images/default-pfp.jpg'}
-                          alt={user.username}
-                          width={44}
-                          height={44}
-                          className="rounded-full object-cover flex-shrink-0"
-                        />
+                        <div 
+                          className="rounded-full flex-shrink-0 relative"
+                          style={{
+                            width: '44px',
+                            height: '44px',
+                            border: '0px solid rgba(43, 48, 54, 0.8)',
+                            backgroundColor: 'rgb(243, 245, 247)',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          <Image
+                            src={user.profile_image_url || '/images/default-pfp.jpg'}
+                            alt={user.username}
+                            width={44}
+                            height={44}
+                            className="rounded-full object-cover w-full h-full"
+                          />
+                        </div>
                         <div className="flex flex-col min-w-0">
-                          <span className="font-semibold text-sm text-instagram-primary truncate">
-                            {user.username}
-                          </span>
+                          <div className="flex items-center gap-1">
+                            <span className="font-semibold text-sm text-instagram-primary truncate">
+                              {user.username}
+                            </span>
+                            {user.is_verified && (
+                              <svg aria-label="Verificato" fill="rgb(0, 149, 246)" height="12" role="img" viewBox="0 0 40 40" width="12" className="flex-shrink-0">
+                                <title>Verificato</title>
+                                <path d="M19.998 3.094 14.638 0l-2.972 5.15H5.432v6.354L0 14.64 3.094 20 0 25.359l5.432 3.137v5.905h5.975L14.638 40l5.36-3.094L25.358 40l3.232-5.6h6.162v-6.01L40 25.359 36.905 20 40 14.641l-5.248-3.03v-6.46h-6.419L25.358 0l-5.36 3.094Zm7.415 11.225 2.254 2.287-11.43 11.5-6.835-6.93 2.244-2.258 4.587 4.581 9.18-9.18Z" fillRule="evenodd"></path>
+                              </svg>
+                            )}
+                          </div>
                           {user.full_name && (
                             <span className="text-gray-500 text-sm truncate">
                               {user.full_name}
