@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get comments (top-level only, ordered by created_at DESC)
+    // Get comments (all comments including replies, ordered by created_at DESC)
     const commentsRows = await queryAll<CommentRow>(
       `SELECT
         c.id,
@@ -93,10 +93,9 @@ export async function GET(request: NextRequest) {
       FROM comments c
       INNER JOIN profiles p ON c.profile_id = p.id
       WHERE c.post_id = ?
-        AND c.parent_id IS NULL
         AND c.deleted_at IS NULL
         AND p.deleted_at IS NULL
-      ORDER BY c.created_at DESC
+      ORDER BY c.created_at ASC
       LIMIT ? OFFSET ?`,
       [currentProfile.id, postId, limit + 1, offset]
     );
@@ -192,10 +191,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create comment
+    // Create comment with local timezone
     const result = await execute(
-      `INSERT INTO comments (post_id, profile_id, parent_id, text)
-       VALUES (?, ?, ?, ?)`,
+      `INSERT INTO comments (post_id, profile_id, parent_id, text, created_at)
+       VALUES (?, ?, ?, ?, datetime('now', 'localtime'))`,
       [postId, currentProfile.id, parentId || null, text.trim()]
     );
 

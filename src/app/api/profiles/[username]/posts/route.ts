@@ -2,7 +2,7 @@
  * @fileoverview API route for getting profile posts
  *
  * This endpoint returns posts for a profile with pagination support.
- * Supports filtering by tab (posts, reels, tagged).
+ * Supports filtering by tab (posts, reels, saved, tagged).
  *
  * @module api/profiles/[username]/posts
  */
@@ -26,7 +26,7 @@ const POSTS_PER_PAGE = 12; // Instagram uses 12 posts per page
  * Get posts for a profile.
  *
  * Query parameters:
- * - tab: 'posts' | 'reels' | 'tagged' (default: 'posts')
+ * - tab: 'posts' | 'reels' | 'saved' | 'tagged' (default: 'posts')
  * - page: number (default: 0)
  *
  * @param request - Next.js request object
@@ -58,9 +58,9 @@ export async function GET(
       );
     }
 
-    if (!['posts', 'reels', 'tagged'].includes(tab)) {
+    if (!['posts', 'reels', 'saved', 'tagged'].includes(tab)) {
       return NextResponse.json(
-        { error: 'Invalid tab parameter. Must be: posts, reels, or tagged' },
+        { error: 'Invalid tab parameter. Must be: posts, reels, saved, or tagged' },
         { status: 400 }
       );
     }
@@ -156,6 +156,41 @@ export async function GET(
           AND p.deleted_at IS NULL
           AND pm.media_type = 'video'
         ORDER BY p.created_at DESC
+        LIMIT ? OFFSET ?`,
+        [targetProfile.id, limit, offset]
+      );
+    } else if (tab === 'saved') {
+      // Get saved posts
+      // Only the profile owner can see their saved posts
+      if (!currentProfile || currentProfile.id !== targetProfile.id) {
+        return NextResponse.json(
+          { error: 'Cannot view saved posts of other users' },
+          { status: 403 }
+        );
+      }
+
+      posts = await queryAll<Post>(
+        `SELECT DISTINCT
+          p.id,
+          p.caption,
+          p.likes_count,
+          p.comments_count,
+          p.created_at,
+          pm.media_url,
+          pm.media_type,
+          (SELECT COUNT(*)
+           FROM post_media pm2
+           WHERE pm2.post_id = p.id AND pm2.deleted_at IS NULL) as media_count
+        FROM saved_posts sp
+        INNER JOIN posts p ON p.id = sp.post_id
+        LEFT JOIN post_media pm
+          ON pm.post_id = p.id
+          AND pm.position = 0
+          AND pm.deleted_at IS NULL
+        WHERE sp.profile_id = ?
+          AND sp.deleted_at IS NULL
+          AND p.deleted_at IS NULL
+        ORDER BY sp.created_at DESC
         LIMIT ? OFFSET ?`,
         [targetProfile.id, limit, offset]
       );
