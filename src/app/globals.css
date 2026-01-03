@@ -202,7 +202,9 @@ body {
   padding: 32px 32px 16px 32px;
 }
 
-.modal-btn {
+.modal-btn-primary,
+.modal-btn-danger,
+.modal-btn-cancel {
   background-color: rgba(0, 0, 0, 0);
   border: none;
   border-top: 1px solid rgb(43, 48, 54);
@@ -218,19 +220,16 @@ body {
 }
 
 .modal-btn-primary {
-  @apply modal-btn;
   color: rgb(74, 93, 249);
   font-weight: 700;
 }
 
 .modal-btn-danger {
-  @apply modal-btn;
   color: rgb(237, 73, 86);
   font-weight: 700;
 }
 
 .modal-btn-cancel {
-  @apply modal-btn;
   color: rgb(248, 249, 249);
   font-weight: 400;
   border-bottom-left-radius: 12px;
