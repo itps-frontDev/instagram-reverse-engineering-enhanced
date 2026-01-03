@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createPortal } from 'react-dom';
+import CreatePostModal from '@/components/feed/CreatePostModal';
 import {
   Home,
   Search,
@@ -24,14 +25,21 @@ import {
   Menu,
 } from 'lucide-react';
 
-const navItems = [
+type NavItem = {
+  icon: string | any;
+  label: string;
+  href?: string;
+  action?: string;
+};
+
+const navItems: NavItem[] = [
   { icon: 'custom-home', label: 'Home', href: '/' },
   { icon: 'custom-search', label: 'Cerca', href: '/search' },
   { icon: 'custom-explore', label: 'Esplora', href: '/explore' },
   { icon: 'custom-reels', label: 'Reels', href: '/reels' },
   { icon: 'custom-message', label: 'Messaggi', href: '/direct' },
   { icon: Heart, label: 'Notifiche', href: '/notifications' },
-  { icon: 'custom-create', label: 'Crea', href: '/create' },
+  { icon: 'custom-create', label: 'Crea', action: 'create' },
 ];
 
 export default function Sidebar() {
@@ -39,6 +47,7 @@ export default function Sidebar() {
   const { profile, isLoading, logout } = useAuth();
   const [showMore, setShowMore] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
   const router = useRouter();
@@ -97,16 +106,8 @@ export default function Sidebar() {
       <nav className="flex-1 space-y-1">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all duration-200 ${
-                isActive
-                  ? 'font-bold'
-                  : 'font-normal hover:bg-[var(--bg-tertiary)]'
-              }`}
-            >
+          const content = (
+            <>
               {item.icon === 'custom-home' ? (
                 <svg
                   className={`w-[26px] h-[26px] text-[#262626] dark:text-white`}
@@ -213,6 +214,36 @@ export default function Sidebar() {
                 />
               )}
               <span className="hidden xl:block text-base text-[#262626] dark:text-white">{item.label}</span>
+            </>
+          );
+
+          if (item.action === 'create') {
+            return (
+              <button
+                key={item.action}
+                onClick={() => setShowCreateModal(true)}
+                className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all duration-200 w-full text-left ${
+                  isActive
+                    ? 'font-bold'
+                    : 'font-normal hover:bg-[var(--bg-tertiary)]'
+                }`}
+              >
+                {content}
+              </button>
+            );
+          }
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href!}
+              className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all duration-200 ${
+                isActive
+                  ? 'font-bold'
+                  : 'font-normal hover:bg-[var(--bg-tertiary)]'
+              }`}
+            >
+              {content}
             </Link>
           );
         })}
@@ -335,6 +366,15 @@ export default function Sidebar() {
               </div>
             </div>
           </div>,
+          document.body
+        )}
+
+        {/* Create Post Modal */}
+        {mounted && showCreateModal && createPortal(
+          <CreatePostModal 
+            isOpen={showCreateModal} 
+            onClose={() => setShowCreateModal(false)} 
+          />,
           document.body
         )}
       </div>

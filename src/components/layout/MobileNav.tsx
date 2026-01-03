@@ -9,31 +9,42 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import CreatePostModal from '@/components/feed/CreatePostModal';
 
 export default function MobileNav() {
   const pathname = usePathname();
   const { profile, isLoading } = useAuth();
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  const navItems = [
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  type NavItem = {
+    icon: string;
+    href?: string;
+    action?: string;
+  };
+
+  const navItems: NavItem[] = [
     { icon: 'custom-home', href: '/' },
     { icon: 'custom-explore', href: '/explore' },
     { icon: 'custom-reels', href: '/reels' },
-    { icon: 'custom-create', href: '/create' },
+    { icon: 'custom-create', action: 'create' },
     { icon: 'custom-message', href: '/direct' },
   ];
 
   return (
+    <>
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-[var(--bg-primary)] border-t border-[var(--border-primary)] z-50">
       <div className="flex items-center justify-around h-14">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex items-center justify-center w-full h-full"
-            >
+          const content = (
+            <>
               {item.icon === 'custom-home' ? (
                 <svg
                   className={`w-6 h-6 text-[var(--text-primary)]`}
@@ -118,6 +129,28 @@ export default function MobileNav() {
                   )}
                 </svg>
               ) : null}
+            </>
+          );
+
+          if (item.action === 'create') {
+            return (
+              <button
+                key={item.action}
+                onClick={() => setShowCreateModal(true)}
+                className="flex items-center justify-center w-full h-full"
+              >
+                {content}
+              </button>
+            );
+          }
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href!}
+              className="flex items-center justify-center w-full h-full"
+            >
+              {content}
             </Link>
           );
         })}
@@ -145,5 +178,15 @@ export default function MobileNav() {
         )}
       </div>
     </nav>
+
+    {/* Create Post Modal */}
+    {mounted && showCreateModal && createPortal(
+      <CreatePostModal 
+        isOpen={showCreateModal} 
+        onClose={() => setShowCreateModal(false)} 
+      />,
+      document.body
+    )}
+    </>
   );
 }
