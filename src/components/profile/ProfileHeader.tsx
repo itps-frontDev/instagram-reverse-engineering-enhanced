@@ -63,7 +63,7 @@ export default function ProfileHeader({
               />
               {/* Camera Icon Overlay - solo se non c'è immagine custom */}
               {(!profile.profile_image_url || profile.profile_image_url === '/images/default-pfp.jpg') && followStatus.isOwnProfile && !isUploadingImage && (
-                <div className="absolute inset-0 rounded-full flex items-center justify-center pointer-events-none" style={{ backgroundColor: 'rgba(85, 85, 85, 0.7)' }}>
+                <div className="absolute inset-0 rounded-full flex items-center justify-center pointer-events-none overlay-bg">
                   <svg
                     viewBox="0 0 24 24"
                     width="44"
@@ -77,7 +77,7 @@ export default function ProfileHeader({
               )}
               {/* Loading Spinner - durante upload */}
               {isUploadingImage && (
-                <div className="absolute inset-0 rounded-full flex items-center justify-center bg-black/50">
+                <div className="absolute inset-0 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(12, 16, 20, 0.7)' }}>
                   <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
                 </div>
               )}

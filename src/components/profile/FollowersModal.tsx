@@ -74,7 +74,7 @@ export default function FollowersModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/65"
+      className="fixed inset-0 z-50 flex items-center justify-center overlay-bg"
       onClick={onClose}
     >
       <div

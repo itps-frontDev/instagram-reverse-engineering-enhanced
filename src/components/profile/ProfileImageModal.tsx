@@ -47,57 +47,119 @@ export default function ProfileImageModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/65"
+      role="dialog"
+      className="fixed inset-0 z-50 flex items-start justify-center pointer-events-none"
+      style={{ height: '520px' }}
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-[rgb(38,38,38)] rounded-xl w-[400px] flex flex-col overflow-hidden"
+        className="bg-[rgb(33,35,40)] rounded-[24px] overflow-auto pointer-events-auto"
+        style={{ height: '223px', maxHeight: '1231px', width: '560px' }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="py-8 border-b border-[#DBDBDB] dark:border-[#2b3036]">
-          <h3 className="text-center font-light text-[18px] leading-[25px] text-instagram-primary">
-            Cambia immagine del profilo
-          </h3>
-        </div>
-
-        {/* Actions */}
-        <div className="flex flex-col">
-          {/* Carica foto */}
-          <button
-            onClick={handleUploadClick}
-            className="py-3 text-[14px] font-bold text-[#0095F6] border-b border-[#DBDBDB] dark:border-[#2b3036] hover:bg-gray-50 dark:hover:bg-[#1A1A1A] transition-colors"
-          >
-            Carica foto
-          </button>
-
-          {/* Rimuovi immagine attuale - solo se c'è un'immagine */}
-          {hasImage && (
-            <button
-              onClick={handleRemoveClick}
-              className="py-3 text-[14px] font-bold text-[#ED4956] border-b border-[#DBDBDB] dark:border-[#2b3036] hover:bg-gray-50 dark:hover:bg-[#1A1A1A] transition-colors"
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', maxWidth: '100%' }}>
+          {/* Header with title */}
+          <div style={{ padding: '32px 0 8px' }}>
+            <h3
+              className="text-center text-[rgb(248,249,249)] break-words"
+              style={{
+                fontSize: '20px',
+                lineHeight: '25px',
+                fontWeight: 400,
+                maxWidth: '100%',
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word',
+              }}
             >
-              Rimuovi immagine attuale
+              Cambia immagine del profilo
+            </h3>
+          </div>
+
+          {/* Buttons */}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {/* Carica foto */}
+            <button
+              className="text-center"
+              style={{
+                backgroundColor: 'rgba(0, 0, 0, 0)',
+                borderTop: '1px solid rgb(43, 48, 54)',
+                borderBottom: 'none',
+                borderLeft: 'none',
+                borderRight: 'none',
+                color: 'rgb(74, 93, 249)',
+                fontWeight: 700,
+                fontSize: '14px',
+                height: '48px',
+                minHeight: '48px',
+                padding: '4px 8px',
+                cursor: 'pointer',
+                userSelect: 'none',
+              }}
+              onClick={handleUploadClick}
+            >
+              Carica foto
             </button>
-          )}
 
-          {/* Annulla */}
-          <button
-            onClick={onClose}
-            className="py-3 text-[14px] text-instagram-primary hover:bg-gray-50 dark:hover:bg-[#1A1A1A] transition-colors"
-          >
-            Annulla
-          </button>
+            {/* Rimuovi immagine attuale */}
+            {hasImage && (
+              <button
+                className="text-center"
+                style={{
+                  backgroundColor: 'rgba(0, 0, 0, 0)',
+                  borderTop: '1px solid rgb(43, 48, 54)',
+                  borderBottom: 'none',
+                  borderLeft: 'none',
+                  borderRight: 'none',
+                  color: 'rgb(237, 73, 86)',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  height: '48px',
+                  minHeight: '48px',
+                  padding: '4px 8px',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                }}
+                onClick={handleRemoveClick}
+              >
+                Rimuovi immagine attuale
+              </button>
+            )}
+
+            {/* Annulla */}
+            <button
+              className="text-center"
+              style={{
+                backgroundColor: 'rgba(0, 0, 0, 0)',
+                borderTop: '1px solid rgb(43, 48, 54)',
+                borderBottom: 'none',
+                borderLeft: 'none',
+                borderRight: 'none',
+                borderBottomLeftRadius: '12px',
+                borderBottomRightRadius: '12px',
+                color: 'rgb(248, 249, 249)',
+                fontWeight: 400,
+                fontSize: '14px',
+                height: '48px',
+                minHeight: '48px',
+                padding: '4px 8px',
+                cursor: 'pointer',
+                userSelect: 'none',
+              }}
+              onClick={onClose}
+            >
+              Annulla
+            </button>
+
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png"
+              style={{ display: 'none' }}
+              onChange={handleFileChange}
+            />
+          </div>
         </div>
-
-        {/* Hidden file input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/png"
-          className="hidden"
-          onChange={handleFileChange}
-        />
       </div>
     </div>
   );
