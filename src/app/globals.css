@@ -1,8 +1,4 @@
 @import "tailwindcss";
-@import "./overlay.css";
-@import "./modals.css";
-@import "./sidebar.css";
-
 
 :root {
   /* Instagram Design System Colors - Light Mode */
@@ -133,44 +129,3 @@ body {
     @apply border-[var(--color-border)];
   }
 }
-
-/* Like Animation */
-@keyframes like-bump {
-  0% {
-    transform: scale(1);
-  }
-  25% {
-    transform: scale(1.2);
-  }
-  50% {
-    transform: scale(0.95);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-.like-animation {
-  animation: like-bump 0.4s ease-in-out;
-}
-
-/* Like Explode Animation (double-click heart) */
-@keyframes like-explode {
-  0% {
-    transform: translate(-50%, -50%) scale(0);
-    opacity: 0;
-  }
-  20% {
-    transform: translate(-50%, -50%) scale(1.1);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, -250%) scale(0.8);
-    opacity: 0;
-  }
-}
-
-.like-explode-animation {
-  animation: like-explode 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-

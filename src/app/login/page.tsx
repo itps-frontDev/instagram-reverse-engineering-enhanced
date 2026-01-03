@@ -1,12 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import Footer from '@/components/common/Footer';
 
-function LoginForm() {
+export default function LoginPage() {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -212,19 +211,64 @@ function LoginForm() {
       </div>
 
       {/* Footer */}
-      <Footer />
+      <footer className="py-3 px-4 mt-auto">
+        <div className="max-w-[1066px] mx-auto">
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 mb-3 text-xs text-[#8E8E8E] dark:text-[#A8A8A8]">
+            <a href="#" className="hover:underline">
+              Meta
+            </a>
+            <a href="#" className="hover:underline">
+              Informazioni
+            </a>
+            <a href="#" className="hover:underline">
+              Blog
+            </a>
+            <a href="#" className="hover:underline">
+              Lavora con noi
+            </a>
+            <a href="#" className="hover:underline">
+              Aiuto
+            </a>
+            <a href="#" className="hover:underline">
+              API
+            </a>
+            <a href="#" className="hover:underline">
+              Privacy
+            </a>
+            <a href="#" className="hover:underline">
+              Condizioni
+            </a>
+            <a href="#" className="hover:underline">
+              Luoghi
+            </a>
+            <a href="#" className="hover:underline">
+              Instagram Lite
+            </a>
+            <a href="#" className="hover:underline">
+              Meta AI
+            </a>
+            <a href="#" className="hover:underline">
+              Threads
+            </a>
+            <a href="#" className="hover:underline">
+              Caricamento dei contatti e non-utenti
+            </a>
+            <a href="#" className="hover:underline">
+              Meta Verified
+            </a>
+          </div>
+          <div className="flex justify-center gap-4 text-xs text-[#8E8E8E] dark:text-[#A8A8A8]">
+            <select className="bg-transparent text-[#8E8E8E] dark:text-[#A8A8A8] text-xs border-none cursor-pointer focus:outline-none">
+              <option>Italiano</option>
+              <option>English</option>
+              <option>Español</option>
+              <option>Français</option>
+              <option>Deutsch</option>
+            </select>
+            <span>© 2025 Instagram from Meta</span>
+          </div>
+        </div>
+      </footer>
     </div>
-  );
-}
-
-export default function LoginPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[#FAFAFA] dark:bg-[#0C1014] flex items-center justify-center">
-        <div className="text-[#8E8E8E]">Caricamento...</div>
-      </div>
-    }>
-      <LoginForm />
-    </Suspense>
   );
 }

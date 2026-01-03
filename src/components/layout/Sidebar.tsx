@@ -52,6 +52,8 @@ export default function Sidebar() {
   const moreButtonRef = useRef<HTMLButtonElement>(null);
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const isDirectPage = pathname.startsWith('/direct');
+  const isCollapsed = isDirectPage;
 
   useEffect(() => {
     setMounted(true);
@@ -71,7 +73,9 @@ export default function Sidebar() {
 
   return (
     <>
-      <aside className="hidden lg:flex fixed left-0 top-0 h-screen lg:w-[80px] xl:w-[336px] flex-col border-r border-[#DBDBDB] dark:border-[#262626] bg-[var(--bg-primary)] py-8 px-3 transition-all duration-300">
+      <aside className={`hidden lg:flex fixed left-0 top-0 h-screen flex-col border-r border-[#DBDBDB] dark:border-[#262626] bg-[var(--bg-primary)] py-8 px-3 transition-all duration-300 ${
+        isCollapsed ? 'w-[80px]' : 'lg:w-[80px] xl:w-[336px]'
+      }`}>
       {/* Instagram Logo */}
       <div className="mb-8 px-3 pt-2">
         <Link href="/" className="flex items-center justify-center xl:justify-start">
@@ -259,25 +263,15 @@ export default function Sidebar() {
             }`}
           >
             <div className="w-[26px] h-[26px] flex items-center justify-center">
-              <div 
-                className={`rounded-full ${pathname.startsWith(`/profile/${profile.username}`) ? 'ring-2 ring-[rgb(12,16,20)] dark:ring-[rgb(245,245,245)]' : ''}`}
-                style={{
-                  width: '24px',
-                  height: '24px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <ProfilePicture
-                  src={profile.profile_image_url}
-                  alt={profile.username}
-                  size={24}
-                  className="sidebar-pfp"
-                />
-              </div>
+              <ProfilePicture
+                src={profile.profile_image_url}
+                alt={profile.username}
+                size={26}
+              />
             </div>
-            <span className="hidden xl:block text-base text-[#262626] dark:text-white">Profilo</span>
+            {!isCollapsed && (
+              <span className="hidden xl:block text-base text-[#262626] dark:text-white">Profilo</span>
+            )}
           </Link>
         )}
       </nav>
@@ -292,7 +286,9 @@ export default function Sidebar() {
           aria-expanded={showMore}
         >
           <Menu className="w-[26px] h-[26px] text-[#262626] dark:text-white" />
-          <span className="hidden xl:block text-base text-[#262626] dark:text-white">Altro</span>
+          {!isCollapsed && (
+            <span className="hidden xl:block text-base text-[#262626] dark:text-white">Altro</span>
+          )}
         </button>
 
         {/* Popup Menu */}
