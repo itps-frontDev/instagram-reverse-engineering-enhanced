@@ -1,13 +1,3 @@
-@media (prefers-color-scheme: dark) {
-  .modal-container {
-    background-color: rgb(33, 35, 40);
-  }
-  .modal-btn-primary,
-  .modal-btn-danger,
-  .modal-btn-cancel {
-    border-top: 1px solid rgb(43, 48, 54);
-  }
-}
 /**
  * Modal Components Styles
  * Shared styles for all modal dialogs across the application
@@ -25,7 +15,12 @@
 
 @media (prefers-color-scheme: dark) {
   .modal-container {
-    background-color: rgb(43, 48, 54);
+    background-color: rgb(33, 35, 40);
+  }
+  .modal-btn-primary,
+  .modal-btn-danger,
+  .modal-btn-cancel {
+    border-top: 2px solid rgb(43, 48, 54);
   }
 }
 
