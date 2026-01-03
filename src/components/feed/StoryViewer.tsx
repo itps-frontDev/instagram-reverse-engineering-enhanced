@@ -297,7 +297,7 @@ export default function StoryViewer({
   }
 
   return (
-    <div className="fixed inset-0 bg-[#1a1a1a] z-50 flex items-center justify-center">
+    <div className="fixed inset-0 bg-[#1a1a1a] z-50 flex items-center justify-center overflow-x-hidden">
       
       {/* Instagram Logo */}
       <div className="absolute top-4 left-4 z-20">
@@ -333,13 +333,13 @@ export default function StoryViewer({
         <button
           key={`prev-${index}`}
           onClick={goToPrevious}
-          className={`absolute top-1/2 -translate-y-1/2 w-[277px] h-[490px] rounded-lg overflow-hidden transition-all ${
+          className={`fixed top-1/2 -translate-y-1/2 w-[277px] h-[490px] rounded-lg overflow-hidden transition-all ${
             isTransitioning && transitionDirection === 'right' && index === 0
               ? 'duration-500 ease-out z-30'
               : 'duration-300 z-20 hover:scale-105'
           }`}
           style={{ 
-            left: `${520 - index * 357}px`,
+            left: `calc(50% - 345px - ${520 + index * 357}px)`,
             transform: isTransitioning && transitionDirection === 'right' && index === 0
               ? 'translateX(500px) scale(2.49)'
               : undefined
@@ -387,7 +387,7 @@ export default function StoryViewer({
       ))}
 
       {/* Story content */}
-      <div className={`relative w-full max-w-[690px] h-[96vh] overflow-hidden rounded-lg z-20 ${
+      <div className={`relative w-full max-w-[690px] h-[90vh] md:h-[90vh] lg:h-[96vh] mx-4 sm:mx-0 overflow-hidden rounded-lg z-20 ${
         isTransitioning || isReturning
           ? 'transition-all duration-500 ease-out' 
           : ''
@@ -532,13 +532,13 @@ export default function StoryViewer({
         <button
           key={`next-${index}`}
           onClick={goToNext}
-          className={`absolute top-1/2 -translate-y-1/2 w-[277px] h-[490px] rounded-lg overflow-hidden transition-all ${
+          className={`fixed top-1/2 -translate-y-1/2 w-[277px] h-[490px] rounded-lg overflow-hidden transition-all ${
             isTransitioning && transitionDirection === 'left' && index === 0
               ? 'duration-500 ease-out z-30'
               : 'duration-300 z-20 hover:scale-105'
           }`}
           style={{ 
-            right: `${520 - index * 357}px`,
+            right: `calc(50% - 345px - ${520 + index * 357}px)`,
             transform: isTransitioning && transitionDirection === 'left' && index === 0
               ? 'translateX(-465px) scale(2.49)'
               : undefined
