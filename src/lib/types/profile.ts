@@ -159,6 +159,7 @@ export interface ProfileHeaderProps {
   onUnfollow: () => Promise<void>;
   isLoading?: boolean;
   onProfileImageClick?: () => void;
+  isUploadingImage?: boolean;
 }
 
 /**
@@ -168,6 +169,8 @@ export interface ProfileStatsProps {
   postsCount: number;
   followersCount: number;
   followingCount: number;
+  onFollowersClick?: () => void;
+  onFollowingClick?: () => void;
 }
 
 /**
