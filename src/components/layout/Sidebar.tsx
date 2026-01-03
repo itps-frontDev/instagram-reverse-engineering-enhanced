@@ -228,11 +228,13 @@ export default function Sidebar() {
             }`}
           >
             <div className="w-[26px] h-[26px] flex items-center justify-center">
-              <ProfilePicture
-                src={profile.profile_image_url}
-                alt={profile.username}
-                size={26}
-              />
+              <div className={pathname.startsWith(`/profile/${profile.username}`) ? 'border-2 border-[rgb(12,16,20)] dark:border-[rgb(245,245,245)] rounded-full' : ''}>
+                <ProfilePicture
+                  src={profile.profile_image_url}
+                  alt={profile.username}
+                  size={26}
+                />
+              </div>
             </div>
             <span className="hidden xl:block text-base text-[#262626] dark:text-white">Profilo</span>
           </Link>

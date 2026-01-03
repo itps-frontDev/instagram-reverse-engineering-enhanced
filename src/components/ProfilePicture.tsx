@@ -8,20 +8,38 @@ interface ProfilePictureProps {
 }
 
 export default function ProfilePicture({ src, alt = 'Profile picture', size = 32, className = '' }: ProfilePictureProps) {
-  const validSrc = src && src.trim() !== '' ? src : '/images/default-pfp.jpg';
+  const isDefault = !src || src.trim() === '';
+  const validSrc = isDefault ? '/images/default-pfp.jpg' : src;
+  
   return (
-    <Image
-      src={validSrc}
-      alt={alt}
-      width={size}
-      height={size}
-      className={`sidebar-pfp border-2 border-[rgb(12,16,20)] dark:border-[rgb(245,245,245)] rounded-full ${className}`}
-      style={{
-        boxSizing: 'border-box',
-        width: size,
-        height: size,
-        display: 'block',
-      }}
-    />
+    <span style={{ position: 'relative', display: 'inline-block', width: size, height: size }}>
+      <Image
+        src={validSrc}
+        alt={alt}
+        width={size}
+        height={size}
+        className={`rounded-full ${className}`}
+        style={{
+          boxSizing: 'border-box',
+          width: size,
+          height: size,
+          display: 'block',
+        }}
+      />
+      {isDefault && (
+        <span
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            background: 'rgba(85, 85, 85, 0.7)',
+            borderRadius: '50%',
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+    </span>
   );
 }
