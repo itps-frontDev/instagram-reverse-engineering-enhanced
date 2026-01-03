@@ -1,0 +1,30 @@
+/* Sidebar Design Tokens & Styles */
+
+:root {
+  --sidebar-pfp-border-light: rgb(12, 16, 20);
+  --sidebar-pfp-border-dark: rgb(245, 245, 245);
+  --sidebar-pfp-color-light: rgb(65, 80, 247);
+  --sidebar-pfp-color-dark: rgb(112, 141, 255);
+  /* Aggiungi qui altre variabili sidebar se necessario */
+}
+
+.sidebar-pfp {
+  border-radius: 50%;
+  box-sizing: border-box;
+  border-bottom: 2px solid var(--sidebar-pfp-border-light);
+  border-inline-end: 2px solid var(--sidebar-pfp-border-light);
+  border-inline-start: 2px solid var(--sidebar-pfp-border-light);
+  border-top: 2px solid var(--sidebar-pfp-border-light);
+  color: var(--sidebar-pfp-color-light);
+  background: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .sidebar-pfp {
+    border-bottom: 2px solid var(--sidebar-pfp-border-dark);
+    border-inline-end: 2px solid var(--sidebar-pfp-border-dark);
+    border-inline-start: 2px solid var(--sidebar-pfp-border-dark);
+    border-top: 2px solid var(--sidebar-pfp-border-dark);
+    color: var(--sidebar-pfp-color-dark);
+  }
+}

@@ -15,7 +15,14 @@ export default function ProfilePicture({ src, alt = 'Profile picture', size = 32
       alt={alt}
       width={size}
       height={size}
-      className={`rounded-full object-cover ${className}`}
+      className={`sidebar-pfp ${className}`}
+      style={{
+        borderRadius: '50%',
+        boxSizing: 'border-box',
+        width: size,
+        height: size,
+        display: 'block',
+      }}
     />
   );
 }
