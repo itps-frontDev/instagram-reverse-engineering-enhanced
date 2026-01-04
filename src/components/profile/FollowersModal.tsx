@@ -201,11 +201,20 @@ export default function FollowersModal({
 
   if (!isOpen) return null;
 
-  const filteredUsers = users.filter(
+  let filteredUsers = users.filter(
     (user) =>
       user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.full_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Se l'utente corrente è nella lista, mettilo in prima posizione
+  if (currentProfile) {
+    const idx = filteredUsers.findIndex(u => u.username === currentProfile.username);
+    if (idx > 0) {
+      const [me] = filteredUsers.splice(idx, 1);
+      filteredUsers = [me, ...filteredUsers];
+    }
+  }
 
   return (
     <div
