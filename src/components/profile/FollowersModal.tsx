@@ -449,7 +449,7 @@ export default function FollowersModal({
                     {/* Se è il proprio profilo nella sezione followers, mostra solo "Rimuovi" o "Rimosso" */}
                     {isOwnProfile && type === 'followers' && (
                       <button
-                        className={removedUsers.has(user.id) ? "flex items-center justify-center rounded-lg text-sm font-semibold h-8 px-4 bg-[rgb(220,224,229)] dark:bg-[rgb(43,48,54)] text-[rgb(12,16,20)] dark:text-[rgb(255,255,255)] pointer-events-none select-none" : "btn-instagram-secondary"}
+                        className={removedUsers.has(user.id) ? "btn-removed" : "btn-instagram-secondary"}
                         onClick={() => handleUnfollow(user.id)}
                         disabled={removedUsers.has(user.id)}
                       >
