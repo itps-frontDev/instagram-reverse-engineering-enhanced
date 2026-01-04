@@ -147,9 +147,6 @@ export default function ProfileActions({
         >
           {actionLoading ? 'Annullamento...' : 'Richiesta effettuata'}
         </button>
-        <button className="btn-instagram-secondary flex-1 !h-10.5">
-          Messaggio
-        </button>
       </div>
     );
   }

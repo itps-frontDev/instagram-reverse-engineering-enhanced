@@ -172,6 +172,7 @@ export interface ProfileStatsProps {
   followingCount: number;
   onFollowersClick?: () => void;
   onFollowingClick?: () => void;
+  canViewContent?: boolean; // Can view private profile content
 }
 
 /**

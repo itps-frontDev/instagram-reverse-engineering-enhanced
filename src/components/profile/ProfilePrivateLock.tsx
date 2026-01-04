@@ -14,18 +14,18 @@ export default function ProfilePrivateLock({
   isPending,
 }: ProfilePrivateLockProps) {
   return (
-    <div className="py-16 flex flex-col items-center justify-center text-center max-w-sm mx-auto">
-      <div className="w-20 h-20 rounded-full border-2 border-black dark:border-white flex items-center justify-center mb-6">
-        <Lock className="w-10 h-10" />
+    <div className="w-full flex justify-center px-4 mt-8 mb-12">
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 rounded-full border-2 border-white flex items-center justify-center flex-shrink-0">
+          <Lock className="w-5 h-5 text-white" />
+        </div>
+        <div className="flex flex-col text-white">
+          <h2 className="text-sm font-semibold whitespace-nowrap">Questo account è privato</h2>
+          <p className="text-sm whitespace-nowrap" style={{ color: 'rgb(168, 168, 168)' }}>
+            Segui questa persona per vedere le sue foto e i suoi video.
+          </p>
+        </div>
       </div>
-
-      <h2 className="text-xl font-semibold mb-2">Questo account è privato</h2>
-
-      <p className="text-sm text-gray-500 dark:text-gray-400">
-        {isPending
-          ? `Segui questa persona per vedere le sue foto e i suoi video.`
-          : `Segui questa persona per vedere le sue foto e i suoi video.`}
-      </p>
     </div>
   );
 }

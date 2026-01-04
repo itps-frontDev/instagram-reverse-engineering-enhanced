@@ -603,18 +603,23 @@ export default function ProfilePage({
           )}
 
           {/* Tabs blocco */}
-          <ProfileTabs
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-            postsCount={profile.posts_count}
-            showTagged={followStatus.isOwnProfile}
-            hasReels={profile.has_reels || false}
-            canViewTagged={
-              followStatus.isOwnProfile ||
-              !profile.is_private ||
-              followStatus.isFollowing
-            }
-          />
+          {canView ? (
+            <ProfileTabs
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+              postsCount={profile.posts_count}
+              showTagged={followStatus.isOwnProfile}
+              hasReels={profile.has_reels || false}
+              canViewTagged={
+                followStatus.isOwnProfile ||
+                !profile.is_private ||
+                followStatus.isFollowing
+              }
+            />
+          ) : (
+            // Bordo anche quando i tabs non sono visibili
+            <div className="w-full border-b border-[#DBDBDB] dark:border-[#2b3036]" />
+          )}
 
           {/* Content blocco */}
           <div className="w-full flex justify-center px-4">
