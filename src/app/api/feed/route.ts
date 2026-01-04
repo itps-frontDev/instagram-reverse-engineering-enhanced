@@ -86,20 +86,28 @@ export async function GET(request: NextRequest) {
       WHERE p.deleted_at IS NULL
         AND pr.deleted_at IS NULL
         AND (
-          -- Posts from users the current user follows
-          EXISTS (
+          -- Only the most recent post from the current user
+          (p.profile_id = ? AND p.id = (
+            SELECT id FROM posts 
+            WHERE profile_id = ? 
+            AND deleted_at IS NULL 
+            ORDER BY created_at DESC 
+            LIMIT 1
+          ))
+          -- OR posts from users the current user follows
+          OR EXISTS (
             SELECT 1 FROM follows f
             WHERE f.follower_profile_id = ?
               AND f.following_profile_id = p.profile_id
               AND f.status = 'accepted'
               AND f.deleted_at IS NULL
           )
-          -- OR posts from public profiles (Explore)
+          -- OR posts from public profiles (Explore), excluding own posts
           OR (pr.is_private = 0 AND p.profile_id != ?)
         )
       ORDER BY p.created_at DESC
       LIMIT ? OFFSET ?`,
-      [currentProfile.id, currentProfile.id, currentProfile.id, currentProfile.id, limit + 1, offset]
+      [currentProfile.id, currentProfile.id, currentProfile.id, currentProfile.id, currentProfile.id, currentProfile.id, limit + 1, offset]
     );
 
     // Check if there are more posts
