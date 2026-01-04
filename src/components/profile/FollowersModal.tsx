@@ -96,7 +96,13 @@ export default function FollowersModal({
       }
 
       const data = await res.json();
-      setSuggestedUsers(data.suggestions || []);
+      // Ensure is_following and isPending are initialized
+      const suggestions = (data.suggestions || []).map((user: SuggestedUser) => ({
+        ...user,
+        is_following: user.is_following ?? 0,
+        isPending: user.isPending ?? false,
+      }));
+      setSuggestedUsers(suggestions);
     } catch (error) {
       console.error('Error fetching suggested users:', error);
       setSuggestedUsers([]);
@@ -119,7 +125,7 @@ export default function FollowersModal({
             ? { ...u, is_following: data.status === 'accepted' ? 1 : 0, isPending: data.status === 'pending' }
             : u
         ));
-        // Update suggested users status (don't remove, just update status)
+        // Update suggested users status
         setSuggestedUsers(prev => prev.map(u =>
           u.id === targetProfileId
             ? { ...u, is_following: data.status === 'accepted' ? 1 : 0, isPending: data.status === 'pending' }
@@ -131,10 +137,10 @@ export default function FollowersModal({
     }
   }
 
-  async function handleUnfollow(targetProfileId: number) {
+  async function handleUnfollow(targetProfileId: number, isSuggested: boolean = false) {
     try {
       // Se era un follower rimosso dal proprio profilo, aggiungi a removedUsers SUBITO (ottimistico)
-      if (isOwnProfile && type === 'followers') {
+      if (isOwnProfile && type === 'followers' && !isSuggested) {
         setRemovedUsers(prev => {
           const newSet = new Set(prev);
           newSet.add(targetProfileId);
@@ -143,7 +149,8 @@ export default function FollowersModal({
       }
       
       // Scegli l'endpoint giusto in base al contesto
-      const endpoint = isOwnProfile && type === 'followers' 
+      // I suggested users devono SEMPRE usare unfollow, non remove-follower
+      const endpoint = (isOwnProfile && type === 'followers' && !isSuggested)
         ? '/api/profiles/actions/remove-follower'
         : '/api/profiles/actions/unfollow';
       
@@ -169,7 +176,7 @@ export default function FollowersModal({
         ));
       } else {
         // Se fallisce, rimuovi da removedUsers
-        if (isOwnProfile && type === 'followers') {
+        if (isOwnProfile && type === 'followers' && !isSuggested) {
           setRemovedUsers(prev => {
             const newSet = new Set(prev);
             newSet.delete(targetProfileId);
@@ -180,7 +187,7 @@ export default function FollowersModal({
     } catch (error) {
       console.error('Error unfollowing user:', error);
       // Se c'è un errore, rimuovi da removedUsers
-      if (isOwnProfile && type === 'followers') {
+      if (isOwnProfile && type === 'followers' && !isSuggested) {
         setRemovedUsers(prev => {
           const newSet = new Set(prev);
           newSet.delete(targetProfileId);
@@ -563,31 +570,33 @@ export default function FollowersModal({
                         </div>
                       </div>
 
-                      {/* Pulsante Segui/Richiesta/Segui già */}
-                      {!user.is_following && !user.isPending && (
-                        <button
-                          className="btn-instagram-primary"
-                          onClick={() => handleFollow(user.id)}
-                        >
-                          Segui
-                        </button>
-                      )}
-                      {user.isPending && (
-                        <button
-                          className="btn-instagram-pending"
-                          onClick={() => handleUnfollow(user.id)}
-                        >
-                          Richiesta effettuata
-                        </button>
-                      )}
-                      {user.is_following === 1 && !user.isPending && (
-                        <button
-                          className="btn-instagram-secondary"
-                          onClick={() => handleUnfollow(user.id)}
-                        >
-                          Segui già
-                        </button>
-                      )}
+                      {/* Pulsante Segui/Richiesta/Segui già - stessa logica di "Chi segui" */}
+                      <div className="flex items-center gap-2">
+                        {user.isPending && (
+                          <button
+                            className="btn-instagram-pending"
+                            onClick={() => handleUnfollow(user.id, true)}
+                          >
+                            Richiesta effettuata
+                          </button>
+                        )}
+                        {!user.isPending && user.is_following === 1 && (
+                          <button
+                            className="btn-instagram-secondary"
+                            onClick={() => handleUnfollow(user.id, true)}
+                          >
+                            Segui già
+                          </button>
+                        )}
+                        {!user.isPending && user.is_following !== 1 && (
+                          <button
+                            className="btn-instagram-primary"
+                            onClick={() => handleFollow(user.id)}
+                          >
+                            Segui
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </>

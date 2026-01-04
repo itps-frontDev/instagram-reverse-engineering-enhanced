@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
     // Get suggested users:
     // - Public profiles only
-    // - Not already followed by current user
+    // - Not already followed by current user (no accepted follows)
     // - Not the current user themselves
     // - Ordered by followers count (most popular first)
     // - Limit to 5 suggestions
@@ -31,8 +31,10 @@ export async function GET(request: NextRequest) {
       username: string;
       full_name: string | null;
       profile_image_url: string | null;
-      is_verified: boolean;
+      is_verified: number;
       followers_count: number;
+      is_following: number;
+      follow_status: string | null;
     }>(
       `SELECT
         p.id,
@@ -40,7 +42,24 @@ export async function GET(request: NextRequest) {
         p.full_name,
         p.profile_image_url,
         p.is_verified,
-        p.followers_count
+        p.followers_count,
+        CASE 
+          WHEN EXISTS (
+            SELECT 1 FROM follows f
+            WHERE f.follower_profile_id = ?
+              AND f.following_profile_id = p.id
+              AND f.status = 'accepted'
+              AND f.deleted_at IS NULL
+          ) THEN 1
+          ELSE 0
+        END as is_following,
+        (
+          SELECT f.status FROM follows f
+          WHERE f.follower_profile_id = ?
+            AND f.following_profile_id = p.id
+            AND f.deleted_at IS NULL
+          LIMIT 1
+        ) as follow_status
       FROM profiles p
       WHERE p.id != ?
         AND p.is_private = 0
@@ -54,13 +73,15 @@ export async function GET(request: NextRequest) {
         )
       ORDER BY p.followers_count DESC, p.created_at DESC
       LIMIT 5`,
-      [currentProfile.id, currentProfile.id]
+      [currentProfile.id, currentProfile.id, currentProfile.id, currentProfile.id]
     );
 
     return NextResponse.json({
       suggestions: suggestions.map((profile) => ({
         ...profile,
         is_verified: Boolean(profile.is_verified),
+        isPending: profile.follow_status === 'pending',
+        follow_status: undefined, // Remove from response
       })),
     });
   } catch (error) {
