@@ -14,6 +14,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createPortal } from 'react-dom';
 import CreatePostModal from '@/components/feed/CreatePostModal';
+import SearchPanel from '@/components/layout/SearchPanel';
 import {
   Home,
   Search,
@@ -35,7 +36,7 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { icon: 'custom-home', label: 'Home', href: '/' },
-  { icon: 'custom-search', label: 'Cerca', href: '/search' },
+  { icon: 'custom-search', label: 'Cerca', action: 'search' },
   { icon: 'custom-explore', label: 'Esplora', href: '/explore' },
   { icon: 'custom-reels', label: 'Reels', href: '/reels' },
   { icon: 'custom-message', label: 'Messaggi', href: '/direct' },
@@ -49,12 +50,13 @@ export default function Sidebar() {
   const [showMore, setShowMore] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showSearchPanel, setShowSearchPanel] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const isDirectPage = pathname.startsWith('/direct');
-  const isCollapsed = isDirectPage;
+  const isCollapsed = isDirectPage || showSearchPanel;
 
   useEffect(() => {
     setMounted(true);
@@ -74,6 +76,17 @@ export default function Sidebar() {
 
   return (
     <>
+      {/* Overlay per chiudere il search panel */}
+      {showSearchPanel && (
+        <div 
+          className="fixed inset-0 bg-transparent z-30"
+          onClick={() => setShowSearchPanel(false)}
+        />
+      )}
+      
+      {/* Search Panel */}
+      <SearchPanel isOpen={showSearchPanel} onClose={() => setShowSearchPanel(false)} />
+      
       <aside className={`hidden lg:flex fixed left-0 top-0 h-screen flex-col border-r border-[#DBDBDB] dark:border-[#262626] bg-[var(--bg-primary)] py-8 px-3 transition-all duration-300 ${
         isCollapsed ? 'w-[80px]' : 'lg:w-[80px] xl:w-[336px]'
       }`}>
@@ -135,7 +148,7 @@ export default function Sidebar() {
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth={isActive ? "3" : "2"}
+                  strokeWidth={showSearchPanel ? "3" : "2"}
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
@@ -229,6 +242,22 @@ export default function Sidebar() {
                 onClick={() => setShowCreateModal(true)}
                 className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all duration-200 w-full text-left ${
                   isActive
+                    ? 'font-bold'
+                    : 'font-normal hover:bg-[var(--bg-tertiary)]'
+                }`}
+              >
+                {content}
+              </button>
+            );
+          }
+
+          if (item.action === 'search') {
+            return (
+              <button
+                key={item.action}
+                onClick={() => setShowSearchPanel(!showSearchPanel)}
+                className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all duration-200 w-full text-left ${
+                  showSearchPanel
                     ? 'font-bold'
                     : 'font-normal hover:bg-[var(--bg-tertiary)]'
                 }`}
