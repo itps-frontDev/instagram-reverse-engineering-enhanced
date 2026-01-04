@@ -404,7 +404,30 @@ export default function ProfilePage({
   /**
    * Handle post click - opens modal
    */
-  function handlePostClick(post: Post) {
+  async function handlePostClick(post: Post) {
+    // Fetch actual like and save status
+    let isLiked = false;
+    let isSaved = false;
+    
+    try {
+      const [likeRes, saveRes] = await Promise.all([
+        fetch(`/api/posts/${post.id}/is-liked`),
+        fetch(`/api/posts/${post.id}/is-saved`)
+      ]);
+      
+      if (likeRes.ok) {
+        const likeData = await likeRes.json();
+        isLiked = likeData.isLiked;
+      }
+      
+      if (saveRes.ok) {
+        const saveData = await saveRes.json();
+        isSaved = saveData.isSaved;
+      }
+    } catch (err) {
+      console.error('Error fetching post status:', err);
+    }
+
     // Convert Post to FeedPost format
     const feedPost: FeedPost = {
       id: post.id,
@@ -430,8 +453,8 @@ export default function ProfilePage({
           position: 0,
         }
       ],
-      is_liked_by_current_user: false, // TODO: fetch actual like status
-      is_saved_by_current_user: false, // TODO: fetch actual save status
+      is_liked_by_current_user: isLiked,
+      is_saved_by_current_user: isSaved,
     };
     setSelectedPost(feedPost);
     setShowPostModal(true);
