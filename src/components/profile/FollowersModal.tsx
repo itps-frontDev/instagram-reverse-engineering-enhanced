@@ -301,7 +301,7 @@ export default function FollowersModal({
                   </Link>
 
                   {/* Pulsante Rimuovi per followers, Segui già per following */}
-                  <button className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors flex-shrink-0 ${type === 'followers' ? 'bg-[#EFEFEF] dark:bg-[#363636] text-instagram-primary hover:bg-gray-200 dark:hover:bg-[#2a2a2a]' : user.is_following ? 'bg-[rgb(240,242,245)] dark:bg-[rgb(37,41,46)] text-instagram-primary' : 'bg-[#0095F6] text-white hover:bg-[#1877F2]'}`}>
+                  <button className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors flex-shrink-0 ${type === 'followers' ? 'bg-[rgb(240,242,245)] dark:bg-[rgb(37,41,46)] text-instagram-primary hover:bg-gray-200 dark:hover:bg-[#2a2a2a]' : user.is_following ? 'bg-[rgb(240,242,245)] dark:bg-[rgb(37,41,46)] text-instagram-primary' : 'bg-[#0095F6] text-white hover:bg-[#1877F2]'}`}>
                     {type === 'followers' ? 'Rimuovi' : user.is_following ? 'Segui già' : 'Segui'}
                   </button>
                 </div>
