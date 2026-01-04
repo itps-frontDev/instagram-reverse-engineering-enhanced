@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     );
 
     return NextResponse.json({
-      profiles: suggestions.map((profile) => ({
+      suggestions: suggestions.map((profile) => ({
         ...profile,
         is_verified: Boolean(profile.is_verified),
       })),

@@ -114,7 +114,9 @@ export default function FollowersModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header con X chiusura */}
-        <div className="relative flex items-center justify-center border-b border-b-[rgb(219,223,228)] dark:border-b-0">
+        <div
+          className="relative flex items-center justify-center border-b border-[rgb(219,223,228)] dark:border-[rgb(43,48,54)]"
+        >
           <h2 
             className="text-center w-full text-[rgb(12,16,20)] dark:text-[rgb(248,249,249)] py-3"
             style={{
