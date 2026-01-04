@@ -133,22 +133,27 @@ export default function FollowersModal({
 
   async function handleUnfollow(targetProfileId: number) {
     try {
-      const res = await fetch('/api/profiles/actions/unfollow', {
+      // Se era un follower rimosso dal proprio profilo, aggiungi a removedUsers SUBITO (ottimistico)
+      if (isOwnProfile && type === 'followers') {
+        setRemovedUsers(prev => {
+          const newSet = new Set(prev);
+          newSet.add(targetProfileId);
+          return newSet;
+        });
+      }
+      
+      // Scegli l'endpoint giusto in base al contesto
+      const endpoint = isOwnProfile && type === 'followers' 
+        ? '/api/profiles/actions/remove-follower'
+        : '/api/profiles/actions/unfollow';
+      
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ targetProfileId }),
       });
 
       if (res.ok) {
-        // Se era un follower rimosso dal proprio profilo, aggiungi a removedUsers PRIMA
-        if (isOwnProfile && type === 'followers') {
-          setRemovedUsers(prev => {
-            const newSet = new Set(prev);
-            newSet.add(targetProfileId);
-            return newSet;
-          });
-        }
-        
         // Update follow status (don't remove from list immediately)
         setUsers(prev => prev.map(u =>
           u.id === targetProfileId
@@ -162,9 +167,26 @@ export default function FollowersModal({
             ? { ...u, is_following: 0, isPending: false }
             : u
         ));
+      } else {
+        // Se fallisce, rimuovi da removedUsers
+        if (isOwnProfile && type === 'followers') {
+          setRemovedUsers(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(targetProfileId);
+            return newSet;
+          });
+        }
       }
     } catch (error) {
       console.error('Error unfollowing user:', error);
+      // Se c'è un errore, rimuovi da removedUsers
+      if (isOwnProfile && type === 'followers') {
+        setRemovedUsers(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(targetProfileId);
+          return newSet;
+        });
+      }
     }
   }
 

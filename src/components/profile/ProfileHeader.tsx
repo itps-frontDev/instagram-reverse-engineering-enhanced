@@ -44,7 +44,7 @@ export default function ProfileHeader({
     if (followStatus.isOwnProfile) {
       setIsBumping(true);
       setTimeout(() => setIsBumping(false), 150);
-      if (onProfileImageClick) onProfileImageClick(e);
+      if (onProfileImageClick) onProfileImageClick();
     }
   };
 

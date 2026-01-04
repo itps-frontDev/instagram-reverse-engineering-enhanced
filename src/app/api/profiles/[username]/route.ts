@@ -43,7 +43,13 @@ export async function GET(
     }
 
     // Fetch profile from database
-    const profile = await queryOne<Profile & { has_reels: number }>(
+    type ProfileQueryResult = Omit<Profile, 'has_reels' | 'is_private' | 'is_verified'> & {
+      has_reels: number;
+      is_private: number;
+      is_verified: number;
+    };
+    
+    const profile = await queryOne<ProfileQueryResult>(
       `SELECT
         id,
         user_id,
@@ -81,10 +87,21 @@ export async function GET(
     }
 
     // Convert integer booleans to actual booleans
-    const profileData: Profile & { has_reels: boolean } = {
-      ...profile,
+    const profileData: Profile = {
+      id: profile.id,
+      user_id: profile.user_id,
+      username: profile.username,
+      full_name: profile.full_name,
+      bio: profile.bio,
+      profile_image_url: profile.profile_image_url,
+      website_url: profile.website_url,
+      followers_count: profile.followers_count,
+      following_count: profile.following_count,
+      posts_count: profile.posts_count,
       is_private: Boolean(profile.is_private),
       is_verified: Boolean(profile.is_verified),
+      created_at: profile.created_at,
+      updated_at: profile.updated_at,
       has_reels: Boolean(profile.has_reels),
     };
 
