@@ -16,11 +16,11 @@ export default function ProfilePrivateLock({
   return (
     <div className="w-full flex justify-center px-4 mt-8 mb-12">
       <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-full border-2 border-white flex items-center justify-center flex-shrink-0">
-          <Lock className="w-5 h-5 text-white" />
+        <div className="w-12 h-12 rounded-full border border-[rgb(12,16,20)] dark:border-white flex items-center justify-center flex-shrink-0">
+          <Lock className="w-6 h-7 text-[rgb(12,16,20)] dark:text-white" strokeWidth={1.5} />
         </div>
-        <div className="flex flex-col text-white">
-          <h2 className="text-sm font-semibold whitespace-nowrap">Questo account è privato</h2>
+        <div className="flex flex-col">
+          <h2 className="text-sm font-semibold whitespace-nowrap text-[rgb(12,16,20)] dark:text-white">Questo account è privato</h2>
           <p className="text-sm whitespace-nowrap" style={{ color: 'rgb(168, 168, 168)' }}>
             Segui questa persona per vedere le sue foto e i suoi video.
           </p>

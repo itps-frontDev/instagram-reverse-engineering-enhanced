@@ -192,6 +192,7 @@ export interface ProfileActionsProps {
   isFollowing: boolean;
   isPending: boolean;
   isPrivate: boolean;
+  isFollowedBy: boolean;
   onFollow: () => Promise<void>;
   onUnfollow: () => Promise<void>;
   isLoading?: boolean;

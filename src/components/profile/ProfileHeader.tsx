@@ -180,6 +180,7 @@ export default function ProfileHeader({
             isFollowing={followStatus.isFollowing}
             isPending={followStatus.isPending}
             isPrivate={profile.is_private}
+            isFollowedBy={followStatus.isFollowedBy}
             onFollow={onFollow}
             onUnfollow={onUnfollow}
             isLoading={isLoading}

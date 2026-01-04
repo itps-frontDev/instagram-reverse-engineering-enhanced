@@ -28,6 +28,7 @@ export default function ProfileActions({
   isFollowing,
   isPending,
   isPrivate,
+  isFollowedBy,
   onFollow,
   onUnfollow,
   isLoading = false,
@@ -78,12 +79,12 @@ export default function ProfileActions({
         {/* Following Button with Dropdown */}
         <div className="relative flex-1">
           <button
-            className="btn-instagram-following !h-10.5 w-full"
+            className="btn-instagram-secondary !h-10.5 w-full flex items-center justify-center gap-1"
             onClick={() => setShowDropdown(!showDropdown)}
             disabled={actionLoading}
           >
-            Segui già
-            <ChevronDown className="w-3 h-3" />
+            <span>Segui già</span>
+            <ChevronDown className="w-4 h-4" />
           </button>
 
           {/* Dropdown Menu */}
@@ -159,7 +160,7 @@ export default function ProfileActions({
         onClick={handleFollow}
         disabled={actionLoading || isLoading}
       >
-        {actionLoading ? 'Caricamento...' : 'Segui'}
+        {actionLoading ? 'Caricamento...' : (isFollowedBy ? 'Segui anche tu' : 'Segui')}
       </button>
       {!isPrivate && (
         <button className="btn-instagram-secondary flex-1 !h-10.5">
