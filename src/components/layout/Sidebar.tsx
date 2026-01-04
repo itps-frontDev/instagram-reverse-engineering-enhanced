@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createPortal } from 'react-dom';
+import CreatePostModal from '@/components/feed/CreatePostModal';
 import {
   Home,
   Search,
@@ -24,14 +25,21 @@ import {
   Menu,
 } from 'lucide-react';
 
-const navItems = [
+type NavItem = {
+  icon: string | any;
+  label: string;
+  href?: string;
+  action?: string;
+};
+
+const navItems: NavItem[] = [
   { icon: 'custom-home', label: 'Home', href: '/' },
   { icon: 'custom-search', label: 'Cerca', href: '/search' },
   { icon: 'custom-explore', label: 'Esplora', href: '/explore' },
   { icon: 'custom-reels', label: 'Reels', href: '/reels' },
   { icon: 'custom-message', label: 'Messaggi', href: '/direct' },
   { icon: Heart, label: 'Notifiche', href: '/notifications' },
-  { icon: 'custom-create', label: 'Crea', href: '/create' },
+  { icon: 'custom-create', label: 'Crea', action: 'create' },
 ];
 
 export default function Sidebar() {
@@ -39,10 +47,13 @@ export default function Sidebar() {
   const { profile, isLoading, logout } = useAuth();
   const [showMore, setShowMore] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const isDirectPage = pathname.startsWith('/direct');
+  const isCollapsed = isDirectPage;
 
   useEffect(() => {
     setMounted(true);
@@ -62,7 +73,9 @@ export default function Sidebar() {
 
   return (
     <>
-      <aside className="hidden lg:flex fixed left-0 top-0 h-screen lg:w-[80px] xl:w-[336px] flex-col border-r border-[#DBDBDB] dark:border-[#262626] bg-[var(--bg-primary)] py-8 px-3 transition-all duration-300">
+      <aside className={`hidden lg:flex fixed left-0 top-0 h-screen flex-col border-r border-[#DBDBDB] dark:border-[#262626] bg-[var(--bg-primary)] py-8 px-3 transition-all duration-300 ${
+        isCollapsed ? 'w-[80px]' : 'lg:w-[80px] xl:w-[336px]'
+      }`}>
       {/* Instagram Logo */}
       <div className="mb-8 px-3 pt-2">
         <Link href="/" className="flex items-center justify-center xl:justify-start">
@@ -97,16 +110,8 @@ export default function Sidebar() {
       <nav className="flex-1 space-y-1">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all duration-200 ${
-                isActive
-                  ? 'font-bold'
-                  : 'font-normal hover:bg-[var(--bg-tertiary)]'
-              }`}
-            >
+          const content = (
+            <>
               {item.icon === 'custom-home' ? (
                 <svg
                   className={`w-[26px] h-[26px] text-[#262626] dark:text-white`}
@@ -213,6 +218,36 @@ export default function Sidebar() {
                 />
               )}
               <span className="hidden xl:block text-base text-[#262626] dark:text-white">{item.label}</span>
+            </>
+          );
+
+          if (item.action === 'create') {
+            return (
+              <button
+                key={item.action}
+                onClick={() => setShowCreateModal(true)}
+                className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all duration-200 w-full text-left ${
+                  isActive
+                    ? 'font-bold'
+                    : 'font-normal hover:bg-[var(--bg-tertiary)]'
+                }`}
+              >
+                {content}
+              </button>
+            );
+          }
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href!}
+              className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all duration-200 ${
+                isActive
+                  ? 'font-bold'
+                  : 'font-normal hover:bg-[var(--bg-tertiary)]'
+              }`}
+            >
+              {content}
             </Link>
           );
         })}
@@ -246,7 +281,9 @@ export default function Sidebar() {
                 />
               </div>
             </div>
-            <span className="hidden xl:block text-base text-[#262626] dark:text-white">Profilo</span>
+            {!isCollapsed && (
+              <span className="hidden xl:block text-base text-[#262626] dark:text-white">Profilo</span>
+            )}
           </Link>
         )}
       </nav>
@@ -261,7 +298,9 @@ export default function Sidebar() {
           aria-expanded={showMore}
         >
           <Menu className="w-[26px] h-[26px] text-[#262626] dark:text-white" />
-          <span className="hidden xl:block text-base text-[#262626] dark:text-white">Altro</span>
+          {!isCollapsed && (
+            <span className="hidden xl:block text-base text-[#262626] dark:text-white">Altro</span>
+          )}
         </button>
 
         {/* Popup Menu */}
@@ -347,6 +386,15 @@ export default function Sidebar() {
               </div>
             </div>
           </div>,
+          document.body
+        )}
+
+        {/* Create Post Modal */}
+        {mounted && showCreateModal && createPortal(
+          <CreatePostModal 
+            isOpen={showCreateModal} 
+            onClose={() => setShowCreateModal(false)} 
+          />,
           document.body
         )}
       </div>

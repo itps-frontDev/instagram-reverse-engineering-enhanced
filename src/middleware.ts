@@ -15,7 +15,6 @@ const protectedRoutes = [
   '/reels',
   '/direct',
   '/notifications',
-  '/create',
   '/profile',
   '/search',
 ];
