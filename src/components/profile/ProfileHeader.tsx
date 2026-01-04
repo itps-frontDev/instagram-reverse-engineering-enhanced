@@ -41,10 +41,13 @@ export default function ProfileHeader({
   const [isBumping, setIsBumping] = useState(false);
 
   const handleProfileImageClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (followStatus.isOwnProfile) {
-      setIsBumping(true);
-      setTimeout(() => setIsBumping(false), 150);
-      if (onProfileImageClick) onProfileImageClick();
+    // Bump effect sempre attivo
+    setIsBumping(true);
+    setTimeout(() => setIsBumping(false), 150);
+
+    // Azioni (aprire modale/file picker) solo per profilo proprio
+    if (followStatus.isOwnProfile && onProfileImageClick) {
+      onProfileImageClick();
     }
   };
 
@@ -56,10 +59,10 @@ export default function ProfileHeader({
           {/* Profile Picture */}
           <div className="flex justify-center md:justify-start flex-shrink-0">
             <div
-              className={`relative w-[77px] h-[77px] md:w-[150px] md:h-[150px] ${followStatus.isOwnProfile ? 'cursor-pointer' : ''} transition-transform duration-150 ${isBumping ? 'scale-95' : ''}`}
+              className={`relative w-[77px] h-[77px] md:w-[150px] md:h-[150px] cursor-pointer transition-transform duration-150 ${isBumping ? 'scale-95' : ''}`}
               onClick={handleProfileImageClick}
-              role={followStatus.isOwnProfile ? 'button' : undefined}
-              tabIndex={followStatus.isOwnProfile ? 0 : undefined}
+              role="button"
+              tabIndex={0}
             >
               <Image
                 src={profile.profile_image_url || '/images/default-pfp.jpg'}
