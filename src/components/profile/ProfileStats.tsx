@@ -72,7 +72,7 @@ export default function ProfileStats({
   return (
     <ul className="flex items-center gap-8 mb-5">
       {/* Posts */}
-      <li className="text-sm leading-[18px] whitespace-nowrap cursor-pointer text-instagram-primary">
+      <li className="text-sm leading-[18px] whitespace-nowrap text-instagram-primary">
         <span className="font-semibold">{formatCount(postsCount)}</span> post
       </li>
       {/* Followers */}

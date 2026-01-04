@@ -312,7 +312,15 @@ export default function FollowersModal({
                 <>
                   <div className="px-4 py-3 border-t border-[#DBDBDB] dark:border-[#2b3036]">
                     <h3 className="font-semibold text-sm text-instagram-primary">
-                      Suggeriti per te
+                      <span
+                        className="block font-semibold font-sans text-[16px] leading-5 h-[13px] text-[rgb(12,16,20)] dark:text-[rgb(250,250,250)] relative max-w-full min-w-0 break-words overflow-visible p-0 m-0 pointer-events-auto select-text"
+                        style={{
+                          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+                          boxSizing: 'border-box',
+                        }}
+                      >
+                        Suggeriti per te
+                      </span>
                     </h3>
                   </div>
                   {suggestedUsers.map((user) => (
