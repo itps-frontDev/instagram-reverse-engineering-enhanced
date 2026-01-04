@@ -18,6 +18,7 @@ import ProfileGrid from '@/components/profile/ProfileGrid';
 import ProfilePrivateLock from '@/components/profile/ProfilePrivateLock';
 import StoriesHighlights from '@/components/profile/StoriesHighlights';
 import ProfileImageModal from '@/components/profile/ProfileImageModal';
+import PostModal from '@/components/feed/PostModal';
 import Footer from '@/components/common/Footer';
 import {
   Profile,
@@ -26,6 +27,7 @@ import {
   ProfileTab,
   StoryHighlight,
 } from '@/lib/types/profile';
+import type { FeedPost } from '@/lib/types/feed';
 
 // ============================================================================
 // MAIN PAGE COMPONENT
@@ -60,6 +62,8 @@ export default function ProfilePage({
   const [error, setError] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [showProfileImageModal, setShowProfileImageModal] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<FeedPost | null>(null);
+  const [showPostModal, setShowPostModal] = useState(false);
 
   // Refs for file inputs
   const createPostInputRef = useRef<HTMLInputElement>(null);
@@ -397,6 +401,165 @@ export default function ProfilePage({
     // Here you would open a modal to create the post with the selected image
   }
 
+  /**
+   * Handle post click - opens modal
+   */
+  function handlePostClick(post: Post) {
+    // Convert Post to FeedPost format
+    const feedPost: FeedPost = {
+      id: post.id,
+      profile_id: profile!.id,
+      caption: post.caption,
+      location: null,
+      is_comments_disabled: false,
+      is_likes_hidden: false,
+      likes_count: post.likes_count,
+      comments_count: post.comments_count,
+      created_at: post.created_at,
+      profile_username: profile!.username,
+      profile_full_name: profile!.full_name,
+      profile_image_url: profile!.profile_image_url,
+      profile_is_verified: profile!.is_verified,
+      media: [
+        {
+          id: post.id, // Using post id as media id
+          post_id: post.id,
+          media_url: post.media_url,
+          media_type: post.media_type,
+          duration_seconds: null,
+          position: 0,
+        }
+      ],
+      is_liked_by_current_user: false, // TODO: fetch actual like status
+      is_saved_by_current_user: false, // TODO: fetch actual save status
+    };
+    setSelectedPost(feedPost);
+    setShowPostModal(true);
+  }
+
+  /**
+   * Handle like post
+   */
+  async function handleLikePost(postId: number) {
+    if (!selectedPost) return;
+
+    const wasLiked = selectedPost.is_liked_by_current_user;
+    
+    // Optimistic update
+    setSelectedPost({
+      ...selectedPost,
+      is_liked_by_current_user: !wasLiked,
+      likes_count: wasLiked ? selectedPost.likes_count - 1 : selectedPost.likes_count + 1,
+    });
+
+    try {
+      const endpoint = wasLiked ? `/api/posts/${postId}/unlike` : `/api/posts/${postId}/like`;
+      const res = await fetch(endpoint, { method: 'POST' });
+      
+      if (!res.ok) throw new Error('Failed to like/unlike post');
+
+      // Update post in posts array
+      setPosts(prev => prev.map(p => 
+        p.id === postId 
+          ? { ...p, likes_count: wasLiked ? p.likes_count - 1 : p.likes_count + 1 }
+          : p
+      ));
+    } catch (err) {
+      // Revert optimistic update
+      setSelectedPost({
+        ...selectedPost,
+        is_liked_by_current_user: wasLiked,
+        likes_count: wasLiked ? selectedPost.likes_count + 1 : selectedPost.likes_count - 1,
+      });
+      console.error('Error liking post:', err);
+    }
+  }
+
+  /**
+   * Handle save post
+   */
+  async function handleSavePost(postId: number) {
+    if (!selectedPost) return;
+
+    const wasSaved = selectedPost.is_saved_by_current_user;
+    
+    // Optimistic update
+    setSelectedPost({
+      ...selectedPost,
+      is_saved_by_current_user: !wasSaved,
+    });
+
+    try {
+      const endpoint = wasSaved ? `/api/posts/${postId}/unsave` : `/api/posts/${postId}/save`;
+      const res = await fetch(endpoint, { method: 'POST' });
+      
+      if (!res.ok) throw new Error('Failed to save/unsave post');
+    } catch (err) {
+      // Revert optimistic update
+      setSelectedPost({
+        ...selectedPost,
+        is_saved_by_current_user: wasSaved,
+      });
+      console.error('Error saving post:', err);
+    }
+  }
+
+  /**
+   * Handle comment on post
+   */
+  async function handleCommentPost(postId: number, text: string) {
+    if (!selectedPost) return;
+
+    try {
+      const res = await fetch(`/api/posts/${postId}/comment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+
+      if (!res.ok) throw new Error('Failed to comment');
+
+      // Update comment count
+      setSelectedPost({
+        ...selectedPost,
+        comments_count: selectedPost.comments_count + 1,
+      });
+
+      // Update post in posts array
+      setPosts(prev => prev.map(p => 
+        p.id === postId 
+          ? { ...p, comments_count: p.comments_count + 1 }
+          : p
+      ));
+    } catch (err) {
+      console.error('Error commenting:', err);
+    }
+  }
+
+  /**
+   * Handle next post navigation
+   */
+  function handleNextPost() {
+    if (!selectedPost) return;
+    
+    const currentIndex = posts.findIndex(p => p.id === selectedPost.id);
+    if (currentIndex < posts.length - 1) {
+      handlePostClick(posts[currentIndex + 1]);
+    }
+  }
+
+  /**
+   * Handle previous post navigation
+   */
+  function handlePrevPost() {
+    if (!selectedPost) return;
+    
+    const currentIndex = posts.findIndex(p => p.id === selectedPost.id);
+    if (currentIndex > 0) {
+      handlePostClick(posts[currentIndex - 1]);
+    }
+  }
+
   // Loading state
   if (isLoading) {
     return (
@@ -494,6 +657,7 @@ export default function ProfilePage({
                   tab={activeTab}
                   isOwnProfile={followStatus.isOwnProfile}
                   onCreatePost={handleCreatePostClick}
+                  onPostClick={handlePostClick}
                 />
               ) : (
                 <ProfilePrivateLock
@@ -517,6 +681,22 @@ export default function ProfilePage({
           onUpload={handleProfileImageUpload}
           onRemove={handleProfileImageRemove}
           hasImage={!!profile.profile_image_url && profile.profile_image_url !== '/images/default-pfp.jpg'}
+        />
+      )}
+
+      {/* Post Modal */}
+      {selectedPost && (
+        <PostModal
+          post={selectedPost}
+          isOpen={showPostModal}
+          onClose={() => setShowPostModal(false)}
+          onLike={handleLikePost}
+          onSave={handleSavePost}
+          onComment={handleCommentPost}
+          onNext={handleNextPost}
+          onPrev={handlePrevPost}
+          hasNext={posts.findIndex(p => p.id === selectedPost.id) < posts.length - 1}
+          hasPrev={posts.findIndex(p => p.id === selectedPost.id) > 0}
         />
       )}
     </>

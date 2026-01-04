@@ -224,6 +224,7 @@ export interface ProfileGridProps {
   tab?: ProfileTab;
   isOwnProfile?: boolean;
   onCreatePost?: () => void;
+  onPostClick?: (post: Post) => void;
 }
 
 /**

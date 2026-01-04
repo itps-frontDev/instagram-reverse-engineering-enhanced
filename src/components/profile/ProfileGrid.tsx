@@ -7,7 +7,6 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
 import { Heart, MessageCircle, Layers } from 'lucide-react';
 import { ProfileGridProps } from '@/lib/types/profile';
 import ProfileEmptyState from './ProfileEmptyState';
@@ -20,6 +19,7 @@ export default function ProfileGrid({
   tab = 'posts',
   isOwnProfile = false,
   onCreatePost,
+  onPostClick,
 }: ProfileGridProps) {
   if (isLoading && posts.length === 0) {
     return (
@@ -42,10 +42,10 @@ export default function ProfileGrid({
     <div>
       <div className="grid grid-cols-3 gap-[3px]">
         {posts.map((post) => (
-          <Link
+          <div
             key={post.id}
-            href={`/p/${post.id}`}
-            className="relative aspect-[3/4] bg-gray-100 dark:bg-gray-800 group overflow-hidden"
+            onClick={() => onPostClick?.(post)}
+            className="relative aspect-[3/4] bg-gray-100 dark:bg-gray-800 group overflow-hidden cursor-pointer"
           >
             <Image
               src={post.media_url}
@@ -73,7 +73,7 @@ export default function ProfileGrid({
                 <Layers className="w-5 h-5 text-white drop-shadow-lg" />
               </div>
             )}
-          </Link>
+          </div>
         ))}
       </div>
 
