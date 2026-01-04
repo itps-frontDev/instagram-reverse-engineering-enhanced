@@ -8,6 +8,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -50,6 +51,7 @@ export default function FollowersModal({
   type,
   isOwnProfile = false,
 }: FollowersModalProps) {
+  const { profile: currentProfile } = useAuth();
   const [users, setUsers] = useState<FollowerUser[]>([]);
   const [suggestedUsers, setSuggestedUsers] = useState<SuggestedUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -335,119 +337,39 @@ export default function FollowersModal({
           ) : (
             <>
               {/* Lista follower/following */}
-              {filteredUsers.map((user) => (
-                <div
-                  key={user.id}
-                  className="flex items-center justify-between px-4 py-2"
-                >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <Link
-                      href={`/profile/${user.username}`}
-                      onClick={onClose}
-                      className="flex-shrink-0"
-                    >
-                      <div
-                        className="rounded-full flex-shrink-0 relative"
-                        style={{
-                          width: '44px',
-                          height: '44px',
-                          border: '0px solid rgba(43, 48, 54, 0.8)',
-                          backgroundColor: 'rgb(243, 245, 247)',
-                          overflow: 'hidden',
-                        }}
-                      >
-                        <Image
-                          src={user.profile_image_url || '/images/default-pfp.jpg'}
-                          alt={user.username}
-                          width={44}
-                          height={44}
-                          className="rounded-full object-cover w-full h-full"
-                        />
-                      </div>
-                    </Link>
-                    <div className="flex flex-col min-w-0">
-                      <div className="flex items-center gap-1">
-                        <Link
-                          href={`/profile/${user.username}`}
-                          onClick={onClose}
-                          className="font-semibold text-sm text-instagram-primary truncate hover:opacity-70"
+              {filteredUsers.map((user) => {
+                const isCurrentUser = currentProfile && user.username === currentProfile.username;
+                let actionButtons = null;
+                if (!isCurrentUser) {
+                  if (isOwnProfile && type === 'following') {
+                    actionButtons = <>
+                      {user.isPending && (
+                        <button
+                          className="btn-instagram-pending"
+                          onClick={() => handleUnfollow(user.id)}
                         >
-                          {user.username}
-                        </Link>
-                        {user.is_verified && (
-                          <svg aria-label="Verificato" fill="rgb(0, 149, 246)" height="12" role="img" viewBox="0 0 40 40" width="12" className="flex-shrink-0">
-                            <title>Verificato</title>
-                            <path d="M19.998 3.094 14.638 0l-2.972 5.15H5.432v6.354L0 14.64 3.094 20 0 25.359l5.432 3.137v5.905h5.975L14.638 40l5.36-3.094L25.358 40l3.232-5.6h6.162v-6.01L40 25.359 36.905 20 40 14.641l-5.248-3.03v-6.46h-6.419L25.358 0l-5.36 3.094Zm7.415 11.225 2.254 2.287-11.43 11.5-6.835-6.93 2.244-2.258 4.587 4.581 9.18-9.18Z" fillRule="evenodd"></path>
-                          </svg>
-                        )}
-                        {type === 'followers' && isOwnProfile && user.is_following === 0 && !user.isPending && (
-                          <span
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleFollow(user.id);
-                            }}
-                            style={{
-                              display: 'block',
-                              color: 'rgb(65, 80, 247)',
-                              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              height: '16px',
-                              lineHeight: '16px',
-                              cursor: 'pointer',
-                              userSelect: 'none',
-                              textAlign: 'center',
-                              marginTop: '-2px',
-                              marginBottom: '-3px',
-                            }}
-                          >
-                            · Segui
-                          </span>
-                        )}
-                      </div>
-                      {user.full_name && (
-                        <span className="text-gray-500 text-sm truncate">
-                          {user.full_name}
-                        </span>
+                          Richiesta effettuata
+                        </button>
                       )}
-                    </div>
-                  </div>
-
-                  {/* Pulsanti - Logica aggiornata per profilo proprio e altri profili */}
-                  <div className="flex items-center gap-2">
-                    {/* Se è il proprio profilo nella sezione following */}
-                    {isOwnProfile && type === 'following' && (
-                      <>
-                        {user.isPending && (
-                          <button
-                            className="btn-instagram-pending"
-                            onClick={() => handleUnfollow(user.id)}
-                          >
-                            Richiesta effettuata
-                          </button>
-                        )}
-                        {!user.isPending && user.is_following === 1 && (
-                          <button
-                            className="btn-instagram-secondary"
-                            onClick={() => handleUnfollow(user.id)}
-                          >
-                            Segui già
-                          </button>
-                        )}
-                        {!user.isPending && user.is_following !== 1 && (
-                          <button
-                            className="btn-instagram-primary"
-                            onClick={() => handleFollow(user.id)}
-                          >
-                            Segui
-                          </button>
-                        )}
-                      </>
-                    )}
-
-                    {/* Se è il proprio profilo nella sezione followers, mostra solo "Rimuovi" o "Rimosso" */}
-                    {isOwnProfile && type === 'followers' && (
+                      {!user.isPending && user.is_following === 1 && (
+                        <button
+                          className="btn-instagram-secondary"
+                          onClick={() => handleUnfollow(user.id)}
+                        >
+                          Segui già
+                        </button>
+                      )}
+                      {!user.isPending && user.is_following !== 1 && (
+                        <button
+                          className="btn-instagram-primary"
+                          onClick={() => handleFollow(user.id)}
+                        >
+                          Segui
+                        </button>
+                      )}
+                    </>;
+                  } else if (isOwnProfile && type === 'followers') {
+                    actionButtons = (
                       <button
                         className={removedUsers.has(user.id) ? "btn-removed" : "btn-instagram-secondary"}
                         onClick={() => handleUnfollow(user.id)}
@@ -455,40 +377,120 @@ export default function FollowersModal({
                       >
                         {removedUsers.has(user.id) ? 'Rimosso' : 'Rimuovi'}
                       </button>
-                    )}
-
-                    {/* Se NON è il proprio profilo, mostra pulsanti follow appropriati */}
-                    {!isOwnProfile && (
-                      <>
-                        {!user.is_following && !user.isPending && (
-                          <button
-                            className="btn-instagram-primary"
-                            onClick={() => handleFollow(user.id)}
+                    );
+                  } else if (!isOwnProfile) {
+                    actionButtons = <>
+                      {!user.is_following && !user.isPending && (
+                        <button
+                          className="btn-instagram-primary"
+                          onClick={() => handleFollow(user.id)}
+                        >
+                          Segui
+                        </button>
+                      )}
+                      {user.isPending && (
+                        <button
+                          className="btn-instagram-pending"
+                          onClick={() => handleUnfollow(user.id)}
+                        >
+                          Richiesta effettuata
+                        </button>
+                      )}
+                      {user.is_following === 1 && !user.isPending && (
+                        <button
+                          className="btn-instagram-secondary"
+                          onClick={() => handleUnfollow(user.id)}
+                        >
+                          Segui già
+                        </button>
+                      )}
+                    </>;
+                  }
+                }
+                return (
+                  <div
+                    key={user.id}
+                    className="flex items-center justify-between px-4 py-2"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <Link
+                        href={`/profile/${user.username}`}
+                        onClick={onClose}
+                        className="flex-shrink-0"
+                      >
+                        <div
+                          className="rounded-full flex-shrink-0 relative"
+                          style={{
+                            width: '44px',
+                            height: '44px',
+                            border: '0px solid rgba(43, 48, 54, 0.8)',
+                            backgroundColor: 'rgb(243, 245, 247)',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          <Image
+                            src={user.profile_image_url || '/images/default-pfp.jpg'}
+                            alt={user.username}
+                            width={44}
+                            height={44}
+                            className="rounded-full object-cover w-full h-full"
+                          />
+                        </div>
+                      </Link>
+                      <div className="flex flex-col min-w-0">
+                        <div className="flex items-center gap-1">
+                          <Link
+                            href={`/profile/${user.username}`}
+                            onClick={onClose}
+                            className="font-semibold text-sm text-instagram-primary truncate hover:opacity-70"
                           >
-                            Segui
-                          </button>
+                            {user.username}
+                          </Link>
+                          {user.is_verified && (
+                            <svg aria-label="Verificato" fill="rgb(0, 149, 246)" height="12" role="img" viewBox="0 0 40 40" width="12" className="flex-shrink-0">
+                              <title>Verificato</title>
+                              <path d="M19.998 3.094 14.638 0l-2.972 5.15H5.432v6.354L0 14.64 3.094 20 0 25.359l5.432 3.137v5.905h5.975L14.638 40l5.36-3.094L25.358 40l3.232-5.6h6.162v-6.01L40 25.359 36.905 20 40 14.641l-5.248-3.03v-6.46h-6.419L25.358 0l-5.36 3.094Zm7.415 11.225 2.254 2.287-11.43 11.5-6.835-6.93 2.244-2.258 4.587 4.581 9.18-9.18Z" fillRule="evenodd"></path>
+                            </svg>
+                          )}
+                          {type === 'followers' && isOwnProfile && user.is_following === 0 && !user.isPending && (
+                            <span
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleFollow(user.id);
+                              }}
+                              style={{
+                                display: 'block',
+                                color: 'rgb(65, 80, 247)',
+                                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                height: '16px',
+                                lineHeight: '16px',
+                                cursor: 'pointer',
+                                userSelect: 'none',
+                                textAlign: 'center',
+                                marginTop: '-2px',
+                                marginBottom: '-3px',
+                              }}
+                            >
+                              · Segui
+                            </span>
+                          )}
+                        </div>
+                        {user.full_name && (
+                          <span className="text-gray-500 text-sm truncate">
+                            {user.full_name}
+                          </span>
                         )}
-                        {user.isPending && (
-                          <button
-                            className="btn-instagram-pending"
-                            onClick={() => handleUnfollow(user.id)}
-                          >
-                            Richiesta effettuata
-                          </button>
-                        )}
-                        {user.is_following === 1 && !user.isPending && (
-                          <button
-                            className="btn-instagram-secondary"
-                            onClick={() => handleUnfollow(user.id)}
-                          >
-                            Segui già
-                          </button>
-                        )}
-                      </>
-                    )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {actionButtons}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
 
               {/* Suggeriti per te - solo nella modale follower */}
               {type === 'followers' && !searchQuery && suggestedUsers.length > 0 && (
