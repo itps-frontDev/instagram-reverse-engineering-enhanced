@@ -405,59 +405,20 @@ export default function ProfilePage({
    * Handle post click - opens modal
    */
   async function handlePostClick(post: Post) {
-    // Fetch actual like and save status
-    let isLiked = false;
-    let isSaved = false;
-    
     try {
-      const [likeRes, saveRes] = await Promise.all([
-        fetch(`/api/posts/${post.id}/is-liked`),
-        fetch(`/api/posts/${post.id}/is-saved`)
-      ]);
+      // Fetch complete post data with all media
+      const res = await fetch(`/api/posts/${post.id}`);
       
-      if (likeRes.ok) {
-        const likeData = await likeRes.json();
-        isLiked = likeData.isLiked;
+      if (!res.ok) {
+        throw new Error('Failed to fetch post');
       }
       
-      if (saveRes.ok) {
-        const saveData = await saveRes.json();
-        isSaved = saveData.isSaved;
-      }
+      const data = await res.json();
+      setSelectedPost(data.post);
+      setShowPostModal(true);
     } catch (err) {
-      console.error('Error fetching post status:', err);
+      console.error('Error fetching post:', err);
     }
-
-    // Convert Post to FeedPost format
-    const feedPost: FeedPost = {
-      id: post.id,
-      profile_id: profile!.id,
-      caption: post.caption,
-      location: null,
-      is_comments_disabled: false,
-      is_likes_hidden: false,
-      likes_count: post.likes_count,
-      comments_count: post.comments_count,
-      created_at: post.created_at,
-      profile_username: profile!.username,
-      profile_full_name: profile!.full_name,
-      profile_image_url: profile!.profile_image_url,
-      profile_is_verified: profile!.is_verified,
-      media: [
-        {
-          id: post.id, // Using post id as media id
-          post_id: post.id,
-          media_url: post.media_url,
-          media_type: post.media_type,
-          duration_seconds: null,
-          position: 0,
-        }
-      ],
-      is_liked_by_current_user: isLiked,
-      is_saved_by_current_user: isSaved,
-    };
-    setSelectedPost(feedPost);
-    setShowPostModal(true);
   }
 
   /**
