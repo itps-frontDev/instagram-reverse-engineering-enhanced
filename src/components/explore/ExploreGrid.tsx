@@ -11,6 +11,7 @@ import Image from 'next/image';
 import { Heart, MessageCircle, Play } from 'lucide-react';
 import type { FeedPost } from '@/lib/types/feed';
 import PostModal from '@/components/feed/PostModal';
+import CarouselIcon from '@/components/common/CarouselIcon';
 
 interface ExploreGridProps {
   posts: FeedPost[];
@@ -84,30 +85,8 @@ export default function ExploreGrid({
 
               {/* Multiple images indicator */}
               {post.media.length > 1 && (
-                <div className="absolute top-2 right-2 z-10">
-                  <svg
-                    className="w-6 h-6 text-white drop-shadow-lg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <rect
-                      x="3"
-                      y="3"
-                      width="18"
-                      height="18"
-                      rx="2"
-                      strokeWidth="2"
-                    />
-                    <rect
-                      x="7"
-                      y="7"
-                      width="10"
-                      height="10"
-                      rx="1"
-                      strokeWidth="2"
-                    />
-                  </svg>
+                <div className="absolute top-2 right-2">
+                  <CarouselIcon className="w-5 h-5 text-white drop-shadow-lg" />
                 </div>
               )}
 
