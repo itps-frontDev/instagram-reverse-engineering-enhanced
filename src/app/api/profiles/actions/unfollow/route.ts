@@ -133,6 +133,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Remove follow notification (soft delete)
+    await execute(
+      `UPDATE notifications
+       SET deleted_at = datetime('now')
+       WHERE recipient_profile_id = ?
+         AND sender_profile_id = ?
+         AND type = 'follow'
+         AND deleted_at IS NULL`,
+      [targetProfileId, currentProfile.id]
+    );
+
     // Return success response
     const response: UnfollowResponse = {
       success: true,
