@@ -125,9 +125,7 @@ export default function Sidebar() {
                       <path d="M9.5 14.5 L9.5 22.5 L14.5 22.5 L14.5 14.5 Q14.5 13 12 13 Q9.5 13 9.5 14.5 Z" fill="var(--bg-primary)"/>
                     </>
                   ) : (
-                    <>
-                      <path d="M12 2.5 L2 10 L2 21 Q2 22 3 22 L9.5 22 L9.5 14.5 Q9.5 13 12 13 Q14.5 13 14.5 14.5 L14.5 22 L21 22 Q22 22 22 21 L22 10 L12 2.5 Z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
-                    </>
+                    <path d="M12 2.5 L2 10 L2 21 Q2 22 3 22 L9.5 22 L9.5 14.5 Q9.5 13 12 13 Q14.5 13 14.5 14.5 L14.5 22 L21 22 Q22 22 22 21 L22 10 L12 2.5 Z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
                   )}
                 </svg>
               ) : item.icon === 'custom-search' ? (
@@ -218,7 +216,9 @@ export default function Sidebar() {
                   fill={isActive ? 'currentColor' : 'none'}
                 />
               )}
-              <span className="hidden xl:block text-base text-[#262626] dark:text-white">{item.label}</span>
+              {!isCollapsed && (
+                <span className="hidden xl:block text-base text-[#262626] dark:text-white">{item.label}</span>
+              )}
             </>
           );
 
