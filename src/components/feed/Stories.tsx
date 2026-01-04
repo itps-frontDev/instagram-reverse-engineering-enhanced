@@ -124,41 +124,41 @@ export default function Stories() {
 
   return (
     <>
-      <div className="rounded-lg py-4 mb-4 mt-20 relative group w-full">
-        {/* Left Arrow */}
-        {currentPage > 0 && (
-          <button
-            onClick={goToPreviousPage}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white dark:bg-[#262626] rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-            aria-label="Pagina precedente"
-          >
-            <ChevronLeft className="w-5 h-5 text-[var(--text-primary)]" />
-          </button>
-        )}
+      <div className="rounded-lg py-4 mb-4 mt-20 relative group w-full flex items-center justify-center">
+        {/* Stories Container - centrato */}
+        <div className="overflow-visible px-0 relative">
+          {/* Left Arrow - sovrapposta alla prima storia */}
+          {currentPage > 0 && (
+            <button
+              onClick={goToPreviousPage}
+              className="absolute left-4 top-[35px] z-20 w-6 h-6 bg-white rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              aria-label="Pagina precedente"
+            >
+              <ChevronLeft className="w-4 h-4 text-black" />
+            </button>
+          )}
 
-        {/* Right Arrow */}
-        {currentPage < totalPages - 1 && (
-          <button
-            onClick={goToNextPage}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white dark:bg-[#262626] rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-            aria-label="Pagina successiva"
-          >
-            <ChevronRight className="w-5 h-5 text-[var(--text-primary)]" />
-          </button>
-        )}
+          {/* Right Arrow - sovrapposta all'ultima storia */}
+          {currentPage < totalPages - 1 && (
+            <button
+              onClick={goToNextPage}
+              className="absolute right-4 top-[35px] z-20 w-6 h-6 bg-white rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              aria-label="Pagina successiva"
+            >
+              <ChevronRight className="w-4 h-4 text-black" />
+            </button>
+          )}
 
-        {/* Stories Container */}
-        <div className="overflow-visible px-0">
-          <div className="flex gap-4 justify-start w-full">
+          <div className="flex gap-4 justify-center w-full">
             {visibleStories.map((item) => (
               <button
                 key={item.id}
                 onClick={() => handleStoryClick(item)}
-                className="flex flex-col items-center gap-2 flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
+                className="flex flex-col items-center gap-1 flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
               >
                 {/* Story Avatar with Gradient Border */}
                 <div className="relative group/story">
-                  <div className="w-[82px] h-[82px] rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[2.5px] cursor-pointer transition-transform">
+                  <div className="w-[86px] h-[86px] rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[3px] cursor-pointer transition-transform">
                     <div className="w-full h-full rounded-full bg-white dark:bg-[#0c1014] p-[2.5px]">
                       {item.profile_image_url ? (
                         <img
@@ -183,24 +183,6 @@ export default function Stories() {
             ))}
           </div>
         </div>
-
-        {/* Page indicator dots */}
-        {totalPages > 1 && (
-          <div className="flex justify-center gap-1 mt-3">
-            {Array.from({ length: totalPages }).map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentPage(i)}
-                className={`h-1 rounded-full transition-all ${
-                  i === currentPage
-                    ? 'bg-blue-500 w-6'
-                    : 'bg-gray-300 dark:bg-gray-600 w-2'
-                }`}
-                aria-label={`Pagina ${i + 1}`}
-              />
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Story Viewer Modal */}

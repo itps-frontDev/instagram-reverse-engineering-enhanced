@@ -191,7 +191,7 @@ export default function StoryViewer({
               setTransitionDirection(null);
             });
           });
-        }, 500);
+        }, 150);
       } else {
         // Chiudi se non ci sono utenti precedenti
         onClose();
@@ -221,7 +221,7 @@ export default function StoryViewer({
               setTransitionDirection(null);
             });
           });
-        }, 500);
+        }, 150);
       } else {
         // Chiudi se non ci sono altri utenti
         onClose();
@@ -243,18 +243,18 @@ export default function StoryViewer({
       autoPauseTimeoutRef.current = null;
     }
 
-    // reset progress for the new story
+    // reset progress for the new story - immediato
     setProgress(0);
 
     const startTime = Date.now();
     const durationMs = duration * 1000;
 
-    // Start progress animation
+    // Start progress animation - intervallo ridotto per maggiore fluidità
     progressIntervalRef.current = window.setInterval(() => {
       const elapsed = Date.now() - startTime;
       const newProgress = Math.min((elapsed / durationMs) * 100, 100);
       setProgress(newProgress);
-    }, 16); // ~60fps for smooth animation
+    }, 10); // ~100fps per animazione più fluida
 
     // Auto-advance when story ends
     autoPauseTimeoutRef.current = window.setTimeout(() => {
