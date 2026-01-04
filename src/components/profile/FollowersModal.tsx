@@ -310,7 +310,7 @@ export default function FollowersModal({
               {/* Suggeriti per te - solo nella modale follower */}
               {type === 'followers' && !searchQuery && suggestedUsers.length > 0 && (
                 <>
-                  <div className="px-4 py-3 border-t border-[#DBDBDB] dark:border-[#2b3036]">
+                  <div className="px-4 py-3">
                     <h3 className="font-semibold text-sm text-instagram-primary">
                       <span
                         className="block font-semibold font-sans text-[16px] leading-5 h-[13px] text-[rgb(12,16,20)] dark:text-[rgb(250,250,250)] relative max-w-full min-w-0 break-words overflow-visible p-0 m-0 pointer-events-auto select-text"
@@ -377,7 +377,7 @@ export default function FollowersModal({
                       </Link>
 
                       {/* Pulsante Segui */}
-                      <button className="px-6 py-1.5 bg-[#0095F6] rounded-lg text-sm font-semibold text-white hover:bg-[#1877F2] transition-colors flex-shrink-0">
+                      <button className="px-6 py-1.5 rounded-lg text-sm font-semibold text-white transition-colors flex-shrink-0" style={{ backgroundColor: 'rgb(74,93,249)' }}>
                         Segui
                       </button>
                     </div>
