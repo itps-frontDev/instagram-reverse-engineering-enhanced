@@ -74,11 +74,11 @@ export default function ProfileActions({
   // STATE 2-4: Following (Public or Private accepted)
   if (isFollowing && !isPending) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-4 w-full mt-4 mb-6">
         {/* Following Button with Dropdown */}
-        <div className="relative">
+        <div className="relative flex-1">
           <button
-            className="btn-instagram-following"
+            className="btn-instagram-following !h-10.5 w-full"
             onClick={() => setShowDropdown(!showDropdown)}
             disabled={actionLoading}
           >
@@ -122,12 +122,12 @@ export default function ProfileActions({
         </div>
 
         {/* Message Button */}
-        <button className="btn-instagram-secondary px-4 h-8 text-sm">
+        <button className="btn-instagram-secondary flex-1 !h-10.5">
           Messaggio
         </button>
 
         {/* Add Person Button */}
-        <button className="btn-instagram-secondary w-8 h-8 flex items-center justify-center">
+        <button className="btn-instagram-secondary !h-10.5 w-10.5 flex items-center justify-center">
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
             <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
           </svg>
@@ -139,15 +139,15 @@ export default function ProfileActions({
   // STATE 5: Pending Request (Private profile)
   if (isPending) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-4 w-full mt-4 mb-6">
         <button
-          className="btn-instagram-pending"
+          className="btn-instagram-pending flex-1 !h-10.5"
           onClick={handleUnfollow}
           disabled={actionLoading}
         >
           {actionLoading ? 'Annullamento...' : 'Richiesta effettuata'}
         </button>
-        <button className="btn-instagram-secondary px-4 h-8 text-sm">
+        <button className="btn-instagram-secondary flex-1 !h-10.5">
           Messaggio
         </button>
       </div>
@@ -156,16 +156,16 @@ export default function ProfileActions({
 
   // STATE 6: Not Following (Public or Private)
   return (
-    <div className={`flex items-center gap-2 ${isPrivate ? 'w-full' : ''}`}>
+    <div className="flex items-center gap-4 w-full mt-4 mb-6">
       <button
-        className={`btn-instagram-primary h-8 text-sm ${isPrivate ? 'flex-1 px-6' : 'px-4'}`}
+        className="btn-instagram-primary flex-1 !h-10.5"
         onClick={handleFollow}
         disabled={actionLoading || isLoading}
       >
         {actionLoading ? 'Caricamento...' : 'Segui'}
       </button>
       {!isPrivate && (
-        <button className="btn-instagram-secondary px-4 h-8 text-sm">
+        <button className="btn-instagram-secondary flex-1 !h-10.5">
           Messaggio
         </button>
       )}
