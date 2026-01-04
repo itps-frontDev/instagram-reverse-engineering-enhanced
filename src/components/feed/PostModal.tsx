@@ -52,10 +52,12 @@ export default function PostModal({
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
+  const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
 
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      setCurrentMediaIndex(0);
       fetchComments();
     } else {
       document.body.style.overflow = 'unset';
@@ -199,6 +201,12 @@ export default function PostModal({
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       onClick={onClose}
     >
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/75 dark:bg-[rgba(12,16,20,0.75)]"
+        onClick={onClose}
+      />
+
       {/* Close Button - Outside modal */}
       <button
         onClick={onClose}
@@ -237,25 +245,76 @@ export default function PostModal({
       )}
 
       <div
-        className="relative bg-[#212328] rounded-lg max-w-7xl w-full h-[86vh] flex overflow-hidden"
+        className="relative bg-white dark:bg-[#212328] rounded-lg max-w-[78vw] w-full h-[96vh] flex overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
 
         {/* Left Side - Image */}
-        <div className="flex-1 bg-black flex items-center justify-center relative">
+        <div className="flex-1 bg-gray-100 dark:bg-black flex items-center justify-center relative group/media">
           {post.media.length > 0 && (
             <Image
-              src={post.media[0].media_url}
+              src={post.media[currentMediaIndex].media_url}
               alt={post.caption || 'Post image'}
               fill
-              className="object-contain"
-              sizes="(max-width: 1200px) 50vw, 800px"
+              className="object-cover"
+              sizes="(max-width: 1200px) 60vw, 1200px"
             />
+          )}
+
+          {/* Media Navigation Arrows */}
+          {post.media.length > 1 && (
+            <>
+              {/* Previous Media Arrow */}
+              {currentMediaIndex > 0 && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentMediaIndex(currentMediaIndex - 1);
+                  }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-6 h-6 bg-white/70 rounded-full flex items-center justify-center transition-opacity hover:bg-white/80"
+                  aria-label="Immagine precedente"
+                >
+                  <svg className="w-4 h-4 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+              )}
+
+              {/* Next Media Arrow */}
+              {currentMediaIndex < post.media.length - 1 && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentMediaIndex(currentMediaIndex + 1);
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-6 h-6 bg-white/70 rounded-full flex items-center justify-center transition-opacity hover:bg-white/80"
+                  aria-label="Immagine successiva"
+                >
+                  <svg className="w-4 h-4 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              )}
+
+              {/* Media Indicators */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+                {post.media.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`w-1.5 h-1.5 rounded-full transition-all ${
+                      index === currentMediaIndex
+                        ? 'bg-white w-2'
+                        : 'bg-white/50'
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
           )}
         </div>
 
         {/* Right Side - Comments */}
-        <div className="w-[400px] flex flex-col border-l border-gray-200 dark:border-[#262626]">
+        <div className="w-[450px] flex flex-col border-l border-gray-200 dark:border-[#262626]">
           {/* Post Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-[#262626]">
             <div className="flex items-center gap-3">
@@ -528,15 +587,13 @@ export default function PostModal({
                 className="flex-1 bg-transparent text-sm text-[#262626] dark:text-[#FAFAFA] placeholder-[#8E8E8E] dark:placeholder-[#A8A8A8] outline-none"
                 disabled={isSubmitting}
               />
-              {commentText.trim() && (
-                <button
-                  onClick={handleCommentSubmit}
-                  disabled={isSubmitting}
-                  className="text-[#0095f6] font-semibold text-sm hover:opacity-70 disabled:opacity-50"
-                >
-                  {isSubmitting ? 'Invio...' : 'Pubblica'}
-                </button>
-              )}
+              <button
+                onClick={handleCommentSubmit}
+                disabled={isSubmitting || !commentText.trim()}
+                className="font-semibold text-sm hover:opacity-70 disabled:opacity-30 transition-opacity text-[#8E8E8E] dark:text-[#A8A8A8]"
+              >
+                {isSubmitting ? 'Invio...' : 'Pubblica'}
+              </button>
             </div>
           </div>
         </div>
