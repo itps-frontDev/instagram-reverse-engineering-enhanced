@@ -19,6 +19,7 @@ import ProfilePrivateLock from '@/components/profile/ProfilePrivateLock';
 import StoriesHighlights from '@/components/profile/StoriesHighlights';
 import ProfileImageModal from '@/components/profile/ProfileImageModal';
 import PostModal from '@/components/feed/PostModal';
+import CreatePostModal from '@/components/feed/CreatePostModal';
 import Footer from '@/components/common/Footer';
 import {
   Profile,
@@ -64,9 +65,7 @@ export default function ProfilePage({
   const [showProfileImageModal, setShowProfileImageModal] = useState(false);
   const [selectedPost, setSelectedPost] = useState<FeedPost | null>(null);
   const [showPostModal, setShowPostModal] = useState(false);
-
-  // Refs for file inputs
-  const createPostInputRef = useRef<HTMLInputElement>(null);
+  const [showCreatePostModal, setShowCreatePostModal] = useState(false);
 
   // Fetch profile data on mount
   useEffect(() => {
@@ -386,19 +385,16 @@ export default function ProfilePage({
    * Handle create post click - opens file picker
    */
   function handleCreatePostClick() {
-    createPostInputRef.current?.click();
+    setShowCreatePostModal(true);
   }
 
   /**
-   * Handle create post file selection
+   * Handle post created successfully
    */
-  async function handleCreatePostUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // TODO: Implement create post logic (open modal with image)
-    console.log('Post image selected:', file);
-    // Here you would open a modal to create the post with the selected image
+  function handlePostCreated() {
+    setShowCreatePostModal(false);
+    // Refresh posts to show the new one
+    fetchPosts(0);
   }
 
   /**
@@ -576,15 +572,6 @@ export default function ProfilePage({
   return (
     <>
       <div className="w-full flex flex-col items-center pb-12 max-w-7xl mx-auto flex-1">
-        {/* Hidden file input for create post */}
-        <input
-          ref={createPostInputRef}
-          type="file"
-          accept="image/*,video/*"
-          className="hidden"
-          onChange={handleCreatePostUpload}
-        />
-
         <div
           style={{
             marginLeft: '159.531px',
@@ -683,6 +670,12 @@ export default function ProfilePage({
           hasPrev={posts.findIndex(p => p.id === selectedPost.id) > 0}
         />
       )}
+
+      {/* Create Post Modal */}
+      <CreatePostModal
+        isOpen={showCreatePostModal}
+        onClose={() => setShowCreatePostModal(false)}
+      />
     </>
   );
 }
