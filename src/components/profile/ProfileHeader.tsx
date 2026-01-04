@@ -38,6 +38,16 @@ export default function ProfileHeader({
 }: ProfileHeaderProps) {
   const [modalType, setModalType] = useState<'followers' | 'following' | null>(null);
 
+  const [isBumping, setIsBumping] = useState(false);
+
+  const handleProfileImageClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (followStatus.isOwnProfile) {
+      setIsBumping(true);
+      setTimeout(() => setIsBumping(false), 150);
+      if (onProfileImageClick) onProfileImageClick(e);
+    }
+  };
+
   return (
     <>
       <header className="px-4 py-4 md:py-6">
@@ -46,10 +56,8 @@ export default function ProfileHeader({
           {/* Profile Picture */}
           <div className="flex justify-center md:justify-start flex-shrink-0">
             <div
-              className={`relative w-[77px] h-[77px] md:w-[150px] md:h-[150px] ${
-                followStatus.isOwnProfile ? 'cursor-pointer' : ''
-              }`}
-              onClick={followStatus.isOwnProfile ? onProfileImageClick : undefined}
+              className={`relative w-[77px] h-[77px] md:w-[150px] md:h-[150px] ${followStatus.isOwnProfile ? 'cursor-pointer' : ''} transition-transform duration-150 ${isBumping ? 'scale-95' : ''}`}
+              onClick={handleProfileImageClick}
               role={followStatus.isOwnProfile ? 'button' : undefined}
               tabIndex={followStatus.isOwnProfile ? 0 : undefined}
             >

@@ -77,14 +77,14 @@ export default function ProfileStats({
       </li>
       {/* Followers */}
       <li
-        className="text-sm leading-[18px] whitespace-nowrap cursor-pointer text-instagram-primary hover:opacity-70 transition-opacity"
+        className="text-sm leading-[18px] whitespace-nowrap cursor-pointer text-instagram-primary active:opacity-70 transition-opacity"
         onClick={onFollowersClick}
       >
         <span className="font-semibold">{formatCount(followersCount)}</span> follower
       </li>
       {/* Following */}
       <li
-        className="text-sm leading-[18px] whitespace-nowrap cursor-pointer text-instagram-primary hover:opacity-70 transition-opacity"
+        className="text-sm leading-[18px] whitespace-nowrap cursor-pointer text-instagram-primary active:opacity-70 transition-opacity"
         onClick={onFollowingClick}
       >
         <span className="font-semibold">{formatCount(followingCount)}</span> seguiti
