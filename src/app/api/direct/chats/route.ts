@@ -1,6 +1,6 @@
 /**
  * API Route: /api/direct/chats
- * Restituisce la lista delle chat dell'utente autenticato
+ * Restituisce la lista delle chat dell'utente autenticato + follower/following senza chat
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentProfile } from '@/lib/auth';
@@ -42,9 +42,43 @@ export async function GET(req: NextRequest) {
     FROM chats c
     JOIN chat_participants cp ON cp.chat_id = c.id
     WHERE cp.profile_id = ? AND cp.left_at IS NULL AND c.deleted_at IS NULL
-    ORDER BY c.last_message_at DESC, c.created_at DESC
+    ORDER BY 
+      CASE WHEN c.last_message_at IS NULL THEN 1 ELSE 0 END,
+      c.last_message_at DESC, 
+      c.created_at DESC
     LIMIT 50
   `, [profile.id, profile.id, profile.id, profile.id, profile.id]);
+
+  // Ottieni gli ID dei profili con cui esiste già una chat
+  const existingChatProfileIds = new Set(
+    chats.map(chat => chat.other_profile_id).filter(id => id !== null)
+  );
+
+  // Recupera i follower (persone che seguono l'utente) e following (persone che l'utente segue)
+  // che non hanno ancora una chat attiva con l'utente
+  const followers = await queryAll<{
+    id: number;
+    username: string;
+    full_name: string | null;
+    profile_image_url: string | null;
+  }>(`
+    SELECT DISTINCT p.id, p.username, p.full_name, p.profile_image_url
+    FROM profiles p
+    JOIN follows f ON (
+      (f.follower_profile_id = p.id AND f.following_profile_id = ?)
+      OR
+      (f.following_profile_id = p.id AND f.follower_profile_id = ?)
+    )
+    WHERE f.status = 'accepted' 
+      AND f.deleted_at IS NULL 
+      AND p.deleted_at IS NULL
+      AND p.id != ?
+    ORDER BY p.username
+    LIMIT 100
+  `, [profile.id, profile.id, profile.id]);
+
+  // Filtra i follower che non hanno già una chat
+  const followersWithoutChat = followers.filter(f => !existingChatProfileIds.has(f.id));
 
   // Mappa le chat per il frontend
   const mappedChats = chats.map(chat => ({
@@ -60,8 +94,25 @@ export async function GET(req: NextRequest) {
     other_profile_image_url: chat.other_profile_image_url,
   }));
 
+  // Mappa i follower senza chat come "contatti potenziali"
+  const mappedFollowers = followersWithoutChat.map(f => ({
+    id: null, // Nessuna chat esistente
+    is_group: false,
+    name: f.full_name || f.username,
+    last_message_at: null,
+    last_message_text: null,
+    isFromMe: false,
+    other_profile_id: f.id,
+    other_username: f.username,
+    other_full_name: f.full_name,
+    other_profile_image_url: f.profile_image_url,
+  }));
+
+  // Combina: prima le chat con messaggi (ordinate per data), poi i follower senza chat
+  const allContacts = [...mappedChats, ...mappedFollowers];
+
   return NextResponse.json(
-    { chats: mappedChats, currentProfileId: profile.id },
+    { chats: allContacts, currentProfileId: profile.id },
     { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
   );
 }

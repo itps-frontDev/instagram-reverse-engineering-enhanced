@@ -27,7 +27,7 @@ export default function DirectPage() {
   // Funzione per caricare le chat
   const fetchChats = React.useCallback(async () => {
     try {
-      const res = await fetch("/api/direct/chats", {
+      const res = await fetch(`/api/direct/chats?_t=${Date.now()}`, {
         cache: 'no-store',
         headers: { 'Cache-Control': 'no-cache' }
       });
@@ -60,7 +60,7 @@ export default function DirectPage() {
     const interval = setInterval(fetchChats, 3000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchChats]);
 
   // Quando viene selezionato un contatto (profilo), crea o ottiene la chat
   useEffect(() => {
@@ -90,7 +90,7 @@ export default function DirectPage() {
     // Carica immediatamente
     const fetchMessages = async () => {
       try {
-        const res = await fetch(`/api/direct/messages?chatId=${selectedChatId}`);
+        const res = await fetch(`/api/direct/messages?chatId=${selectedChatId}&_t=${Date.now()}`);
         if (res.ok) {
           const data = await res.json();
           setMessages(data.messages || []);
@@ -120,11 +120,11 @@ export default function DirectPage() {
       });
       if (res.ok) {
         // Ricarica i messaggi dopo l'invio
-        const data = await fetch(`/api/direct/messages?chatId=${selectedChatId}`).then((r) => r.json());
+        const data = await fetch(`/api/direct/messages?chatId=${selectedChatId}&_t=${Date.now()}`).then((r) => r.json());
         setMessages(data.messages || []);
         
         // Aggiorna anche la lista chat per mostrare il nuovo ultimo messaggio
-        const chatsRes = await fetch("/api/direct/chats");
+        const chatsRes = await fetch(`/api/direct/chats?_t=${Date.now()}`);
         if (chatsRes.ok) {
           const chatsData = await chatsRes.json();
           const chats = (chatsData.chats || []) as any[];
