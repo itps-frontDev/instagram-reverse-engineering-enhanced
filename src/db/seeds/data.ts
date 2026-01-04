@@ -17,7 +17,8 @@ const FIRST_NAMES = [
   'Sebastian', 'Ella', 'Jack', 'Scarlett', 'Aiden', 'Grace', 'Owen', 'Chloe',
   'Samuel', 'Victoria', 'Joseph', 'Riley', 'John', 'Aria', 'David', 'Lily',
   'Wyatt', 'Aubrey', 'Carter', 'Zoey', 'Jayden', 'Penelope', 'Luke', 'Lillian',
-  'Gabriel', 'Addison', 'Anthony', 'Jane', 'Mike', 'Sarah', 'Alex', 'Lisa'
+  'Gabriel', 'Addison', 'Anthony', 'Jane', 'Mike', 'Sarah', 'Alex', 'Lisa',
+  'Chris', 'Rachel', 'Ryan', 'Jessica', 'Tyler', 'Hannah', 'Kevin', 'Nicole'
 ];
 
 const LAST_NAMES = [
@@ -27,7 +28,8 @@ const LAST_NAMES = [
   'White', 'Harris', 'Sanchez', 'Clark', 'Ramirez', 'Lewis', 'Robinson', 'Walker',
   'Young', 'Allen', 'King', 'Wright', 'Scott', 'Torres', 'Nguyen', 'Hill', 'Flores',
   'Green', 'Adams', 'Nelson', 'Baker', 'Hall', 'Rivera', 'Campbell', 'Mitchell',
-  'Carter', 'Roberts', 'Gomez', 'Phillips', 'Evans', 'Turner', 'Diaz', 'Doe'
+  'Carter', 'Roberts', 'Gomez', 'Phillips', 'Evans', 'Turner', 'Diaz', 'Doe',
+  'Cruz', 'Reyes', 'Cooper', 'Reed', 'Bailey', 'Bell', 'Murphy', 'Morgan'
 ];
 
 const BIO_TEMPLATES = [
@@ -51,6 +53,16 @@ const BIO_TEMPLATES = [
   '🏖️ Beach lover',
   '🍰 Baking enthusiast',
   '🚴 Cyclist',
+  '✈️ Wanderlust | Making memories',
+  '🎭 Actor | Dreamer',
+  '🏋️ Gym rat | Protein shakes',
+  '👗 Fashion blogger',
+  '🍜 Ramen connoisseur',
+  '🎸 Musician | Songwriter',
+  '🏄 Surf life',
+  '🌺 Island vibes only',
+  '📝 Content creator',
+  '🎪 Life is a circus 🤹',
 ];
 
 function randomElement<T>(array: T[]): T {
@@ -84,10 +96,10 @@ function generateDateOfBirth(): string {
 }
 
 // ============================================================================
-// USERS - Generate 55 users
+// USERS - Generate 80 users (expanded from 55)
 // ============================================================================
 
-const NUM_USERS = 55;
+const NUM_USERS = 80;
 
 export const TEST_USERS = Array.from({ length: NUM_USERS }, (_, i) => {
   const firstName = randomElement(FIRST_NAMES);
@@ -103,7 +115,7 @@ export const TEST_USERS = Array.from({ length: NUM_USERS }, (_, i) => {
 });
 
 // ============================================================================
-// PROFILES - Generate 55 profiles
+// PROFILES - Generate 80 profiles with PROFILE PICTURES
 // ============================================================================
 
 export const TEST_PROFILES = Array.from({ length: NUM_USERS }, (_, i) => {
@@ -111,6 +123,9 @@ export const TEST_PROFILES = Array.from({ length: NUM_USERS }, (_, i) => {
   const lastName = randomElement(LAST_NAMES);
   const username = generateUsername(firstName, lastName, i);
   const fullName = `${firstName} ${lastName}`;
+  
+  // 95% degli utenti hanno profile picture, solo 5% (circa 4 utenti) senza
+  const hasProfilePicture = i >= 4; // Primi 4 utenti senza pfp
 
   return {
     username,
@@ -119,11 +134,12 @@ export const TEST_PROFILES = Array.from({ length: NUM_USERS }, (_, i) => {
     website_url: randomBool(0.3) ? `https://${username}.com` : null,
     is_private: randomBool(0.25), // 25% private accounts
     is_verified: randomBool(0.15), // 15% verified accounts
+    profile_image_url: hasProfilePicture ? `https://i.pravatar.cc/300?u=${username}` : null,
   };
 });
 
 // ============================================================================
-// POSTS - Caption templates
+// POSTS - Caption templates (EXPANDED)
 // ============================================================================
 
 const POST_CAPTIONS = [
@@ -135,9 +151,9 @@ const POST_CAPTIONS = [
   'Weekend mood',
   'Making memories',
   'Good times with great people',
-  'Chasing sunsets',
+  'Chasing sunsets 🌅',
   'Adventure awaits',
-  'Feeling blessed',
+  'Feeling blessed 🙏',
   'Life is beautiful',
   'Creating my own sunshine',
   'Just because',
@@ -147,47 +163,138 @@ const POST_CAPTIONS = [
   'Here\'s to the good times',
   'Happiness looks good on me',
   'Throwback to this amazing day',
+  'New day, new vibes',
+  'Exploring hidden gems',
+  'Coffee and contemplation ☕',
+  'Golden hour magic',
+  'Home is where the heart is 💙',
+  'Friday feels',
+  'Making every second count',
+  'This is what happiness looks like',
+  'Soaking up the sun',
+  'Lost in paradise',
+  'Positive vibes only ✨',
+  'Dream big, work hard',
+  'Collecting moments, not things',
+  'Living in the moment',
+  'Best day ever!',
+  'Nature therapy 🌿',
+  'Good food, good mood 🍽️',
+  'Workout completed 💪',
+  'Self-care Sunday',
+  'Travel mode: ON ✈️',
+  'City lights and late nights',
+  'Beach days are the best days',
+  'Sunset state of mind',
+  'Art is everywhere 🎨',
+  'Music makes everything better 🎵',
+  'Foodie life',
+  'Just keep swimming 🏊',
+  'Hustle and heart',
+  'Find me where the wifi is weak',
+  'Today was a good day',
 ];
 
-// Each profile will get 5-10 posts dynamically generated in seeders
-export const TEST_POSTS = POST_CAPTIONS.map(caption => ({
-  caption,
-  likes: randomInt(10, 500),
-  comments: randomInt(0, 50),
-}));
-
-// ============================================================================
-// POST ASSIGNMENTS - All profiles get posts
-// ============================================================================
-
+// Each profile will get 8-15 posts dynamically generated in seeders (INCREASED)
 export const POST_ASSIGNMENTS = Array.from({ length: NUM_USERS }, (_, i) => ({
   profileIndex: i,
-  count: randomInt(5, 10), // Each profile gets 5-10 posts
+  count: randomInt(8, 15), // INCREASED from 5-10
 }));
 
 // ============================================================================
-// STORIES - Will be generated dynamically per profile in seeders
+// STORIES - With 99 YEAR EXPIRATION for demos
 // ============================================================================
 
-// Each profile will get 3-6 stories with picsum URLs
-// Stories will have extended expiration (2030-12-31)
-export const TEST_STORIES: Array<{
-  profileIndex: number;
-  media_url: string;
-  media_type: 'image' | 'video';
-  duration_seconds: number;
-}> = [];
+// Calculate expiration date 99 years from now
+const STORY_EXPIRATION_DATE = new Date();
+STORY_EXPIRATION_DATE.setFullYear(STORY_EXPIRATION_DATE.getFullYear() + 99);
+const STORY_EXPIRATION = STORY_EXPIRATION_DATE.toISOString().split('T')[0] + ' 23:59:59';
+
+export const STORY_CONFIG = {
+  expiresAt: STORY_EXPIRATION,
+  storiesPerProfile: { min: 3, max: 8 }, // INCREASED from 3-6
+};
 
 // ============================================================================
-// FOLLOWS - Will be generated dynamically in seeders
+// MESSAGE TEMPLATES
 // ============================================================================
 
-// Follows will be generated with:
-// - ~30% probability of following any other user
-// - Pending requests for private accounts (~15% of follows to private accounts)
-// - Complex social graph with multiple connections
-export const TEST_FOLLOWS: Array<{
-  followerIndex: number;
-  followingIndex: number;
-  status: 'accepted' | 'pending' | 'rejected';
-}> = [];
+export const MESSAGE_TEMPLATES = [
+  'Hey! How are you?',
+  'Thanks for following! 😊',
+  'Love your recent post!',
+  'Let\'s catch up soon',
+  'That photo is amazing!',
+  'What camera do you use?',
+  'Where is this place?',
+  'Great content!',
+  'Haha that\'s so funny 😂',
+  'Can\'t wait to see more',
+  'This is goals 🔥',
+  'Stunning!',
+  'You inspire me',
+  'Following back! 🙌',
+  'Nice to meet you',
+  'Do you have any tips?',
+  'This made my day',
+  'Beautiful shot!',
+  'Keep up the great work',
+  'Wow just wow',
+];
+
+// ============================================================================
+// COMMENT TEMPLATES
+// ============================================================================
+
+export const COMMENT_TEMPLATES = [
+  'Love this! 😍',
+  'Amazing!',
+  'So beautiful ❤️',
+  'Goals!',
+  'Stunning 🔥',
+  'This is perfect',
+  'Can\'t stop looking at this',
+  'Wow! 🤩',
+  'Incredible',
+  'You\'re killing it!',
+  'This is art',
+  'Obsessed 💯',
+  'Perfection',
+  'Need this in my life',
+  'So good!',
+  'Beautiful capture',
+  'Love the vibes',
+  'This speaks to me',
+  'Absolutely gorgeous',
+  'You nailed it!',
+  '🔥🔥🔥',
+  '💙💙💙',
+  '✨✨✨',
+  'Yes! 🙌',
+  'Epic!',
+];
+
+// ============================================================================
+// HASHTAG TEMPLATES
+// ============================================================================
+
+export const HASHTAG_TEMPLATES = [
+  '#instagood', '#photooftheday', '#beautiful', '#happy', '#fashion',
+  '#picoftheday', '#art', '#photography', '#love', '#nature',
+  '#travel', '#style', '#summer', '#beauty', '#fitness',
+  '#food', '#life', '#instadaily', '#instalike', '#follow',
+  '#amazing', '#me', '#inspiration', '#lifestyle', '#sunset',
+  '#vibes', '#goals', '#mood', '#blessed', '#weekend',
+];
+
+// ============================================================================
+// LOCATION TEMPLATES
+// ============================================================================
+
+export const LOCATION_TEMPLATES = [
+  'New York, NY', 'Los Angeles, CA', 'Miami, FL', 'Chicago, IL',
+  'San Francisco, CA', 'Seattle, WA', 'Boston, MA', 'Austin, TX',
+  'Las Vegas, NV', 'Portland, OR', 'Denver, CO', 'Nashville, TN',
+  'Paris, France', 'London, UK', 'Tokyo, Japan', 'Barcelona, Spain',
+  'Rome, Italy', 'Bali, Indonesia', 'Dubai, UAE', 'Sydney, Australia',
+];

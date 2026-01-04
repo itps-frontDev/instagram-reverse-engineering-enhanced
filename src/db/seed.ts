@@ -6,12 +6,25 @@
  */
 
 import { queryOne } from '@/lib/db';
-import { seedUsers, seedProfiles, seedPosts, seedFollows, seedStories, seedPostTags } from './seeds/seeders';
+import { 
+  seedUsers, 
+  seedProfiles, 
+  seedPosts, 
+  seedFollows, 
+  seedStories, 
+  seedPostTags,
+  seedPostLikes,
+  seedSavedPosts,
+  seedPostComments,
+  seedCommentLikes,
+  seedDirectMessages,
+  seedStoryViews,
+} from './seeds/seeders';
 
 async function main() {
-  console.log('\n📦 Instagram Clone - Large Dataset Seeding\n');
+  console.log('\n📦 Instagram Clone - COMPREHENSIVE Dataset Seeding\n');
   console.log('─'.repeat(60) + '\n');
-  console.log('Generating 55 accounts with comprehensive data...');
+  console.log('Generating 80 accounts with FULL Instagram features...');
   console.log('─'.repeat(60));
 
   try {
@@ -25,31 +38,60 @@ async function main() {
 
     const startTime = Date.now();
 
-    // Seed data
+    // Seed data in order (dependencies matter!)
+    console.log('\n🚀 Starting comprehensive seeding process...\n');
+    
     const userIds = await seedUsers();
     const profileIds = await seedProfiles(userIds);
     const allPostIds = await seedPosts(profileIds);
+    
     await seedPostTags(allPostIds, profileIds);
+    await seedPostLikes(allPostIds, profileIds);
+    await seedSavedPosts(allPostIds, profileIds);
+    await seedPostComments(allPostIds, profileIds);
+    await seedCommentLikes(profileIds);
+    
     await seedFollows(profileIds);
     await seedStories(profileIds);
+    await seedStoryViews(profileIds);
+    await seedDirectMessages(profileIds);
 
     const endTime = Date.now();
     const duration = ((endTime - startTime) / 1000).toFixed(2);
 
-    console.log('\n' + '─'.repeat(60));
-    console.log('\n🎉 Seeding complete!\n');
-    console.log(`⏱️  Total time: ${duration}s`);
-    console.log(`👥 Created: 55 accounts with diverse profiles`);
-    console.log(`📝 Posts: ${allPostIds.length} total with multiple images`);
-    console.log(`🏷️  Tags: Post tags for testing tagged section`);
-    console.log(`📖 Stories: 3-6 per profile (expiring Dec 31, 2030)`);
-    console.log(`🤝 Follows: Complex social graph with pending requests`);
-    console.log('\n💡 All accounts use password: password123');
-    console.log('📅 Stories expire on: December 31, 2030');
-    console.log('\n✨ Sample accounts to try:');
-    console.log('   Browse profiles to see the rich dataset!\n');
+    console.log('\n' + '═'.repeat(60));
+    console.log('\n🎉 SEEDING COMPLETE - FULL INSTAGRAM CLONE DATABASE!\n');
+    console.log('═'.repeat(60));
+    console.log(`\n⏱️  Total time: ${duration}s\n`);
+    console.log('📊 DATABASE STATISTICS:');
+    console.log('─'.repeat(60));
+    console.log(`👥 Users: 80 accounts with profile pictures`);
+    console.log(`📝 Posts: ${allPostIds.length} posts (8-15 per user)`);
+    console.log(`❤️  Likes: Distributed across posts`);
+    console.log(`💬 Comments: Multiple comments per post`);
+    console.log(`🔖 Saved Posts: Users saving their favorite content`);
+    console.log(`🏷️  Tagged: Users tagged in photos`);
+    console.log(`📖 Stories: 3-8 per profile (99-year expiration!)`);
+    console.log(`👁️  Story Views: Comprehensive view tracking`);
+    console.log(`🤝 Follows: Complex social graph + pending requests`);
+    console.log(`💌 Direct Messages: Chats with message history`);
+    console.log('─'.repeat(60));
+    console.log('\n🔑 ALL ACCOUNTS USE PASSWORD: password123');
+    console.log('📅 STORIES EXPIRE IN: 99 years (perfect for demos!)');
+    console.log('\n✨ FEATURES INCLUDED:');
+    console.log('   • Profile pictures (95% of users)');
+    console.log('   • Pending follow requests');
+    console.log('   • Post likes & comment likes');
+    console.log('   • Saved posts collections');
+    console.log('   • Tagged users in posts');
+    console.log('   • Direct message conversations');
+    console.log('   • Story views tracking');
+    console.log('   • Private & verified accounts');
+    console.log('   • Multiple images per post');
+    console.log('\n🎯 READY FOR DEMO & TESTING!\n');
   } catch (error) {
     console.error('\n❌ Seeding failed:', error);
+    console.error('Stack trace:', error);
     process.exit(1);
   }
 }
