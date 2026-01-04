@@ -8,12 +8,15 @@ import { ProfileTabsProps, ProfileTab } from '@/lib/types/profile';
 import PostsTabIcon from './icons/PostsTabIcon';
 import SavedTabIcon from './icons/SavedTabIcon';
 import TaggedTabIcon from './icons/TaggedTabIcon';
+import ReelsTabIcon from './icons/ReelsTabIcon';
 
 export default function ProfileTabs({
   activeTab,
   onTabChange,
   postsCount,
   showTagged,
+  hasReels = false,
+  canViewTagged = false,
 }: ProfileTabsProps) {
   const tabs: { id: ProfileTab; icon: (active: boolean) => React.ReactNode }[] = [
     {
@@ -22,17 +25,28 @@ export default function ProfileTabs({
     },
   ];
 
+  // Add Reels tab if profile has reels
+  if (hasReels) {
+    tabs.push({
+      id: 'reels',
+      icon: (active) => <ReelsTabIcon active={active} />,
+    });
+  }
+
+  // Add Saved tab only for own profile
   if (showTagged) {
-    tabs.push(
-      {
-        id: 'saved',
-        icon: (active) => <SavedTabIcon active={active} />,
-      },
-      {
-        id: 'tagged',
-        icon: (active) => <TaggedTabIcon active={active} />,
-      }
-    );
+    tabs.push({
+      id: 'saved',
+      icon: (active) => <SavedTabIcon active={active} />,
+    });
+  }
+
+  // Add Tagged tab if can view (public/following) or own profile
+  if (canViewTagged || showTagged) {
+    tabs.push({
+      id: 'tagged',
+      icon: (active) => <TaggedTabIcon active={active} />,
+    });
   }
 
   return (

@@ -25,6 +25,7 @@ export interface Profile {
   followers_count: number;
   following_count: number;
   posts_count: number;
+  has_reels?: boolean; // Whether profile has any video posts
   created_at?: string;
   updated_at?: string;
 }
@@ -202,7 +203,9 @@ export interface ProfileTabsProps {
   activeTab: ProfileTab;
   onTabChange: (tab: ProfileTab) => void;
   postsCount: number;
-  showTagged: boolean; // Only show on own profile
+  showTagged: boolean; // Show saved tab (only on own profile)
+  hasReels?: boolean; // Show reels tab if profile has reels
+  canViewTagged?: boolean; // Show tagged tab if can view (public or following)
 }
 
 /**

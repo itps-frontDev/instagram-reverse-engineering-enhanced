@@ -1,0 +1,83 @@
+/**
+ * Instagram Button Styles
+ * Reusable button classes for Instagram-style buttons
+ */
+
+@layer components {
+  /* Primary button - Blue/Accent color (Follow button) */
+  .btn-instagram-primary {
+    background-color: rgb(74, 93, 249);
+    color: rgb(255, 255, 255);
+    @apply font-semibold rounded-lg px-4 h-8 text-sm transition-colors disabled:opacity-70;
+  }
+
+  .btn-instagram-primary:hover {
+    background-color: rgb(64, 83, 239);
+  }
+
+  /* Secondary button - Light gray (Edit Profile, View Archive) */
+  .btn-instagram-secondary {
+    background-color: rgb(240, 242, 245);
+    color: rgb(12, 16, 20);
+    @apply font-semibold rounded-lg px-4 h-8 text-sm transition-colors;
+  }
+
+  .btn-instagram-secondary:hover {
+    background-color: rgb(219, 223, 228);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .btn-instagram-secondary {
+      background-color: rgb(37, 41, 46);
+      color: rgb(248, 249, 249);
+    }
+
+    .btn-instagram-secondary:hover {
+      background-color: rgb(27, 31, 36);
+    }
+  }
+
+  /* Pending request button - Light gray (Richiesta effettuata) */
+  .btn-instagram-pending {
+    background-color: rgb(240, 242, 245);
+    color: rgb(12, 16, 20);
+    @apply font-semibold rounded-lg px-4 h-8 text-sm transition-colors;
+  }
+
+  .btn-instagram-pending:hover {
+    background-color: rgb(219, 223, 228);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .btn-instagram-pending {
+      background-color: rgb(37, 41, 46);
+      color: rgb(248, 249, 249);
+    }
+
+    .btn-instagram-pending:hover {
+      background-color: rgb(27, 31, 36);
+    }
+  }
+
+  /* Following dropdown button - Gray (Segui già) */
+  .btn-instagram-following {
+    background-color: rgb(239, 239, 239);
+    color: rgb(12, 16, 20);
+    @apply font-semibold rounded-lg px-4 h-8 text-sm transition-colors flex items-center gap-1;
+  }
+
+  .btn-instagram-following:hover {
+    background-color: rgb(219, 219, 219);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .btn-instagram-following {
+      background-color: rgb(54, 54, 54);
+      color: rgb(248, 249, 249);
+    }
+
+    .btn-instagram-following:hover {
+      background-color: rgb(38, 38, 38);
+    }
+  }
+}

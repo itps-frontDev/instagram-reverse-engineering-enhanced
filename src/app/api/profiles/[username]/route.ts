@@ -43,7 +43,7 @@ export async function GET(
     }
 
     // Fetch profile from database
-    const profile = await queryOne<Profile>(
+    const profile = await queryOne<Profile & { has_reels: number }>(
       `SELECT
         id,
         user_id,
@@ -58,7 +58,15 @@ export async function GET(
         following_count,
         posts_count,
         created_at,
-        updated_at
+        updated_at,
+        (
+          SELECT COUNT(*) > 0
+          FROM posts p
+          INNER JOIN post_media pm ON pm.post_id = p.id
+          WHERE p.profile_id = profiles.id
+            AND pm.media_type = 'video'
+            AND p.deleted_at IS NULL
+        ) as has_reels
       FROM profiles
       WHERE username = ? AND deleted_at IS NULL`,
       [username]
@@ -73,10 +81,11 @@ export async function GET(
     }
 
     // Convert integer booleans to actual booleans
-    const profileData: Profile = {
+    const profileData: Profile & { has_reels: boolean } = {
       ...profile,
       is_private: Boolean(profile.is_private),
       is_verified: Boolean(profile.is_verified),
+      has_reels: Boolean(profile.has_reels),
     };
 
     // Return profile data

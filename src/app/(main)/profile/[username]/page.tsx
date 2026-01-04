@@ -474,6 +474,12 @@ export default function ProfilePage({
             onTabChange={handleTabChange}
             postsCount={profile.posts_count}
             showTagged={followStatus.isOwnProfile}
+            hasReels={profile.has_reels || false}
+            canViewTagged={
+              followStatus.isOwnProfile ||
+              !profile.is_private ||
+              followStatus.isFollowing
+            }
           />
 
           {/* Content blocco */}

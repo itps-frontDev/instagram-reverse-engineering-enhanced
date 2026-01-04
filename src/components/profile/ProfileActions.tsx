@@ -59,12 +59,12 @@ export default function ProfileActions({
     return (
       <div className="flex items-center gap-4 w-full mt-4 mb-6">
         <button
-          className="btn-instagram-secondary flex-1"
+          className="btn-instagram-secondary flex-1 !h-10.5"
           onClick={() => (window.location.href = '/accounts/edit')}
         >
           Modifica profilo
         </button>
-        <button className="btn-instagram-secondary flex-1">
+        <button className="btn-instagram-secondary flex-1 !h-10.5">
           Visualizza archivio
         </button>
       </div>
@@ -78,7 +78,7 @@ export default function ProfileActions({
         {/* Following Button with Dropdown */}
         <div className="relative">
           <button
-            className="px-4 h-8 rounded-lg bg-[#efefef] dark:bg-[#363636] hover:bg-[#dbdbdb] dark:hover:bg-[#262626] font-semibold text-sm transition-colors flex items-center gap-1"
+            className="btn-instagram-following"
             onClick={() => setShowDropdown(!showDropdown)}
             disabled={actionLoading}
           >
@@ -127,12 +127,10 @@ export default function ProfileActions({
         </button>
 
         {/* Add Person Button */}
-        <button className="w-8 h-8 rounded-lg bg-[#efefef] dark:bg-[#363636] hover:bg-[#dbdbdb] dark:hover:bg-[#262626] font-semibold text-sm transition-colors flex items-center justify-center">
-          <button className="btn-instagram-secondary w-8 h-8 flex items-center justify-center text-sm">
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-            </svg>
-          </button>
+        <button className="btn-instagram-secondary w-8 h-8 flex items-center justify-center">
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg>
         </button>
       </div>
     );
@@ -143,7 +141,7 @@ export default function ProfileActions({
     return (
       <div className="flex items-center gap-2">
         <button
-          className="btn-instagram-secondary px-4 h-8 text-sm"
+          className="btn-instagram-pending"
           onClick={handleUnfollow}
           disabled={actionLoading}
         >
