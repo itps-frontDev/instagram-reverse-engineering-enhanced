@@ -11,12 +11,15 @@
 
 import { use, useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import ProfileTabs from '@/components/profile/ProfileTabs';
 import ProfileGrid from '@/components/profile/ProfileGrid';
 import ProfilePrivateLock from '@/components/profile/ProfilePrivateLock';
 import StoriesHighlights from '@/components/profile/StoriesHighlights';
 import ProfileImageModal from '@/components/profile/ProfileImageModal';
+import PostModal from '@/components/feed/PostModal';
+import CreatePostModal from '@/components/feed/CreatePostModal';
 import Footer from '@/components/common/Footer';
 import {
   Profile,
@@ -25,6 +28,7 @@ import {
   ProfileTab,
   StoryHighlight,
 } from '@/lib/types/profile';
+import type { FeedPost } from '@/lib/types/feed';
 
 // ============================================================================
 // MAIN PAGE COMPONENT
@@ -38,6 +42,7 @@ export default function ProfilePage({
   const { username } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { refreshProfile } = useAuth();
 
   // State
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -58,9 +63,9 @@ export default function ProfilePage({
   const [error, setError] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [showProfileImageModal, setShowProfileImageModal] = useState(false);
-
-  // Refs for file inputs
-  const createPostInputRef = useRef<HTMLInputElement>(null);
+  const [selectedPost, setSelectedPost] = useState<FeedPost | null>(null);
+  const [showPostModal, setShowPostModal] = useState(false);
+  const [showCreatePostModal, setShowCreatePostModal] = useState(false);
 
   // Fetch profile data on mount
   useEffect(() => {
@@ -291,7 +296,7 @@ export default function ProfilePage({
   function handleProfileImageClick() {
     // Se non c'è una pfp custom, apri l'esplora risorse, altrimenti apri il modale
     if (!profile?.profile_image_url || profile.profile_image_url === '/images/default-pfp.jpg') {
-      // Trova l'input file per upload immagine profilo
+      // Apri direttamente l'esplora file
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'image/*';
@@ -303,6 +308,7 @@ export default function ProfilePage({
       };
       input.click();
     } else {
+      // Apri il modale se c'è già una pfp custom
       setShowProfileImageModal(true);
     }
   }
@@ -333,6 +339,9 @@ export default function ProfilePage({
 
       // Aggiorna lo stato del profilo con la nuova immagine
       setProfile(prev => prev ? { ...prev, profile_image_url: data.imageUrl } : null);
+      
+      // Aggiorna il profilo nell'AuthContext per aggiornare la sidebar
+      await refreshProfile();
 
     } catch (error) {
       console.error('Error uploading image:', error);
@@ -360,6 +369,9 @@ export default function ProfilePage({
 
       // Aggiorna lo stato del profilo rimuovendo l'immagine
       setProfile(prev => prev ? { ...prev, profile_image_url: null } : null);
+      
+      // Aggiorna il profilo nell'AuthContext per aggiornare la sidebar
+      await refreshProfile();
 
     } catch (error) {
       console.error('Error removing image:', error);
@@ -373,19 +385,159 @@ export default function ProfilePage({
    * Handle create post click - opens file picker
    */
   function handleCreatePostClick() {
-    createPostInputRef.current?.click();
+    setShowCreatePostModal(true);
   }
 
   /**
-   * Handle create post file selection
+   * Handle post created successfully
    */
-  async function handleCreatePostUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  function handlePostCreated() {
+    setShowCreatePostModal(false);
+    // Refresh posts to show the new one
+    fetchPosts(0);
+  }
 
-    // TODO: Implement create post logic (open modal with image)
-    console.log('Post image selected:', file);
-    // Here you would open a modal to create the post with the selected image
+  /**
+   * Handle post click - opens modal
+   */
+  async function handlePostClick(post: Post) {
+    try {
+      // Fetch complete post data with all media
+      const res = await fetch(`/api/posts/${post.id}`);
+      
+      if (!res.ok) {
+        throw new Error('Failed to fetch post');
+      }
+      
+      const data = await res.json();
+      setSelectedPost(data.post);
+      setShowPostModal(true);
+    } catch (err) {
+      console.error('Error fetching post:', err);
+    }
+  }
+
+  /**
+   * Handle like post
+   */
+  async function handleLikePost(postId: number) {
+    if (!selectedPost) return;
+
+    const wasLiked = selectedPost.is_liked_by_current_user;
+    
+    // Optimistic update
+    setSelectedPost({
+      ...selectedPost,
+      is_liked_by_current_user: !wasLiked,
+      likes_count: wasLiked ? selectedPost.likes_count - 1 : selectedPost.likes_count + 1,
+    });
+
+    try {
+      const endpoint = wasLiked ? `/api/posts/${postId}/unlike` : `/api/posts/${postId}/like`;
+      const res = await fetch(endpoint, { method: 'POST' });
+      
+      if (!res.ok) throw new Error('Failed to like/unlike post');
+
+      // Update post in posts array
+      setPosts(prev => prev.map(p => 
+        p.id === postId 
+          ? { ...p, likes_count: wasLiked ? p.likes_count - 1 : p.likes_count + 1 }
+          : p
+      ));
+    } catch (err) {
+      // Revert optimistic update
+      setSelectedPost({
+        ...selectedPost,
+        is_liked_by_current_user: wasLiked,
+        likes_count: wasLiked ? selectedPost.likes_count + 1 : selectedPost.likes_count - 1,
+      });
+      console.error('Error liking post:', err);
+    }
+  }
+
+  /**
+   * Handle save post
+   */
+  async function handleSavePost(postId: number) {
+    if (!selectedPost) return;
+
+    const wasSaved = selectedPost.is_saved_by_current_user;
+    
+    // Optimistic update
+    setSelectedPost({
+      ...selectedPost,
+      is_saved_by_current_user: !wasSaved,
+    });
+
+    try {
+      const endpoint = wasSaved ? `/api/posts/${postId}/unsave` : `/api/posts/${postId}/save`;
+      const res = await fetch(endpoint, { method: 'POST' });
+      
+      if (!res.ok) throw new Error('Failed to save/unsave post');
+    } catch (err) {
+      // Revert optimistic update
+      setSelectedPost({
+        ...selectedPost,
+        is_saved_by_current_user: wasSaved,
+      });
+      console.error('Error saving post:', err);
+    }
+  }
+
+  /**
+   * Handle comment on post
+   */
+  async function handleCommentPost(postId: number, text: string) {
+    if (!selectedPost) return;
+
+    try {
+      const res = await fetch(`/api/posts/${postId}/comment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+
+      if (!res.ok) throw new Error('Failed to comment');
+
+      // Update comment count
+      setSelectedPost({
+        ...selectedPost,
+        comments_count: selectedPost.comments_count + 1,
+      });
+
+      // Update post in posts array
+      setPosts(prev => prev.map(p => 
+        p.id === postId 
+          ? { ...p, comments_count: p.comments_count + 1 }
+          : p
+      ));
+    } catch (err) {
+      console.error('Error commenting:', err);
+    }
+  }
+
+  /**
+   * Handle next post navigation
+   */
+  function handleNextPost() {
+    if (!selectedPost) return;
+    
+    const currentIndex = posts.findIndex(p => p.id === selectedPost.id);
+    if (currentIndex < posts.length - 1) {
+      handlePostClick(posts[currentIndex + 1]);
+    }
+  }
+
+  /**
+   * Handle previous post navigation
+   */
+  function handlePrevPost() {
+    if (!selectedPost) return;
+    
+    const currentIndex = posts.findIndex(p => p.id === selectedPost.id);
+    if (currentIndex > 0) {
+      handlePostClick(posts[currentIndex - 1]);
+    }
   }
 
   // Loading state
@@ -420,15 +572,6 @@ export default function ProfilePage({
   return (
     <>
       <div className="w-full flex flex-col items-center pb-12 max-w-7xl mx-auto flex-1">
-        {/* Hidden file input for create post */}
-        <input
-          ref={createPostInputRef}
-          type="file"
-          accept="image/*,video/*"
-          className="hidden"
-          onChange={handleCreatePostUpload}
-        />
-
         <div
           style={{
             marginLeft: '159.531px',
@@ -460,12 +603,23 @@ export default function ProfilePage({
           )}
 
           {/* Tabs blocco */}
-          <ProfileTabs
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-            postsCount={profile.posts_count}
-            showTagged={followStatus.isOwnProfile}
-          />
+          {canView ? (
+            <ProfileTabs
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+              postsCount={profile.posts_count}
+              showTagged={followStatus.isOwnProfile}
+              hasReels={profile.has_reels || false}
+              canViewTagged={
+                followStatus.isOwnProfile ||
+                !profile.is_private ||
+                followStatus.isFollowing
+              }
+            />
+          ) : (
+            // Bordo anche quando i tabs non sono visibili
+            <div className="w-full border-b border-[#DBDBDB] dark:border-[#2b3036]" />
+          )}
 
           {/* Content blocco */}
           <div className="w-full flex justify-center px-4">
@@ -479,6 +633,7 @@ export default function ProfilePage({
                   tab={activeTab}
                   isOwnProfile={followStatus.isOwnProfile}
                   onCreatePost={handleCreatePostClick}
+                  onPostClick={handlePostClick}
                 />
               ) : (
                 <ProfilePrivateLock
@@ -504,6 +659,28 @@ export default function ProfilePage({
           hasImage={!!profile.profile_image_url && profile.profile_image_url !== '/images/default-pfp.jpg'}
         />
       )}
+
+      {/* Post Modal */}
+      {selectedPost && (
+        <PostModal
+          post={selectedPost}
+          isOpen={showPostModal}
+          onClose={() => setShowPostModal(false)}
+          onLike={handleLikePost}
+          onSave={handleSavePost}
+          onComment={handleCommentPost}
+          onNext={handleNextPost}
+          onPrev={handlePrevPost}
+          hasNext={posts.findIndex(p => p.id === selectedPost.id) < posts.length - 1}
+          hasPrev={posts.findIndex(p => p.id === selectedPost.id) > 0}
+        />
+      )}
+
+      {/* Create Post Modal */}
+      <CreatePostModal
+        isOpen={showCreatePostModal}
+        onClose={() => setShowCreatePostModal(false)}
+      />
     </>
   );
 }

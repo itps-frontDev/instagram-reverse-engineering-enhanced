@@ -47,6 +47,7 @@ if (!existsSync(DATA_DIR)) {
 
 /**
  * Deletes the existing database file and associated WAL files.
+ * If files are locked, clears all data from tables instead.
  *
  * SQLite with WAL mode creates additional files:
  * - instagram.db-wal (Write-Ahead Log)
@@ -58,15 +59,59 @@ async function resetDatabase(): Promise<void> {
   console.log("🗑️  Resetting database...\n");
 
   const filesToDelete = [DB_PATH, `${DB_PATH}-wal`, `${DB_PATH}-shm`];
+  let hasErrors = false;
 
   for (const file of filesToDelete) {
     try {
       await access(file);
       await unlink(file);
-      console.log(`   Deleted: ${file}`);
-    } catch {
-      // File doesn't exist, skip
+      console.log(`   ✅ Deleted: ${file}`);
+    } catch (error: any) {
+      if (error.code === 'ENOENT') {
+        // File doesn't exist, skip
+        continue;
+      }
+      
+      // File is locked or other error
+      hasErrors = true;
     }
+  }
+
+  if (hasErrors) {
+    console.log('\n⚠️  Database files are locked (dev server running?)');
+    console.log('   Using alternative: Clearing all data from tables...\n');
+    
+    try {
+      // Import db here to avoid circular dependency
+      const { execute, queryAll } = await import('@/lib/db');
+      
+      // Disable foreign keys temporarily
+      await execute('PRAGMA foreign_keys = OFF');
+      
+      // Get all tables
+      const tables = await queryAll<{ name: string }>(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+      );
+      
+      // Delete all data from each table
+      for (const table of tables) {
+        await execute(`DELETE FROM ${table.name}`);
+        console.log(`   ✅ Cleared: ${table.name}`);
+      }
+      
+      // Re-enable foreign keys
+      await execute('PRAGMA foreign_keys = ON');
+      
+      // Reset sequences
+      await execute('DELETE FROM sqlite_sequence');
+      
+      console.log('\n✅ All data cleared successfully!\n');
+    } catch (error) {
+      console.error('\n❌ Failed to clear data:', error);
+      process.exit(1);
+    }
+    
+    return;
   }
 
   console.log("\n✅ Database reset complete!\n");

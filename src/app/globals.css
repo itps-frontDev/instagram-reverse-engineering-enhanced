@@ -2,6 +2,7 @@
 @import "./overlay.css";
 @import "./modals.css";
 @import "./sidebar.css";
+@import "./buttons.css";
 
 
 :root {
@@ -88,28 +89,6 @@ body {
 
 /* Instagram Component Utility Classes */
 @layer components {
-  /* Button Styles */
-  .btn-instagram-primary {
-    @apply bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)]
-           text-white font-semibold rounded-lg px-4 py-2
-           transition-colors disabled:opacity-70;
-  }
-
-  .btn-instagram-secondary {
-    background-color: rgb(240, 242, 245);
-    color: rgb(12, 16, 20);
-    border: 1px solid rgba(43, 48, 54, 0);
-    @apply font-semibold rounded-xl px-5 h-11 transition-colors flex items-center justify-center;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .btn-instagram-secondary {
-      background-color: rgb(37, 41, 46);
-      color: rgb(245, 245, 245);
-      border: 1px solid rgba(43, 48, 54, 0.8);
-    }
-  }
-
   /* Text Utilities */
   .text-instagram-primary {
     @apply text-[var(--color-text-primary)];

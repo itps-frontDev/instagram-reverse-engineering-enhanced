@@ -7,10 +7,10 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
-import { Heart, MessageCircle, Layers } from 'lucide-react';
+import { Heart, MessageCircle } from 'lucide-react';
 import { ProfileGridProps } from '@/lib/types/profile';
 import ProfileEmptyState from './ProfileEmptyState';
+import CarouselIcon from '@/components/common/CarouselIcon';
 
 export default function ProfileGrid({
   posts,
@@ -20,6 +20,7 @@ export default function ProfileGrid({
   tab = 'posts',
   isOwnProfile = false,
   onCreatePost,
+  onPostClick,
 }: ProfileGridProps) {
   if (isLoading && posts.length === 0) {
     return (
@@ -42,10 +43,10 @@ export default function ProfileGrid({
     <div>
       <div className="grid grid-cols-3 gap-[3px]">
         {posts.map((post) => (
-          <Link
+          <div
             key={post.id}
-            href={`/p/${post.id}`}
-            className="relative aspect-[3/4] bg-gray-100 dark:bg-gray-800 group overflow-hidden"
+            onClick={() => onPostClick?.(post)}
+            className="relative aspect-[3/4] bg-gray-100 dark:bg-gray-800 group overflow-hidden cursor-pointer"
           >
             <Image
               src={post.media_url}
@@ -54,6 +55,13 @@ export default function ProfileGrid({
               className="object-cover"
               sizes="(max-width: 768px) 33vw, 25vw"
             />
+
+            {/* Multi-media indicator */}
+            {post.media_count > 1 && (
+              <div className="absolute top-2 right-2">
+                <CarouselIcon className="w-5 h-5 text-white drop-shadow-lg" />
+              </div>
+            )}
 
             {/* Hover Overlay */}
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6">
@@ -66,14 +74,7 @@ export default function ProfileGrid({
                 <span>{post.comments_count}</span>
               </div>
             </div>
-
-            {/* Multi-media indicator */}
-            {post.media_count > 1 && (
-              <div className="absolute top-2 right-2">
-                <Layers className="w-5 h-5 text-white drop-shadow-lg" />
-              </div>
-            )}
-          </Link>
+          </div>
         ))}
       </div>
 

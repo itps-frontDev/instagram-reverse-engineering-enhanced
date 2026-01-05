@@ -68,24 +68,37 @@ export default function ProfileStats({
   followingCount,
   onFollowersClick,
   onFollowingClick,
+  canViewContent = true,
 }: ProfileStatsProps) {
+  const handleFollowersClick = () => {
+    if (canViewContent && onFollowersClick) {
+      onFollowersClick();
+    }
+  };
+
+  const handleFollowingClick = () => {
+    if (canViewContent && onFollowingClick) {
+      onFollowingClick();
+    }
+  };
+
   return (
     <ul className="flex items-center gap-8 mb-5">
       {/* Posts */}
-      <li className="text-sm leading-[18px] whitespace-nowrap cursor-pointer text-instagram-primary">
+      <li className="text-sm leading-[18px] whitespace-nowrap text-instagram-primary">
         <span className="font-semibold">{formatCount(postsCount)}</span> post
       </li>
       {/* Followers */}
       <li
-        className="text-sm leading-[18px] whitespace-nowrap cursor-pointer text-instagram-primary hover:opacity-70 transition-opacity"
-        onClick={onFollowersClick}
+        className="text-sm leading-[18px] whitespace-nowrap cursor-pointer text-instagram-primary active:scale-95 transition-transform"
+        onClick={handleFollowersClick}
       >
         <span className="font-semibold">{formatCount(followersCount)}</span> follower
       </li>
       {/* Following */}
       <li
-        className="text-sm leading-[18px] whitespace-nowrap cursor-pointer text-instagram-primary hover:opacity-70 transition-opacity"
-        onClick={onFollowingClick}
+        className="text-sm leading-[18px] whitespace-nowrap cursor-pointer text-instagram-primary active:scale-95 transition-transform"
+        onClick={handleFollowingClick}
       >
         <span className="font-semibold">{formatCount(followingCount)}</span> seguiti
       </li>

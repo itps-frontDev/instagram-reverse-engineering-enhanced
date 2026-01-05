@@ -7,15 +7,27 @@
 
 .modal-container {
   background-color: rgb(255, 255, 255);
-  border-radius: 24px;
-  overflow: auto;
-  width: 560px;
+  border-end-end-radius: 24px;
+  border-end-start-radius: 24px;
+  border-start-end-radius: 24px;
+  border-start-start-radius: 24px;
+  color: rgb(12, 16, 20);
+  display: block;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 18px;
   max-height: 1231px;
+  overflow-x: auto;
+  overflow-y: auto;
+  pointer-events: all;
+  width: 400px;
+  max-width: 90vw;
 }
 
 @media (prefers-color-scheme: dark) {
   .modal-container {
     background-color: rgb(33, 35, 40);
+    color: rgb(248, 249, 249);
   }
   .modal-btn-primary,
   .modal-btn-danger,
@@ -96,4 +108,23 @@
   .modal-btn-cancel {
     color: rgb(248, 249, 249);
   }
+}
+
+/* Scrollbar always visible */
+.modal-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(142, 142, 142) transparent;
+}
+
+.modal-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgb(142, 142, 142);
+  border-radius: 10px;
 }

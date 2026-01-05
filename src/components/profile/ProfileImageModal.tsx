@@ -48,29 +48,49 @@ export default function ProfileImageModal({
   return (
     <div
       role="dialog"
-      className="fixed inset-0 z-50 flex items-center justify-center overlay-bg"
+      aria-modal="true"
+      className="fixed inset-0 z-[9999] flex items-center justify-center"
+      style={{ 
+        backgroundColor: 'rgba(12, 16, 20, 0.7)',
+        backdropFilter: 'blur(0px)',
+        WebkitBackdropFilter: 'blur(0px)',
+      }}
       onClick={onClose}
     >
-      <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+      <div 
+        className="bg-white dark:bg-[#212328] rounded-xl w-[400px] max-w-[90vw] overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header with title */}
-        <h3 className="modal-title">Cambia immagine del profilo</h3>
+        <h3 className="text-xl font-normal text-center py-8 px-8 text-[#0c1014] dark:text-[#f8f9f9]">
+          Cambia immagine del profilo
+        </h3>
 
         {/* Buttons */}
         <div>
           {/* Carica foto */}
-          <button className="modal-btn-primary" onClick={handleUploadClick}>
+          <button 
+            className="w-full h-12 border-t border-[#dbdfe4] dark:border-[#2b3036] text-[#4a5df9] font-bold text-sm hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors"
+            onClick={handleUploadClick}
+          >
             Carica foto
           </button>
 
           {/* Rimuovi immagine attuale */}
           {hasImage && (
-            <button className="modal-btn-danger" onClick={handleRemoveClick}>
+            <button 
+              className="w-full h-12 border-t border-[#dbdfe4] dark:border-[#2b3036] text-[#ed4956] font-bold text-sm hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors"
+              onClick={handleRemoveClick}
+            >
               Rimuovi immagine attuale
             </button>
           )}
 
           {/* Annulla */}
-          <button className="modal-btn-cancel" onClick={onClose}>
+          <button 
+            className="w-full h-12 border-t border-[#dbdfe4] dark:border-[#2b3036] text-[#0c1014] dark:text-[#f8f9f9] text-sm hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors rounded-b-xl"
+            onClick={onClose}
+          >
             Annulla
           </button>
 

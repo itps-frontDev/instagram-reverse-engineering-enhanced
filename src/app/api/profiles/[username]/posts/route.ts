@@ -128,7 +128,6 @@ export async function GET(
           AND pm.deleted_at IS NULL
         WHERE pt.tagged_profile_id = ?
           AND p.deleted_at IS NULL
-          AND pt.deleted_at IS NULL
         ORDER BY p.created_at DESC
         LIMIT ? OFFSET ?`,
         [targetProfile.id, limit, offset]

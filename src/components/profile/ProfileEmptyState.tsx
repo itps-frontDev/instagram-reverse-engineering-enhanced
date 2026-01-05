@@ -26,10 +26,10 @@ export default function ProfileEmptyState({
   const emptyStates = {
     posts: {
       icon: <PostsEmptyIcon />,
-      title: isOwnProfile ? 'Condividi foto' : 'Nessuna foto ancora',
+      title: isOwnProfile ? 'Condividi foto' : 'Ancora nessun post',
       message: isOwnProfile
         ? 'Quando condividi le foto, saranno visualizzate sul tuo profilo.'
-        : 'Quando questa persona condividerà foto, le vedrai qui.',
+        : '',
       action: isOwnProfile ? (
         <button
           onClick={onCreatePost}
@@ -44,7 +44,7 @@ export default function ProfileEmptyState({
       title: isOwnProfile ? 'Condividi reel' : 'Nessun reel ancora',
       message: isOwnProfile
         ? 'Quando condividi i reel, saranno visualizzati sul tuo profilo.'
-        : 'Quando questa persona condividerà reel, li vedrai qui.',
+        : '',
       action: null,
     },
     saved: {
@@ -56,10 +56,10 @@ export default function ProfileEmptyState({
     },
     tagged: {
       icon: <TaggedEmptyIcon />,
-      title: 'Foto in cui ci sei tu',
+      title: isOwnProfile ? 'Foto in cui ci sei tu' : 'Nessuna foto',
       message: isOwnProfile
         ? 'Quando le persone ti taggano nelle foto, saranno visualizzate qui.'
-        : 'Quando questa persona viene taggata nelle foto, le vedrai qui.',
+        : '',
       action: null,
     },
   };

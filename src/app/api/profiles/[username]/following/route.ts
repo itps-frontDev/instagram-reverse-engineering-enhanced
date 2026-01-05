@@ -75,7 +75,13 @@ export async function GET(
       ORDER BY f.created_at DESC
     `, [currentProfile?.id || 0, currentProfile?.id || 0, targetProfile.id]);
 
-    return NextResponse.json({ following });
+    // Convert SQLite numeric fields to proper types
+    const formattedFollowing = following.map((user: any) => ({
+      ...user,
+      is_verified: Boolean(user.is_verified),
+    }));
+
+    return NextResponse.json({ following: formattedFollowing });
   } catch (error) {
     console.error('Error fetching following:', error);
     return NextResponse.json(
