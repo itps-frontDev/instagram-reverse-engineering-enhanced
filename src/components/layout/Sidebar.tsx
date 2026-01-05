@@ -56,6 +56,7 @@ export default function Sidebar() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const isDirectPage = pathname.startsWith('/direct');
+  const isProfilePage = pathname.startsWith('/profile/');
   const isCollapsed = isDirectPage || showSearchPanel;
 
   useEffect(() => {
@@ -87,7 +88,9 @@ export default function Sidebar() {
       {/* Search Panel */}
       <SearchPanel isOpen={showSearchPanel} onClose={() => setShowSearchPanel(false)} />
       
-      <aside className={`hidden lg:flex fixed left-0 top-0 h-screen flex-col border-r border-[#DBDBDB] dark:border-[#262626] bg-[var(--bg-primary)] py-8 px-3 transition-all duration-300 ${
+      <aside className={`hidden lg:flex fixed left-0 top-0 h-screen flex-col ${
+        isProfilePage ? '' : 'border-r border-[#DBDBDB] dark:border-[#262626]'
+      } bg-[var(--bg-primary)] py-8 px-3 transition-all duration-300 ${
         isCollapsed ? 'w-[80px]' : 'lg:w-[80px] xl:w-[336px]'
       }`}>
       {/* Instagram Logo */}
