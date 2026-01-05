@@ -36,6 +36,9 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [showImagePrompt, setShowImagePrompt] = useState(false);
+  const [showThreadsBadge, setShowThreadsBadge] = useState(false);
+  const [showSuggestedAccounts, setShowSuggestedAccounts] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const bioMaxLength = 150;
@@ -81,7 +84,18 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+      setShowImagePrompt(false);
     }
+  };
+
+  // Mostra la modale di scelta immagine
+  const handleProfileImageClick = () => {
+    setShowImagePrompt(true);
+  };
+
+  // Gestisce il click su "Cambia foto"
+  const handleChangePhotoClick = () => {
+    setShowImagePrompt(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -132,42 +146,39 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
       {/* Avatar Section - Instagram style */}
       <div className="flex items-center justify-between bg-[#232323] dark:bg-[#232323] rounded-2xl px-4 py-3 mb-8">
         <div className="flex items-center gap-4">
-          <div className="relative w-16 h-16 rounded-full overflow-hidden">
-            {profileImage ? (
-              <Image
-                src={profileImage}
-                alt={profile.username}
-                fill
-                className="object-cover"
-              />
-            ) : (
-              <Image
-                src={"/images/default-pfp.png"}
-                alt="Default profile picture"
-                fill
-                className="object-cover"
-              />
-            )}
+          <div
+            className="relative w-[77px] h-[77px] cursor-pointer transition-transform duration-150"
+            onClick={handleProfileImageClick}
+            role="button"
+            tabIndex={0}
+          >
+            <Image
+              src={profileImage || '/images/default-pfp.jpg'}
+              alt={profile.username}
+              fill
+              className="rounded-full object-cover"
+              sizes="77px"
+              priority
+            />
             {isUploadingImage && (
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-full">
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               </div>
             )}
           </div>
-          <div className="ml-2">
+          <div>
             <span className="block font-bold text-base text-white leading-5">{profile.username}</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <label htmlFor="profile-image-input">
-            <button
-              type="button"
-              className="bg-[#4264ff] hover:bg-[#3853cc] text-white font-semibold text-sm rounded-lg px-4 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-[#4264ff]/50"
-              disabled={isUploadingImage}
-            >
-              {isUploadingImage ? 'Caricamento...' : 'Cambia foto'}
-            </button>
-          </label>
+          <button
+            type="button"
+            className="bg-[#4264ff] hover:bg-[#3853cc] text-white font-semibold text-sm rounded-lg px-4 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-[#4264ff]/50"
+            disabled={isUploadingImage}
+            onClick={handleChangePhotoClick}
+          >
+            {isUploadingImage ? 'Caricamento...' : 'Cambia foto'}
+          </button>
           <input
             ref={fileInputRef}
             type="file"
@@ -179,11 +190,31 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
         </div>
       </div>
 
+      {/* Modale per scegliere se caricare una nuova immagine */}
+      {showImagePrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-white dark:bg-[#232323] rounded-xl p-6 w-[90vw] max-w-xs flex flex-col items-center">
+            <p className="mb-4 text-center text-base font-semibold">Vuoi cambiare la foto del profilo?</p>
+            <button
+              className="mb-2 w-full bg-[#4264ff] hover:bg-[#3853cc] text-white font-semibold text-sm rounded-lg px-4 py-2 transition-colors"
+              onClick={() => {
+                setShowImagePrompt(false);
+                fileInputRef.current?.click();
+              }}
+            >Scegli immagine</button>
+            <button
+              className="w-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold text-sm rounded-lg px-4 py-2 mt-1 transition-colors"
+              onClick={() => setShowImagePrompt(false)}
+            >Annulla</button>
+          </div>
+        </div>
+      )}
+
       {/* Website Field */}
       <div className="mb-6">
         <label
           htmlFor="website"
-          className="block text-sm font-semibold mb-2"
+          className="block text-base font-semibold mb-3"
         >
           Sito web
         </label>
@@ -192,16 +223,19 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
           type="url"
           value={formData.websiteUrl}
           onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
-          placeholder="https://esempio.com"
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-transparent focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 text-sm"
+          placeholder="Sito web"
+          className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 text-sm"
         />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 leading-relaxed">
+          La modifica dei link è disponibile solo su mobile. Visita l'app di Instagram e modifica il tuo profilo per cambiare i siti web nella tua biografia.
+        </p>
       </div>
 
       {/* Bio Field */}
       <div className="mb-6">
         <label
           htmlFor="bio"
-          className="block text-sm font-semibold mb-2"
+          className="block text-base font-semibold mb-3"
         >
           Biografia
         </label>
@@ -215,18 +249,41 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
           }}
           rows={3}
           maxLength={bioMaxLength}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-transparent focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 text-sm resize-none"
+          placeholder="Biografia di prova"
+          className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 text-sm resize-none"
         />
         <div className="text-xs text-gray-500 dark:text-gray-400 text-right mt-1">
-          {bioLength}/{bioMaxLength}
+          {bioLength} / {bioMaxLength}
+        </div>
+      </div>
+
+      {/* Threads Badge Toggle */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <label className="block text-base font-semibold">
+            Mostra badge di Threads
+          </label>
+          <button
+            type="button"
+            onClick={() => setShowThreadsBadge(!showThreadsBadge)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              showThreadsBadge ? 'bg-[#0095f6]' : 'bg-gray-300 dark:bg-gray-600'
+            }`}
+          >
+            <span
+              className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                showThreadsBadge ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
         </div>
       </div>
 
       {/* Gender Select */}
-      <div className="mb-8">
+      <div className="mb-6">
         <label
           htmlFor="gender"
-          className="block text-sm font-semibold mb-2"
+          className="block text-base font-semibold mb-3"
         >
           Genere
         </label>
@@ -234,7 +291,7 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
           id="gender"
           value={formData.gender}
           onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-black focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 text-sm"
+          className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-black focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 text-sm"
         >
           <option value="prefer_not_to_say">Preferisco non indicarlo</option>
           <option value="male">Uomo</option>
@@ -249,14 +306,41 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
             value={formData.customGender}
             onChange={(e) => setFormData({ ...formData, customGender: e.target.value })}
             placeholder="Inserisci il tuo genere"
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-transparent focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 text-sm mt-2"
+            className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 text-sm mt-3"
             maxLength={50}
           />
         )}
         
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Questa informazione non verrà mostrata pubblicamente
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+          Non farà parte del tuo profilo pubblico.
         </p>
+      </div>
+
+      {/* Suggested Accounts Toggle */}
+      <div className="mb-8">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <label className="block text-base font-semibold mb-1">
+              Mostra account suggeriti sui profili
+            </label>
+            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+              Scegli se le persone possono vedere suggerimenti di account simili sul tuo profilo e se il tuo account può essere suggerito su altri profili.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowSuggestedAccounts(!showSuggestedAccounts)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${
+              showSuggestedAccounts ? 'bg-[#0095f6]' : 'bg-gray-300 dark:bg-gray-600'
+            }`}
+          >
+            <span
+              className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                showSuggestedAccounts ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
       </div>
 
       {/* Success Message */}
