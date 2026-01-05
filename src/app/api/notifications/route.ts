@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { queryAll } from '@/lib/db';
-import { verifyToken } from '@/lib/jwt';
+import { getCurrentProfile } from '@/lib/auth';
 
 interface NotificationRow {
   id: number;
@@ -36,26 +36,17 @@ interface NotificationRow {
  */
 export async function GET(request: NextRequest) {
   try {
-    // Get auth token from cookie
-    const token = request.cookies.get('auth_token')?.value;
+    // Get current user's profile
+    const currentProfile = await getCurrentProfile();
 
-    if (!token) {
+    if (!currentProfile) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    // Verify token and get profile ID
-    const decoded = await verifyToken(token);
-    if (!decoded || !decoded.id) {
-      return NextResponse.json(
-        { error: 'Invalid token' },
-        { status: 401 }
-      );
-    }
-
-    const profileId = decoded.id;
+    const profileId = currentProfile.id;
 
     // Fetch notifications with sender info
     const rows = await queryAll<NotificationRow>(

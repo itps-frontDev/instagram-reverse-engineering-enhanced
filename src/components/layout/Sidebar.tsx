@@ -83,8 +83,8 @@ export default function Sidebar() {
 
     fetchUnreadCount();
     
-    // Aggiorna ogni 30 secondi
-    const interval = setInterval(fetchUnreadCount, 30000);
+    // Aggiorna ogni 5 secondi
+    const interval = setInterval(fetchUnreadCount, 2000);
     return () => clearInterval(interval);
   }, [profile]);
 
@@ -270,7 +270,7 @@ export default function Sidebar() {
               )}
               {/* Badge notifiche non lette */}
               {item.action === 'notifications' && unreadCount > 0 && (
-                <div className="absolute top-2 left-8 w-2 h-2 bg-[#FF3B30] rounded-full" />
+                <div className="absolute top-2.75 left-7.5 w-3 h-3 bg-[#FF3B30] rounded-full border-2 border-white dark:border-black" />
               )}
             </>
           );

@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentProfileId } from '@/lib/auth';
-import { execute, queryAll } from '@/lib/db';
+import { execute, queryAll, queryOne } from '@/lib/db';
 
 export async function POST(
   request: NextRequest,
@@ -47,6 +47,21 @@ export async function POST(
       `UPDATE posts SET likes_count = likes_count + 1 WHERE id = ?`,
       [postIdNum]
     );
+
+    // Get post owner to send notification
+    const post = await queryOne<{ profile_id: number }>(
+      `SELECT profile_id FROM posts WHERE id = ?`,
+      [postIdNum]
+    );
+
+    // Create notification (only if not liking own post)
+    if (post && post.profile_id !== profileId) {
+      await execute(
+        `INSERT INTO notifications (recipient_profile_id, sender_profile_id, type, reference_type, reference_id)
+         VALUES (?, ?, 'like_post', 'post', ?)`,
+        [post.profile_id, profileId, postIdNum]
+      );
+    }
 
     return NextResponse.json({ message: 'Post liked successfully' });
   } catch (error) {

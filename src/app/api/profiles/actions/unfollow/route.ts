@@ -133,14 +133,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Remove follow notification (soft delete)
+    // Remove follow notification
     await execute(
-      `UPDATE notifications
-       SET deleted_at = datetime('now')
+      `DELETE FROM notifications
        WHERE recipient_profile_id = ?
          AND sender_profile_id = ?
-         AND type = 'follow'
-         AND deleted_at IS NULL`,
+         AND type = 'follow'`,
       [targetProfileId, currentProfile.id]
     );
 
