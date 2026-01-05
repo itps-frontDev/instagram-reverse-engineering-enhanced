@@ -124,13 +124,23 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
           className="relative w-full aspect-square rounded-xl bg-gray-100 dark:bg-gray-800 overflow-hidden mt-2 mb-2"
           onDoubleClick={handleLike}
         >
-          <Image
-            src={post.media[0].media_url}
-            alt={post.caption || 'Post image'}
-            fill
-            className="object-cover rounded-xl"
-            sizes="(max-width: 768px) 100vw, 600px"
-          />
+          {post.media[0].media_type === 'video' ? (
+            <video
+              src={post.media[0].media_url}
+              className="w-full h-full object-cover rounded-xl"
+              controls
+              muted
+              playsInline
+            />
+          ) : (
+            <Image
+              src={post.media[0].media_url}
+              alt={post.caption || 'Post image'}
+              fill
+              className="object-cover rounded-xl"
+              sizes="(max-width: 768px) 100vw, 600px"
+            />
+          )}
           {/* Exploding Heart Animation */}
           {showExplodingHeart && (
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
