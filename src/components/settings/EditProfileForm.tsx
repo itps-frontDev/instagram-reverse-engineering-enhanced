@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Camera } from 'lucide-react';
 
@@ -18,6 +18,8 @@ interface EditProfileFormProps {
     bio: string | null;
     website_url: string | null;
     profile_image_url: string | null;
+    gender: string | null;
+    custom_gender: string | null;
   };
 }
 
@@ -25,21 +27,79 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
   const [formData, setFormData] = useState({
     websiteUrl: profile.website_url || '',
     bio: profile.bio || '',
-    showThreadsBadge: false,
-    gender: 'prefer-not-to-say',
-    showSuggestedAccounts: true,
+    gender: profile.gender || 'prefer_not_to_say',
+    customGender: profile.custom_gender || '',
   });
 
+  const [profileImage, setProfileImage] = useState(profile.profile_image_url);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const bioMaxLength = 150;
   const bioLength = formData.bio.length;
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+      alert('Formato non supportato. Usa JPEG, PNG, WebP o GIF');
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Il file è troppo grande. Dimensione massima: 5MB');
+      return;
+    }
+
+    setIsUploadingImage(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const res = await fetch('/api/profiles/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to upload image');
+      }
+
+      const data = await res.json();
+      setProfileImage(data.profile_image_url);
+      setSuccessMessage('Foto del profilo aggiornata!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (err) {
+      console.error('Error uploading image:', err);
+      alert(err instanceof Error ? err.message : 'Errore durante il caricamento dell\'immagine');
+    } finally {
+      setIsUploadingImage(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setSuccessMessage('');
+
+    // Validate custom gender if needed
+    if (formData.gender === 'custom' && !formData.customGender.trim()) {
+      alert('Inserisci un genere personalizzato');
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const res = await fetch('/api/profiles/edit', {
@@ -48,18 +108,21 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
         body: JSON.stringify({
           website_url: formData.websiteUrl,
           bio: formData.bio,
+          gender: formData.gender,
+          custom_gender: formData.gender === 'custom' ? formData.customGender : null,
         }),
       });
 
       if (!res.ok) {
-        throw new Error('Failed to update profile');
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to update profile');
       }
 
       setSuccessMessage('Profilo aggiornato con successo!');
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err) {
       console.error('Error updating profile:', err);
-      alert('Errore durante l\'aggiornamento del profilo');
+      alert(err instanceof Error ? err.message : 'Errore durante l\'aggiornamento del profilo');
     } finally {
       setIsSubmitting(false);
     }
@@ -70,9 +133,9 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
       {/* Avatar Section */}
       <div className="flex items-center gap-6 mb-8 pb-8 border-b border-gray-200 dark:border-gray-800">
         <div className="relative w-14 h-14 flex-shrink-0">
-          {profile.profile_image_url ? (
+          {profileImage ? (
             <Image
-              src={profile.profile_image_url}
+              src={profileImage}
               alt={profile.username}
               fill
               className="rounded-full object-cover"
@@ -82,15 +145,28 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
               <Camera className="w-6 h-6 text-gray-500 dark:text-gray-400" />
             </div>
           )}
+          {isUploadingImage && (
+            <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
         </div>
         <div className="flex-1">
           <h2 className="text-base font-normal mb-1">{profile.username}</h2>
-          <button
-            type="button"
-            className="text-[#0095f6] font-semibold text-sm hover:text-[#00376b] transition-colors"
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            onChange={handleImageChange}
+            className="hidden"
+            id="profile-image-input"
+          />
+          <label
+            htmlFor="profile-image-input"
+            className="text-[#0095f6] font-semibold text-sm hover:text-[#00376b] transition-colors cursor-pointer"
           >
-            Cambia foto
-          </button>
+            {isUploadingImage ? 'Caricamento...' : 'Cambia foto'}
+          </label>
         </div>
       </div>
 
@@ -137,37 +213,8 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
         </div>
       </div>
 
-      {/* Threads Badge Toggle */}
-      <div className="mb-6 pb-6 border-b border-gray-200 dark:border-gray-800">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-semibold mb-1">Mostra badge di Threads</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Il tuo badge di Threads verrà mostrato sul profilo
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() =>
-              setFormData({ ...formData, showThreadsBadge: !formData.showThreadsBadge })
-            }
-            className={`relative w-11 h-6 rounded-full transition-colors ${
-              formData.showThreadsBadge
-                ? 'bg-[#0095f6]'
-                : 'bg-gray-300 dark:bg-gray-600'
-            }`}
-          >
-            <span
-              className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
-                formData.showThreadsBadge ? 'translate-x-5' : 'translate-x-0'
-              }`}
-            />
-          </button>
-        </div>
-      </div>
-
       {/* Gender Select */}
-      <div className="mb-6">
+      <div className="mb-8">
         <label
           htmlFor="gender"
           className="block text-sm font-semibold mb-2"
@@ -180,48 +227,27 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
           onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-black focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 text-sm"
         >
-          <option value="prefer-not-to-say">Preferisco non indicarlo</option>
+          <option value="prefer_not_to_say">Preferisco non indicarlo</option>
           <option value="male">Uomo</option>
           <option value="female">Donna</option>
-          <option value="custom">Personalizzato</option>
+          <option value="custom">Impostazione personalizzata</option>
         </select>
+        
+        {/* Custom Gender Input */}
+        {formData.gender === 'custom' && (
+          <input
+            type="text"
+            value={formData.customGender}
+            onChange={(e) => setFormData({ ...formData, customGender: e.target.value })}
+            placeholder="Inserisci il tuo genere"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-transparent focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 text-sm mt-2"
+            maxLength={50}
+          />
+        )}
+        
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
           Questa informazione non verrà mostrata pubblicamente
         </p>
-      </div>
-
-      {/* Show Suggested Accounts Toggle */}
-      <div className="mb-8 pb-8 border-b border-gray-200 dark:border-gray-800">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-semibold mb-1">
-              Mostra account suggeriti sui profili
-            </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Scegli se vuoi mostrare account suggeriti simili al tuo su altri profili
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() =>
-              setFormData({
-                ...formData,
-                showSuggestedAccounts: !formData.showSuggestedAccounts,
-              })
-            }
-            className={`relative w-11 h-6 rounded-full transition-colors ${
-              formData.showSuggestedAccounts
-                ? 'bg-[#0095f6]'
-                : 'bg-gray-300 dark:bg-gray-600'
-            }`}
-          >
-            <span
-              className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
-                formData.showSuggestedAccounts ? 'translate-x-5' : 'translate-x-0'
-              }`}
-            />
-          </button>
-        </div>
       </div>
 
       {/* Success Message */}

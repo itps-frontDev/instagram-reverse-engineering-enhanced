@@ -17,6 +17,7 @@ const protectedRoutes = [
   '/notifications',
   '/profile',
   '/search',
+  '/accounts',
 ];
 
 // Routes that should redirect to home if already authenticated
@@ -39,8 +40,8 @@ async function verifyJWT(token: string): Promise<boolean> {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Get token from cookie
-  const token = request.cookies.get('authToken')?.value;
+  // Get token from cookie (try both possible names)
+  const token = request.cookies.get('auth_token')?.value || request.cookies.get('authToken')?.value;
 
   console.log('[Middleware]', {
     pathname,

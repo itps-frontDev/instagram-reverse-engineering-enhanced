@@ -15,6 +15,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Settings, ChevronDown } from 'lucide-react';
 import { ProfileActionsProps } from '@/lib/types/profile';
 
@@ -33,6 +34,7 @@ export default function ProfileActions({
   onUnfollow,
   isLoading = false,
 }: ProfileActionsProps) {
+  const router = useRouter();
   const [showDropdown, setShowDropdown] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -61,7 +63,7 @@ export default function ProfileActions({
       <div className="flex items-center gap-4 w-full mt-4 mb-6">
         <button
           className="btn-instagram-secondary flex-1 !h-10.5"
-          onClick={() => (window.location.href = '/accounts/edit')}
+          onClick={() => router.push('/accounts/edit')}
         >
           Modifica profilo
         </button>

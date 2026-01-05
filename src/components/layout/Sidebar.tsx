@@ -341,7 +341,7 @@ export default function Sidebar() {
           >
             <button
               className="w-full text-left py-3 px-4 text-[#262626] dark:text-white hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition"
-              onClick={() => { setShowMore(false); router.push('/settings'); }}
+              onClick={() => { setShowMore(false); router.push('/accounts/edit'); }}
             >
               Impostazioni
             </button>
