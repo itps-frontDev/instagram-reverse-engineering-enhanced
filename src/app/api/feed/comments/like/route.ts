@@ -43,8 +43,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if comment exists
-    const comment = await queryOne<{ id: number; likes_count: number }>(
-      'SELECT id, likes_count FROM comments WHERE id = ? AND deleted_at IS NULL',
+    const comment = await queryOne<{ id: number; likes_count: number; profile_id: number; post_id: number }>(
+      'SELECT id, likes_count, profile_id, post_id FROM comments WHERE id = ? AND deleted_at IS NULL',
       [commentId]
     );
 
@@ -86,6 +86,16 @@ export async function POST(request: NextRequest) {
         [commentId]
       );
 
+      // Delete notification
+      await execute(
+        `DELETE FROM notifications
+         WHERE sender_profile_id = ?
+           AND type = 'like_comment'
+           AND reference_type = 'post'
+           AND reference_id = ?`,
+        [currentProfile.id, comment.post_id]
+      );
+
       liked = false;
       newLikesCount = Math.max(0, comment.likes_count - 1);
     } else if (existingLike && existingLike.deleted_at) {
@@ -105,6 +115,15 @@ export async function POST(request: NextRequest) {
         [commentId]
       );
 
+      // Create notification (only if not liking own comment)
+      if (comment.profile_id !== currentProfile.id) {
+        await execute(
+          `INSERT INTO notifications (recipient_profile_id, sender_profile_id, type, reference_type, reference_id)
+           VALUES (?, ?, 'like_comment', 'post', ?)`,
+          [comment.profile_id, currentProfile.id, comment.post_id]
+        );
+      }
+
       liked = true;
       newLikesCount = comment.likes_count + 1;
     } else {
@@ -122,6 +141,15 @@ export async function POST(request: NextRequest) {
          WHERE id = ?`,
         [commentId]
       );
+
+      // Create notification (only if not liking own comment)
+      if (comment.profile_id !== currentProfile.id) {
+        await execute(
+          `INSERT INTO notifications (recipient_profile_id, sender_profile_id, type, reference_type, reference_id)
+           VALUES (?, ?, 'like_comment', 'post', ?)`,
+          [comment.profile_id, currentProfile.id, comment.post_id]
+        );
+      }
 
       liked = true;
       newLikesCount = comment.likes_count + 1;

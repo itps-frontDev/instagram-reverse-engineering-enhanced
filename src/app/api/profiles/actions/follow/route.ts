@@ -131,6 +131,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Create notification for the target user
+    await execute(
+      `INSERT INTO notifications (recipient_profile_id, sender_profile_id, type, reference_type, reference_id)
+       VALUES (?, ?, ?, ?, ?)`,
+      [targetProfileId, currentProfile.id, 'follow', 'profile', currentProfile.id]
+    );
+
     // Return success response
     const response: FollowResponse = {
       success: true,
