@@ -1,0 +1,17 @@
+/**
+ * Toggle switch styles for privacy settings
+ * Clean, readable implementation with proper light/dark mode support
+ */
+
+/* Privacy Toggle Switch - Custom styles if needed beyond Tailwind */
+.privacy-toggle-switch {
+  /* Shadow effects for the switch */
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.privacy-toggle-switch span {
+  /* Shadow for the handle/pallino */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Smooth transitions are handled by Tailwind's transition classes */
