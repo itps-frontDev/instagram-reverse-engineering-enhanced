@@ -264,7 +264,7 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
           value={formData.websiteUrl}
           disabled
           placeholder="Sito web"
-          className="w-full px-3 py-2.5 rounded-lg bg-[rgb(243,245,247)] dark:bg-[rgb(38,38,38)] focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 text-sm cursor-not-allowed opacity-60"
+          className="w-full px-3 py-2.5 rounded-lg bg-[rgb(38,38,38)] focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 text-base cursor-not-allowed"
         />
         <p className="text-xs text-[rgb(115,115,115)] dark:text-[rgb(168,168,168)] mt-2 leading-4">
           La modifica dei link è disponibile solo su mobile. Visita l'app di Instagram e modifica il tuo profilo per cambiare i siti web nella tua biografia.
@@ -316,9 +316,12 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
               {formData.gender === 'female' && 'Donna'}
               {formData.gender === 'custom' && (formData.customGender || 'Impostazione personalizzata')}
             </span>
-            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
+            <span style={{ display: 'inline-block', transform: 'rotate(180deg)' }}>
+              <svg aria-label="Freccia verso il basso" className="w-3 h-3" fill="currentColor" height="12" role="img" viewBox="0 0 24 24" width="12">
+                <title>Freccia verso il basso</title>
+                <path d="M21 17.502a.997.997 0 0 1-.707-.293L12 8.913l-8.293 8.296a1 1 0 1 1-1.414-1.414l9-9.004a1.03 1.03 0 0 1 1.414 0l9 9.004A1 1 0 0 1 21 17.502Z"></path>
+              </svg>
+            </span>
           </button>
 
           {/* Gender Dropdown */}
