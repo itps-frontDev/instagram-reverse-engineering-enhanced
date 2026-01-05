@@ -9,6 +9,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { queryOne } from '@/lib/db';
 import SettingsSidebar from '@/components/settings/SettingsSidebar';
 import EditProfileForm from '@/components/settings/EditProfileForm';
+import Footer from '@/components/common/Footer';
 
 interface Profile {
   id: number;
@@ -62,6 +63,7 @@ export default async function EditProfilePage() {
         <div className="w-full max-w-xl">
           <EditProfileForm profile={profile} />
         </div>
+        <Footer />
       </main>
     </div>
   );

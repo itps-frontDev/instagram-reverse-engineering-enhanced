@@ -10,6 +10,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import EditProfileIcon from './icons/EditProfileIcon';
 import PrivacyIcon from './icons/PrivacyIcon';
+import AccountIcon from './icons/AccountIcon';
+import SecurityIcon from './icons/SecurityIcon';
+import BirthdayIcon from './icons/BirthdayIcon';
 
 interface SidebarItem {
   label: string;
@@ -27,6 +30,7 @@ export default function SettingsSidebar() {
 
   const sections: SidebarSection[] = [
     {
+      title: 'Come usi Instagram',
       items: [
         {
           label: 'Modifica profilo',
@@ -34,16 +38,41 @@ export default function SettingsSidebar() {
           icon: <EditProfileIcon />,
         },
         {
+          label: 'Account personale',
+          href: '/accounts/personal',
+          icon: <AccountIcon />,
+        },
+      ],
+    },
+    {
+      title: 'Chi può vedere i tuoi contenuti',
+      items: [
+        {
           label: "Privacy dell'account",
           href: '/accounts/privacy',
           icon: <PrivacyIcon />,
         },
       ],
     },
+    {
+      title: 'Altre opzioni e supporto',
+      items: [
+        {
+          label: 'Sicurezza e accesso',
+          href: '/accounts/security',
+          icon: <SecurityIcon />,
+        },
+        {
+          label: 'Compleanno',
+          href: '/accounts/birthday',
+          icon: <BirthdayIcon />,
+        },
+      ],
+    },
   ];
 
   return (
-    <aside className="w-full md:w-80 border-r border-gray-200 dark:border-gray-800">
+    <aside className="w-full md:w-80 border-r border-gray-200 dark:border-gray-800 h-screen overflow-y-auto">
       {/* Header */}
       <div className="px-4 pt-10 pb-6 mx-[34px]">
         <h1 className="text-xl font-bold leading-[25px] break-words">Impostazioni</h1>
@@ -55,7 +84,7 @@ export default function SettingsSidebar() {
           <div key={sectionIdx}>
             {/* Section Title */}
             {section.title && (
-              <h3 className="px-6 mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">
+              <h3 className="px-4 py-3 mx-[34px] text-xs font-semibold leading-4 break-words text-[rgb(106,113,122)] dark:text-[rgb(168,168,168)]">
                 {section.title}
               </h3>
             )}

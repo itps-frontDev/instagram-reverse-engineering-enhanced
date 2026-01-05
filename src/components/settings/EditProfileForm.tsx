@@ -264,7 +264,7 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
           value={formData.websiteUrl}
           disabled
           placeholder="Sito web"
-          className="w-full px-3 py-2.5 rounded-lg bg-[rgb(38,38,38)] focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 text-base cursor-not-allowed"
+          className="w-full px-3 py-2.5 rounded-lg bg-[rgb(243,245,247)] dark:bg-[rgb(38,38,38)] focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 text-base cursor-not-allowed"
         />
         <p className="text-xs text-[rgb(115,115,115)] dark:text-[rgb(168,168,168)] mt-2 leading-4">
           La modifica dei link è disponibile solo su mobile. Visita l'app di Instagram e modifica il tuo profilo per cambiare i siti web nella tua biografia.

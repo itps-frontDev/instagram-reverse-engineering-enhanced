@@ -145,7 +145,13 @@ export default function ProfilePage({
       );
 
       if (!res.ok) {
-        throw new Error('Failed to fetch posts');
+        const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Failed to fetch posts:', {
+          status: res.status,
+          error: errorData.error,
+          message: errorData.message,
+        });
+        throw new Error(errorData.error || 'Failed to fetch posts');
       }
 
       const data = await res.json();
@@ -160,6 +166,7 @@ export default function ProfilePage({
       setPage(pageNum);
     } catch (err) {
       console.error('Error fetching posts:', err);
+      // Don't throw - just log and continue
     } finally {
       setIsLoadingPosts(false);
     }
