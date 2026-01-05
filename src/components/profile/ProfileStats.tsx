@@ -83,7 +83,7 @@ export default function ProfileStats({
   };
 
   return (
-    <ul className="flex items-center gap-8 mb-5">
+    <ul className="flex items-center gap-8 mb-5 max-[639px]:gap-4 max-[639px]:mb-0">
       {/* Posts */}
       <li className="text-sm leading-[18px] whitespace-nowrap text-instagram-primary">
         <span className="font-semibold">{formatCount(postsCount)}</span> post

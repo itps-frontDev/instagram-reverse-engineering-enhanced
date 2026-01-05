@@ -259,11 +259,11 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
 
       {/* Modal */}
       <div 
-        className="relative z-10 bg-white dark:bg-[#262626] rounded-3xl w-full mx-4 overflow-hidden shadow-2xl transition-all duration-300"
+        className="relative z-10 bg-white dark:bg-[#262626] rounded-3xl w-full mx-4 overflow-hidden shadow-2xl transition-all duration-300 max-[639px]:mx-2 max-[639px]:rounded-lg max-[639px]:max-w-[88vw] max-[639px]:max-h-[55vh]"
         style={{ maxWidth: modalWidth }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-[#363636] dark:bg-[#0c1014]">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-[#363636] dark:bg-[#0c1014] max-[639px]:px-2 max-[639px]:py-1.5">
           {uploadedImage ? (
             <>
               <button
@@ -284,13 +284,13 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
                   <polyline points="14 10 8 16 14 22" />
                 </svg>
               </button>
-              <h2 className="text-base font-semibold text-[#262626] dark:text-white">
+              <h2 className="text-base font-semibold text-[#262626] dark:text-white max-[639px]:text-sm">
                 {phase === 'crop' ? 'Ritaglia' : 'Crea nuovo post'}
               </h2>
               <button
                 onClick={phase === 'crop' ? handleNext : handleShare}
                 disabled={isUploading}
-                className="text-[#4165d4] hover:opacity-70 transition-opacity font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                className="text-[#4165d4] hover:opacity-70 transition-opacity font-semibold disabled:opacity-50 disabled:cursor-not-allowed max-[639px]:text-sm"
               >
                 {isUploading ? 'Caricamento...' : phase === 'crop' ? 'Avanti' : 'Condividi'}
               </button>
@@ -309,19 +309,19 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
         {uploadedImage ? (
           phase === 'crop' ? (
             // Crop Phase - solo immagine
-            <div className="relative min-h-[850px] flex items-center justify-center dark:bg-[#25292e]">
+            <div className="relative min-h-[850px] flex items-center justify-center dark:bg-[#25292e] max-[639px]:min-h-[150px]">
               <img 
                 src={uploadedImage} 
                 alt="Uploaded" 
-                className="max-h-[850px] w-auto object-contain"
+                className="max-h-[850px] w-auto object-contain max-[639px]:max-h-[150px]"
               />
               
               {/* Icona post multipli in basso a destra */}
               <button 
                 onClick={() => setShowMediaManager(!showMediaManager)}
-                className="absolute bottom-4 right-4 p-2 bg-[#262626] rounded-full hover:bg-[#363636] transition-colors"
+                className="absolute bottom-4 right-4 p-2 bg-[#262626] rounded-full hover:bg-[#363636] transition-colors max-[639px]:bottom-2 max-[639px]:right-2 max-[639px]:p-1"
               >
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 text-white max-[639px]:w-4 max-[639px]:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </button>
@@ -385,28 +385,28 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
             </div>
           ) : (
             // Details Phase - immagine + form caption
-            <div className="flex min-h-[850px]">
+            <div className="flex min-h-[850px] max-[639px]:flex-col max-[639px]:min-h-auto max-[639px]:max-h-[calc(42.5vh-40px)]">
               {/* Immagine a sinistra */}
-              <div className="flex-1 flex items-center justify-center dark:bg-[#25292e] border-r border-gray-200 dark:border-[#363636]">
+              <div className="flex-1 flex items-center justify-center dark:bg-[#25292e] border-r border-gray-200 dark:border-[#363636] max-[639px]:border-r-0 max-[639px]:border-b max-[639px]:min-h-[100px] max-[639px]:max-h-[120px]">
                 <img 
                   src={uploadedImage} 
                   alt="Uploaded" 
-                  className="max-h-[850px] w-auto object-contain"
+                  className="max-h-[850px] w-auto object-contain max-[639px]:max-h-[100px]"
                 />
               </div>
               
               {/* Form dettagli a destra */}
-              <div className="w-[340px] flex flex-col bg-white dark:bg-[#262626]">
+              <div className="w-[340px] flex flex-col bg-white dark:bg-[#262626] max-[639px]:w-full max-[639px]:flex-1 max-[639px]:overflow-y-auto">
                 {/* Profilo */}
                 {currentProfile && (
-                  <div className="flex items-center gap-3 p-4 border-b border-gray-200 dark:border-[#363636]">
+                  <div className="flex items-center gap-3 p-4 border-b border-gray-200 dark:border-[#363636] max-[639px]:p-2 max-[639px]:gap-2">
                     <ProfilePicture
                       src={currentProfile.profile_image_url}
                       alt={currentProfile.username}
                       size={28}
                     />
                     <div className="flex-1">
-                      <p className="font-semibold text-sm text-[#262626] dark:text-white">
+                      <p className="font-semibold text-sm text-[#262626] dark:text-white max-[639px]:text-xs">
                         {currentProfile.username}
                       </p>
                     </div>
@@ -414,7 +414,7 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
                 )}
                 
                 {/* Caption textarea */}
-                <div className="flex-1 p-4">
+                <div className="flex-1 p-4 max-[639px]:p-2">
                   <textarea
                     value={caption}
                     onChange={(e) => setCaption(e.target.value)}
@@ -434,24 +434,24 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
           <div
             className={`flex flex-col items-center justify-center p-32 min-h-[850px] transition-colors ${
               isDragging ? 'bg-gray-50 dark:bg-[#1a1a1a]' : ''
-            }`}
+            } max-[639px]:p-3 max-[639px]:py-4 max-[639px]:min-h-[400px]`}
             onDragEnter={handleDragEnter}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
             {/* Icone sovrapposte */}
-            <div className="relative mb-3 flex items-center justify-center h-28">
+            <div className="relative mb-3 flex items-center justify-center h-28 max-[639px]:h-16 max-[639px]:mb-1">
               {/* Icona immagine (sotto/sinistra) */}
               <div 
-                className="absolute"
+                className="absolute max-[639px]:left-[30%]"
                 style={{ 
                   transform: 'rotate(-5deg) translateX(-25px)',
                   zIndex: 1
                 }}
               >
                 <svg
-                  className="w-20 h-20 text-[#262626] dark:text-white drop-shadow-lg"
+                  className="w-20 h-20 text-[#262626] dark:text-white drop-shadow-lg max-[639px]:w-8 max-[639px]:h-8"
                   viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
@@ -460,45 +460,40 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
-                  {/* Sole */}
                   <circle cx="6" cy="8" r="1.5" fill="none" stroke="currentColor" />
-                  {/* Montagne */}
                   <path d="M2.5 19 L8 12 L12 16 L16 10 L22 17" fill="none" />
-                  {/* Cornice */}
                   <rect x="2" y="4" width="18" height="16" rx="2" fill="none" />
                 </svg>
               </div>
 
               {/* Icona reels (sopra/destra) */}
               <div 
-                className="absolute"
+                className="absolute max-[639px]:right-[25%] max-[639px]:top-[20%]"
                 style={{ 
                   transform: 'rotate(5deg) translateX(15px) translateY(10px)',
                   zIndex: 2
                 }}
               >
                 <svg
-                  className="w-20 h-20 drop-shadow-xl"
+                  className="w-20 h-20 drop-shadow-xl max-[639px]:w-8 max-[639px]:h-8"
                   viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  {/* Rettangolo riempito con bordo bianco */}
                   <rect x="3" y="3" width="18" height="18" rx="4" ry="4" fill="#262626" stroke="white" strokeWidth="0.65" strokeLinecap="round" strokeLinejoin="round"/>
-                  {/* Play button bianco */}
                   <path d="M9 8 Q9.5 8 10 8.5 L16 11.5 Q16.5 12 16.5 12 Q16.5 12 16 12.5 L10 15.5 Q9.5 16 9 16 Q9 16 9 15.5 L9 8.5 Q9 8 9 8" fill="none" stroke="white" strokeWidth="0.65"/>
                 </svg>
               </div>
             </div>
 
             {/* Testo */}
-            <p className="text-xl mb-6 text-[#262626] dark:text-white">
+            <p className="text-xl mb-6 text-[#262626] dark:text-white max-[639px]:text-sm max-[639px]:mb-2 max-[639px]:text-center max-[639px]:px-2">
               Trascina le foto e i video qui
             </p>
 
             {/* Bottone */}
             <button
               onClick={handleButtonClick}
-              className="px-4 py-2 bg-[#4150f7] text-white rounded-lg font-semibold hover:bg-[#3442d9] transition-colors"
+              className="px-4 py-2 bg-[#4150f7] text-white rounded-lg font-semibold hover:bg-[#3442d9] transition-colors max-[639px]:px-3 max-[639px]:py-1.5 max-[639px]:text-sm"
             >
               Seleziona dal computer
             </button>

@@ -120,8 +120,8 @@ export default function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
         isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-full pointer-events-none'
       }`}
       style={{
-        width: isOpen ? '397px' : '0px',
-        marginLeft: '80px', // Spazio per la sidebar contratta
+        width: isOpen ? (typeof window !== 'undefined' && window.innerWidth < 640 ? '100vw' : '397px') : '0px',
+        marginLeft: typeof window !== 'undefined' && window.innerWidth >= 640 ? '80px' : '0px',
       }}
     >
       <div className="flex flex-col h-full">
