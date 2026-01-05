@@ -9,6 +9,8 @@
 import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Camera } from 'lucide-react';
+import ProfileImageModal from '@/components/profile/ProfileImageModal';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface EditProfileFormProps {
   profile: {
@@ -24,6 +26,7 @@ interface EditProfileFormProps {
 }
 
 export default function EditProfileForm({ profile }: EditProfileFormProps) {
+  const { refreshProfile } = useAuth();
   // Header style: text-xl font-bold leading-[25px] break-words, padding top 0, bottom 6, left/right 0 (match sidebar)
   const [formData, setFormData] = useState({
     websiteUrl: profile.website_url || '',
@@ -37,23 +40,14 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [showImagePrompt, setShowImagePrompt] = useState(false);
-  const [showThreadsBadge, setShowThreadsBadge] = useState(false);
-  const [showSuggestedAccounts, setShowSuggestedAccounts] = useState(true);
+  const [showGenderDropdown, setShowGenderDropdown] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const bioMaxLength = 150;
   const bioLength = formData.bio.length;
 
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  async function handleProfileImageUpload(file: File) {
     if (!file) return;
-
-    // Validate file type
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    if (!validTypes.includes(file.type)) {
-      alert('Formato non supportato. Usa JPEG, PNG, WebP o GIF');
-      return;
-    }
 
     setIsUploadingImage(true);
 
@@ -61,41 +55,90 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
       const formData = new FormData();
       formData.append('image', file);
 
-      const res = await fetch('/api/profiles/upload-image', {
+      const res = await fetch(`/api/profiles/${profile.username}/upload-image`, {
         method: 'POST',
         body: formData,
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to upload image');
+        const error = await res.json();
+        throw new Error(error.error || 'Upload failed');
       }
 
       const data = await res.json();
-      setProfileImage(data.profile_image_url);
+      setProfileImage(data.imageUrl);
       setSuccessMessage('Foto del profilo aggiornata!');
       setTimeout(() => setSuccessMessage(''), 3000);
-    } catch (err) {
-      console.error('Error uploading image:', err);
-      alert(err instanceof Error ? err.message : 'Errore durante il caricamento dell\'immagine');
+      
+      // Aggiorna il profilo nell'AuthContext per aggiornare la sidebar
+      await refreshProfile();
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert(error instanceof Error ? error.message : 'Errore durante il caricamento dell\'immagine');
     } finally {
       setIsUploadingImage(false);
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      setShowImagePrompt(false);
     }
-  };
+  }
 
-  // Mostra la modale di scelta immagine
+  async function handleProfileImageRemove() {
+    setIsUploadingImage(true);
+
+    try {
+      const res = await fetch(`/api/profiles/${profile.username}/remove-image`, {
+        method: 'POST',
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to remove image');
+      }
+
+      setProfileImage(null);
+      setSuccessMessage('Foto del profilo rimossa!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+      
+      // Aggiorna il profilo nell'AuthContext per aggiornare la sidebar
+      await refreshProfile();
+    } catch (error) {
+      console.error('Error removing image:', error);
+      alert(error instanceof Error ? error.message : 'Errore durante la rimozione dell\'immagine');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  }
+
+  // Mostra la modale di scelta immagine o apre direttamente il file picker
   const handleProfileImageClick = () => {
-    setShowImagePrompt(true);
+    const hasImage = profileImage && !profileImage.includes('default-pfp.jpg');
+    if (!hasImage) {
+      // Se non c'è immagine, apri direttamente il file picker
+      fileInputRef.current?.click();
+    } else {
+      // Altrimenti mostra il modale con le opzioni
+      setShowImagePrompt(true);
+    }
   };
 
   // Gestisce il click su "Cambia foto"
   const handleChangePhotoClick = () => {
-    setShowImagePrompt(true);
+    const hasImage = profileImage && !profileImage.includes('default-pfp.jpg');
+    if (!hasImage) {
+      fileInputRef.current?.click();
+    } else {
+      setShowImagePrompt(true);
+    }
+  };
+
+  // Gestisce il cambio file dall'input nascosto
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleProfileImageUpload(file);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -144,10 +187,10 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
       </div>
       <form onSubmit={handleSubmit} className="max-w-2xl">
       {/* Avatar Section - Instagram style */}
-      <div className="flex items-center justify-between bg-[#232323] dark:bg-[#232323] rounded-2xl px-4 py-3 mb-8">
+      <div className="flex items-center justify-between bg-[rgb(243,245,247)] dark:bg-[#232323] rounded-2xl px-4 py-3 mb-8">
         <div className="flex items-center gap-4">
           <div
-            className="relative w-[77px] h-[77px] cursor-pointer transition-transform duration-150"
+            className="relative w-[56px] h-[56px] cursor-pointer transition-transform duration-150 rounded-full border border-gray-200 dark:border-gray-700"
             onClick={handleProfileImageClick}
             role="button"
             tabIndex={0}
@@ -157,7 +200,7 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
               alt={profile.username}
               fill
               className="rounded-full object-cover"
-              sizes="77px"
+              sizes="56px"
               priority
             />
             {isUploadingImage && (
@@ -167,7 +210,7 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
             )}
           </div>
           <div>
-            <span className="block font-bold text-base text-white leading-5">{profile.username}</span>
+            <span className="block font-bold text-base leading-5">{profile.username}</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -182,39 +225,27 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
-            onChange={handleImageChange}
-            className="hidden"
-            id="profile-image-input"
+            accept="image/jpeg,image/png"
+            style={{ display: 'none' }}
+            onChange={handleFileChange}
           />
         </div>
       </div>
 
-      {/* Modale per scegliere se caricare una nuova immagine */}
-      {showImagePrompt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="bg-white dark:bg-[#232323] rounded-xl p-6 w-[90vw] max-w-xs flex flex-col items-center">
-            <p className="mb-4 text-center text-base font-semibold">Vuoi cambiare la foto del profilo?</p>
-            <button
-              className="mb-2 w-full bg-[#4264ff] hover:bg-[#3853cc] text-white font-semibold text-sm rounded-lg px-4 py-2 transition-colors"
-              onClick={() => {
-                setShowImagePrompt(false);
-                fileInputRef.current?.click();
-              }}
-            >Scegli immagine</button>
-            <button
-              className="w-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold text-sm rounded-lg px-4 py-2 mt-1 transition-colors"
-              onClick={() => setShowImagePrompt(false)}
-            >Annulla</button>
-          </div>
-        </div>
-      )}
+      {/* Profile Image Modal */}
+      <ProfileImageModal
+        isOpen={showImagePrompt}
+        onClose={() => setShowImagePrompt(false)}
+        onUpload={handleProfileImageUpload}
+        onRemove={handleProfileImageRemove}
+        hasImage={!!(profileImage && !profileImage.includes('default-pfp.jpg'))}
+      />
 
       {/* Website Field */}
       <div className="mb-6">
         <label
           htmlFor="website"
-          className="block text-base font-semibold mb-3"
+          className="block text-lg font-bold mb-3"
         >
           Sito web
         </label>
@@ -222,11 +253,11 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
           id="website"
           type="url"
           value={formData.websiteUrl}
-          onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
+          disabled
           placeholder="Sito web"
-          className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 text-sm"
+          className="w-full px-3 py-2.5 rounded-lg bg-[rgb(243,245,247)] dark:bg-[rgb(38,38,38)] focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 text-sm cursor-not-allowed opacity-60"
         />
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 leading-relaxed">
+        <p className="text-xs text-[rgb(115,115,115)] dark:text-[rgb(168,168,168)] mt-2 leading-4">
           La modifica dei link è disponibile solo su mobile. Visita l'app di Instagram e modifica il tuo profilo per cambiare i siti web nella tua biografia.
         </p>
       </div>
@@ -235,112 +266,175 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
       <div className="mb-6">
         <label
           htmlFor="bio"
-          className="block text-base font-semibold mb-3"
+          className="block text-lg font-bold mb-3"
         >
           Biografia
         </label>
-        <textarea
-          id="bio"
-          value={formData.bio}
-          onChange={(e) => {
-            if (e.target.value.length <= bioMaxLength) {
-              setFormData({ ...formData, bio: e.target.value });
-            }
-          }}
-          rows={3}
-          maxLength={bioMaxLength}
-          placeholder="Biografia di prova"
-          className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 text-sm resize-none"
-        />
-        <div className="text-xs text-gray-500 dark:text-gray-400 text-right mt-1">
-          {bioLength} / {bioMaxLength}
-        </div>
-      </div>
-
-      {/* Threads Badge Toggle */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <label className="block text-base font-semibold">
-            Mostra badge di Threads
-          </label>
-          <button
-            type="button"
-            onClick={() => setShowThreadsBadge(!showThreadsBadge)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              showThreadsBadge ? 'bg-[#0095f6]' : 'bg-gray-300 dark:bg-gray-600'
-            }`}
-          >
-            <span
-              className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                showThreadsBadge ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
+        <div className="relative">
+          <textarea
+            id="bio"
+            value={formData.bio}
+            onChange={(e) => {
+              if (e.target.value.length <= bioMaxLength) {
+                setFormData({ ...formData, bio: e.target.value });
+              }
+            }}
+            rows={3}
+            maxLength={bioMaxLength}
+            placeholder="Biografia di prova"
+            className="w-full px-3 py-2.5 pb-8 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 text-sm resize-none"
+          />
+          <div className="absolute bottom-2.5 right-3 text-xs text-[rgb(115,115,115)] dark:text-[rgb(168,168,168)] pointer-events-none">
+            {bioLength} / {bioMaxLength}
+          </div>
         </div>
       </div>
 
       {/* Gender Select */}
       <div className="mb-6">
-        <label
-          htmlFor="gender"
-          className="block text-base font-semibold mb-3"
-        >
+        <label className="block text-lg font-bold mb-3">
           Genere
         </label>
-        <select
-          id="gender"
-          value={formData.gender}
-          onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-          className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-black focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 text-sm"
-        >
-          <option value="prefer_not_to_say">Preferisco non indicarlo</option>
-          <option value="male">Uomo</option>
-          <option value="female">Donna</option>
-          <option value="custom">Impostazione personalizzata</option>
-        </select>
-        
-        {/* Custom Gender Input */}
-        {formData.gender === 'custom' && (
-          <input
-            type="text"
-            value={formData.customGender}
-            onChange={(e) => setFormData({ ...formData, customGender: e.target.value })}
-            placeholder="Inserisci il tuo genere"
-            className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 text-sm mt-3"
-            maxLength={50}
-          />
-        )}
-        
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-          Non farà parte del tuo profilo pubblico.
-        </p>
-      </div>
-
-      {/* Suggested Accounts Toggle */}
-      <div className="mb-8">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <label className="block text-base font-semibold mb-1">
-              Mostra account suggeriti sui profili
-            </label>
-            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-              Scegli se le persone possono vedere suggerimenti di account simili sul tuo profilo e se il tuo account può essere suggerito su altri profili.
-            </p>
-          </div>
+        <div className="relative">
           <button
             type="button"
-            onClick={() => setShowSuggestedAccounts(!showSuggestedAccounts)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${
-              showSuggestedAccounts ? 'bg-[#0095f6]' : 'bg-gray-300 dark:bg-gray-600'
-            }`}
+            onClick={() => setShowGenderDropdown(!showGenderDropdown)}
+            className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 text-sm text-left flex items-center justify-between"
           >
-            <span
-              className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                showSuggestedAccounts ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
+            <span>
+              {formData.gender === 'prefer_not_to_say' && 'Preferisco non indicarlo'}
+              {formData.gender === 'male' && 'Uomo'}
+              {formData.gender === 'female' && 'Donna'}
+              {formData.gender === 'custom' && (formData.customGender || 'Impostazione personalizzata')}
+            </span>
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
           </button>
+
+          {/* Gender Dropdown */}
+          {showGenderDropdown && (
+            <div className="absolute top-full right-0 mt-1 bg-white dark:bg-[#262626] rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-10 overflow-hidden w-full max-w-[366px]">
+              {/* Donna */}
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData({ ...formData, gender: 'female' });
+                  setShowGenderDropdown(false);
+                }}
+                className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors text-sm"
+              >
+                <span>Donna</span>
+                <div className="relative w-6 h-6 flex items-center justify-center">
+                  {formData.gender === 'female' ? (
+                    <div className="w-5 h-5 rounded-full border-2 border-black dark:border-white bg-black dark:bg-white flex items-center justify-center">
+                      <svg className="w-3.5 h-3.5 text-white dark:text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="21.648 5.352 9.002 17.998 2.358 11.358"></polyline>
+                      </svg>
+                    </div>
+                  ) : (
+                    <div className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600"></div>
+                  )}
+                  <input type="checkbox" checked={formData.gender === 'female'} readOnly className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                </div>
+              </button>
+
+              {/* Uomo */}
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData({ ...formData, gender: 'male' });
+                  setShowGenderDropdown(false);
+                }}
+                className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors text-sm"
+              >
+                <span>Uomo</span>
+                <div className="relative w-6 h-6 flex items-center justify-center">
+                  {formData.gender === 'male' ? (
+                    <div className="w-5 h-5 rounded-full border-2 border-black dark:border-white bg-black dark:bg-white flex items-center justify-center">
+                      <svg className="w-3.5 h-3.5 text-white dark:text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="21.648 5.352 9.002 17.998 2.358 11.358"></polyline>
+                      </svg>
+                    </div>
+                  ) : (
+                    <div className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600"></div>
+                  )}
+                  <input type="checkbox" checked={formData.gender === 'male'} readOnly className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                </div>
+              </button>
+
+              {/* Impostazione personalizzata */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData({ ...formData, gender: 'custom' });
+                  }}
+                  className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors text-sm"
+                >
+                  <span>Impostazione personalizzata</span>
+                  <div className="relative w-6 h-6 flex items-center justify-center">
+                    {formData.gender === 'custom' ? (
+                      <div className="w-5 h-5 rounded-full border-2 border-black dark:border-white bg-black dark:bg-white flex items-center justify-center">
+                        <svg className="w-3.5 h-3.5 text-white dark:text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="21.648 5.352 9.002 17.998 2.358 11.358"></polyline>
+                        </svg>
+                      </div>
+                    ) : (
+                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600"></div>
+                    )}
+                    <input type="checkbox" checked={formData.gender === 'custom'} readOnly className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                  </div>
+                </button>
+
+                {/* Custom Gender Input - sempre visibile */}
+                <div className="px-4 pb-3">
+                  <input
+                    type="text"
+                    value={formData.customGender}
+                    onChange={(e) => setFormData({ ...formData, customGender: e.target.value })}
+                    onClick={() => setFormData({ ...formData, gender: 'custom' })}
+                    placeholder=""
+                    className={`w-full px-3 py-2 rounded-lg bg-[rgb(243,245,247)] dark:bg-[rgb(37,41,46)] focus:outline-none focus:ring-1 text-sm ${
+                      formData.gender === 'custom' && formData.customGender.trim() === '' 
+                        ? 'border-2 border-red-500 focus:ring-red-500' 
+                        : 'border border-gray-300 dark:border-gray-600 focus:ring-gray-400 dark:focus:ring-gray-500'
+                    }`}
+                    maxLength={50}
+                  />
+                </div>
+              </div>
+
+              {/* Preferisco non indicarlo */}
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData({ ...formData, gender: 'prefer_not_to_say' });
+                  setShowGenderDropdown(false);
+                }}
+                className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors text-sm"
+              >
+                <span>Preferisco non indicarlo</span>
+                <div className="relative w-6 h-6 flex items-center justify-center">
+                  {formData.gender === 'prefer_not_to_say' ? (
+                    <div className="w-5 h-5 rounded-full border-2 border-black dark:border-white bg-black dark:bg-white flex items-center justify-center">
+                      <svg className="w-3.5 h-3.5 text-white dark:text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="21.648 5.352 9.002 17.998 2.358 11.358"></polyline>
+                      </svg>
+                    </div>
+                  ) : (
+                    <div className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600"></div>
+                  )}
+                  <input type="checkbox" checked={formData.gender === 'prefer_not_to_say'} readOnly className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                </div>
+              </button>
+            </div>
+          )}
         </div>
+        
+        <p className="text-xs text-[rgb(115,115,115)] dark:text-[rgb(168,168,168)] mt-2 leading-4">
+          Non farà parte del tuo profilo pubblico.
+        </p>
       </div>
 
       {/* Success Message */}
@@ -355,7 +449,7 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-6 py-2 bg-[#0095f6] hover:bg-[#1877f2] text-white font-semibold text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="relative flex items-center justify-center w-[253px] h-11 mt-4 px-5 bg-[rgb(74,93,249)] hover:bg-[rgb(64,83,239)] text-white font-semibold text-sm rounded-xl cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting ? 'Salvataggio...' : 'Invia'}
         </button>

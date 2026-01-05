@@ -30,14 +30,14 @@ export async function POST(request: NextRequest) {
   try {
     // Verify authentication
     const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
+    const token = cookieStore.get('authToken')?.value;
 
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { payload } = await jwtVerify(token, JWT_SECRET);
-    const userId = payload.userId as number;
+    const userId = payload.id as number;
 
     // Get profile
     const profile = await queryOne<Profile>(
