@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { execute, queryOne } from '@/lib/db';
 import { verifyToken } from '@/lib/jwt';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 /**
  * PUT /api/profiles/security

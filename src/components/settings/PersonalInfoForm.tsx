@@ -22,11 +22,66 @@ export default function PersonalInfoForm({ profile }: PersonalInfoFormProps) {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [errors, setErrors] = useState({
+    username: '',
+    fullName: '',
+  });
+
+  // Validazione client-side
+  const validateUsername = (username: string): string => {
+    if (!username.trim()) {
+      return 'Il nome utente è obbligatorio';
+    }
+    if (username.length > 32) {
+      return 'Il nome utente non può superare i 32 caratteri';
+    }
+    if (!/^[a-zA-Z0-9._]+$/.test(username)) {
+      return 'Il nome utente può contenere solo lettere, numeri, punti e trattini bassi';
+    }
+    return '';
+  };
+
+  const validateFullName = (fullName: string): string => {
+    if (fullName.length > 64) {
+      return 'Il nome non può superare i 64 caratteri';
+    }
+    return '';
+  };
+
+  const handleUsernameChange = (value: string) => {
+    setFormData({ ...formData, username: value });
+    setErrors({ ...errors, username: validateUsername(value) });
+  };
+
+  const handleFullNameChange = (value: string) => {
+    setFormData({ ...formData, fullName: value });
+    setErrors({ ...errors, fullName: validateFullName(value) });
+  };
+
+  // Check if form can be submitted - computed on every render
+  const isFormValid = !errors.username && 
+    !errors.fullName && 
+    (formData.username !== profile.username || formData.fullName !== (profile.full_name || '')) &&
+    formData.username.trim() !== '' &&
+    !validateUsername(formData.username);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setSuccessMessage('');
+
+    // Validazione completa prima di inviare
+    const usernameError = validateUsername(formData.username);
+    const fullNameError = validateFullName(formData.fullName);
+
+    if (usernameError || fullNameError) {
+      setErrors({
+        username: usernameError,
+        fullName: fullNameError,
+      });
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const res = await fetch('/api/profiles/personal', {
@@ -40,14 +95,24 @@ export default function PersonalInfoForm({ profile }: PersonalInfoFormProps) {
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to update personal info');
+        // Mostra l'errore sotto il campo appropriato
+        if (errorData.error.includes('username') || errorData.error.includes('Nome utente')) {
+          setErrors({ ...errors, username: errorData.error });
+        } else {
+          setErrors({ ...errors, fullName: errorData.error });
+        }
+        return;
       }
 
       setSuccessMessage('Informazioni aggiornate con successo!');
+      setErrors({ username: '', fullName: '' });
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err) {
       console.error('Error updating personal info:', err);
-      alert(err instanceof Error ? err.message : 'Errore durante l\'aggiornamento');
+      setErrors({
+        username: '',
+        fullName: 'Si è verificato un errore. Riprova più tardi.',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -69,14 +134,24 @@ export default function PersonalInfoForm({ profile }: PersonalInfoFormProps) {
             id="username"
             type="text"
             value={formData.username}
-            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-            className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 text-sm"
+            onChange={(e) => handleUsernameChange(e.target.value)}
+            className={`w-full px-3 py-2.5 border rounded-lg bg-transparent focus:outline-none focus:ring-1 text-sm ${
+              errors.username
+                ? 'border-red-500 focus:ring-red-500'
+                : 'border-gray-300 dark:border-gray-600 focus:ring-gray-400 dark:focus:ring-gray-500'
+            }`}
             maxLength={32}
             required
           />
-          <p className="text-xs text-[rgb(115,115,115)] dark:text-[rgb(168,168,168)] mt-2 leading-4">
-            Il nome utente può contenere solo lettere, numeri, punti e trattini bassi.
-          </p>
+          {errors.username ? (
+            <p className="text-xs text-red-500 mt-2 leading-4">
+              {errors.username}
+            </p>
+          ) : (
+            <p className="text-xs text-[rgb(115,115,115)] dark:text-[rgb(168,168,168)] mt-2 leading-4">
+              Il nome utente può contenere solo lettere, numeri, punti e trattini bassi.
+            </p>
+          )}
         </div>
 
         {/* Full Name Field */}
@@ -88,14 +163,24 @@ export default function PersonalInfoForm({ profile }: PersonalInfoFormProps) {
             id="fullName"
             type="text"
             value={formData.fullName}
-            onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-            className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 text-sm"
+            onChange={(e) => handleFullNameChange(e.target.value)}
+            className={`w-full px-3 py-2.5 border rounded-lg bg-transparent focus:outline-none focus:ring-1 text-sm ${
+              errors.fullName
+                ? 'border-red-500 focus:ring-red-500'
+                : 'border-gray-300 dark:border-gray-600 focus:ring-gray-400 dark:focus:ring-gray-500'
+            }`}
             maxLength={64}
             placeholder="Nome completo"
           />
-          <p className="text-xs text-[rgb(115,115,115)] dark:text-[rgb(168,168,168)] mt-2 leading-4">
-            Usa il tuo nome reale per aiutare gli amici a riconoscerti.
-          </p>
+          {errors.fullName ? (
+            <p className="text-xs text-red-500 mt-2 leading-4">
+              {errors.fullName}
+            </p>
+          ) : (
+            <p className="text-xs text-[rgb(115,115,115)] dark:text-[rgb(168,168,168)] mt-2 leading-4">
+              Usa il tuo nome reale per aiutare gli amici a riconoscerti.
+            </p>
+          )}
         </div>
 
         {/* Success Message */}
@@ -109,7 +194,7 @@ export default function PersonalInfoForm({ profile }: PersonalInfoFormProps) {
         <div className="flex justify-end">
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !isFormValid}
             className="relative flex items-center justify-center w-[253px] h-11 mt-4 px-5 bg-[rgb(74,93,249)] hover:bg-[rgb(64,83,239)] text-white font-semibold text-sm rounded-xl cursor-pointer select-none disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[rgb(74,93,249)] transition-all"
           >
             {isSubmitting ? (
