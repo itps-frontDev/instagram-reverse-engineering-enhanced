@@ -43,9 +43,9 @@ export default function SettingsSidebar() {
   ];
 
   return (
-    <aside className="w-full md:w-80 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
+    <aside className="w-full md:w-80 border-r border-gray-200 dark:border-gray-800">
       {/* Header */}
-      <div className="px-4 py-6 mx-[34px]">
+      <div className="px-4 pt-10 pb-6 mx-[34px]">
         <h1 className="text-xl font-bold leading-[25px] break-words">Impostazioni</h1>
       </div>
 

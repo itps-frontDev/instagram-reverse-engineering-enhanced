@@ -24,6 +24,7 @@ interface EditProfileFormProps {
 }
 
 export default function EditProfileForm({ profile }: EditProfileFormProps) {
+  // Header style: text-xl font-bold leading-[25px] break-words, padding top 0, bottom 6, left/right 0 (match sidebar)
   const [formData, setFormData] = useState({
     websiteUrl: profile.website_url || '',
     bio: profile.bio || '',
@@ -48,12 +49,6 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
     const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!validTypes.includes(file.type)) {
       alert('Formato non supportato. Usa JPEG, PNG, WebP o GIF');
-      return;
-    }
-
-    // Validate file size (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Il file è troppo grande. Dimensione massima: 5MB');
       return;
     }
 
@@ -129,11 +124,15 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl">
-      {/* Avatar Section */}
-      <div className="flex items-center gap-6 mb-8 pb-8 border-b border-gray-200 dark:border-gray-800">
-        <div className="relative group cursor-pointer">
-          <div className="relative w-14 h-14 flex-shrink-0 rounded-full overflow-hidden">
+    <div>
+      <div className="px-0 pt-0 pb-6">
+        <h1 className="text-xl font-bold leading-[25px] break-words mb-4">Modifica profilo</h1>
+      </div>
+      <form onSubmit={handleSubmit} className="max-w-2xl">
+      {/* Avatar Section - Instagram style */}
+      <div className="flex items-center justify-between bg-[#232323] dark:bg-[#232323] rounded-2xl px-4 py-3 mb-8">
+        <div className="flex items-center gap-4">
+          <div className="relative w-16 h-16 rounded-full overflow-hidden">
             {profileImage ? (
               <Image
                 src={profileImage}
@@ -142,9 +141,12 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
                 className="object-cover"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
-                <Camera className="w-6 h-6 text-gray-500 dark:text-gray-400" />
-              </div>
+              <Image
+                src={"/images/default-pfp.png"}
+                alt="Default profile picture"
+                fill
+                className="object-cover"
+              />
             )}
             {isUploadingImage && (
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -152,6 +154,20 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
               </div>
             )}
           </div>
+          <div className="ml-2">
+            <span className="block font-bold text-base text-white leading-5">{profile.username}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <label htmlFor="profile-image-input">
+            <button
+              type="button"
+              className="bg-[#4264ff] hover:bg-[#3853cc] text-white font-semibold text-sm rounded-lg px-4 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-[#4264ff]/50"
+              disabled={isUploadingImage}
+            >
+              {isUploadingImage ? 'Caricamento...' : 'Cambia foto'}
+            </button>
+          </label>
           <input
             ref={fileInputRef}
             type="file"
@@ -160,15 +176,6 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
             className="hidden"
             id="profile-image-input"
           />
-        </div>
-        <div className="flex-1 flex flex-col gap-1">
-          <h2 className="text-base font-normal text-[#262626] dark:text-white">{profile.username}</h2>
-          <label
-            htmlFor="profile-image-input"
-            className="text-[#0095f6] font-semibold text-sm hover:text-[#00376b] dark:hover:text-[#1e96fc] transition-colors cursor-pointer inline-block w-fit"
-          >
-            {isUploadingImage ? 'Caricamento...' : 'Cambia foto'}
-          </label>
         </div>
       </div>
 
@@ -269,6 +276,7 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
           {isSubmitting ? 'Salvataggio...' : 'Invia'}
         </button>
       </div>
-    </form>
+      </form>
+    </div>
   );
 }

@@ -53,13 +53,15 @@ export default async function EditProfilePage() {
   const profile = await getProfile();
 
   return (
-    <div className="flex min-h-screen bg-white dark:bg-black">
+    <div className="flex min-h-screen">
       {/* Sidebar */}
       <SettingsSidebar />
 
       {/* Main Content */}
-      <main className="flex-1 p-8">
-        <EditProfileForm profile={profile} />
+      <main className="flex-1 flex flex-col items-center py-9 px-8">
+        <div className="w-full max-w-xl">
+          <EditProfileForm profile={profile} />
+        </div>
       </main>
     </div>
   );
