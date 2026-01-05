@@ -52,7 +52,7 @@ export default function ProfilePage({
     isPending: false,
     isOwnProfile: false,
   });
-  const [canView, setCanView] = useState(true);
+  const [canView, setCanView] = useState<boolean | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [highlights, setHighlights] = useState<StoryHighlight[]>([]);
   const [activeTab, setActiveTab] = useState<ProfileTab>('posts');
@@ -74,7 +74,7 @@ export default function ProfilePage({
 
   // Fetch posts when tab changes
   useEffect(() => {
-    if (profile && canView) {
+    if (profile && canView === true) {
       fetchPosts(0);
     }
   }, [activeTab, profile, canView]);
@@ -631,7 +631,7 @@ export default function ProfilePage({
           {/* Content blocco */}
           <div className="w-full flex justify-center px-4">
             <div className="w-full max-w-[935px]">
-              {canView ? (
+              {canView === true ? (
                 <ProfileGrid
                   posts={posts}
                   isLoading={isLoadingPosts}
@@ -642,12 +642,12 @@ export default function ProfilePage({
                   onCreatePost={handleCreatePostClick}
                   onPostClick={handlePostClick}
                 />
-              ) : (
+              ) : canView === false ? (
                 <ProfilePrivateLock
                   username={profile.username}
                   isPending={followStatus.isPending}
                 />
-              )}
+              ) : null}
             </div>
           </div>
         </div>
