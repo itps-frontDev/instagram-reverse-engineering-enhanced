@@ -6,12 +6,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { jwtVerify } from 'jose';
 import { execute, queryOne } from '@/lib/db';
-
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-secret-key-change-in-production'
-);
+import { verifyToken } from '@/lib/jwt';
 
 interface Profile {
   id: number;
@@ -32,14 +28,19 @@ export async function PUT(request: NextRequest) {
   try {
     // Verify authentication
     const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
+    const token = cookieStore.get('authToken')?.value;
 
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { payload } = await jwtVerify(token, JWT_SECRET);
-    const userId = payload.userId as number;
+    const payload = await verifyToken(token);
+    
+    if (!payload) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+    
+    const userId = payload.id;
 
     // Parse request body
     const body = await request.json();

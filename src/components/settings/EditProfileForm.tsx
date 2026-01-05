@@ -46,6 +46,15 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
   const bioMaxLength = 150;
   const bioLength = formData.bio.length;
 
+  // Determina se il form può essere inviato
+  const isFormValid = () => {
+    // Se il genere è custom, il campo custom gender deve essere compilato
+    if (formData.gender === 'custom' && !formData.customGender.trim()) {
+      return false;
+    }
+    return true;
+  };
+
   async function handleProfileImageUpload(file: File) {
     if (!file) return;
 
@@ -314,7 +323,7 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
 
           {/* Gender Dropdown */}
           {showGenderDropdown && (
-            <div className="absolute top-full right-0 mt-1 bg-white dark:bg-[#262626] rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-10 overflow-hidden w-full max-w-[366px]">
+            <div className="absolute top-full right-0 mt-1 bg-white dark:bg-[#262626] rounded-xl shadow-lg z-10 overflow-hidden w-full max-w-[366px]">
               {/* Donna */}
               <button
                 type="button"
@@ -448,10 +457,19 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
       <div className="flex justify-end">
         <button
           type="submit"
-          disabled={isSubmitting}
-          className="relative flex items-center justify-center w-[253px] h-11 mt-4 px-5 bg-[rgb(74,93,249)] hover:bg-[rgb(64,83,239)] text-white font-semibold text-sm rounded-xl cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={isSubmitting || !isFormValid()}
+          className="relative flex items-center justify-center w-[253px] h-11 mt-4 px-5 bg-[rgb(74,93,249)] hover:bg-[rgb(64,83,239)] text-white font-semibold text-sm rounded-xl cursor-pointer select-none disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[rgb(74,93,249)] transition-all"
         >
-          {isSubmitting ? 'Salvataggio...' : 'Invia'}
+          {isSubmitting ? (
+            <>
+              <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </>
+          ) : (
+            'Invia'
+          )}
         </button>
       </div>
       </form>
