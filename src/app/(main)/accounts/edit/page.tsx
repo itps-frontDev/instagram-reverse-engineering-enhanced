@@ -22,21 +22,14 @@ interface Profile {
 }
 
 async function getProfile() {
-  console.log('[EditProfile] Starting getProfile...');
-  
   // Use the getCurrentUser utility which handles JWT verification correctly
   const user = await getCurrentUser();
-  
-  console.log('[EditProfile] User exists:', !!user);
 
   if (!user) {
-    console.log('[EditProfile] No user found, redirecting to login');
     redirect('/login');
   }
 
   try {
-    console.log('[EditProfile] User ID:', user.id);
-
     // Fetch user profile from database
     const profile = await queryOne<Profile>(
       `SELECT id, username, full_name, bio, website_url, profile_image_url, gender, custom_gender
@@ -44,11 +37,8 @@ async function getProfile() {
        WHERE user_id = ? AND deleted_at IS NULL`,
       [user.id]
     );
-    
-    console.log('[EditProfile] Profile found:', !!profile, profile?.username);
 
     if (!profile) {
-      console.log('[EditProfile] Profile not found, redirecting to login');
       redirect('/login');
     }
 

@@ -24,25 +24,9 @@ export default function SettingsSidebar() {
 
   const sections: SidebarSection[] = [
     {
-      title: 'Come usi Instagram',
       items: [
         { label: 'Modifica profilo', href: '/accounts/edit' },
-        { label: 'Notifiche', href: '/accounts/notifications' },
-      ],
-    },
-    {
-      title: 'Chi può vedere i tuoi contenuti',
-      items: [
         { label: "Privacy dell'account", href: '/accounts/privacy' },
-        { label: 'Amici più stretti', href: '/accounts/close-friends' },
-        { label: 'Utenti bloccati', href: '/accounts/blocked' },
-      ],
-    },
-    {
-      title: 'Cosa vedi',
-      items: [
-        { label: 'Account silenziati', href: '/accounts/muted' },
-        { label: 'Preferenze per i contenuti', href: '/accounts/content-preferences' },
       ],
     },
   ];
