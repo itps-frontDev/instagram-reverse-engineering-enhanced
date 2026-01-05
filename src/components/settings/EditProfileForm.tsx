@@ -132,27 +132,26 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
     <form onSubmit={handleSubmit} className="max-w-2xl">
       {/* Avatar Section */}
       <div className="flex items-center gap-6 mb-8 pb-8 border-b border-gray-200 dark:border-gray-800">
-        <div className="relative w-14 h-14 flex-shrink-0">
-          {profileImage ? (
-            <Image
-              src={profileImage}
-              alt={profile.username}
-              fill
-              className="rounded-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
-              <Camera className="w-6 h-6 text-gray-500 dark:text-gray-400" />
-            </div>
-          )}
-          {isUploadingImage && (
-            <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            </div>
-          )}
-        </div>
-        <div className="flex-1">
-          <h2 className="text-base font-normal mb-1">{profile.username}</h2>
+        <div className="relative group cursor-pointer">
+          <div className="relative w-14 h-14 flex-shrink-0 rounded-full overflow-hidden">
+            {profileImage ? (
+              <Image
+                src={profileImage}
+                alt={profile.username}
+                fill
+                className="object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
+                <Camera className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+              </div>
+            )}
+            {isUploadingImage && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+          </div>
           <input
             ref={fileInputRef}
             type="file"
@@ -161,9 +160,12 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
             className="hidden"
             id="profile-image-input"
           />
+        </div>
+        <div className="flex-1 flex flex-col gap-1">
+          <h2 className="text-base font-normal text-[#262626] dark:text-white">{profile.username}</h2>
           <label
             htmlFor="profile-image-input"
-            className="text-[#0095f6] font-semibold text-sm hover:text-[#00376b] transition-colors cursor-pointer"
+            className="text-[#0095f6] font-semibold text-sm hover:text-[#00376b] dark:hover:text-[#1e96fc] transition-colors cursor-pointer inline-block w-fit"
           >
             {isUploadingImage ? 'Caricamento...' : 'Cambia foto'}
           </label>

@@ -53,25 +53,14 @@ export default async function EditProfilePage() {
   const profile = await getProfile();
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black">
-      {/* Header */}
-      <header className="border-b border-gray-200 dark:border-gray-800 py-5 px-6">
-        <div className="max-w-5xl mx-auto">
-          <h1 className="text-xl font-semibold">Impostazioni</h1>
-        </div>
-      </header>
+    <div className="flex min-h-screen bg-white dark:bg-black">
+      {/* Sidebar */}
+      <SettingsSidebar />
 
-      {/* Two-column Layout */}
-      <div className="flex max-w-5xl mx-auto">
-        {/* Sidebar */}
-        <SettingsSidebar />
-
-        {/* Main Content */}
-        <main className="flex-1 p-8 pt-6">
-          <h2 className="text-xl font-normal mb-8">Modifica profilo</h2>
-          <EditProfileForm profile={profile} />
-        </main>
-      </div>
+      {/* Main Content */}
+      <main className="flex-1 p-8">
+        <EditProfileForm profile={profile} />
+      </main>
     </div>
   );
 }
