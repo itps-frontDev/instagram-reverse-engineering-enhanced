@@ -24,6 +24,17 @@ export default function DirectPage() {
     selectedIdRef.current = selectedId;
   }, [selectedId]);
 
+  // Marca una chat come letta quando viene selezionata
+  useEffect(() => {
+    if (selectedChatId) {
+      const readChats = JSON.parse(localStorage.getItem('readChats') || '{}');
+      const chatKey = `chat_${selectedChatId}`;
+      readChats[chatKey] = Date.now();
+      localStorage.setItem('readChats', JSON.stringify(readChats));
+      console.log('[DirectPage] Marked chat as read:', chatKey, Date.now());
+    }
+  }, [selectedChatId]);
+
   // Funzione per caricare le chat
   const fetchChats = React.useCallback(async () => {
     try {

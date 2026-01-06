@@ -54,6 +54,7 @@ export default function Sidebar() {
   const [showSearchPanel, setShowSearchPanel] = useState(false);
   const [showNotificationsPanel, setShowNotificationsPanel] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadChatsCount, setUnreadChatsCount] = useState(0);
   const moreRef = useRef<HTMLDivElement>(null);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
   const router = useRouter();
@@ -78,22 +79,78 @@ export default function Sidebar() {
           setUnreadCount(data.count || 0);
         }
       } catch (error) {
-        console.error('Error fetching unread count:', error);
+        console.error('Error fetching unread notifications:', error);
+      }
+    };
+
+    const fetchUnreadChats = async () => {
+      try {
+        const response = await fetch('/api/direct/chats');
+        if (response.ok) {
+          const data = await response.json();
+          const chats = data.chats || [];
+          // Conta le chat con messaggi non letti
+          // Non mostrare il badge se l'utente è già sulla pagina dei messaggi
+          if (!pathname.startsWith('/direct')) {
+            // Ottieni le chat lette da localStorage
+            const readChats = JSON.parse(localStorage.getItem('readChats') || '{}');
+            
+            const unread = chats.filter((chat: any) => {
+              // Ignora chat senza messaggi
+              if (!chat.last_message_text || !chat.last_message_at) return false;
+              
+              // Ignora messaggi inviati da me
+              if (chat.isFromMe) return false;
+              
+              // Usa solo l'ID della chat come chiave
+              const chatKey = `chat_${chat.id}`;
+              const lastReadTime = readChats[chatKey] || 0;
+              
+              // Converti last_message_at in timestamp se è una stringa datetime
+              let lastMessageTime: number;
+              if (typeof chat.last_message_at === 'number') {
+                lastMessageTime = chat.last_message_at;
+              } else {
+                lastMessageTime = new Date(chat.last_message_at).getTime();
+              }
+              
+              console.log('[Sidebar] Chat:', chat.id, 'LastMsg:', lastMessageTime, 'LastRead:', lastReadTime, 'Unread:', lastMessageTime > lastReadTime);
+              
+              return lastMessageTime > lastReadTime;
+            }).length;
+            
+            setUnreadChatsCount(unread);
+          } else {
+            setUnreadChatsCount(0);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching unread chats:', error);
       }
     };
 
     fetchUnreadCount();
-    
-    // Aggiorna ogni 5 secondi
-    const interval = setInterval(fetchUnreadCount, 2000);
+    fetchUnreadChats();
+
+    // Poll ogni 5 secondi per messaggi
+    const interval = setInterval(() => {
+      fetchUnreadCount();
+      fetchUnreadChats();
+    }, 5000);
+
     return () => clearInterval(interval);
-  }, [profile]);
+  }, [profile, pathname]);
 
   // Chiudi il popup cliccando fuori
   useEffect(() => {
     if (!showMore) return;
     function handleClick(e: MouseEvent) {
-      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
+      if (
+        moreRef.current &&
+        !moreRef.current.contains(e.target as Node) &&
+        moreButtonRef.current &&
+        !moreButtonRef.current.contains(e.target as Node)
+      ) {
         setShowMore(false);
       }
     }
@@ -205,24 +262,31 @@ export default function Sidebar() {
                   <path d="M21 11h-8V3a1 1 0 1 0-2 0v8H3a1 1 0 1 0 0 2h8v8a1 1 0 1 0 2 0v-8h8a1 1 0 1 0 0-2Z" />
                 </svg>
               ) : item.icon === 'custom-message' ? (
-                <svg
-                  className={`w-[26px] h-[26px] text-[#262626] dark:text-white`}
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                  style={{ transform: 'rotate(13deg)' }}
-                >
-                  {isActive ? (
-                    <>
-                      <path d="M21.5 2.5Q18 12 15.5 20Q15 21.5 14 21Q12.5 17 11 13Q7 11.5 3 10Q2 9 2.5 8.5Q11 5.5 21.5 2.5Z" fill="currentColor"/>
-                      <path d="M16 7Q14 9.5 11.5 11.5" stroke="#000000" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                    </>
-                  ) : (
-                    <>
-                      <path d="M21.5 2.5Q16 8 11 13" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M21.5 2.5Q18 12 15.5 20Q15 21.5 14 21Q12.5 17 11 13Q7 11.5 3 10Q2 9 2.5 8.5Q11 5.5 21.5 2.5Z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                    </>
+                <div className="relative">
+                  <svg
+                    className={`w-[26px] h-[26px] text-[#262626] dark:text-white`}
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                    style={{ transform: 'rotate(13deg)' }}
+                  >
+                    {isActive ? (
+                      <>
+                        <path d="M21.5 2.5Q18 12 15.5 20Q15 21.5 14 21Q12.5 17 11 13Q7 11.5 3 10Q2 9 2.5 8.5Q11 5.5 21.5 2.5Z" fill="currentColor"/>
+                        <path d="M16 7Q14 9.5 11.5 11.5" stroke="#000000" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                      </>
+                    ) : (
+                      <>
+                        <path d="M21.5 2.5Q16 8 11 13" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M21.5 2.5Q18 12 15.5 20Q15 21.5 14 21Q12.5 17 11 13Q7 11.5 3 10Q2 9 2.5 8.5Q11 5.5 21.5 2.5Z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                      </>
+                    )}
+                  </svg>
+                  {unreadChatsCount > 0 && (
+                    <div className="absolute -top-1 -right-3 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                      {unreadChatsCount > 9 ? '9+' : unreadChatsCount}
+                    </div>
                   )}
-                </svg>
+                </div>
               ) : item.icon === 'custom-reels' ? (
                 <svg
                   className={`w-[26px] h-[26px] text-[#262626] dark:text-white`}
@@ -388,8 +452,11 @@ export default function Sidebar() {
       <div className="relative">
         <button
           ref={moreButtonRef}
-          className="flex items-center gap-4 px-3 py-3 rounded-lg hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition-all duration-200 w-full"
-          onClick={() => setShowMore(!showMore)}
+          className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all duration-200 w-full ${showMore ? 'font-bold bg-[var(--bg-tertiary)]' : 'font-normal hover:bg-[var(--bg-tertiary)]'}`}
+          onMouseDown={e => {
+            e.stopPropagation();
+            setShowMore(prev => !prev);
+          }}
           aria-haspopup="true"
           aria-expanded={showMore}
         >
@@ -399,64 +466,61 @@ export default function Sidebar() {
           )}
         </button>
 
-        {/* Popup Menu */}
-        {showMore && (
-          <div
-            ref={moreRef}
-            className="absolute bottom-full lg:left-12 xl:left-3 mb-2 w-[260px] bg-white dark:bg-[#262626] border border-[#DBDBDB] dark:border-[#363636] rounded-2xl shadow-lg py-2 animate-in fade-in zoom-in-95 duration-200"
-          >
-            <button
-              className="w-full text-left py-3 px-4 text-[#262626] dark:text-white hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition"
-              onClick={() => { setShowMore(false); router.push('/accounts/edit'); }}
-            >
-              Impostazioni
-            </button>
-
-            <button
-              className="w-full text-left py-3 px-4 text-[#262626] dark:text-white hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition"
-              onClick={() => { setShowMore(false); router.push('/your-activity'); }}
-            >
-              La tua attività
-            </button>
-
-            <button
-              className="w-full text-left py-3 px-4 text-[#262626] dark:text-white hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition"
-              onClick={() => { setShowMore(false); router.push('/saved'); }}
-            >
-              Elementi salvati
-            </button>
-
-            <button
-              className="w-full text-left py-3 px-4 text-[#262626] dark:text-white hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition"
-              onClick={() => { setShowMore(false); /* toggle appearance: light/dark */ document.documentElement.classList.toggle('dark'); }}
-            >
-              Cambia aspetto
-            </button>
-
-            <button
-              className="w-full text-left py-3 px-4 text-[#262626] dark:text-white hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition"
-              onClick={() => { setShowMore(false); router.push('/report'); }}
-            >
-              Segnala un problema
-            </button>
-
-            <div className="border-t border-[#E5E5E5] dark:border-[#333333] my-1" />
-
-            <button
-              className="w-full text-left py-3 px-4 text-[#262626] dark:text-white hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition"
-              onClick={() => { setShowMore(false); router.push('/login'); }}
-            >
-              Cambia account
-            </button>
-
-            <button
-              className="w-full text-left py-3 px-4 text-[#d9534f] dark:text-[#ff6b6b] hover:bg-[#FFF0F0] dark:hover:bg-[#3a1f1f] transition"
-              onClick={() => { setShowLogoutConfirm(true); setShowMore(false); }}
-            >
-              Esci
-            </button>
-          </div>
-        )}
+        {/* Popup Menu (portal) */}
+        {(typeof window !== 'undefined' && mounted && showMore)
+          ? createPortal(
+              <div
+                ref={moreRef}
+                className="fixed left-4 bottom-20 lg:left-16 xl:left-6 z-[1050] w-[260px] bg-white dark:bg-[#262626] border border-[#DBDBDB] dark:border-[#363636] rounded-2xl shadow-lg py-2 animate-in fade-in zoom-in-95 duration-200"
+                style={{ maxWidth: '90vw' }}
+              >
+                <button
+                  className="w-full text-left py-3 px-4 text-[#262626] dark:text-white hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition"
+                  onClick={() => { setShowMore(false); router.push('/accounts/edit'); }}
+                >
+                  Impostazioni
+                </button>
+                <button
+                  className="w-full text-left py-3 px-4 text-[#262626] dark:text-white hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition"
+                  onClick={() => { setShowMore(false); router.push('/your-activity'); }}
+                >
+                  La tua attività
+                </button>
+                <button
+                  className="w-full text-left py-3 px-4 text-[#262626] dark:text-white hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition"
+                  onClick={() => { setShowMore(false); router.push('/saved'); }}
+                >
+                  Elementi salvati
+                </button>
+                <button
+                  className="w-full text-left py-3 px-4 text-[#262626] dark:text-white hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition"
+                  onClick={() => { setShowMore(false); /* toggle appearance: light/dark */ document.documentElement.classList.toggle('dark'); }}
+                >
+                  Cambia aspetto
+                </button>
+                <button
+                  className="w-full text-left py-3 px-4 text-[#262626] dark:text-white hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition"
+                  onClick={() => { setShowMore(false); router.push('/report'); }}
+                >
+                  Segnala un problema
+                </button>
+                <div className="border-t border-[#E5E5E5] dark:border-[#333333] my-1" />
+                <button
+                  className="w-full text-left py-3 px-4 text-[#262626] dark:text-white hover:bg-[#F2F2F2] dark:hover:bg-[#121212] transition"
+                  onClick={() => { setShowMore(false); router.push('/login'); }}
+                >
+                  Cambia account
+                </button>
+                <button
+                  className="w-full text-left py-3 px-4 text-[#d9534f] dark:text-[#ff6b6b] hover:bg-[#FFF0F0] dark:hover:bg-[#3a1f1f] transition"
+                  onClick={() => { setShowLogoutConfirm(true); setShowMore(false); }}
+                >
+                  Esci
+                </button>
+              </div>,
+              document.body
+            )
+          : null}
 
         {/* Logout Confirmation Modal (portal) */}
         {mounted && showLogoutConfirm && createPortal(
