@@ -29,9 +29,17 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [caption, setCaption] = useState('');
+  const [hasAudio, setHasAudio] = useState(true);
   const [currentProfile, setCurrentProfile] = useState<{ username: string; full_name: string | null; profile_image_url: string | null } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const multipleFileInputRef = useRef<HTMLInputElement>(null);
+  const mediaRef = useRef<HTMLDivElement>(null);
+  
+  // Stati per zoom e posizionamento
+  const [zoom, setZoom] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDraggingMedia, setIsDraggingMedia] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     if (isOpen) {
@@ -90,8 +98,8 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
   };
 
   const handleFiles = (files: File[]) => {
-    const imageFiles = files.filter(file => file.type.startsWith('image/'));
-    const promises = imageFiles.map(file => {
+    const supportedFiles = files.filter(file => file.type.startsWith('image/') || file.type.startsWith('video/'));
+    const promises = supportedFiles.map(file => {
       return new Promise<string>((resolve) => {
         const reader = new FileReader();
         reader.onload = (e) => resolve(e.target?.result as string);
@@ -99,12 +107,12 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
       });
     });
 
-    Promise.all(promises).then(images => {
+    Promise.all(promises).then(media => {
       if (uploadedImages.length === 0) {
-        setUploadedImages(images);
+        setUploadedImages(media);
         setCurrentImageIndex(0);
       } else {
-        setUploadedImages(prev => [...prev, ...images]);
+        setUploadedImages(prev => [...prev, ...media]);
       }
     });
   };
@@ -132,19 +140,76 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
     setPhase('details');
   };
 
+  const processVideoWithoutAudio = async (videoDataUrl: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      video.src = videoDataUrl;
+      video.muted = true;
+      
+      video.onloadedmetadata = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        
+        const mediaRecorder = new MediaRecorder(canvas.captureStream(), {
+          mimeType: 'video/webm',
+          videoBitsPerSecond: 2500000
+        });
+        
+        const chunks: Blob[] = [];
+        mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(chunks, { type: 'video/webm' });
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+        };
+        
+        mediaRecorder.start();
+        video.play();
+        
+        const drawFrame = () => {
+          if (video.ended) {
+            mediaRecorder.stop();
+            return;
+          }
+          ctx?.drawImage(video, 0, 0);
+          requestAnimationFrame(drawFrame);
+        };
+        drawFrame();
+      };
+      
+      video.onerror = reject;
+    });
+  };
+
   const handleShare = async () => {
     if (uploadedImages.length === 0) return;
     
     setIsUploading(true);
     
     try {
+      // Processa i media per rimuovere l'audio dai video se necessario
+      let processedMedia = uploadedImages;
+      if (!hasAudio) {
+        processedMedia = await Promise.all(
+          uploadedImages.map(async (media) => {
+            if (media.startsWith('data:video')) {
+              return await processVideoWithoutAudio(media);
+            }
+            return media;
+          })
+        );
+      }
+      
       const response = await fetch('/api/posts/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          images: uploadedImages,
+          images: processedMedia,
           caption: caption.trim(),
           location: '',
           isCommentsDisabled: false,
@@ -239,6 +304,39 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
     setDragOverIndex(null);
   };
 
+  const handleMediaMouseDown = (e: React.MouseEvent) => {
+    setIsDraggingMedia(true);
+    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+  };
+
+  const handleMediaMouseMove = (e: React.MouseEvent) => {
+    if (!isDraggingMedia) return;
+    setPosition({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y
+    });
+  };
+
+  const handleMediaMouseUp = () => {
+    setIsDraggingMedia(false);
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY * -0.001;
+    const newZoom = Math.min(Math.max(0.5, zoom + delta), 3);
+    setZoom(newZoom);
+  };
+
+  const resetMediaTransform = () => {
+    setZoom(1);
+    setPosition({ x: 0, y: 0 });
+  };
+
+  useEffect(() => {
+    resetMediaTransform();
+  }, [currentImageIndex]);
+
   return (
     <>
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -309,12 +407,40 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
         {uploadedImage ? (
           phase === 'crop' ? (
             // Crop Phase - solo immagine
-            <div className="relative min-h-[850px] flex items-center justify-center dark:bg-[#25292e]">
-              <img 
-                src={uploadedImage} 
-                alt="Uploaded" 
-                className="max-h-[850px] w-auto object-contain"
-              />
+            <div 
+              className="relative min-h-[850px] flex items-center justify-center dark:bg-[#25292e] overflow-hidden"
+              onWheel={handleWheel}
+            >
+              <div
+                ref={mediaRef}
+                className="cursor-move select-none"
+                onMouseDown={handleMediaMouseDown}
+                onMouseMove={handleMediaMouseMove}
+                onMouseUp={handleMediaMouseUp}
+                onMouseLeave={handleMediaMouseUp}
+                style={{
+                  transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
+                  transition: isDraggingMedia ? 'none' : 'transform 0.1s ease-out'
+                }}
+              >
+                {uploadedImage && uploadedImage.startsWith('data:video') ? (
+                  <video 
+                    src={uploadedImage} 
+                    className="max-h-[850px] w-auto object-contain pointer-events-none" 
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                  />
+                ) : (
+                  <img 
+                    src={uploadedImage || ''} 
+                    alt="Uploaded" 
+                    className="max-h-[850px] w-auto object-contain pointer-events-none"
+                    draggable={false}
+                  />
+                )}
+              </div>
               
               {/* Icona post multipli in basso a destra */}
               <button 
@@ -343,11 +469,15 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
                         }`}
                         onClick={() => setCurrentImageIndex(index)}
                       >
-                        <img 
-                          src={image} 
-                          alt={`Media ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
+                        {image.startsWith('data:video') ? (
+                          <video src={image} className="w-full h-full object-cover" preload="metadata" />
+                        ) : (
+                          <img 
+                            src={image} 
+                            alt={`Media ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
                         
                         {/* Bottone elimina */}
                         <button
@@ -375,7 +505,7 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
                   <input
                     ref={multipleFileInputRef}
                     type="file"
-                    accept="image/*"
+                    accept="image/*,video/*"
                     multiple
                     className="hidden"
                     onChange={handleFileSelect}
@@ -387,12 +517,39 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
             // Details Phase - immagine + form caption
             <div className="flex min-h-[850px]">
               {/* Immagine a sinistra */}
-              <div className="flex-1 flex items-center justify-center dark:bg-[#25292e] border-r border-gray-200 dark:border-[#363636]">
-                <img 
-                  src={uploadedImage} 
-                  alt="Uploaded" 
-                  className="max-h-[850px] w-auto object-contain"
-                />
+              <div 
+                className="flex-1 flex items-center justify-center dark:bg-[#25292e] border-r border-gray-200 dark:border-[#363636] overflow-hidden"
+                onWheel={handleWheel}
+              >
+                <div
+                  className="cursor-move select-none"
+                  onMouseDown={handleMediaMouseDown}
+                  onMouseMove={handleMediaMouseMove}
+                  onMouseUp={handleMediaMouseUp}
+                  onMouseLeave={handleMediaMouseUp}
+                  style={{
+                    transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
+                    transition: isDraggingMedia ? 'none' : 'transform 0.1s ease-out'
+                  }}
+                >
+                  {uploadedImage && uploadedImage.startsWith('data:video') ? (
+                    <video 
+                      src={uploadedImage} 
+                      className="max-h-[850px] w-auto object-contain pointer-events-none" 
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                    />
+                  ) : (
+                    <img 
+                      src={uploadedImage || ''} 
+                      alt="Uploaded" 
+                      className="max-h-[850px] w-auto object-contain pointer-events-none"
+                      draggable={false}
+                    />
+                  )}
+                </div>
               </div>
               
               {/* Form dettagli a destra */}
@@ -425,6 +582,30 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
                   <div className="text-xs text-gray-400 text-right mt-2">
                     {caption.length}/2200
                   </div>
+
+                  {/* Toggle audio per video */}
+                  {uploadedImage && uploadedImage.startsWith('data:video') && (
+                    <div className="mt-6 pt-4 border-t border-gray-200 dark:border-[#363636]">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lgef text-[#262626] dark:text-white">Audio attivo</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setHasAudio(!hasAudio)}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                            hasAudio ? 'bg-white border-2 border-gray-300 dark:border-gray-600' : 'bg-gray-300 dark:bg-gray-600'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full transition-transform ${
+                              hasAudio ? 'translate-x-5 bg-[#262626] dark:bg-black' : 'translate-x-1 bg-[#262626]'
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
