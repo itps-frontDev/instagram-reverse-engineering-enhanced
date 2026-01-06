@@ -7,6 +7,7 @@
 
 import Sidebar from '@/components/layout/Sidebar';
 import MobileNav from '@/components/layout/MobileNav';
+import InstagramLoadingBar from '@/components/common/InstagramLoadingBar';
 
 export default function MainLayout({
   children,
@@ -15,6 +16,9 @@ export default function MainLayout({
 }) {
   return (
     <div className="flex min-h-screen">
+      {/* Instagram loading bar */}
+      <InstagramLoadingBar />
+      
       {/* Desktop Sidebar - nascosta su mobile */}
       <Sidebar />
 
