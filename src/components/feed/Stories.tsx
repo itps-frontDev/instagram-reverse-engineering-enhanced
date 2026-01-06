@@ -18,6 +18,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRef, useState, useEffect } from 'react';
 import StoryViewer from './StoryViewer';
 import StoriesSkeleton from '@/components/common/skeletons/StoriesSkeleton';
+import ProfilePicture from '@/components/ProfilePicture';
 
 interface StoryItem {
   id: number;
@@ -169,18 +170,15 @@ export default function Stories() {
                 {/* Story Avatar with Gradient Border */}
                 <div className="relative group/story">
                   <div className="w-[86px] h-[86px] rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[3px] cursor-pointer transition-transform max-[639px]:w-[90px] max-[639px]:h-[90px] max-[639px]:p-[2.5px]">
-                    <div className="w-full h-full rounded-full bg-white dark:bg-[#0c1014] p-[2.5px]">
-                      {item.profile_image_url ? (
-                        <img
+                    <div className="w-full h-full rounded-full bg-white dark:bg-[#0c1014] p-[2.5px] flex items-center justify-center">
+                      <div className="w-[75px] h-[75px] max-[639px]:w-[80px] max-[639px]:h-[80px]">
+                        <ProfilePicture
                           src={item.profile_image_url}
                           alt={item.username}
-                          className="w-full h-full rounded-full object-cover"
+                          size={75}
+                          className="max-[639px]:!w-[80px] max-[639px]:!h-[80px]"
                         />
-                      ) : (
-                        <div className="w-full h-full rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-white font-semibold">
-                          {item.username.charAt(0).toUpperCase()}
-                        </div>
-                      )}
+                      </div>
                     </div>
                   </div>
                 </div>

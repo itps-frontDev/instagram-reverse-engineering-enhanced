@@ -19,6 +19,8 @@
 import { X, ChevronLeft, ChevronRight, Volume2, VolumeX, Eye, Heart, Send } from 'lucide-react';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+import ProfilePicture from '@/components/ProfilePicture';
 
 interface Story {
   id: number;
@@ -363,21 +365,13 @@ export default function StoryViewer({
           {/* Preview User info overlay */}
           <div className="absolute top-47 left-2 right-2 flex flex-col items-center gap-2.5">
             {/* Profile picture */}
-            {preview.profile_image_url ? (
-              <div className="p-1 rounded-full border-2 border-gray-700">
-                <img
-                  src={preview.profile_image_url || ''}
-                  alt={preview.username}
-                  className="w-13 h-13 rounded-full"
-                />
-              </div>
-            ) : (
-              <div className="p-1 rounded-full border-2 border-gray-700">
-                <div className="w-13 h-13 rounded-full bg-gray-600 flex items-center justify-center text-white text-xs font-semibold">
-                  {preview.username.charAt(0).toUpperCase()}
-                </div>
-              </div>
-            )}
+            <div className="p-1 rounded-full border-2 border-gray-700">
+              <ProfilePicture
+                src={preview.profile_image_url}
+                alt={preview.username}
+                size={52}
+              />
+            </div>
             {/* Username */}
             <span className="text-white text-xs font-semibold truncate max-w-full px-1">
               {preview.username}
@@ -448,24 +442,18 @@ export default function StoryViewer({
 
         {/* Story header - Profile info - INSIDE story */}
         <div className="absolute top-8 left-4 right-3 flex items-center gap-3 z-20">
-          {currentStory.profile_image_url ? (
-            <div className="w-8 h-8 rounded-full overflow-hidden">
-              <Image
-                unoptimized
-                src={currentStory.profile_image_url}
-                alt={currentStory.username}
-                width={32}
-                height={32}
-                className="object-cover"
-              />
-            </div>
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-white font-semibold text-xs">
-              {currentStory.username.charAt(0).toUpperCase()}
-            </div>
-          )}
+          <ProfilePicture
+            src={currentStory.profile_image_url}
+            alt={currentStory.username}
+            size={32}
+          />
           <div className="flex-1">
-            <p className="text-white font-semibold text-sm drop-shadow-lg">{currentStory.username}</p>
+            <Link 
+              href={`/profile/${currentStory.username}`}
+              className="text-white font-semibold text-sm drop-shadow-lg hover:opacity-80 transition-opacity"
+            >
+              {currentStory.username}
+            </Link>
             <p className="text-white text-xs opacity-80 drop-shadow-lg">
               {new Date(currentStory.created_at).toLocaleTimeString('it-IT', {
                 hour: '2-digit',
@@ -562,21 +550,13 @@ export default function StoryViewer({
           {/* Preview User info overlay */}
           <div className="absolute top-47 left-2 right-2 flex flex-col items-center gap-2.5">
             {/* Profile picture */}
-            {preview.profile_image_url ? (
-              <div className="p-1 rounded-full border-2 border-gray-700">
-                <img
-                  src={preview.profile_image_url || ''}
-                  alt={preview.username}
-                  className="w-13 h-13 rounded-full"
-                />
-              </div>
-            ) : (
-              <div className="p-1 rounded-full border-2 border-gray-700">
-                <div className="w-13 h-13 rounded-full bg-gray-600 flex items-center justify-center text-white text-xs font-semibold">
-                  {preview.username.charAt(0).toUpperCase()}
-                </div>
-              </div>
-            )}
+            <div className="p-1 rounded-full border-2 border-gray-700">
+              <ProfilePicture
+                src={preview.profile_image_url}
+                alt={preview.username}
+                size={52}
+              />
+            </div>
             {/* Username */}
             <span className="text-white text-xs font-semibold truncate max-w-full px-1">
               {preview.username}

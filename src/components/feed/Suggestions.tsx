@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import VerifiedBadge from '@/components/common/VerifiedBadge';
+import ProfilePicture from '@/components/ProfilePicture';
 
 interface SuggestedUser {
   id: number;
@@ -118,19 +119,11 @@ export default function Suggestions() {
         {/* Current User Info */}
         <div className="flex items-center justify-between">
           <Link href={`/profile/${profile.username}`} className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-              {profile.profile_image_url ? (
-                <img
-                  src={profile.profile_image_url}
-                  alt={profile.username}
-                  className="w-full h-full rounded-full object-cover"
-                />
-              ) : (
-                <span className="text-white text-lg font-semibold">
-                  {profile.username.charAt(0).toUpperCase()}
-                </span>
-              )}
-            </div>
+            <ProfilePicture
+              src={profile.profile_image_url}
+              alt={profile.username}
+              size={48}
+            />
             <div>
               <p className="font-semibold text-sm text-[#262626] dark:text-white">
                 {profile.username}
@@ -181,19 +174,11 @@ export default function Suggestions() {
               {suggestions.map((user) => (
                 <div key={user.id} className="flex items-center justify-between">
                   <Link href={`/profile/${user.username}`} className="flex items-center gap-3 flex-1">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
-                      {user.profile_image_url ? (
-                        <img
-                          src={user.profile_image_url}
-                          alt={user.username}
-                          className="w-full h-full rounded-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-white text-xs font-semibold">
-                          {user.username.charAt(0).toUpperCase()}
-                        </span>
-                      )}
-                    </div>
+                    <ProfilePicture
+                      src={user.profile_image_url}
+                      alt={user.username}
+                      size={32}
+                    />
                     <div>
                       <p className="font-semibold text-sm text-[#262626] dark:text-white flex items-center gap-1">
                         {user.username}
