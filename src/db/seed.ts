@@ -10,6 +10,7 @@ import {
   seedUsers, 
   seedProfiles, 
   seedPosts, 
+  seedVideoReels,
   seedFollows, 
   seedStories, 
   seedPostTags,
@@ -44,11 +45,13 @@ async function main() {
     const userIds = await seedUsers();
     const profileIds = await seedProfiles(userIds);
     const allPostIds = await seedPosts(profileIds);
+    const reelIds = await seedVideoReels(profileIds);
+    const allMediaPostIds = [...allPostIds, ...reelIds];
     
-    await seedPostTags(allPostIds, profileIds);
-    await seedPostLikes(allPostIds, profileIds);
-    await seedSavedPosts(allPostIds, profileIds);
-    await seedPostComments(allPostIds, profileIds);
+    await seedPostTags(allMediaPostIds, profileIds);
+    await seedPostLikes(allMediaPostIds, profileIds);
+    await seedSavedPosts(allMediaPostIds, profileIds);
+    await seedPostComments(allMediaPostIds, profileIds);
     await seedCommentLikes(profileIds);
     
     await seedFollows(profileIds);
@@ -67,6 +70,7 @@ async function main() {
     console.log('─'.repeat(60));
     console.log(`👥 Users: 80 accounts with profile pictures`);
     console.log(`📝 Posts: ${allPostIds.length} posts (8-15 per user)`);
+    console.log(`🎬 Reels: ${reelIds.length} video reels (1-3 per user)`);
     console.log(`❤️  Likes: Distributed across posts`);
     console.log(`💬 Comments: Multiple comments per post`);
     console.log(`🔖 Saved Posts: Users saving their favorite content`);

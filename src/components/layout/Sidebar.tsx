@@ -15,6 +15,7 @@ import { useRouter } from 'next/navigation';
 import { createPortal } from 'react-dom';
 import CreatePostModal from '@/components/feed/CreatePostModal';
 import SearchPanel from '@/components/layout/SearchPanel';
+import NotificationsPanel from '@/components/layout/NotificationsPanel';
 import {
   Home,
   Search,
@@ -40,7 +41,7 @@ const navItems: NavItem[] = [
   { icon: 'custom-explore', label: 'Esplora', href: '/explore' },
   { icon: 'custom-reels', label: 'Reels', href: '/reels' },
   { icon: 'custom-message', label: 'Messaggi', href: '/direct' },
-  { icon: Heart, label: 'Notifiche', href: '/notifications' },
+  { icon: Heart, label: 'Notifiche', action: 'notifications' },
   { icon: 'custom-create', label: 'Crea', action: 'create' },
 ];
 
@@ -51,17 +52,42 @@ export default function Sidebar() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showSearchPanel, setShowSearchPanel] = useState(false);
+  const [showNotificationsPanel, setShowNotificationsPanel] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const moreRef = useRef<HTMLDivElement>(null);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const isDirectPage = pathname.startsWith('/direct');
   const isProfilePage = pathname.startsWith('/profile/');
-  const isCollapsed = isDirectPage || showSearchPanel;
+  const isCollapsed = isDirectPage || showSearchPanel || showNotificationsPanel;
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Carica il conteggio delle notifiche non lette
+  useEffect(() => {
+    if (!profile) return;
+
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await fetch('/api/notifications/unread-count');
+        if (response.ok) {
+          const data = await response.json();
+          setUnreadCount(data.count || 0);
+        }
+      } catch (error) {
+        console.error('Error fetching unread count:', error);
+      }
+    };
+
+    fetchUnreadCount();
+    
+    // Aggiorna ogni 5 secondi
+    const interval = setInterval(fetchUnreadCount, 2000);
+    return () => clearInterval(interval);
+  }, [profile]);
 
   // Chiudi il popup cliccando fuori
   useEffect(() => {
@@ -77,22 +103,33 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Overlay per chiudere il search panel */}
-      {showSearchPanel && (
+      {/* Overlay per chiudere i pannelli */}
+      {(showSearchPanel || showNotificationsPanel) && (
         <div 
           className="fixed inset-0 bg-transparent z-30"
-          onClick={() => setShowSearchPanel(false)}
+          onClick={() => {
+            setShowSearchPanel(false);
+            setShowNotificationsPanel(false);
+          }}
         />
       )}
       
       {/* Search Panel */}
       <SearchPanel isOpen={showSearchPanel} onClose={() => setShowSearchPanel(false)} />
       
+      {/* Notifications Panel */}
+      <NotificationsPanel 
+        isOpen={showNotificationsPanel} 
+        onClose={() => setShowNotificationsPanel(false)}
+        onMarkAllAsRead={() => setUnreadCount(0)}
+      />
+      
       <aside className={`hidden lg:flex fixed left-0 top-0 h-screen flex-col ${
         isProfilePage ? '' : 'border-r border-[#DBDBDB] dark:border-[#262626]'
       } bg-[var(--bg-primary)] py-8 px-3 transition-all duration-300 ${
         isCollapsed ? 'w-[80px]' : 'lg:w-[80px] xl:w-[336px]'
       }`}>
+        
       {/* Instagram Logo */}
       <div className="mb-8 px-3 pt-2">
         <Link href="/" className="flex items-center justify-center xl:justify-start">
@@ -235,6 +272,10 @@ export default function Sidebar() {
               {!isCollapsed && (
                 <span className="hidden xl:block text-base text-[#262626] dark:text-white">{item.label}</span>
               )}
+              {/* Badge notifiche non lette */}
+              {item.action === 'notifications' && unreadCount > 0 && (
+                <div className="absolute top-2.75 left-7.5 w-3 h-3 bg-[#FF3B30] rounded-full border-2 border-white dark:border-black" />
+              )}
             </>
           );
 
@@ -258,9 +299,31 @@ export default function Sidebar() {
             return (
               <button
                 key={item.action}
-                onClick={() => setShowSearchPanel(!showSearchPanel)}
-                className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all duration-200 w-full text-left ${
+                onClick={() => {
+                  setShowSearchPanel(!showSearchPanel);
+                  setShowNotificationsPanel(false);
+                }}
+                className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all duration-200 w-full text-left relative ${
                   showSearchPanel
+                    ? 'font-bold'
+                    : 'font-normal hover:bg-[var(--bg-tertiary)]'
+                }`}
+              >
+                {content}
+              </button>
+            );
+          }
+
+          if (item.action === 'notifications') {
+            return (
+              <button
+                key={item.action}
+                onClick={() => {
+                  setShowNotificationsPanel(!showNotificationsPanel);
+                  setShowSearchPanel(false);
+                }}
+                className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all duration-200 w-full text-left relative ${
+                  showNotificationsPanel
                     ? 'font-bold'
                     : 'font-normal hover:bg-[var(--bg-tertiary)]'
                 }`}

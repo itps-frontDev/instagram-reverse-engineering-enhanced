@@ -43,6 +43,16 @@ export async function POST(
       [postIdNum]
     );
 
+    // Delete like notification
+    await execute(
+      `DELETE FROM notifications
+       WHERE sender_profile_id = ?
+         AND type = 'like_post'
+         AND reference_type = 'post'
+         AND reference_id = ?`,
+      [profileId, postIdNum]
+    );
+
     return NextResponse.json({ message: 'Post unliked successfully' });
   } catch (error) {
     console.error('Error unliking post:', error);

@@ -208,6 +208,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get post owner to send notification
+    const postOwner = await queryOne<{ profile_id: number }>(
+      `SELECT profile_id FROM posts WHERE id = ?`,
+      [postId]
+    );
+
+    // Create notification (only if not commenting on own post)
+    if (postOwner && postOwner.profile_id !== currentProfile.id) {
+      await execute(
+        `INSERT INTO notifications (recipient_profile_id, sender_profile_id, type, reference_type, reference_id)
+         VALUES (?, ?, 'comment', 'post', ?)`,
+        [postOwner.profile_id, currentProfile.id, postId]
+      );
+    }
+
     // Fetch the created comment with profile data
     const commentRow = await queryOne<CommentRow>(
       `SELECT

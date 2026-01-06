@@ -80,6 +80,105 @@ export async function seedPosts(profileIds: number[]) {
 
   return allPostIds; // Return post IDs for tagging
 }
+
+// ============================================================================
+// VIDEO REELS
+// ============================================================================
+
+export async function seedVideoReels(profileIds: number[]) {
+  console.log('\n🌱 Seeding video reels...');
+
+  const REEL_CAPTIONS = [
+    '🎬 Check this out!',
+    'POV: Living my best life ✨',
+    'This is everything 🔥',
+    'Wait for it... 😱',
+    'Caught on camera 📹',
+    'Vibes only 🌟',
+    'No way this happened! 😂',
+    'Golden hour magic ☀️',
+    'Behind the scenes 🎭',
+    'Making memories 💫',
+    'This view though 😍',
+    'Adventure mode: ON 🗺️',
+    'Life update 📱',
+    'Mood 💯',
+    'Can\'t stop watching this',
+    'A message from the matchwinner 🏆',
+    'Best day ever! 🙌',
+    'Saturday vibes 🎉',
+    'This is art 🎨',
+    'Pure happiness 💙',
+  ];
+
+  // Sample video URLs (using test video URLs from various sources)
+  const VIDEO_URLS = [
+    'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+    'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+    'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+    'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+    'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
+    'https://storage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
+    'https://storage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+  ];
+
+  let totalReels = 0;
+  const allReelIds: number[] = [];
+  const TARGET_REELS = 20; // Only create 20 reels total
+
+  // Give only some users video reels (20 total)
+  const selectedProfiles = profileIds.slice(0, TARGET_REELS);
+  for (let i = 0; i < selectedProfiles.length; i++) {
+    const profileId = selectedProfiles[i];
+    const numReels = 1; // 1 reel per selected user
+
+    for (let j = 0; j < numReels; j++) {
+      const caption = REEL_CAPTIONS[Math.floor(Math.random() * REEL_CAPTIONS.length)];
+      const likesCount = Math.floor(Math.random() * 100000) + 1000; // 1K-100K likes
+      const commentsCount = Math.floor(Math.random() * 1000) + 50; // 50-1000 comments
+      const videoUrl = VIDEO_URLS[Math.floor(Math.random() * VIDEO_URLS.length)];
+      const duration = Math.floor(Math.random() * 55) + 5; // 5-60 seconds
+
+      const result = await execute(
+        `INSERT INTO posts (profile_id, caption, likes_count, comments_count)
+         VALUES (?, ?, ?, ?)`,
+        [profileId, caption, likesCount, commentsCount]
+      );
+
+      const postId = result.lastID;
+      allReelIds.push(postId);
+
+      // Add video media for this reel
+      await execute(
+        `INSERT INTO post_media (post_id, media_url, media_type, duration_seconds, position)
+         VALUES (?, ?, 'video', ?, 0)`,
+        [postId, videoUrl, duration]
+      );
+
+      totalReels++;
+    }
+
+    // Update posts_count
+    await execute(
+      `UPDATE profiles SET posts_count = posts_count + (
+        SELECT COUNT(*) FROM posts WHERE profile_id = ? AND deleted_at IS NULL
+      ) - posts_count WHERE id = ?`,
+      [profileId, profileId]
+    );
+
+    if ((i + 1) % 20 === 0) {
+      console.log(`   ✓ Generated reels for ${i + 1}/${profileIds.length} profiles...`);
+    }
+  }
+
+  console.log(`   ✓ Created ${totalReels} video reels successfully!`);
+
+  return allReelIds;
+}
+
 /**
  * @fileoverview Seed functions
  *

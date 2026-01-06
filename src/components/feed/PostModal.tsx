@@ -18,6 +18,9 @@ import {
   Bookmark,
   MoreHorizontal,
   X,
+  Volume2,
+  VolumeX,
+  Play,
 } from 'lucide-react';
 import type { FeedPost, Comment, GetCommentsResponse } from '@/lib/types/feed';
 
@@ -53,6 +56,8 @@ export default function PostModal({
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  const [isMuted, setIsMuted] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(true);
 
   useEffect(() => {
     if (isOpen) {
@@ -249,16 +254,73 @@ export default function PostModal({
         onClick={(e) => e.stopPropagation()}
       >
 
-        {/* Left Side - Image */}
+        {/* Left Side - Media (Image or Video) */}
         <div className="flex-1 bg-gray-100 dark:bg-black flex items-center justify-center relative group/media">
           {post.media.length > 0 && (
-            <Image
-              src={post.media[currentMediaIndex].media_url}
-              alt={post.caption || 'Post image'}
-              fill
-              className="object-cover"
-              sizes="(max-width: 1200px) 60vw, 1200px"
-            />
+            <>
+              {post.media[currentMediaIndex].media_type === 'video' ? (
+                <div className="relative w-full h-full">
+                  <video
+                    ref={(el) => {
+                      if (el) {
+                        el.muted = isMuted;
+                        if (isPlaying) {
+                          el.play().catch(() => {});
+                        } else {
+                          el.pause();
+                        }
+                      }
+                    }}
+                    src={post.media[currentMediaIndex].media_url}
+                    className="w-full h-full object-cover cursor-pointer"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const video = e.currentTarget;
+                      if (video.paused) {
+                        video.play();
+                        setIsPlaying(true);
+                      } else {
+                        video.pause();
+                        setIsPlaying(false);
+                      }
+                    }}
+                  />
+                  {/* Play Icon when paused */}
+                  {!isPlaying && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <Play className="w-16 h-16 text-white fill-white" />
+                    </div>
+                  )}
+                  {/* Mute/Unmute Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsMuted(!isMuted);
+                    }}
+                    className="absolute bottom-3 right-3 z-10 w-7 h-7 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-all"
+                    aria-label={isMuted ? 'Attiva audio' : 'Disattiva audio'}
+                  >
+                    {isMuted ? (
+                      <VolumeX className="w-4 h-4 text-white drop-shadow-lg" />
+                    ) : (
+                      <Volume2 className="w-4 h-4 text-white drop-shadow-lg" />
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <Image
+                  src={post.media[currentMediaIndex].media_url}
+                  alt={post.caption || 'Post image'}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1200px) 60vw, 1200px"
+                />
+              )}
+            </>
           )}
 
           {/* Media Navigation Arrows */}

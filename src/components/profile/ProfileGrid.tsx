@@ -7,7 +7,7 @@
 'use client';
 
 import Image from 'next/image';
-import { Heart, MessageCircle } from 'lucide-react';
+import { Heart, MessageCircle, Play } from 'lucide-react';
 import { ProfileGridProps } from '@/lib/types/profile';
 import ProfileEmptyState from './ProfileEmptyState';
 import CarouselIcon from '@/components/common/CarouselIcon';
@@ -48,13 +48,37 @@ export default function ProfileGrid({
             onClick={() => onPostClick?.(post)}
             className="relative aspect-[3/4] bg-gray-100 dark:bg-gray-800 group overflow-hidden cursor-pointer"
           >
-            <Image
-              src={post.media_url}
-              alt={post.caption || 'Post'}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 33vw, 25vw"
-            />
+            {post.media_type === 'video' ? (
+              <>
+                <video
+                  src={post.media_url}
+                  className="w-full h-full object-cover"
+                  preload="metadata"
+                  muted
+                  playsInline
+                />
+                {/* Video/Reels indicator */}
+                <div className="absolute top-2 right-2">
+                  <svg
+                    className="w-5 h-5 text-white drop-shadow-lg"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="currentColor"
+                  >
+                    <rect x="3" y="3" width="18" height="18" rx="4" ry="4" fill="currentColor"/>
+                    <path d="M9 8 Q9.5 8 10 8.5 L16 11.5 Q16.5 12 16.5 12 Q16.5 12 16 12.5 L10 15.5 Q9.5 16 9 16 Q9 16 9 15.5 L9 8.5 Q9 8 9 8" fill="rgba(0, 0, 0, 0.6)"/>
+                  </svg>
+                </div>
+              </>
+            ) : (
+              <Image
+                src={post.media_url}
+                alt={post.caption || 'Post'}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 33vw, 25vw"
+              />
+            )}
 
             {/* Multi-media indicator */}
             {post.media_count > 1 && (
