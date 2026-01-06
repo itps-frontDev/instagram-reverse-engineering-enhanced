@@ -11,6 +11,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import VerifiedBadge from '@/components/common/VerifiedBadge';
 import ProfilePicture from '@/components/ProfilePicture';
+import ProfilePreviewCard from '@/components/profile/ProfilePreviewCard';
 
 interface SuggestedUser {
   id: number;
@@ -18,6 +19,7 @@ interface SuggestedUser {
   full_name: string | null;
   profile_image_url: string | null;
   is_verified: boolean;
+  is_private?: boolean;
   followers_count: number;
 }
 
@@ -26,7 +28,10 @@ export default function Suggestions() {
   const [suggestions, setSuggestions] = useState<SuggestedUser[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(true);
   const [followingIds, setFollowingIds] = useState<Set<number>>(new Set());
+  const [pendingIds, setPendingIds] = useState<Set<number>>(new Set());
   const [loadingFollowIds, setLoadingFollowIds] = useState<Set<number>>(new Set());
+  const [hoveredUser, setHoveredUser] = useState<string | null>(null);
+  const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     async function fetchSuggestions() {
@@ -62,9 +67,16 @@ export default function Suggestions() {
       });
 
       if (response.ok) {
-        setFollowingIds(prev => new Set(prev).add(userId));
+        const data = await response.json();
+        console.log('Follow response:', data);
+        if (data.status === 'pending') {
+          setPendingIds(prev => new Set(prev).add(userId));
+        } else if (data.status === 'accepted') {
+          setFollowingIds(prev => new Set(prev).add(userId));
+        }
       } else {
-        console.error('Failed to follow user');
+        const errorData = await response.json();
+        console.error('Failed to follow user:', errorData);
       }
     } catch (error) {
       console.error('Error following user:', error);
@@ -91,6 +103,11 @@ export default function Suggestions() {
 
       if (response.ok) {
         setFollowingIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(userId);
+          return newSet;
+        });
+        setPendingIds(prev => {
           const newSet = new Set(prev);
           newSet.delete(userId);
           return newSet;
@@ -172,7 +189,23 @@ export default function Suggestions() {
           ) : suggestions.length > 0 ? (
             <div className="space-y-3">
               {suggestions.map((user) => (
-                <div key={user.id} className="flex items-center justify-between">
+                <div 
+                  key={user.id} 
+                  className="flex items-center justify-between relative"
+                  onMouseEnter={() => {
+                    const timeout = setTimeout(() => {
+                      setHoveredUser(user.username);
+                    }, 500);
+                    setHoverTimeout(timeout);
+                  }}
+                  onMouseLeave={() => {
+                    if (hoverTimeout) {
+                      clearTimeout(hoverTimeout);
+                      setHoverTimeout(null);
+                    }
+                    setHoveredUser(null);
+                  }}
+                >
                   <Link href={`/profile/${user.username}`} className="flex items-center gap-3 flex-1">
                     <ProfilePicture
                       src={user.profile_image_url}
@@ -190,20 +223,36 @@ export default function Suggestions() {
                     </div>
                   </Link>
                   <button 
-                    onClick={() => followingIds.has(user.id) ? handleUnfollow(user.id) : handleFollow(user.id)}
+                    onClick={() => (followingIds.has(user.id) || pendingIds.has(user.id)) ? handleUnfollow(user.id) : handleFollow(user.id)}
                     disabled={loadingFollowIds.has(user.id)}
                     className={`text-xs font-semibold transition-colors ${
-                      followingIds.has(user.id)
+                      followingIds.has(user.id) || pendingIds.has(user.id)
                         ? 'text-[#84a0fe] dark:text-white hover:text-[#1877F2]'
                         : 'text-[#84a0fe] hover:text-[#1877F2]'
                     } disabled:opacity-50`}
                   >
                     {loadingFollowIds.has(user.id) 
                       ? '...' 
-                      : followingIds.has(user.id) 
-                        ? 'Seguito' 
-                        : 'Segui'}
+                      : pendingIds.has(user.id)
+                        ? 'Richiesta effettuata'
+                        : followingIds.has(user.id) 
+                          ? 'Seguito' 
+                          : 'Segui'}
                   </button>
+
+                  {/* Profile Preview Card on Hover */}
+                  {hoveredUser === user.username && (!user.is_private || followingIds.has(user.id)) && (
+                    <div className="absolute left-0 top-0 z-50">
+                      <ProfilePreviewCard
+                        username={user.username}
+                        onFollow={() => handleFollow(user.id)}
+                        onUnfollow={() => handleUnfollow(user.id)}
+                        isFollowing={followingIds.has(user.id)}
+                        isPending={pendingIds.has(user.id)}
+                        isLoading={loadingFollowIds.has(user.id)}
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
