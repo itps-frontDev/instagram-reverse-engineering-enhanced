@@ -9,6 +9,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import VerifiedBadge from '@/components/common/VerifiedBadge';
 
 interface SuggestedUser {
   id: number;
@@ -23,6 +24,8 @@ export default function Suggestions() {
   const { profile, isLoading } = useAuth();
   const [suggestions, setSuggestions] = useState<SuggestedUser[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(true);
+  const [followingIds, setFollowingIds] = useState<Set<number>>(new Set());
+  const [loadingFollowIds, setLoadingFollowIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     async function fetchSuggestions() {
@@ -30,7 +33,8 @@ export default function Suggestions() {
         const response = await fetch('/api/profiles/suggestions');
         if (response.ok) {
           const data = await response.json();
-          setSuggestions(data.profiles || []);
+          console.log('Suggestions API response:', data);
+          setSuggestions(data.suggestions || []);
         }
       } catch (error) {
         console.error('Failed to fetch suggestions:', error);
@@ -43,6 +47,66 @@ export default function Suggestions() {
       fetchSuggestions();
     }
   }, [profile]);
+
+  const handleFollow = async (userId: number) => {
+    if (loadingFollowIds.has(userId)) return;
+
+    setLoadingFollowIds(prev => new Set(prev).add(userId));
+
+    try {
+      const response = await fetch('/api/profiles/actions/follow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetProfileId: userId }),
+      });
+
+      if (response.ok) {
+        setFollowingIds(prev => new Set(prev).add(userId));
+      } else {
+        console.error('Failed to follow user');
+      }
+    } catch (error) {
+      console.error('Error following user:', error);
+    } finally {
+      setLoadingFollowIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
+    }
+  };
+
+  const handleUnfollow = async (userId: number) => {
+    if (loadingFollowIds.has(userId)) return;
+
+    setLoadingFollowIds(prev => new Set(prev).add(userId));
+
+    try {
+      const response = await fetch('/api/profiles/actions/unfollow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetProfileId: userId }),
+      });
+
+      if (response.ok) {
+        setFollowingIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(userId);
+          return newSet;
+        });
+      } else {
+        console.error('Failed to unfollow user');
+      }
+    } catch (error) {
+      console.error('Error unfollowing user:', error);
+    } finally {
+      setLoadingFollowIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
+    }
+  };
 
   if (isLoading || !profile) {
     return null;
@@ -133,19 +197,27 @@ export default function Suggestions() {
                     <div>
                       <p className="font-semibold text-sm text-[#262626] dark:text-white flex items-center gap-1">
                         {user.username}
-                        {user.is_verified && (
-                          <svg className="w-3 h-3 text-[#0095F6]" fill="currentColor" viewBox="0 0 40 40">
-                            <path d="M19.998 3.094l2.124 3.217c.297.45.835.76 1.421.82l3.839.394c1.358.139 1.915 1.854.92 2.815l-2.817 2.72c-.395.382-.603.99-.541 1.593l.386 3.842c.138 1.364-1.188 2.407-2.425 1.845l-3.42-1.813c-.48-.253-1.05-.253-1.529 0l-3.42 1.813c-1.236.562-2.564-.48-2.425-1.845l.386-3.842c.062-.603-.145-1.21-.541-1.593l-2.817-2.72c-.996-.961-.439-2.676.92-2.815l3.838-.394c.587-.06 1.124-.37 1.422-.82l2.123-3.217c.592-.898 2.147-.898 2.739 0z"/>
-                          </svg>
-                        )}
+                        {user.is_verified && <VerifiedBadge size={12} />}
                       </p>
                       <p className="text-xs text-[#8E8E8E] dark:text-gray-400">
                         {user.full_name || `${user.followers_count} follower`}
                       </p>
                     </div>
                   </Link>
-                  <button className="text-xs font-semibold text-[#0095F6] hover:text-[#1877F2]">
-                    Segui
+                  <button 
+                    onClick={() => followingIds.has(user.id) ? handleUnfollow(user.id) : handleFollow(user.id)}
+                    disabled={loadingFollowIds.has(user.id)}
+                    className={`text-xs font-semibold transition-colors ${
+                      followingIds.has(user.id)
+                        ? 'text-[#84a0fe] dark:text-white hover:text-[#1877F2]'
+                        : 'text-[#84a0fe] hover:text-[#1877F2]'
+                    } disabled:opacity-50`}
+                  >
+                    {loadingFollowIds.has(user.id) 
+                      ? '...' 
+                      : followingIds.has(user.id) 
+                        ? 'Seguito' 
+                        : 'Segui'}
                   </button>
                 </div>
               ))}
