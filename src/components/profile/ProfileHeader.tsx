@@ -53,13 +53,13 @@ export default function ProfileHeader({
 
   return (
     <>
-      <header className="px-4 py-4 md:py-6">
+      <header className="px-4 md:px-0 py-3 md:py-6">
       <div className="max-w-[693px] mx-auto">
-        <div className="flex flex-col md:flex-row gap-6 md:gap-7 items-center">
+        <div className="flex flex-row md:flex-row gap-4 md:gap-7 items-start md:items-center">
           {/* Profile Picture */}
-          <div className="flex justify-center md:justify-start flex-shrink-0">
+          <div className="flex justify-start flex-shrink-0">
             <div
-              className={`relative w-[77px] h-[77px] md:w-[150px] md:h-[150px] cursor-pointer transition-transform duration-150 ${isBumping ? 'scale-95' : ''}`}
+              className={`relative w-[110px] h-[110px] md:w-[150px] md:h-[150px] cursor-pointer transition-transform duration-150 ${isBumping ? 'scale-95' : ''}`}
               onClick={handleProfileImageClick}
               role="button"
               tabIndex={0}
@@ -101,9 +101,9 @@ export default function ProfileHeader({
           {/* Profile Info */}
           <div className="flex-1 min-w-0">
             {/* Username + Badge Row */}
-            <div className="flex items-center gap-1.5 mb-5">
+            <div className="flex items-center gap-1.5 mb-2 md:mb-5">
               <h1
-                className="text-2xl font-bold leading-[30px] h-[30px] truncate cursor-pointer text-instagram-primary"
+                className="text-xl md:text-2xl font-bold leading-[26px] md:leading-[30px] truncate cursor-pointer text-instagram-primary"
                 tabIndex={0}
               >
                 {profile.username}
@@ -170,11 +170,23 @@ export default function ProfileHeader({
               bio={profile.bio}
               websiteUrl={profile.website_url}
             />
+            
+            {/* Stats - Visible on mobile only, directly below bio */}
+            <div className="md:hidden mt-3">
+              <ProfileStats
+                postsCount={profile.posts_count}
+                followersCount={profile.followers_count}
+                followingCount={profile.following_count}
+                onFollowersClick={() => setModalType('followers')}
+                onFollowingClick={() => setModalType('following')}
+                canViewContent={followStatus.isOwnProfile || !profile.is_private || followStatus.isFollowing}
+              />
+            </div>
           </div>
         </div>
 
         {/* Action Buttons - Full Width Below */}
-        <div className="mt-5">
+        <div className="mt-3 md:mt-5">
           <ProfileActions
             isOwnProfile={followStatus.isOwnProfile}
             isFollowing={followStatus.isFollowing}
@@ -193,18 +205,6 @@ export default function ProfileHeader({
             <NewHighlight />
           </div>
         )}
-
-        {/* Stats - Visible on mobile only */}
-        <div className="md:hidden mt-6 pt-3 border-t border-gray-200 dark:border-gray-800">
-          <ProfileStats
-            postsCount={profile.posts_count}
-            followersCount={profile.followers_count}
-            followingCount={profile.following_count}
-            onFollowersClick={() => setModalType('followers')}
-            onFollowingClick={() => setModalType('following')}
-            canViewContent={followStatus.isOwnProfile || !profile.is_private || followStatus.isFollowing}
-          />
-        </div>
       </div>
     </header>
 

@@ -24,7 +24,7 @@ export default function ProfileGrid({
 }: ProfileGridProps) {
   if (isLoading && posts.length === 0) {
     return (
-      <div className="grid grid-cols-3 gap-[3px]">
+      <div className="grid grid-cols-3 gap-[1px] md:gap-[3px]">
         {Array.from({ length: 12 }).map((_, i) => (
           <div
             key={i}
@@ -41,7 +41,7 @@ export default function ProfileGrid({
 
   return (
     <div>
-      <div className="grid grid-cols-3 gap-[3px]">
+      <div className="grid grid-cols-3 gap-[1px] md:gap-[3px]">
         {posts.map((post) => (
           <div
             key={post.id}

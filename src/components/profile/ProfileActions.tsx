@@ -60,14 +60,14 @@ export default function ProfileActions({
   // STATE 1: Own Profile
   if (isOwnProfile) {
     return (
-      <div className="flex items-center gap-4 w-full mt-4 mb-6">
+      <div className="flex items-center gap-2 md:gap-4 w-full mt-2 md:mt-4 mb-3 md:mb-6">
         <button
-          className="btn-instagram-secondary flex-1 !h-10.5"
+          className="btn-instagram-secondary flex-1 !h-8 md:!h-10.5 text-sm"
           onClick={() => router.push('/accounts/edit')}
         >
           Modifica profilo
         </button>
-        <button className="btn-instagram-secondary flex-1 !h-10.5">
+        <button className="btn-instagram-secondary flex-1 !h-8 md:!h-10.5 text-sm">
           Visualizza archivio
         </button>
       </div>
@@ -77,16 +77,16 @@ export default function ProfileActions({
   // STATE 2-4: Following (Public or Private accepted)
   if (isFollowing && !isPending) {
     return (
-      <div className="flex items-center gap-4 w-full mt-4 mb-6">
+      <div className="flex items-center gap-2 md:gap-4 w-full mt-2 md:mt-4 mb-3 md:mb-6">
         {/* Following Button with Dropdown */}
         <div className="relative flex-1">
           <button
-            className="btn-instagram-secondary !h-10.5 w-full flex items-center justify-center gap-1"
+            className="btn-instagram-secondary !h-8 md:!h-10.5 w-full flex items-center justify-center gap-1 text-sm"
             onClick={() => setShowDropdown(!showDropdown)}
             disabled={actionLoading}
           >
             <span>Segui già</span>
-            <ChevronDown className="w-4 h-4" />
+            <ChevronDown className="w-3 h-3 md:w-4 md:h-4" />
           </button>
 
           {/* Dropdown Menu */}
@@ -125,12 +125,12 @@ export default function ProfileActions({
         </div>
 
         {/* Message Button */}
-        <button className="btn-instagram-secondary flex-1 !h-10.5">
+        <button className="btn-instagram-secondary flex-1 !h-8 md:!h-10.5 text-sm">
           Messaggio
         </button>
 
         {/* Add Person Button */}
-        <button className="btn-instagram-secondary !h-10.5 w-10.5 flex items-center justify-center">
+        <button className="btn-instagram-secondary !h-8 md:!h-10.5 !w-8 md:!w-10.5 flex items-center justify-center">
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
             <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
           </svg>
@@ -142,9 +142,9 @@ export default function ProfileActions({
   // STATE 5: Pending Request (Private profile)
   if (isPending) {
     return (
-      <div className="flex items-center gap-4 w-full mt-4 mb-6">
+      <div className="flex items-center gap-2 md:gap-4 w-full mt-2 md:mt-4 mb-3 md:mb-6">
         <button
-          className="btn-instagram-pending flex-1 !h-10.5"
+          className="btn-instagram-pending flex-1 !h-8 md:!h-10.5 text-sm"
           onClick={handleUnfollow}
           disabled={actionLoading}
         >
@@ -156,16 +156,16 @@ export default function ProfileActions({
 
   // STATE 6: Not Following (Public or Private)
   return (
-    <div className="flex items-center gap-4 w-full mt-4 mb-6">
+    <div className="flex items-center gap-2 md:gap-4 w-full mt-2 md:mt-4 mb-3 md:mb-6">
       <button
-        className="btn-instagram-primary flex-1 !h-10.5"
+        className="btn-instagram-primary flex-1 !h-8 md:!h-10.5 text-sm"
         onClick={handleFollow}
         disabled={actionLoading || isLoading}
       >
         {actionLoading ? 'Caricamento...' : (isFollowedBy ? 'Segui anche tu' : 'Segui')}
       </button>
       {!isPrivate && (
-        <button className="btn-instagram-secondary flex-1 !h-10.5">
+        <button className="btn-instagram-secondary flex-1 !h-8 md:!h-10.5 text-sm">
           Messaggio
         </button>
       )}

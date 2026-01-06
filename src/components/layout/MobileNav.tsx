@@ -40,14 +40,14 @@ export default function MobileNav() {
   return (
     <>
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-[var(--bg-primary)] border-t border-[var(--border-primary)] z-50">
-      <div className="flex items-center justify-around h-14">
+      <div className="flex items-center justify-around h-17">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           const content = (
             <>
               {item.icon === 'custom-home' ? (
                 <svg
-                  className={`w-6 h-6 text-[var(--text-primary)]`}
+                  className={`w-9 h-9 text-[var(--text-primary)]`}
                   viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
                 >
@@ -64,7 +64,7 @@ export default function MobileNav() {
                 </svg>
               ) : item.icon === 'custom-explore' ? (
                 <svg
-                  className={`w-6 h-6 text-[var(--text-primary)]`}
+                  className={`w-9 h-9 text-[var(--text-primary)]`}
                   viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
                 >
@@ -84,7 +84,7 @@ export default function MobileNav() {
                 </svg>
               ) : item.icon === 'custom-reels' ? (
                 <svg
-                  className={`w-6 h-6 text-[var(--text-primary)]`}
+                  className={`w-9 h-9 text-[var(--text-primary)]`}
                   viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
                 >
@@ -102,7 +102,7 @@ export default function MobileNav() {
                 </svg>
               ) : item.icon === 'custom-create' ? (
                 <svg
-                  className={`w-6 h-6 text-[var(--text-primary)]`}
+                  className={`w-9 h-9 text-[var(--text-primary)]`}
                   fill="currentColor"
                   viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
@@ -111,7 +111,7 @@ export default function MobileNav() {
                 </svg>
               ) : item.icon === 'custom-message' ? (
                 <svg
-                  className={`w-6 h-6 text-[var(--text-primary)]`}
+                  className={`w-9 h-9 text-[var(--text-primary)]`}
                   viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
                   style={{ transform: 'rotate(13deg)' }}
@@ -161,7 +161,7 @@ export default function MobileNav() {
             href={`/profile/${profile.username}`}
             className="flex items-center justify-center w-full h-full"
           >
-            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
               {profile.profile_image_url ? (
                 <img
                   src={profile.profile_image_url}
@@ -169,7 +169,7 @@ export default function MobileNav() {
                   className="w-full h-full rounded-full object-cover"
                 />
               ) : (
-                <span className="text-white text-[10px] font-semibold">
+                <span className="text-white text-xs font-semibold">
                   {profile.username.charAt(0).toUpperCase()}
                 </span>
               )}

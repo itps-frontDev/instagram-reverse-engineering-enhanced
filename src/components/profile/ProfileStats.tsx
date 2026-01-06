@@ -83,21 +83,23 @@ export default function ProfileStats({
   };
 
   return (
-    <ul className="flex items-center gap-8 mb-5">
+    <ul className="flex items-center justify-around md:justify-start md:gap-8 mb-3 md:mb-5">
       {/* Posts */}
-      <li className="text-sm leading-[18px] whitespace-nowrap text-instagram-primary">
-        <span className="font-semibold">{formatCount(postsCount)}</span> post
+      <li className="text-sm leading-[18px] whitespace-nowrap text-instagram-primary text-center md:text-left">
+        <span className="font-semibold block md:inline">{formatCount(postsCount)}</span>
+        <span className="block md:inline md:ml-1">post</span>
       </li>
       {/* Followers */}
       <li
-        className="text-sm leading-[18px] whitespace-nowrap cursor-pointer text-instagram-primary active:scale-95 transition-transform"
+        className="text-sm leading-[18px] whitespace-nowrap cursor-pointer text-instagram-primary active:scale-95 transition-transform text-center md:text-left"
         onClick={handleFollowersClick}
       >
-        <span className="font-semibold">{formatCount(followersCount)}</span> follower
+        <span className="font-semibold block md:inline">{formatCount(followersCount)}</span>
+        <span className="block md:inline md:ml-1">follower</span>
       </li>
       {/* Following */}
       <li
-        className="text-sm leading-[18px] whitespace-nowrap cursor-pointer text-instagram-primary active:scale-95 transition-transform"
+        className="text-sm leading-[18px] whitespace-nowrap cursor-pointer text-instagram-primary active:scale-95 transition-transform text-center md:text-left"
         onClick={handleFollowingClick}
       >
         <span className="font-semibold">{formatCount(followingCount)}</span> seguiti
