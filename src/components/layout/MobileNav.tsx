@@ -39,15 +39,15 @@ export default function MobileNav() {
 
   return (
     <>
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-[var(--bg-primary)] border-t border-[var(--border-primary)] z-50">
-      <div className="flex items-center justify-around h-17">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-[var(--bg-primary)] border-t border-gray-700 z-50">
+      <div className="flex items-center justify-around h-13">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           const content = (
             <>
               {item.icon === 'custom-home' ? (
                 <svg
-                  className={`w-9 h-9 text-[var(--text-primary)]`}
+                  className={`w-6 h-6 text-[var(--text-primary)]`}
                   viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
                 >
@@ -64,7 +64,7 @@ export default function MobileNav() {
                 </svg>
               ) : item.icon === 'custom-explore' ? (
                 <svg
-                  className={`w-9 h-9 text-[var(--text-primary)]`}
+                  className={`w-6 h-6 text-[var(--text-primary)]`}
                   viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
                 >
@@ -84,7 +84,7 @@ export default function MobileNav() {
                 </svg>
               ) : item.icon === 'custom-reels' ? (
                 <svg
-                  className={`w-9 h-9 text-[var(--text-primary)]`}
+                  className={`w-6 h-6 text-[var(--text-primary)]`}
                   viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
                 >
@@ -102,7 +102,7 @@ export default function MobileNav() {
                 </svg>
               ) : item.icon === 'custom-create' ? (
                 <svg
-                  className={`w-9 h-9 text-[var(--text-primary)]`}
+                  className={`w-6 h-6 text-[var(--text-primary)]`}
                   fill="currentColor"
                   viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
@@ -111,7 +111,7 @@ export default function MobileNav() {
                 </svg>
               ) : item.icon === 'custom-message' ? (
                 <svg
-                  className={`w-9 h-9 text-[var(--text-primary)]`}
+                  className={`w-6 h-6 text-[var(--text-primary)]`}
                   viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
                   style={{ transform: 'rotate(13deg)' }}

@@ -265,7 +265,7 @@ export default function MobileSearchBar() {
             }}
             className="relative p-2"
           >
-            <Heart className="w-5 h-5 text-[var(--text-primary)]" />
+            <Heart className="w-6 h-6 text-[var(--text-primary)]" />
             {unreadCount > 0 && (
               <div className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-[#FF3B30] rounded-full flex items-center justify-center">
                 <span className="text-[9px] font-semibold text-white">

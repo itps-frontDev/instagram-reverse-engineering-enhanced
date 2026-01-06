@@ -39,7 +39,17 @@ export default function Stories() {
   const [selectedUsername, setSelectedUsername] = useState<string | null>(null);
   const [selectedStoryId, setSelectedStoryId] = useState<number>();
   const [selectedUserIndex, setSelectedUserIndex] = useState<number>(0);
-  const storiesPerPage = 6;
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile screen
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const storiesPerPage = isMobile ? 4 : 6;
 
   // Fetch stories from API
   useEffect(() => {
@@ -124,17 +134,17 @@ export default function Stories() {
 
   return (
     <>
-      <div className="rounded-lg py-4 mb-4 mt-20 lg:mt-20 pt-14 lg:pt-0 relative group w-full flex items-center justify-center">
+      <div className="rounded-lg py-2 mb-4 mt-15 pt-2 relative group w-full flex items-center justify-center max-[639px]:px-2">
         {/* Stories Container - centrato */}
-        <div className="overflow-visible px-0 relative">
+        <div className="overflow-visible px-0 relative w-full">
           {/* Left Arrow - sovrapposta alla prima storia */}
           {currentPage > 0 && (
             <button
               onClick={goToPreviousPage}
-              className="absolute left-4 top-[35px] z-20 w-6 h-6 bg-white rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              className="absolute left-2 top-[35px] z-20 w-6 h-6 bg-white rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 max-[639px]:opacity-100 transition-opacity cursor-pointer max-[639px]:left-0 max-[639px]:w-5 max-[639px]:h-5"
               aria-label="Pagina precedente"
             >
-              <ChevronLeft className="w-4 h-4 text-black" />
+              <ChevronLeft className="w-4 h-4 text-black max-[639px]:w-3 max-[639px]:h-3" />
             </button>
           )}
 
@@ -142,14 +152,14 @@ export default function Stories() {
           {currentPage < totalPages - 1 && (
             <button
               onClick={goToNextPage}
-              className="absolute right-4 top-[35px] z-20 w-6 h-6 bg-white rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              className="absolute right-2 top-[35px] z-20 w-6 h-6 bg-white rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 max-[639px]:opacity-100 transition-opacity cursor-pointer max-[639px]:right-0 max-[639px]:w-5 max-[639px]:h-5"
               aria-label="Pagina successiva"
             >
-              <ChevronRight className="w-4 h-4 text-black" />
+              <ChevronRight className="w-4 h-4 text-black max-[639px]:w-3 max-[639px]:h-3" />
             </button>
           )}
 
-          <div className="flex gap-4 justify-center w-full max-[639px]:gap-2">
+          <div className="flex gap-4 justify-center w-full max-[639px]:gap-3 max-[639px]:px-6">
             {visibleStories.map((item) => (
               <button
                 key={item.id}
@@ -158,7 +168,7 @@ export default function Stories() {
               >
                 {/* Story Avatar with Gradient Border */}
                 <div className="relative group/story">
-                  <div className="w-[86px] h-[86px] rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[3px] cursor-pointer transition-transform max-[639px]:w-[70px] max-[639px]:h-[70px] max-[639px]:p-[2.5px]">
+                  <div className="w-[86px] h-[86px] rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[3px] cursor-pointer transition-transform max-[639px]:w-[90px] max-[639px]:h-[90px] max-[639px]:p-[2.5px]">
                     <div className="w-full h-full rounded-full bg-white dark:bg-[#0c1014] p-[2.5px]">
                       {item.profile_image_url ? (
                         <img
@@ -176,7 +186,7 @@ export default function Stories() {
                 </div>
 
                 {/* Username */}
-                <span className="text-xs truncate w-[82px] text-center text-[var(--text-primary)] font-normal max-[639px]:text-[10px] max-[639px]:w-[70px]">
+                <span className="text-xs truncate w-[82px] text-center text-[var(--text-primary)] font-normal max-[639px]:text-[11px] max-[639px]:w-[90px]">
                   {item.username}
                 </span>
               </button>
