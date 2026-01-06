@@ -441,7 +441,7 @@ export default function StoryViewer({
         </div>
 
         {/* Story header - Profile info - INSIDE story */}
-        <div className="absolute top-8 left-4 right-3 flex items-center gap-3 z-20">
+        <div className="absolute top-8 left-4 right-3 flex items-center gap-3 z-40">
           <ProfilePicture
             src={currentStory.profile_image_url}
             alt={currentStory.username}
@@ -579,7 +579,7 @@ export default function StoryViewer({
           {/* Mobile tap area (invisible) */}
           <button
             onClick={goToPrevious}
-            className="md:hidden fixed top-0 bottom-0 left-0 w-1/3 z-30"
+            className="md:hidden fixed top-20 bottom-0 left-0 w-1/3 z-30"
             aria-label="Storia precedente"
           />
         </>
@@ -599,7 +599,7 @@ export default function StoryViewer({
           {/* Mobile tap area (invisible) */}
           <button
             onClick={goToNext}
-            className="md:hidden fixed top-0 bottom-0 right-0 w-1/3 z-30"
+            className="md:hidden fixed top-20 bottom-0 right-0 w-1/3 z-30"
             aria-label="Storia successiva"
           />
         </>

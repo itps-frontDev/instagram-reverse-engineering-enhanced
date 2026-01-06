@@ -151,18 +151,6 @@ export default function ProfileHeader({
                 </button>
               )}            </div>
 
-            {/* Stats - Mobile: subito dopo username, Desktop: dopo username */}
-            <div className="md:hidden mb-4">
-              <ProfileStats
-                postsCount={profile.posts_count}
-                followersCount={profile.followers_count}
-                followingCount={profile.following_count}
-                onFollowersClick={() => setModalType('followers')}
-                onFollowingClick={() => setModalType('following')}
-                canViewContent={followStatus.isOwnProfile || !profile.is_private || followStatus.isFollowing}
-              />
-            </div>
-
             {/* Stats - Hidden on mobile, visible on tablet+ */}
             <div className="hidden md:block">
               <ProfileStats

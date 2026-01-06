@@ -646,8 +646,10 @@ export default function ProfilePage({
         </div>
       </div>
 
-      {/* Footer */}
-      <Footer />
+      {/* Footer - nascosto su mobile */}
+      <div className={`hidden lg:block ${profile?.is_private && !followStatus.isFollowing && !followStatus.isOwnProfile ? 'mt-150' : ''}`}>
+        <Footer />
+      </div>
 
       {/* Profile Image Modal */}
       {profile && (
