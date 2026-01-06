@@ -49,7 +49,10 @@ export async function DELETE() {
     // Delete profile image if exists
     if (profile.profile_image_url) {
       try {
-        deleteFile(profile.profile_image_url);
+        // Extract filename from URL: /api/media/profiles/{id}/{filename}
+        const urlParts = profile.profile_image_url.split('/');
+        const filename = urlParts[urlParts.length - 1];
+        deleteFile('profiles', profile.id, filename);
       } catch (err) {
         console.error('Error deleting profile image:', err);
         // Continue anyway - update DB even if file deletion fails
