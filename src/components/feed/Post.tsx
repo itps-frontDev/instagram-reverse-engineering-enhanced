@@ -91,7 +91,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
   return (
     <article className="mb-3">
       {/* Post Header */}
-      <div className="flex items-center justify-between px-4 py-3">
+      <div className="flex items-center justify-between px-4 py-3 max-[639px]:px-2">
         <div className="flex items-center gap-3">
           <Link href={`/profile/${post.profile_username}`}>
             <ProfilePicture
@@ -103,12 +103,12 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
           <div className="flex items-center gap-2">
             <Link
               href={`/profile/${post.profile_username}`}
-              className="font-semibold text-sm text-[#262626] dark:text-[#FAFAFA] hover:opacity-50"
+              className="font-semibold text-sm text-[#262626] dark:text-[#FAFAFA] hover:opacity-50 max-[639px]:text-xs max-[639px]:truncate max-[639px]:max-w-[120px]"
             >
               {post.profile_username}
             </Link>
             {post.profile_is_verified && <VerifiedBadge size={12} />}
-            <span className="text-[#8E8E8E] dark:text-[#A8A8A8] text-sm">
+            <span className="text-[#8E8E8E] dark:text-[#A8A8A8] text-sm max-[639px]:text-xs">
               • {formatTimeAgo(post.created_at)}
             </span>
           </div>
@@ -154,7 +154,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
       )}
 
       {/* Post Actions */}
-      <div className="px-4 pb-4">
+      <div className="px-4 pb-4 max-[639px]:px-2">
         <div className="flex items-center justify-between pt-1 pb-2">
           <div className="flex items-center gap-4">
             <button onClick={handleButtonLike} className="flex items-center gap-1">

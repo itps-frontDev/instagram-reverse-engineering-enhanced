@@ -124,7 +124,7 @@ export default function Stories() {
 
   return (
     <>
-      <div className="rounded-lg py-4 mb-4 mt-20 relative group w-full flex items-center justify-center">
+      <div className="rounded-lg py-4 mb-4 mt-20 lg:mt-20 pt-14 lg:pt-0 relative group w-full flex items-center justify-center">
         {/* Stories Container - centrato */}
         <div className="overflow-visible px-0 relative">
           {/* Left Arrow - sovrapposta alla prima storia */}
@@ -149,7 +149,7 @@ export default function Stories() {
             </button>
           )}
 
-          <div className="flex gap-4 justify-center w-full">
+          <div className="flex gap-4 justify-center w-full max-[639px]:gap-2">
             {visibleStories.map((item) => (
               <button
                 key={item.id}
@@ -158,7 +158,7 @@ export default function Stories() {
               >
                 {/* Story Avatar with Gradient Border */}
                 <div className="relative group/story">
-                  <div className="w-[86px] h-[86px] rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[3px] cursor-pointer transition-transform">
+                  <div className="w-[86px] h-[86px] rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[3px] cursor-pointer transition-transform max-[639px]:w-[70px] max-[639px]:h-[70px] max-[639px]:p-[2.5px]">
                     <div className="w-full h-full rounded-full bg-white dark:bg-[#0c1014] p-[2.5px]">
                       {item.profile_image_url ? (
                         <img
@@ -176,7 +176,7 @@ export default function Stories() {
                 </div>
 
                 {/* Username */}
-                <span className="text-xs truncate w-[82px] text-center text-[var(--text-primary)] font-normal">
+                <span className="text-xs truncate w-[82px] text-center text-[var(--text-primary)] font-normal max-[639px]:text-[10px] max-[639px]:w-[70px]">
                   {item.username}
                 </span>
               </button>

@@ -250,12 +250,12 @@ export default function PostModal({
       )}
 
       <div
-        className="relative bg-white dark:bg-[#212328] rounded-lg max-w-[78vw] w-full h-[96vh] flex overflow-hidden"
+        className="relative bg-white dark:bg-[#212328] rounded-lg max-w-[78vw] w-full h-[96vh] flex overflow-hidden max-[639px]:max-w-[95vw] max-[639px]:flex-col"
         onClick={(e) => e.stopPropagation()}
       >
 
         {/* Left Side - Media (Image or Video) */}
-        <div className="flex-1 bg-gray-100 dark:bg-black flex items-center justify-center relative group/media">
+        <div className="flex-1 bg-gray-100 dark:bg-black flex items-center justify-center relative group/media max-[639px]:max-h-[50vh]">
           {post.media.length > 0 && (
             <>
               {post.media[currentMediaIndex].media_type === 'video' ? (
@@ -376,9 +376,9 @@ export default function PostModal({
         </div>
 
         {/* Right Side - Comments */}
-        <div className="w-[450px] flex flex-col border-l border-gray-200 dark:border-[#262626]">
+        <div className="w-[450px] flex flex-col border-l border-gray-200 dark:border-[#262626] max-[639px]:w-full max-[639px]:border-l-0 max-[639px]:border-t">
           {/* Post Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-[#262626]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-[#262626] max-[639px]:px-2">
             <div className="flex items-center gap-3">
               <Link href={`/profile/${post.profile_username}`}>
                 <ProfilePicture
@@ -403,7 +403,7 @@ export default function PostModal({
           </div>
 
           {/* Comments Section */}
-          <div className="flex-1 overflow-y-auto px-4 py-4">
+          <div className="flex-1 overflow-y-auto px-4 py-4 max-[639px]:px-2">
             {/* Caption as first comment */}
             {post.caption && (
               <div className="flex gap-3 mb-4">
@@ -557,7 +557,7 @@ export default function PostModal({
           </div>
 
           {/* Actions */}
-          <div className="px-4 py-2 border-t border-gray-200 dark:border-[#262626]">
+          <div className="px-4 py-2 border-t border-gray-200 dark:border-[#262626] max-[639px]:px-2">
             <div className="flex items-center justify-between pb-2">
               <div className="flex items-center gap-4">
                 <button
@@ -619,7 +619,7 @@ export default function PostModal({
           </div>
 
           {/* Comment Input */}
-          <div className="px-4 py-3 border-t border-gray-200 dark:border-[#262626]">
+          <div className="px-4 py-3 border-t border-gray-200 dark:border-[#262626] max-[639px]:px-2">
             {/* Replying To Indicator */}
             {replyingTo && (
               <div className="flex items-center justify-between mb-2 text-sm">

@@ -68,6 +68,7 @@
 
 html {
   background: var(--bg-secondary);
+  overflow-x: hidden;
 }
 
 body {
@@ -76,6 +77,19 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   font-size: 14px;
   line-height: 1.5;
+  overflow-x: hidden;
+}
+
+/* Prevent horizontal scroll on small devices */
+@media (max-width: 639px) {
+  * {
+    max-width: 100%;
+  }
+  
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+  }
 }
 
 /* Hide scrollbar but keep functionality */
