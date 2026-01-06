@@ -37,6 +37,9 @@ export default function MobileNav() {
     { icon: 'custom-message', href: '/direct' },
   ];
 
+  // Nascondi la navbar se siamo nella home con stories aperte (rilevabile da hash o stato)
+  // Per ora la lasciamo visibile, ma potremmo nasconderla con una prop
+
   return (
     <>
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-[var(--bg-primary)] border-t border-gray-700 z-50">
