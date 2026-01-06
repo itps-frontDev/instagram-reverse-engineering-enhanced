@@ -55,12 +55,14 @@ export default async function EditProfilePage() {
 
   return (
     <div className="flex min-h-screen">
-      {/* Sidebar */}
-      <SettingsSidebar />
+      {/* Sidebar - nascosta su mobile */}
+      <div className="hidden lg:block">
+        <SettingsSidebar />
+      </div>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center py-9 px-8">
-        <div className="w-full max-w-xl">
+      {/* Main Content - full screen su mobile */}
+      <main className="flex-1 flex flex-col items-center py-9 px-8 max-[1023px]:py-4 max-[1023px]:px-4 max-[1023px]:w-full">
+        <div className="w-full max-w-xl max-[1023px]:max-w-full">
           <EditProfileForm profile={profile} />
         </div>
         <Footer />
