@@ -65,8 +65,6 @@ export default function ProfilePicture({
               className={`rounded-full ${className}`}
               style={{
                 boxSizing: 'border-box',
-                width: innerSize,
-                height: innerSize,
                 display: 'block',
               }}
             />
@@ -86,8 +84,6 @@ export default function ProfilePicture({
         className={`rounded-full ${className}`}
         style={{
           boxSizing: 'border-box',
-          width: size,
-          height: size,
           display: 'block',
         }}
       />

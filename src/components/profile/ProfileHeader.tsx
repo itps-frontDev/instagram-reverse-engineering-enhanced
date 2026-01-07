@@ -75,7 +75,6 @@ export default function ProfileHeader({
                 hasStory={!followStatus.isOwnProfile && profile.has_active_story && (!profile.is_private || followStatus.isFollowing)}
                 storyViewed={profile.has_viewed_story}
                 onStoryClick={onStoryClick}
-                className="md:w-[150px] md:h-[150px] w-[110px] h-[110px]"
               />
               {/* Overlay grigiastro con icona fotocamera - solo per profilo proprio senza immagine custom */}
               {followStatus.isOwnProfile && (!profile.profile_image_url || profile.profile_image_url === '/images/default-pfp.jpg') && !isUploadingImage && (

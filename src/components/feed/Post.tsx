@@ -21,6 +21,9 @@ import {
   MessageCircle,
   Send,
   Bookmark,
+  Volume2,
+  VolumeX,
+  Play,
 } from 'lucide-react';
 import type { FeedPost } from '@/lib/types/feed';
 import PostModal from './PostModal';
@@ -49,6 +52,8 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
   const [tagsLoaded, setTagsLoaded] = useState(false);
   const [hoveredUsername, setHoveredUsername] = useState(false);
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [isMuted, setIsMuted] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(true);
 
   useEffect(() => {
     fetch(`/api/posts/${post.id}/tags`)
@@ -226,13 +231,58 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
           onDoubleClick={handleLike}
         >
           {post.media[0].media_type === 'video' ? (
-            <video
-              src={post.media[0].media_url}
-              className="w-full h-full object-cover rounded-xl"
-              controls
-              muted
-              playsInline
-            />
+            <div className="relative w-full h-full">
+              <video
+                ref={(el) => {
+                  if (el) {
+                    el.muted = isMuted;
+                    if (isPlaying) {
+                      el.play().catch(() => {});
+                    } else {
+                      el.pause();
+                    }
+                  }
+                }}
+                src={post.media[0].media_url}
+                className="w-full h-full object-cover rounded-xl cursor-pointer"
+                autoPlay
+                loop
+                muted
+                playsInline
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const video = e.currentTarget;
+                  if (video.paused) {
+                    video.play();
+                    setIsPlaying(true);
+                  } else {
+                    video.pause();
+                    setIsPlaying(false);
+                  }
+                }}
+              />
+              {/* Play Icon when paused */}
+              {!isPlaying && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <Play className="w-16 h-16 text-white fill-white" />
+                </div>
+              )}
+              {/* Mute/Unmute Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMuted(!isMuted);
+                }}
+                className="absolute bottom-3 right-3 z-10 w-7 h-7 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-all"
+                aria-label={isMuted ? 'Attiva audio' : 'Disattiva audio'}
+              >
+                {isMuted ? (
+                  <VolumeX className="w-4 h-4 text-white drop-shadow-lg" />
+                ) : (
+                  <Volume2 className="w-4 h-4 text-white drop-shadow-lg" />
+                )}
+              </button>
+            </div>
           ) : (
             <Image
               src={post.media[0].media_url}
