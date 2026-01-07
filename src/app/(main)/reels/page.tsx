@@ -21,7 +21,6 @@ import {
   Volume2,
   VolumeX,
   ChevronUp,
-  ChevronDown,
   Play,
   Music,
   AtSign,
@@ -87,6 +86,7 @@ export default function ReelsPage() {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
+  const commentsRef = useRef<HTMLDivElement>(null);
   const lastScrollTime = useRef(0);
   
   // Minimum swipe distance
@@ -199,6 +199,11 @@ export default function ReelsPage() {
 
   // Handle wheel scroll - one tick = one reel with smooth transition
   const handleWheel = useCallback((e: WheelEvent) => {
+    // Don't change reel if scrolling inside comments
+    if (commentsRef.current && commentsRef.current.contains(e.target as Node)) {
+      return;
+    }
+    
     e.preventDefault();
     
     const now = Date.now();
@@ -618,18 +623,105 @@ export default function ReelsPage() {
                     </button>
 
                     {/* Comments Button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowComments(true);
-                      }}
-                      className="flex flex-col items-center gap-1"
-                    >
-                      <MessageCircle className="w-7 h-7 text-[var(--color-text-primary)]" />
-                      <span className="text-[var(--color-text-primary)] text-xs font-medium">
-                        {reel.comments_count}
-                      </span>
-                    </button>
+                    <div className="relative">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowComments(!showComments);
+                        }}
+                        className="flex flex-col items-center gap-1"
+                      >
+                        <MessageCircle className="w-7 h-7 text-[var(--color-text-primary)]" />
+                        <span className="text-[var(--color-text-primary)] text-xs font-medium">
+                          {reel.comments_count}
+                        </span>
+                      </button>
+
+                      {/* Comments Cloud Popup - Mobile: left of button, Desktop: right of button */}
+                      {showComments && isCurrent && (
+                        <div
+                          ref={commentsRef}
+                          className="flex absolute z-50 w-[320px] lg:w-[360px] max-h-[70vh] lg:max-h-[500px] bg-[#262626] rounded-xl flex-col overflow-hidden shadow-2xl bottom-0 right-full mr-4 lg:right-auto lg:left-full lg:ml-4 lg:mr-0"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {/* Arrow - Mobile (right) */}
+                          <div className="lg:hidden absolute -right-2 bottom-4 w-0 h-0 border-t-8 border-b-8 border-l-8 border-t-transparent border-b-transparent border-l-[#262626]" />
+                          {/* Arrow - Desktop (left) */}
+                          <div className="hidden lg:block absolute -left-2 bottom-4 w-0 h-0 border-t-8 border-b-8 border-r-8 border-t-transparent border-b-transparent border-r-[#262626]" />
+
+                          {/* Header */}
+                          <div className="flex items-center justify-between px-4 py-3 border-b border-[#363636]">
+                            <button onClick={() => setShowComments(false)} className="text-white hover:opacity-70">
+                              <X className="w-5 h-5" />
+                            </button>
+                            <span className="text-[15px] font-semibold text-white">Commenti</span>
+                            <div className="w-5" />
+                          </div>
+
+                          {/* Comments List */}
+                          <div className="flex-1 overflow-y-auto px-4 py-3 max-h-[350px]">
+                            {isLoadingComments ? (
+                              <div className="text-center text-[#A8A8A8] py-6 text-sm">Caricamento commenti...</div>
+                            ) : comments.length === 0 ? (
+                              <div className="text-center text-[#A8A8A8] py-6 text-sm">Nessun commento ancora. Sii il primo!</div>
+                            ) : (
+                              comments.map((comment) => (
+                                <div key={comment.id} className="mb-4">
+                                  <div className="flex gap-2.5">
+                                    <Link href={`/profile/${comment.profile_username}`}>
+                                      <ProfilePicture src={comment.profile_image_url} alt={comment.profile_username} size={32} />
+                                    </Link>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-start justify-between gap-2">
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-1.5 flex-wrap">
+                                            <Link href={`/profile/${comment.profile_username}`} className="font-semibold text-sm text-white hover:opacity-70">
+                                              {comment.profile_username}
+                                            </Link>
+                                            {comment.profile_is_verified && <VerifiedBadge size={10} />}
+                                            <span className="text-xs text-[#A8A8A8]">{formatTimeAgo(comment.created_at)}</span>
+                                          </div>
+                                          <p className="text-sm text-white mt-0.5 leading-[1.4] break-words">{comment.text}</p>
+                                          <div className="flex items-center gap-3 mt-1.5">
+                                            <span className="text-xs text-[#A8A8A8]">Mi piace: {comment.likes_count}</span>
+                                            <button className="text-xs text-[#A8A8A8] font-semibold hover:text-white">Rispondi</button>
+                                          </div>
+                                          {comment.replies && comment.replies.length > 0 && (
+                                            <button className="flex items-center gap-2 mt-2 text-xs text-[#A8A8A8] hover:text-white">
+                                              <span className="w-5 h-[1px] bg-[#A8A8A8]"></span>
+                                              Visualizza tutte le {comment.replies.length} risposte
+                                            </button>
+                                          )}
+                                        </div>
+                                        <button onClick={() => handleCommentLike(comment.id)} className="flex-shrink-0 mt-1">
+                                          <Heart className={`w-3.5 h-3.5 ${comment.is_liked_by_current_user ? 'fill-[#ED4956] text-[#ED4956]' : 'text-[#A8A8A8]'}`} />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+
+                          {/* Comment Input */}
+                          <div className="border-t border-[#363636] px-3 py-2.5">
+                            <div className="flex items-center gap-2.5">
+                              <ProfilePicture src={null} alt="You" size={28} />
+                              <input
+                                type="text"
+                                placeholder="Aggiungi un commento..."
+                                value={commentText}
+                                onChange={(e) => setCommentText(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleCommentSubmit()}
+                                className="flex-1 bg-transparent text-sm text-white placeholder-[#A8A8A8] outline-none"
+                              />
+                              <button className="text-lg">😊</button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
 
                     {/* Share Button */}
                     <button
@@ -688,136 +780,6 @@ export default function ReelsPage() {
         </div>
       </div>
 
-      {/* Comments Panel Modal */}
-      {showComments && currentReel && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          onClick={() => setShowComments(false)}
-        >
-          {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/70" />
-
-          {/* Comments Modal */}
-          <div
-            className="relative w-[400px] max-h-[80vh] bg-[var(--color-bg-primary)] rounded-xl overflow-hidden flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              animation: 'slideUp 0.3s ease-out',
-            }}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border)]">
-              <span className="text-base font-semibold text-[var(--color-text-primary)]">
-                Commenti
-              </span>
-              <button
-                onClick={() => setShowComments(false)}
-                className="text-[var(--color-text-primary)] hover:opacity-70"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            {/* Sort Option */}
-            <div className="px-4 py-2 border-b border-[var(--color-border)]">
-              <button className="flex items-center gap-1 text-sm text-[var(--color-text-secondary)]">
-                Per te
-                <ChevronDown className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Comments List */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 max-h-[50vh]">
-              {isLoadingComments ? (
-                <div className="text-center text-[var(--color-text-secondary)] py-8">
-                  Caricamento commenti...
-                </div>
-              ) : comments.length === 0 ? (
-                <div className="text-center text-[var(--color-text-secondary)] py-8">
-                  Nessun commento ancora. Sii il primo!
-                </div>
-              ) : (
-                comments.map((comment) => (
-                  <div key={comment.id} className="flex gap-3 mb-4">
-                    <Link href={`/profile/${comment.profile_username}`}>
-                      <ProfilePicture
-                        src={comment.profile_image_url}
-                        alt={comment.profile_username}
-                        size={36}
-                      />
-                    </Link>
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <div className="flex items-center gap-1">
-                            <Link
-                              href={`/profile/${comment.profile_username}`}
-                              className="font-semibold text-sm text-[var(--color-text-primary)] hover:opacity-70"
-                            >
-                              {comment.profile_username}
-                            </Link>
-                            {comment.profile_is_verified && <VerifiedBadge size={10} />}
-                            <span className="text-xs text-[var(--color-text-secondary)]">
-                              {formatTimeAgo(comment.created_at)}
-                            </span>
-                          </div>
-                          <p className="text-sm text-[var(--color-text-primary)] mt-0.5">
-                            {comment.text}
-                          </p>
-                          <div className="flex items-center gap-4 mt-1">
-                            <span className="text-xs text-[var(--color-text-secondary)]">
-                              Mi piace: {comment.likes_count}
-                            </span>
-                            <button className="text-xs text-[var(--color-text-secondary)] font-semibold">
-                              Rispondi
-                            </button>
-                            <button className="text-xs text-[var(--color-text-secondary)]">
-                              Vedi traduzione
-                            </button>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleCommentLike(comment.id)}
-                          className="mt-1"
-                        >
-                          <Heart
-                            className={`w-4 h-4 ${
-                              comment.is_liked_by_current_user
-                                ? 'fill-[var(--color-like)] text-[var(--color-like)]'
-                                : 'text-[var(--color-text-secondary)]'
-                            }`}
-                          />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Comment Input */}
-            <div className="border-t border-[var(--color-border)] px-4 py-3">
-              <div className="flex items-center gap-3">
-                <ProfilePicture
-                  src={null}
-                  alt="You"
-                  size={36}
-                />
-                <input
-                  type="text"
-                  placeholder="Aggiungi un commento..."
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleCommentSubmit()}
-                  className="flex-1 bg-transparent text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)] outline-none"
-                />
-                <button className="text-xl">😊</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* CSS Animations */}
       <style jsx global>{`
         @keyframes slideUp {
@@ -827,6 +789,16 @@ export default function ReelsPage() {
           }
           to {
             transform: translateY(0);
+            opacity: 1;
+          }
+        }
+        @keyframes popIn {
+          from {
+            transform: scale(0.9);
+            opacity: 0;
+          }
+          to {
+            transform: scale(1);
             opacity: 1;
           }
         }
