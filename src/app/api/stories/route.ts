@@ -27,7 +27,14 @@ export async function GET() {
         s.duration_seconds,
         s.views_count,
         s.created_at,
-        s.expires_at
+        s.expires_at,
+        CASE WHEN EXISTS (
+          SELECT 1 FROM likes 
+          WHERE profile_id = ? 
+            AND likeable_type = 'story' 
+            AND likeable_id = s.id 
+            AND deleted_at IS NULL
+        ) THEN 1 ELSE 0 END as is_liked_by_me
       FROM stories s
       JOIN profiles p ON p.id = s.profile_id
       WHERE s.profile_id IN (
@@ -47,7 +54,7 @@ export async function GET() {
         AND s.deleted_at IS NULL
      
      */
-    const rows = await queryAll(sql, [currentProfile.id]);
+    const rows = await queryAll(sql, [currentProfile.id, currentProfile.id]);
 
     return NextResponse.json({ stories: rows });
   } catch (error) {
