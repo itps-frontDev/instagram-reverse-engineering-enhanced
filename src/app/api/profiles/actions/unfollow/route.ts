@@ -133,6 +133,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Remove follow notification
+    await execute(
+      `DELETE FROM notifications
+       WHERE recipient_profile_id = ?
+         AND sender_profile_id = ?
+         AND type = 'follow'`,
+      [targetProfileId, currentProfile.id]
+    );
+
     // Return success response
     const response: UnfollowResponse = {
       success: true,

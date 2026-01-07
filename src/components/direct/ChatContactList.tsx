@@ -6,7 +6,7 @@ export interface ChatContact {
   username?: string;
   profile_image_url?: string;
   last_message_text?: string;
-  last_message_at?: string;
+  last_message_at?: string | number;
   isFromMe?: boolean;
   selected?: boolean;
   onClick?: () => void;
@@ -19,8 +19,9 @@ interface ChatContactListProps {
 }
 
 // Funzione per formattare il tempo relativo
-function formatRelativeTime(dateString: string): string {
-  const date = new Date(dateString);
+function formatRelativeTime(dateString: string | number): string {
+  // Se è un numero, è già un timestamp in millisecondi
+  const date = typeof dateString === 'number' ? new Date(dateString) : new Date(dateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMinutes = Math.floor(diffMs / (1000 * 60));

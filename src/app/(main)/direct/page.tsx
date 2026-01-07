@@ -24,6 +24,17 @@ export default function DirectPage() {
     selectedIdRef.current = selectedId;
   }, [selectedId]);
 
+  // Marca una chat come letta quando viene selezionata
+  useEffect(() => {
+    if (selectedChatId) {
+      const readChats = JSON.parse(localStorage.getItem('readChats') || '{}');
+      const chatKey = `chat_${selectedChatId}`;
+      readChats[chatKey] = Date.now();
+      localStorage.setItem('readChats', JSON.stringify(readChats));
+      console.log('[DirectPage] Marked chat as read:', chatKey, Date.now());
+    }
+  }, [selectedChatId]);
+
   // Funzione per caricare le chat
   const fetchChats = React.useCallback(async () => {
     try {
@@ -35,16 +46,18 @@ export default function DirectPage() {
       const data = await res.json();
       const chats = (data.chats || []) as any[];
       
-      // Mappa le chat come contatti
-      const mapped: ChatContact[] = chats.map((chat) => ({
-        id: chat.other_profile_id,
-        name: chat.other_full_name || chat.other_username || chat.name,
-        username: chat.other_username,
-        profile_image_url: chat.other_profile_image_url,
-        last_message_text: chat.last_message_text,
-        last_message_at: chat.last_message_at,
-        isFromMe: chat.isFromMe,
-      }));
+      // Mappa le chat come contatti e filtra solo quelle con messaggi
+      const mapped: ChatContact[] = chats
+        .filter((chat) => chat.last_message_text) // Mostra solo chat con messaggi
+        .map((chat) => ({
+          id: chat.other_profile_id,
+          name: chat.other_full_name || chat.other_username || chat.name,
+          username: chat.other_username,
+          profile_image_url: chat.other_profile_image_url,
+          last_message_text: chat.last_message_text,
+          last_message_at: chat.last_message_at,
+          isFromMe: chat.isFromMe,
+        }));
       
       setContacts(mapped);
     } catch (e) {
@@ -128,15 +141,17 @@ export default function DirectPage() {
         if (chatsRes.ok) {
           const chatsData = await chatsRes.json();
           const chats = (chatsData.chats || []) as any[];
-          const mapped: ChatContact[] = chats.map((chat) => ({
-            id: chat.other_profile_id,
-            name: chat.other_full_name || chat.other_username || chat.name,
-            username: chat.other_username,
-            profile_image_url: chat.other_profile_image_url,
-            last_message_text: chat.last_message_text,
-            last_message_at: chat.last_message_at,
-            isFromMe: chat.isFromMe,
-          }));
+          const mapped: ChatContact[] = chats
+            .filter((chat) => chat.last_message_text) // Mostra solo chat con messaggi
+            .map((chat) => ({
+              id: chat.other_profile_id,
+              name: chat.other_full_name || chat.other_username || chat.name,
+              username: chat.other_username,
+              profile_image_url: chat.other_profile_image_url,
+              last_message_text: chat.last_message_text,
+              last_message_at: chat.last_message_at,
+              isFromMe: chat.isFromMe,
+            }));
           setContacts(mapped);
         }
       }

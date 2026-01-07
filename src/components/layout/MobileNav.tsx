@@ -37,10 +37,13 @@ export default function MobileNav() {
     { icon: 'custom-message', href: '/direct' },
   ];
 
+  // Nascondi la navbar se siamo nella home con stories aperte (rilevabile da hash o stato)
+  // Per ora la lasciamo visibile, ma potremmo nasconderla con una prop
+
   return (
     <>
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-[var(--bg-primary)] border-t border-[var(--border-primary)] z-50">
-      <div className="flex items-center justify-around h-14">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-[var(--bg-primary)] border-t border-gray-700 z-50">
+      <div className="flex items-center justify-around h-13">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           const content = (
@@ -161,7 +164,7 @@ export default function MobileNav() {
             href={`/profile/${profile.username}`}
             className="flex items-center justify-center w-full h-full"
           >
-            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
               {profile.profile_image_url ? (
                 <img
                   src={profile.profile_image_url}
@@ -169,7 +172,7 @@ export default function MobileNav() {
                   className="w-full h-full rounded-full object-cover"
                 />
               ) : (
-                <span className="text-white text-[10px] font-semibold">
+                <span className="text-white text-xs font-semibold">
                   {profile.username.charAt(0).toUpperCase()}
                 </span>
               )}

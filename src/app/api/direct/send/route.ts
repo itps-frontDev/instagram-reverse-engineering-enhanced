@@ -22,10 +22,11 @@ export async function POST(req: NextRequest) {
     [chatId, profile.id, text]
   );
 
-  // Aggiorna last_message_at sulla chat
+  // Aggiorna last_message_at sulla chat (usa timestamp in millisecondi)
+  const now = Date.now();
   await execute(
-    `UPDATE chats SET last_message_at = datetime('now') WHERE id = ?`,
-    [chatId]
+    `UPDATE chats SET last_message_at = ? WHERE id = ?`,
+    [now, chatId]
   );
 
   return NextResponse.json({ success: true, messageId: result.lastID });

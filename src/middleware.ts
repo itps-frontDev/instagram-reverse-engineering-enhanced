@@ -17,6 +17,7 @@ const protectedRoutes = [
   '/notifications',
   '/profile',
   '/search',
+  '/accounts',
 ];
 
 // Routes that should redirect to home if already authenticated
@@ -39,18 +40,10 @@ async function verifyJWT(token: string): Promise<boolean> {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Get token from cookie
-  const token = request.cookies.get('authToken')?.value;
-
-  console.log('[Middleware]', {
-    pathname,
-    hasToken: !!token,
-    tokenPreview: token ? token.substring(0, 20) + '...' : 'none',
-  });
+  // Get token from cookie (try both possible names)
+  const token = request.cookies.get('auth_token')?.value || request.cookies.get('authToken')?.value;
 
   const isAuthenticated = token ? await verifyJWT(token) : false;
-
-  console.log('[Middleware] isAuthenticated:', isAuthenticated);
 
   // Check if current route is protected
   const isProtectedRoute = protectedRoutes.some((route) =>
@@ -62,7 +55,6 @@ export async function middleware(request: NextRequest) {
 
   // Redirect to login if accessing protected route without authentication
   if (isProtectedRoute && !isAuthenticated) {
-    console.log('[Middleware] Redirecting to login - no auth for protected route');
     const url = new URL('/login', request.url);
     url.searchParams.set('redirect', pathname);
     return NextResponse.redirect(url);
@@ -70,11 +62,9 @@ export async function middleware(request: NextRequest) {
 
   // Redirect to home if accessing auth routes while authenticated
   if (isAuthRoute && isAuthenticated) {
-    console.log('[Middleware] Redirecting to home - already authenticated');
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  console.log('[Middleware] Allowing access to:', pathname);
   return NextResponse.next();
 }
 

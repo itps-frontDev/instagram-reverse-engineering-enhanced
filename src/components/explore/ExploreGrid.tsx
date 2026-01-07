@@ -68,13 +68,22 @@ export default function ExploreGrid({
               className="group relative aspect-square bg-gray-100 overflow-hidden cursor-pointer"
             >
               {/* Image/Video */}
-              <Image
-                src={firstMedia.media_url}
-                alt={post.caption || 'Post'}
-                fill
-                sizes="(max-width: 768px) 33vw, (max-width: 1200px) 25vw, 20vw"
-                className="object-cover"
-              />
+              {isVideo ? (
+                <video
+                  src={firstMedia.media_url}
+                  className="w-full h-full object-cover"
+                  preload="metadata"
+                  muted
+                />
+              ) : (
+                <Image
+                  src={firstMedia.media_url}
+                  alt={post.caption || 'Post'}
+                  fill
+                  sizes="(max-width: 768px) 33vw, (max-width: 1200px) 25vw, 20vw"
+                  className="object-cover"
+                />
+              )}
 
               {/* Video indicator */}
               {isVideo && (

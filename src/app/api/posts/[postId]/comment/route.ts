@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentProfileId } from '@/lib/auth';
-import { execute } from '@/lib/db';
+import { execute, queryOne } from '@/lib/db';
 
 export async function POST(
   request: NextRequest,
@@ -39,6 +39,21 @@ export async function POST(
       `UPDATE posts SET comments_count = comments_count + 1 WHERE id = ?`,
       [postIdNum]
     );
+
+    // Get post owner to send notification
+    const post = await queryOne<{ profile_id: number }>(
+      `SELECT profile_id FROM posts WHERE id = ?`,
+      [postIdNum]
+    );
+
+    // Create notification (only if not commenting on own post)
+    if (post && post.profile_id !== profileId) {
+      await execute(
+        `INSERT INTO notifications (recipient_profile_id, sender_profile_id, type, reference_type, reference_id)
+         VALUES (?, ?, 'comment', 'post', ?)`,
+        [post.profile_id, profileId, postIdNum]
+      );
+    }
 
     return NextResponse.json({ message: 'Comment added successfully' });
   } catch (error) {

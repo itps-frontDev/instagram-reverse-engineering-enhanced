@@ -21,7 +21,9 @@ function getDb(): sqlite3.Database {
       }
     });
     db.run("PRAGMA foreign_keys = ON");
-    db.run("PRAGMA journal_mode = WAL");
+    // Using DELETE mode instead of WAL for better data persistence in development
+    // WAL mode can lose data if the server is killed abruptly
+    db.run("PRAGMA journal_mode = DELETE");
   }
   return db;
 }

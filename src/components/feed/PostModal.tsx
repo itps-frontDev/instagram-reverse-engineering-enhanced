@@ -18,6 +18,9 @@ import {
   Bookmark,
   MoreHorizontal,
   X,
+  Volume2,
+  VolumeX,
+  Play,
 } from 'lucide-react';
 import type { FeedPost, Comment, GetCommentsResponse } from '@/lib/types/feed';
 
@@ -53,6 +56,8 @@ export default function PostModal({
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  const [isMuted, setIsMuted] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(true);
 
   useEffect(() => {
     if (isOpen) {
@@ -245,20 +250,77 @@ export default function PostModal({
       )}
 
       <div
-        className="relative bg-white dark:bg-[#212328] rounded-lg max-w-[78vw] w-full h-[96vh] flex overflow-hidden"
+        className="relative bg-white dark:bg-[#212328] rounded-lg max-w-[78vw] w-full h-[96vh] flex overflow-hidden max-[639px]:max-w-[95vw] max-[639px]:flex-col"
         onClick={(e) => e.stopPropagation()}
       >
 
-        {/* Left Side - Image */}
-        <div className="flex-1 bg-gray-100 dark:bg-black flex items-center justify-center relative group/media">
+        {/* Left Side - Media (Image or Video) */}
+        <div className="flex-1 bg-gray-100 dark:bg-black flex items-center justify-center relative group/media max-[639px]:max-h-[50vh]">
           {post.media.length > 0 && (
-            <Image
-              src={post.media[currentMediaIndex].media_url}
-              alt={post.caption || 'Post image'}
-              fill
-              className="object-cover"
-              sizes="(max-width: 1200px) 60vw, 1200px"
-            />
+            <>
+              {post.media[currentMediaIndex].media_type === 'video' ? (
+                <div className="relative w-full h-full">
+                  <video
+                    ref={(el) => {
+                      if (el) {
+                        el.muted = isMuted;
+                        if (isPlaying) {
+                          el.play().catch(() => {});
+                        } else {
+                          el.pause();
+                        }
+                      }
+                    }}
+                    src={post.media[currentMediaIndex].media_url}
+                    className="w-full h-full object-cover cursor-pointer"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const video = e.currentTarget;
+                      if (video.paused) {
+                        video.play();
+                        setIsPlaying(true);
+                      } else {
+                        video.pause();
+                        setIsPlaying(false);
+                      }
+                    }}
+                  />
+                  {/* Play Icon when paused */}
+                  {!isPlaying && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <Play className="w-16 h-16 text-white fill-white" />
+                    </div>
+                  )}
+                  {/* Mute/Unmute Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsMuted(!isMuted);
+                    }}
+                    className="absolute bottom-3 right-3 z-10 w-7 h-7 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-all"
+                    aria-label={isMuted ? 'Attiva audio' : 'Disattiva audio'}
+                  >
+                    {isMuted ? (
+                      <VolumeX className="w-4 h-4 text-white drop-shadow-lg" />
+                    ) : (
+                      <Volume2 className="w-4 h-4 text-white drop-shadow-lg" />
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <Image
+                  src={post.media[currentMediaIndex].media_url}
+                  alt={post.caption || 'Post image'}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1200px) 60vw, 1200px"
+                />
+              )}
+            </>
           )}
 
           {/* Media Navigation Arrows */}
@@ -314,9 +376,9 @@ export default function PostModal({
         </div>
 
         {/* Right Side - Comments */}
-        <div className="w-[450px] flex flex-col border-l border-gray-200 dark:border-[#262626]">
+        <div className="w-[450px] flex flex-col border-l border-gray-200 dark:border-[#262626] max-[639px]:w-full max-[639px]:border-l-0 max-[639px]:border-t">
           {/* Post Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-[#262626]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-[#262626] max-[639px]:px-2">
             <div className="flex items-center gap-3">
               <Link href={`/profile/${post.profile_username}`}>
                 <ProfilePicture
@@ -341,7 +403,7 @@ export default function PostModal({
           </div>
 
           {/* Comments Section */}
-          <div className="flex-1 overflow-y-auto px-4 py-4">
+          <div className="flex-1 overflow-y-auto px-4 py-4 max-[639px]:px-2">
             {/* Caption as first comment */}
             {post.caption && (
               <div className="flex gap-3 mb-4">
@@ -495,7 +557,7 @@ export default function PostModal({
           </div>
 
           {/* Actions */}
-          <div className="px-4 py-2 border-t border-gray-200 dark:border-[#262626]">
+          <div className="px-4 py-2 border-t border-gray-200 dark:border-[#262626] max-[639px]:px-2">
             <div className="flex items-center justify-between pb-2">
               <div className="flex items-center gap-4">
                 <button
@@ -557,7 +619,7 @@ export default function PostModal({
           </div>
 
           {/* Comment Input */}
-          <div className="px-4 py-3 border-t border-gray-200 dark:border-[#262626]">
+          <div className="px-4 py-3 border-t border-gray-200 dark:border-[#262626] max-[639px]:px-2">
             {/* Replying To Indicator */}
             {replyingTo && (
               <div className="flex items-center justify-between mb-2 text-sm">

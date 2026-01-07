@@ -42,6 +42,7 @@ export async function GET(request: NextRequest) {
         p.full_name,
         p.profile_image_url,
         p.is_verified,
+        p.is_private,
         p.followers_count,
         CASE 
           WHEN EXISTS (

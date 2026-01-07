@@ -8,10 +8,16 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import EditProfileIcon from './icons/EditProfileIcon';
+import PrivacyIcon from './icons/PrivacyIcon';
+import AccountIcon from './icons/AccountIcon';
+import SecurityIcon from './icons/SecurityIcon';
+import BirthdayIcon from './icons/BirthdayIcon';
 
 interface SidebarItem {
   label: string;
   href: string;
+  icon: React.ReactNode;
 }
 
 interface SidebarSection {
@@ -26,35 +32,59 @@ export default function SettingsSidebar() {
     {
       title: 'Come usi Instagram',
       items: [
-        { label: 'Modifica profilo', href: '/accounts/edit' },
-        { label: 'Notifiche', href: '/accounts/notifications' },
+        {
+          label: 'Modifica profilo',
+          href: '/accounts/edit',
+          icon: <EditProfileIcon />,
+        },
+        {
+          label: 'Account personale',
+          href: '/accounts/personal',
+          icon: <AccountIcon />,
+        },
       ],
     },
     {
       title: 'Chi può vedere i tuoi contenuti',
       items: [
-        { label: "Privacy dell'account", href: '/accounts/privacy' },
-        { label: 'Amici più stretti', href: '/accounts/close-friends' },
-        { label: 'Utenti bloccati', href: '/accounts/blocked' },
+        {
+          label: "Privacy dell'account",
+          href: '/accounts/privacy',
+          icon: <PrivacyIcon />,
+        },
       ],
     },
     {
-      title: 'Cosa vedi',
+      title: 'Altre opzioni e supporto',
       items: [
-        { label: 'Account silenziati', href: '/accounts/muted' },
-        { label: 'Preferenze per i contenuti', href: '/accounts/content-preferences' },
+        {
+          label: 'Sicurezza e accesso',
+          href: '/accounts/security',
+          icon: <SecurityIcon />,
+        },
+        {
+          label: 'Compleanno',
+          href: '/accounts/birthday',
+          icon: <BirthdayIcon />,
+        },
       ],
     },
   ];
 
   return (
-    <aside className="w-full md:w-80 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
+    <aside className="w-full md:w-80 border-r border-gray-200 dark:border-gray-800 h-screen overflow-y-auto hidden lg:block">
+      {/* Header */}
+      <div className="px-4 pt-10 pb-6 mx-[34px]">
+        <h1 className="text-xl font-bold leading-[25px] break-words">Impostazioni</h1>
+      </div>
+
+      {/* Menu */}
       <div className="py-6">
         {sections.map((section, sectionIdx) => (
-          <div key={sectionIdx} className="mb-8">
+          <div key={sectionIdx}>
             {/* Section Title */}
             {section.title && (
-              <h3 className="px-6 mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">
+              <h3 className="px-4 py-3 mx-[34px] text-xs font-semibold leading-4 break-words text-[rgb(106,113,122)] dark:text-[rgb(168,168,168)]">
                 {section.title}
               </h3>
             )}
@@ -67,13 +97,14 @@ export default function SettingsSidebar() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`block px-6 py-3 text-sm transition-colors ${
+                    className={`flex items-center gap-3 px-4 mx-[34px] py-3 text-sm font-normal rounded-lg transition-all select-none cursor-pointer ${
                       isActive
-                        ? 'font-semibold border-l-2 border-black dark:border-white bg-gray-50 dark:bg-gray-900'
-                        : 'font-normal hover:bg-gray-50 dark:hover:bg-gray-900'
+                        ? 'bg-gray-100 dark:bg-[#1a1a1a] hover:bg-gray-200 dark:hover:bg-[#262626]'
+                        : 'hover:bg-gray-50 dark:hover:bg-[#121212]'
                     }`}
                   >
-                    {item.label}
+                    <span className="flex-shrink-0">{item.icon}</span>
+                    <span className="leading-[18px] break-words">{item.label}</span>
                   </Link>
                 );
               })}

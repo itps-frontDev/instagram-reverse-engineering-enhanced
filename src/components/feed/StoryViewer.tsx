@@ -19,6 +19,8 @@
 import { X, ChevronLeft, ChevronRight, Volume2, VolumeX, Eye, Heart, Send } from 'lucide-react';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+import ProfilePicture from '@/components/ProfilePicture';
 
 interface Story {
   id: number;
@@ -297,10 +299,10 @@ export default function StoryViewer({
   }
 
   return (
-    <div className="fixed inset-0 bg-[#1a1a1a] z-50 flex items-center justify-center overflow-x-hidden">
+    <div className="fixed inset-0 bg-[#1a1a1a] z-[60] flex items-center justify-center overflow-x-hidden">
       
-      {/* Instagram Logo */}
-      <div className="absolute top-4 left-4 z-20">
+      {/* Instagram Logo - solo desktop */}
+      <div className="hidden md:block absolute top-4 left-4 z-20">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           aria-label="Instagram"
@@ -322,10 +324,10 @@ export default function StoryViewer({
       {/* Close button */}
       <button
         onClick={onClose}
-        className="absolute top-3 right-3 text-white hover:transform hover:scale-110 hover:bg-opacity-20 p-2 rounded-full transition-all z-10"
+        className="absolute top-5 md:top-3 right-3 text-white hover:transform hover:scale-110 hover:bg-opacity-20 p-2 transition-all z-40 drop-shadow-lg"
         aria-label="Chiudi"
       >
-        <X className="w-8.5 h-8.5" />
+        <X className="w-8 h-8 md:w-8.5 md:h-8.5" />
       </button>
 
       {/* Previous Users Previews - Left */}
@@ -333,7 +335,7 @@ export default function StoryViewer({
         <button
           key={`prev-${index}`}
           onClick={goToPrevious}
-          className={`fixed top-1/2 -translate-y-1/2 w-[277px] h-[490px] rounded-lg overflow-hidden transition-all ${
+          className={`fixed top-1/2 -translate-y-1/2 w-[277px] h-[490px] rounded-lg overflow-hidden transition-all hidden md:block ${
             isTransitioning && transitionDirection === 'right' && index === 0
               ? 'duration-500 ease-out z-30'
               : 'duration-300 z-20 hover:scale-105'
@@ -363,21 +365,13 @@ export default function StoryViewer({
           {/* Preview User info overlay */}
           <div className="absolute top-47 left-2 right-2 flex flex-col items-center gap-2.5">
             {/* Profile picture */}
-            {preview.profile_image_url ? (
-              <div className="p-1 rounded-full border-2 border-gray-700">
-                <img
-                  src={preview.profile_image_url || ''}
-                  alt={preview.username}
-                  className="w-13 h-13 rounded-full"
-                />
-              </div>
-            ) : (
-              <div className="p-1 rounded-full border-2 border-gray-700">
-                <div className="w-13 h-13 rounded-full bg-gray-600 flex items-center justify-center text-white text-xs font-semibold">
-                  {preview.username.charAt(0).toUpperCase()}
-                </div>
-              </div>
-            )}
+            <div className="p-1 rounded-full border-2 border-gray-700">
+              <ProfilePicture
+                src={preview.profile_image_url}
+                alt={preview.username}
+                size={52}
+              />
+            </div>
             {/* Username */}
             <span className="text-white text-xs font-semibold truncate max-w-full px-1">
               {preview.username}
@@ -387,7 +381,7 @@ export default function StoryViewer({
       ))}
 
       {/* Story content */}
-      <div className={`relative w-full max-w-[690px] h-[90vh] md:h-[90vh] lg:h-[96vh] mx-4 sm:mx-0 overflow-hidden rounded-lg z-20 ${
+      <div className={`relative w-full max-w-[690px] h-[100vh] md:h-[90vh] lg:h-[96vh] mx-0 sm:mx-4 overflow-hidden rounded-none sm:rounded-lg z-20 ${
         isTransitioning || isReturning
           ? 'transition-all duration-500 ease-out' 
           : ''
@@ -447,25 +441,19 @@ export default function StoryViewer({
         </div>
 
         {/* Story header - Profile info - INSIDE story */}
-        <div className="absolute top-8 left-4 right-3 flex items-center gap-3 z-20">
-          {currentStory.profile_image_url ? (
-            <div className="w-8 h-8 rounded-full overflow-hidden">
-              <Image
-                unoptimized
-                src={currentStory.profile_image_url}
-                alt={currentStory.username}
-                width={32}
-                height={32}
-                className="object-cover"
-              />
-            </div>
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-white font-semibold text-xs">
-              {currentStory.username.charAt(0).toUpperCase()}
-            </div>
-          )}
+        <div className="absolute top-8 left-4 right-3 flex items-center gap-3 z-40">
+          <ProfilePicture
+            src={currentStory.profile_image_url}
+            alt={currentStory.username}
+            size={32}
+          />
           <div className="flex-1">
-            <p className="text-white font-semibold text-sm drop-shadow-lg">{currentStory.username}</p>
+            <Link 
+              href={`/profile/${currentStory.username}`}
+              className="text-white font-semibold text-sm drop-shadow-lg hover:opacity-80 transition-opacity"
+            >
+              {currentStory.username}
+            </Link>
             <p className="text-white text-xs opacity-80 drop-shadow-lg">
               {new Date(currentStory.created_at).toLocaleTimeString('it-IT', {
                 hour: '2-digit',
@@ -479,19 +467,19 @@ export default function StoryViewer({
         {currentStory.media_type === 'video' && (
           <button
             onClick={() => setIsMuted(!isMuted)}
-            className="absolute bottom-20 right-4 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all z-20"
+            className="absolute bottom-16 md:bottom-20 right-2 md:right-4 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all z-20"
             aria-label={isMuted ? 'Abilita audio' : 'Disabilita audio'}
           >
             {isMuted ? (
-              <VolumeX className="w-5 h-5" />
+              <VolumeX className="w-4 h-4 md:w-5 md:h-5" />
             ) : (
-              <Volume2 className="w-5 h-5" />
+              <Volume2 className="w-4 h-4 md:w-5 md:h-5" />
             )}
           </button>
         )}
 
         {/* Bottom interaction bar */}
-        <div className="absolute bottom-4 left-4 right-4 flex items-center gap-2.5 z-20">
+        <div className="absolute bottom-2 md:bottom-4 left-2 md:left-4 right-2 md:right-4 flex items-center gap-2 md:gap-2.5 z-40">
 
           {/* Message input */}
           <input
@@ -499,29 +487,29 @@ export default function StoryViewer({
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}
             placeholder={`Rispondi a ${currentStory.username}`}
-            className="flex-1 max-w-[570px] bg-transparent border border-white/50 rounded-full px-4 py-3 text-white placeholder-white/70 text-sm focus:outline-none focus:border-white"
+            className="flex-1 max-w-[570px] bg-transparent border-2 border-white/70 rounded-full px-3 md:px-4 py-2 md:py-3 text-white placeholder-white/80 text-sm md:text-sm focus:outline-none focus:border-white"
           />
 
           {/* Action buttons */}
-          <div className="flex items-center gap-4 ml-1.5">
+          <div className="flex items-center gap-3 md:gap-4 ml-0 md:ml-1.5">
 
             {/* Like button */}
             <button
               onClick={() => setIsLiked(!isLiked)}
-              className="flex-shrink-0 hover:scale-110 transition-transform"
+              className="flex-shrink-0 hover:scale-110 transition-transform drop-shadow-lg"
               aria-label={isLiked ? 'Rimuovi like' : 'Metti like'}
             >
               <Heart
-                className={`w-6.5 h-6.5 ${isLiked ? 'fill-red-500 text-red-500' : 'text-white'}`}
+                className={`w-7 h-7 md:w-6.5 md:h-6.5 ${isLiked ? 'fill-red-500 text-red-500' : 'text-white'}`}
               />
             </button>
 
             {/* Share button */}
             <button
-              className="flex-shrink-0 hover:scale-110 transition-transform"
+              className="flex-shrink-0 hover:scale-110 transition-transform drop-shadow-lg"
               aria-label="Condividi storia"
             >
-              <Send className="w-6.5 h-6.5 text-white" />
+              <Send className="w-7 h-7 md:w-6.5 md:h-6.5 text-white" />
             </button>
           </div>
         </div>
@@ -532,7 +520,7 @@ export default function StoryViewer({
         <button
           key={`next-${index}`}
           onClick={goToNext}
-          className={`fixed top-1/2 -translate-y-1/2 w-[277px] h-[490px] rounded-lg overflow-hidden transition-all ${
+          className={`fixed top-1/2 -translate-y-1/2 w-[277px] h-[490px] rounded-lg overflow-hidden transition-all hidden md:block ${
             isTransitioning && transitionDirection === 'left' && index === 0
               ? 'duration-500 ease-out z-30'
               : 'duration-300 z-20 hover:scale-105'
@@ -562,21 +550,13 @@ export default function StoryViewer({
           {/* Preview User info overlay */}
           <div className="absolute top-47 left-2 right-2 flex flex-col items-center gap-2.5">
             {/* Profile picture */}
-            {preview.profile_image_url ? (
-              <div className="p-1 rounded-full border-2 border-gray-700">
-                <img
-                  src={preview.profile_image_url || ''}
-                  alt={preview.username}
-                  className="w-13 h-13 rounded-full"
-                />
-              </div>
-            ) : (
-              <div className="p-1 rounded-full border-2 border-gray-700">
-                <div className="w-13 h-13 rounded-full bg-gray-600 flex items-center justify-center text-white text-xs font-semibold">
-                  {preview.username.charAt(0).toUpperCase()}
-                </div>
-              </div>
-            )}
+            <div className="p-1 rounded-full border-2 border-gray-700">
+              <ProfilePicture
+                src={preview.profile_image_url}
+                alt={preview.username}
+                size={52}
+              />
+            </div>
             {/* Username */}
             <span className="text-white text-xs font-semibold truncate max-w-full px-1">
               {preview.username}
@@ -585,28 +565,44 @@ export default function StoryViewer({
         </button>
       ))}
 
-      {/* Previous button */}
+      {/* Previous button/tap area */}
       {(currentIndex > 0 || (allUsernames.length > 0 && currentUserIndex > 0)) && (
-        <button
-          onClick={goToPrevious}
-          className="fixed top-1/2 -translate-y-1/2 bg-gray-500 hover:bg-white p-0.25 rounded-full transition-all z-30"
-          style={{ left: 'calc(50% - 345px - 40px)' }}
-          aria-label="Storia precedente"
-        >
-          <ChevronLeft className="w-5 h-5 text-black" />
-        </button>
+        <>
+          {/* Desktop arrow button */}
+          <button
+            onClick={goToPrevious}
+            className="hidden md:block fixed top-1/2 -translate-y-1/2 left-[calc(50%-345px-40px)] bg-gray-500 hover:bg-white p-0.25 rounded-full transition-all z-30"
+            aria-label="Storia precedente"
+          >
+            <ChevronLeft className="w-5 h-5 text-black" />
+          </button>
+          {/* Mobile tap area (invisible) */}
+          <button
+            onClick={goToPrevious}
+            className="md:hidden fixed top-20 bottom-0 left-0 w-1/3 z-30"
+            aria-label="Storia precedente"
+          />
+        </>
       )}
 
-      {/* Next button */}
+      {/* Next button/tap area */}
       {(currentIndex < stories.length - 1 || (allUsernames.length > 0 && currentUserIndex < allUsernames.length - 1)) && (
-        <button
-          onClick={goToNext}
-          className="fixed top-1/2 -translate-y-1/2 bg-gray-500 hover:bg-white p-0.25 rounded-full transition-all z-30"
-          style={{ right: 'calc(50% - 345px - 40px)' }}
-          aria-label="Storia successiva"
-        >
-          <ChevronRight className="w-5 h-5 text-black" />
-        </button>
+        <>
+          {/* Desktop arrow button */}
+          <button
+            onClick={goToNext}
+            className="hidden md:block fixed top-1/2 -translate-y-1/2 right-[calc(50%-345px-40px)] bg-gray-500 hover:bg-white p-0.25 rounded-full transition-all z-30"
+            aria-label="Storia successiva"
+          >
+            <ChevronRight className="w-5 h-5 text-black" />
+          </button>
+          {/* Mobile tap area (invisible) */}
+          <button
+            onClick={goToNext}
+            className="md:hidden fixed top-20 bottom-0 right-0 w-1/3 z-30"
+            aria-label="Storia successiva"
+          />
+        </>
       )}
     </div>
   );

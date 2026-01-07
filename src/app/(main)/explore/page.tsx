@@ -6,35 +6,75 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import ExploreGrid from '@/components/explore/ExploreGrid';
 import type { FeedPost, GetFeedResponse } from '@/lib/types/feed';
 
 export default function ExplorePage() {
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [offset, setOffset] = useState(0);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchExplorePosts();
+    fetchExplorePosts(0, true);
   }, []);
 
-  const fetchExplorePosts = async () => {
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoading && !isLoadingMore) {
+          fetchExplorePosts(offset);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [offset, hasMore, isLoading, isLoadingMore]);
+
+  const fetchExplorePosts = async (currentOffset: number, isInitial = false) => {
     try {
-      setIsLoading(true);
-      const response = await fetch('/api/explore?limit=30');
+      if (isInitial) {
+        setIsLoading(true);
+      } else {
+        setIsLoadingMore(true);
+      }
+      
+      const response = await fetch(`/api/explore?limit=30&offset=${currentOffset}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch explore posts');
       }
 
       const data: GetFeedResponse = await response.json();
-      setPosts(data.posts);
+      
+      if (isInitial) {
+        setPosts(data.posts);
+      } else {
+        setPosts((prevPosts) => [...prevPosts, ...data.posts]);
+      }
+      
+      setHasMore(data.hasMore);
+      setOffset(currentOffset + data.posts.length);
     } catch (err) {
       console.error('Error fetching explore posts:', err);
       setError('Impossibile caricare i post');
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
   };
 
@@ -140,7 +180,7 @@ export default function ExplorePage() {
         <div className="text-center py-12">
           <p className="text-gray-600">{error}</p>
           <button
-            onClick={fetchExplorePosts}
+            onClick={() => fetchExplorePosts(0, true)}
             className="mt-4 text-blue-500 hover:text-blue-600 font-semibold"
           >
             Riprova
@@ -150,7 +190,7 @@ export default function ExplorePage() {
     );
   }
 
-  if (posts.length === 0) {
+  if (posts.length === 0 && !isLoading) {
     return (
       <div className="max-w-5xl mx-auto px-4 pt-8">
         <h1 className="text-2xl font-semibold mb-6">Esplora</h1>
@@ -171,6 +211,23 @@ export default function ExplorePage() {
         onSave={handleSave}
         onComment={handleComment}
       />
+
+      {/* Loading indicator for infinite scroll */}
+      {isLoadingMore && (
+        <div className="grid grid-cols-3 gap-1 md:gap-2 mt-1 md:mt-2">
+          {Array(9)
+            .fill(null)
+            .map((_, i) => (
+              <div
+                key={i}
+                className="aspect-square bg-gray-200 animate-pulse rounded"
+              />
+            ))}
+        </div>
+      )}
+
+      {/* Intersection observer target */}
+      <div ref={observerTarget} className="h-20" />
     </div>
   );
 }

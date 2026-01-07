@@ -20,8 +20,8 @@ export default function ProfilePrivateLock({
           <Lock className="w-6 h-7 text-[rgb(12,16,20)] dark:text-white" strokeWidth={1.5} />
         </div>
         <div className="flex flex-col">
-          <h2 className="text-sm font-semibold whitespace-nowrap text-[rgb(12,16,20)] dark:text-white">Questo account è privato</h2>
-          <p className="text-sm whitespace-nowrap" style={{ color: 'rgb(168, 168, 168)' }}>
+          <h2 className="text-sm font-semibold md:whitespace-nowrap text-[rgb(12,16,20)] dark:text-white">Questo account è privato</h2>
+          <p className="text-sm md:whitespace-nowrap" style={{ color: 'rgb(168, 168, 168)' }}>
             Segui questa persona per vedere le sue foto e i suoi video.
           </p>
         </div>

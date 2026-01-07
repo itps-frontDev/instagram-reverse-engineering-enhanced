@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0');
 
     // Query per post popolari da profili pubblici
-    // Esclude i propri post e ordina per likes_count e recency
+    // Esclude i propri post e usa RANDOM() per mischiare video e immagini
     const posts = await queryAll<PostRow>(
       `SELECT DISTINCT
         p.id,
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
         AND pr.deleted_at IS NULL
         AND pr.is_private = 0
         AND p.profile_id != ?
-      ORDER BY p.likes_count DESC, p.created_at DESC
+      ORDER BY RANDOM()
       LIMIT ? OFFSET ?`,
       [currentProfile.id, currentProfile.id, currentProfile.id, limit + 1, offset]
     );

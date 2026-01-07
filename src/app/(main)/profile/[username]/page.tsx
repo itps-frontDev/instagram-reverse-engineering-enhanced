@@ -52,7 +52,7 @@ export default function ProfilePage({
     isPending: false,
     isOwnProfile: false,
   });
-  const [canView, setCanView] = useState(true);
+  const [canView, setCanView] = useState<boolean | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [highlights, setHighlights] = useState<StoryHighlight[]>([]);
   const [activeTab, setActiveTab] = useState<ProfileTab>('posts');
@@ -74,7 +74,7 @@ export default function ProfilePage({
 
   // Fetch posts when tab changes
   useEffect(() => {
-    if (profile && canView) {
+    if (profile && canView === true) {
       fetchPosts(0);
     }
   }, [activeTab, profile, canView]);
@@ -145,7 +145,13 @@ export default function ProfilePage({
       );
 
       if (!res.ok) {
-        throw new Error('Failed to fetch posts');
+        const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Failed to fetch posts:', {
+          status: res.status,
+          error: errorData.error,
+          message: errorData.message,
+        });
+        throw new Error(errorData.error || 'Failed to fetch posts');
       }
 
       const data = await res.json();
@@ -160,6 +166,7 @@ export default function ProfilePage({
       setPage(pageNum);
     } catch (err) {
       console.error('Error fetching posts:', err);
+      // Don't throw - just log and continue
     } finally {
       setIsLoadingPosts(false);
     }
@@ -571,16 +578,9 @@ export default function ProfilePage({
 
   return (
     <>
-      <div className="w-full flex flex-col items-center pb-12 max-w-7xl mx-auto flex-1">
+      <div className="w-full flex flex-col items-center pb-12 lg:max-w-7xl mx-auto flex-1">
         <div
-          style={{
-            marginLeft: '159.531px',
-            marginRight: '159.531px',
-            paddingLeft: '20px',
-            paddingRight: '20px',
-            paddingTop: '16px',
-          }}
-          className="w-full flex flex-col items-center"
+          className="w-full flex flex-col items-center px-0 md:px-5 lg:px-20 xl:px-40 pt-4 md:pt-6"
         >
           {/* Header blocco */}
           <div className="w-full pb-2">
@@ -624,7 +624,7 @@ export default function ProfilePage({
           {/* Content blocco */}
           <div className="w-full flex justify-center px-4">
             <div className="w-full max-w-[935px]">
-              {canView ? (
+              {canView === true ? (
                 <ProfileGrid
                   posts={posts}
                   isLoading={isLoadingPosts}
@@ -635,19 +635,21 @@ export default function ProfilePage({
                   onCreatePost={handleCreatePostClick}
                   onPostClick={handlePostClick}
                 />
-              ) : (
+              ) : canView === false ? (
                 <ProfilePrivateLock
                   username={profile.username}
                   isPending={followStatus.isPending}
                 />
-              )}
+              ) : null}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Footer */}
-      <Footer />
+      {/* Footer - nascosto su mobile */}
+      <div className={`hidden lg:block ${profile?.is_private && !followStatus.isFollowing && !followStatus.isOwnProfile ? 'mt-150' : ''}`}>
+        <Footer />
+      </div>
 
       {/* Profile Image Modal */}
       {profile && (

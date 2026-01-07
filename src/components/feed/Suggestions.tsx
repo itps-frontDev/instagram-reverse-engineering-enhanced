@@ -9,6 +9,9 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import VerifiedBadge from '@/components/common/VerifiedBadge';
+import ProfilePicture from '@/components/ProfilePicture';
+import ProfilePreviewCard from '@/components/profile/ProfilePreviewCard';
 
 interface SuggestedUser {
   id: number;
@@ -16,6 +19,7 @@ interface SuggestedUser {
   full_name: string | null;
   profile_image_url: string | null;
   is_verified: boolean;
+  is_private?: boolean;
   followers_count: number;
 }
 
@@ -23,6 +27,11 @@ export default function Suggestions() {
   const { profile, isLoading } = useAuth();
   const [suggestions, setSuggestions] = useState<SuggestedUser[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(true);
+  const [followingIds, setFollowingIds] = useState<Set<number>>(new Set());
+  const [pendingIds, setPendingIds] = useState<Set<number>>(new Set());
+  const [loadingFollowIds, setLoadingFollowIds] = useState<Set<number>>(new Set());
+  const [hoveredUser, setHoveredUser] = useState<string | null>(null);
+  const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     async function fetchSuggestions() {
@@ -30,7 +39,8 @@ export default function Suggestions() {
         const response = await fetch('/api/profiles/suggestions');
         if (response.ok) {
           const data = await response.json();
-          setSuggestions(data.profiles || []);
+          console.log('Suggestions API response:', data);
+          setSuggestions(data.suggestions || []);
         }
       } catch (error) {
         console.error('Failed to fetch suggestions:', error);
@@ -44,6 +54,78 @@ export default function Suggestions() {
     }
   }, [profile]);
 
+  const handleFollow = async (userId: number) => {
+    if (loadingFollowIds.has(userId)) return;
+
+    setLoadingFollowIds(prev => new Set(prev).add(userId));
+
+    try {
+      const response = await fetch('/api/profiles/actions/follow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetProfileId: userId }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Follow response:', data);
+        if (data.status === 'pending') {
+          setPendingIds(prev => new Set(prev).add(userId));
+        } else if (data.status === 'accepted') {
+          setFollowingIds(prev => new Set(prev).add(userId));
+        }
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to follow user:', errorData);
+      }
+    } catch (error) {
+      console.error('Error following user:', error);
+    } finally {
+      setLoadingFollowIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
+    }
+  };
+
+  const handleUnfollow = async (userId: number) => {
+    if (loadingFollowIds.has(userId)) return;
+
+    setLoadingFollowIds(prev => new Set(prev).add(userId));
+
+    try {
+      const response = await fetch('/api/profiles/actions/unfollow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetProfileId: userId }),
+      });
+
+      if (response.ok) {
+        setFollowingIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(userId);
+          return newSet;
+        });
+        setPendingIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(userId);
+          return newSet;
+        });
+      } else {
+        console.error('Failed to unfollow user');
+      }
+    } catch (error) {
+      console.error('Error unfollowing user:', error);
+    } finally {
+      setLoadingFollowIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
+    }
+  };
+
   if (isLoading || !profile) {
     return null;
   }
@@ -54,19 +136,11 @@ export default function Suggestions() {
         {/* Current User Info */}
         <div className="flex items-center justify-between">
           <Link href={`/profile/${profile.username}`} className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-              {profile.profile_image_url ? (
-                <img
-                  src={profile.profile_image_url}
-                  alt={profile.username}
-                  className="w-full h-full rounded-full object-cover"
-                />
-              ) : (
-                <span className="text-white text-lg font-semibold">
-                  {profile.username.charAt(0).toUpperCase()}
-                </span>
-              )}
-            </div>
+            <ProfilePicture
+              src={profile.profile_image_url}
+              alt={profile.username}
+              size={48}
+            />
             <div>
               <p className="font-semibold text-sm text-[#262626] dark:text-white">
                 {profile.username}
@@ -115,38 +189,70 @@ export default function Suggestions() {
           ) : suggestions.length > 0 ? (
             <div className="space-y-3">
               {suggestions.map((user) => (
-                <div key={user.id} className="flex items-center justify-between">
+                <div 
+                  key={user.id} 
+                  className="flex items-center justify-between relative"
+                  onMouseEnter={() => {
+                    const timeout = setTimeout(() => {
+                      setHoveredUser(user.username);
+                    }, 500);
+                    setHoverTimeout(timeout);
+                  }}
+                  onMouseLeave={() => {
+                    if (hoverTimeout) {
+                      clearTimeout(hoverTimeout);
+                      setHoverTimeout(null);
+                    }
+                    setHoveredUser(null);
+                  }}
+                >
                   <Link href={`/profile/${user.username}`} className="flex items-center gap-3 flex-1">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
-                      {user.profile_image_url ? (
-                        <img
-                          src={user.profile_image_url}
-                          alt={user.username}
-                          className="w-full h-full rounded-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-white text-xs font-semibold">
-                          {user.username.charAt(0).toUpperCase()}
-                        </span>
-                      )}
-                    </div>
+                    <ProfilePicture
+                      src={user.profile_image_url}
+                      alt={user.username}
+                      size={32}
+                    />
                     <div>
                       <p className="font-semibold text-sm text-[#262626] dark:text-white flex items-center gap-1">
                         {user.username}
-                        {user.is_verified && (
-                          <svg className="w-3 h-3 text-[#0095F6]" fill="currentColor" viewBox="0 0 40 40">
-                            <path d="M19.998 3.094l2.124 3.217c.297.45.835.76 1.421.82l3.839.394c1.358.139 1.915 1.854.92 2.815l-2.817 2.72c-.395.382-.603.99-.541 1.593l.386 3.842c.138 1.364-1.188 2.407-2.425 1.845l-3.42-1.813c-.48-.253-1.05-.253-1.529 0l-3.42 1.813c-1.236.562-2.564-.48-2.425-1.845l.386-3.842c.062-.603-.145-1.21-.541-1.593l-2.817-2.72c-.996-.961-.439-2.676.92-2.815l3.838-.394c.587-.06 1.124-.37 1.422-.82l2.123-3.217c.592-.898 2.147-.898 2.739 0z"/>
-                          </svg>
-                        )}
+                        {user.is_verified && <VerifiedBadge size={12} />}
                       </p>
                       <p className="text-xs text-[#8E8E8E] dark:text-gray-400">
                         {user.full_name || `${user.followers_count} follower`}
                       </p>
                     </div>
                   </Link>
-                  <button className="text-xs font-semibold text-[#0095F6] hover:text-[#1877F2]">
-                    Segui
+                  <button 
+                    onClick={() => (followingIds.has(user.id) || pendingIds.has(user.id)) ? handleUnfollow(user.id) : handleFollow(user.id)}
+                    disabled={loadingFollowIds.has(user.id)}
+                    className={`text-xs font-semibold transition-colors ${
+                      followingIds.has(user.id) || pendingIds.has(user.id)
+                        ? 'text-[#84a0fe] dark:text-white hover:text-[#1877F2]'
+                        : 'text-[#84a0fe] hover:text-[#1877F2]'
+                    } disabled:opacity-50`}
+                  >
+                    {loadingFollowIds.has(user.id) 
+                      ? '...' 
+                      : pendingIds.has(user.id)
+                        ? 'Richiesta effettuata'
+                        : followingIds.has(user.id) 
+                          ? 'Seguito' 
+                          : 'Segui'}
                   </button>
+
+                  {/* Profile Preview Card on Hover */}
+                  {hoveredUser === user.username && (!user.is_private || followingIds.has(user.id)) && (
+                    <div className="absolute left-0 top-0 z-50">
+                      <ProfilePreviewCard
+                        username={user.username}
+                        onFollow={() => handleFollow(user.id)}
+                        onUnfollow={() => handleUnfollow(user.id)}
+                        isFollowing={followingIds.has(user.id)}
+                        isPending={pendingIds.has(user.id)}
+                        isLoading={loadingFollowIds.has(user.id)}
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

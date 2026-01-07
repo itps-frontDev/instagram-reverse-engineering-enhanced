@@ -4,54 +4,48 @@
  * Two-column layout with settings sidebar and edit profile form.
  */
 
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { jwtVerify } from 'jose';
+import { getCurrentUser } from '@/lib/auth';
 import { queryOne } from '@/lib/db';
 import SettingsSidebar from '@/components/settings/SettingsSidebar';
 import EditProfileForm from '@/components/settings/EditProfileForm';
+import Footer from '@/components/common/Footer';
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-secret-key-change-in-production'
-);
-
-interface User {
+interface Profile {
   id: number;
   username: string;
   full_name: string | null;
   bio: string | null;
   website_url: string | null;
   profile_image_url: string | null;
+  gender: string | null;
+  custom_gender: string | null;
 }
 
 async function getProfile() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('auth_token')?.value;
+  // Use the getCurrentUser utility which handles JWT verification correctly
+  const user = await getCurrentUser();
 
-  if (!token) {
+  if (!user) {
     redirect('/login');
   }
 
   try {
-    // Verify JWT and get user ID
-    const { payload } = await jwtVerify(token, JWT_SECRET);
-    const userId = payload.userId as number;
-
     // Fetch user profile from database
-    const user = await queryOne<User>(
-      `SELECT id, username, full_name, bio, website_url, profile_image_url
-       FROM users
-       WHERE id = ?`,
-      [userId]
+    const profile = await queryOne<Profile>(
+      `SELECT id, username, full_name, bio, website_url, profile_image_url, gender, custom_gender
+       FROM profiles
+       WHERE user_id = ? AND deleted_at IS NULL`,
+      [user.id]
     );
 
-    if (!user) {
+    if (!profile) {
       redirect('/login');
     }
 
-    return user;
+    return profile;
   } catch (err) {
-    console.error('Error verifying token or fetching profile:', err);
+    console.error('[EditProfile] Error fetching profile:', err);
     redirect('/login');
   }
 }
@@ -60,25 +54,19 @@ export default async function EditProfilePage() {
   const profile = await getProfile();
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black">
-      {/* Header */}
-      <header className="border-b border-gray-200 dark:border-gray-800 py-4 px-6">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl font-normal">Impostazioni</h1>
-        </div>
-      </header>
-
-      {/* Two-column Layout */}
-      <div className="flex max-w-7xl mx-auto">
-        {/* Sidebar */}
+    <div className="flex min-h-screen">
+      {/* Sidebar - nascosta su mobile */}
+      <div className="hidden lg:block">
         <SettingsSidebar />
-
-        {/* Main Content */}
-        <main className="flex-1 p-8">
-          <h2 className="text-xl font-semibold mb-6">Modifica profilo</h2>
-          <EditProfileForm profile={profile} />
-        </main>
       </div>
+
+      {/* Main Content - full screen su mobile */}
+      <main className="flex-1 flex flex-col items-center py-9 px-8 max-[1023px]:py-4 max-[1023px]:px-4 max-[1023px]:w-full">
+        <div className="w-full max-w-xl max-[1023px]:max-w-full">
+          <EditProfileForm profile={profile} />
+        </div>
+        <Footer />
+      </main>
     </div>
   );
 }
