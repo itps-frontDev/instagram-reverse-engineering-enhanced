@@ -482,7 +482,7 @@ export default function ReelsPage() {
             return (
               <div
                 key={reel.id}
-                className="absolute inset-0 w-full h-full flex items-center justify-center transition-all duration-400 ease-out"
+                className="absolute inset-0 w-full h-full flex items-center justify-center transition-all duration-400 ease-out pt-20"
                 style={{
                   transform: `translateY(${translateY}) scale(${scale})`,
                   opacity,
@@ -494,7 +494,7 @@ export default function ReelsPage() {
                 <div className="relative flex items-center gap-4">
                   {/* Video Container - responsive height for mobile nav */}
                   <div 
-                    className="relative w-[421px] h-[748px] max-h-[calc(100vh-80px)] lg:max-h-[calc(100vh-40px)] rounded-lg overflow-hidden"
+                    className="relative w-[600px] h-[1000px] max-h-[calc(100vh-80px)] lg:max-h-[calc(100vh-40px)] rounded-lg overflow-hidden shadow-[0_0_40px_rgba(255,255,255,0.3)]"
                     onDoubleClick={() => handleDoubleTap(reel.id)}
                     onClick={() => setIsPlaying(prev => !prev)}
                   >
@@ -638,109 +638,7 @@ export default function ReelsPage() {
                         </span>
                       </button>
 
-                      {/* Comments Cloud Popup - Mobile: left of button, Desktop: right of button */}
-                      {showComments && isCurrent && (
-                        <div
-                          ref={commentsRef}
-                          className="flex absolute z-50 w-[320px] lg:w-[360px] max-h-[70vh] lg:max-h-[500px] bg-[#262626] rounded-xl flex-col overflow-hidden shadow-2xl bottom-0 right-full mr-4 lg:right-auto lg:left-full lg:ml-4 lg:mr-0"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {/* Arrow - Mobile (right) */}
-                          <div className="lg:hidden absolute -right-2 bottom-4 w-0 h-0 border-t-8 border-b-8 border-l-8 border-t-transparent border-b-transparent border-l-[#262626]" />
-                          {/* Arrow - Desktop (left) */}
-                          <div className="hidden lg:block absolute -left-2 bottom-4 w-0 h-0 border-t-8 border-b-8 border-r-8 border-t-transparent border-b-transparent border-r-[#262626]" />
-
-                          {/* Header */}
-                          <div className="flex items-center justify-between px-4 py-3 border-b border-[#363636]">
-                            <button onClick={() => setShowComments(false)} className="text-white hover:opacity-70">
-                              <X className="w-5 h-5" />
-                            </button>
-                            <span className="text-[15px] font-semibold text-white">Commenti</span>
-                            <div className="w-5" />
-                          </div>
-
-                          {/* Comments List */}
-                          <div className="flex-1 overflow-y-auto px-4 py-3 max-h-[350px]">
-                            {isLoadingComments ? (
-                              <div className="text-center text-[#A8A8A8] py-6 text-sm">Caricamento commenti...</div>
-                            ) : comments.length === 0 ? (
-                              <div className="text-center text-[#A8A8A8] py-6 text-sm">Nessun commento ancora. Sii il primo!</div>
-                            ) : (
-                              comments.map((comment) => (
-                                <div key={comment.id} className="mb-4">
-                                  <div className="flex gap-2.5">
-                                    <Link href={`/profile/${comment.profile_username}`}>
-                                      <ProfilePicture src={comment.profile_image_url} alt={comment.profile_username} size={32} />
-                                    </Link>
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-start justify-between gap-2">
-                                        <div className="flex-1 min-w-0">
-                                          <div className="flex items-center gap-1.5 flex-wrap">
-                                            <Link href={`/profile/${comment.profile_username}`} className="font-semibold text-sm text-white hover:opacity-70">
-                                              {comment.profile_username}
-                                            </Link>
-                                            {comment.profile_is_verified && <VerifiedBadge size={10} />}
-                                            <span className="text-xs text-[#A8A8A8]">{formatTimeAgo(comment.created_at)}</span>
-                                          </div>
-                                          <p className="text-sm text-white mt-0.5 leading-[1.4] break-words">{comment.text}</p>
-                                          <div className="flex items-center gap-3 mt-1.5">
-                                            <span className="text-xs text-[#A8A8A8]">Mi piace: {comment.likes_count}</span>
-                                            <button className="text-xs text-[#A8A8A8] font-semibold hover:text-white">Rispondi</button>
-                                          </div>
-                                          {comment.replies && comment.replies.length > 0 && (
-                                            <button className="flex items-center gap-2 mt-2 text-xs text-[#A8A8A8] hover:text-white">
-                                              <span className="w-5 h-[1px] bg-[#A8A8A8]"></span>
-                                              Visualizza tutte le {comment.replies.length} risposte
-                                            </button>
-                                          )}
-                                        </div>
-                                        <button onClick={() => handleCommentLike(comment.id)} className="flex-shrink-0 mt-1">
-                                          <Heart className={`w-3.5 h-3.5 ${comment.is_liked_by_current_user ? 'fill-[#ED4956] text-[#ED4956]' : 'text-[#A8A8A8]'}`} />
-                                        </button>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))
-                            )}
-                          </div>
-
-                          {/* Comment Input */}
-                          <div className="border-t border-[#363636] px-3 py-2.5">
-                            <div className="flex items-center gap-2.5">
-                              <ProfilePicture src={null} alt="You" size={28} />
-                              <input
-                                type="text"
-                                placeholder="Aggiungi un commento..."
-                                value={commentText}
-                                onChange={(e) => setCommentText(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleCommentSubmit()}
-                                className="flex-1 bg-transparent text-sm text-white placeholder-[#A8A8A8] outline-none"
-                              />
-                              <button
-                                onClick={handleCommentSubmit}
-                                disabled={isSubmittingComment || !commentText.trim()}
-                                className="font-semibold text-sm hover:underline disabled:opacity-30 transition-opacity text-[#0095F6]"
-                              >
-                                {isSubmittingComment ? 'Invio...' : 'Pubblica'}
-                              </button>
-                              <button className="text-[#A8A8A8] hover:text-white transition-colors">
-                                <svg
-                                  aria-label="Emoji"
-                                  fill="currentColor"
-                                  height="24"
-                                  role="img"
-                                  viewBox="0 0 24 24"
-                                  width="24"
-                                >
-                                  <title>Emoji</title>
-                                  <path d="M15.83 10.997a1.167 1.167 0 1 0 1.167 1.167 1.167 1.167 0 0 0-1.167-1.167Zm-6.5 1.167a1.167 1.167 0 1 0-1.166 1.167 1.167 1.167 0 0 0 1.166-1.167Zm5.163 3.24a3.406 3.406 0 0 1-4.982.007 1 1 0 1 0-1.557 1.256 5.397 5.397 0 0 0 8.09 0 1 1 0 0 0-1.55-1.263ZM12 .503a11.5 11.5 0 1 0 11.5 11.5A11.513 11.513 0 0 0 12 .503Zm0 21a9.5 9.5 0 1 1 9.5-9.5 9.51 9.51 0 0 1-9.5 9.5Z"></path>
-                                </svg>
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                      {/* Comments Popup - Rendered at page level for mobile */}
                     </div>
 
                     {/* Share Button */}
@@ -774,7 +672,7 @@ export default function ReelsPage() {
                     </button>
 
                     {/* Music/Audio Disc */}
-                    <div className="w-8 h-8 rounded-md overflow-hidden border-2 border-[var(--color-border)] mt-1 animate-spin" style={{ animationDuration: '3s' }}>
+                    <div className="w-8 h-8 rounded-md overflow-hidden mt-1 animate-spin" style={{ animationDuration: '3s' }}>
                       <ProfilePicture
                         src={reel.profile_image_url}
                         alt={reel.profile_username}
@@ -788,6 +686,120 @@ export default function ReelsPage() {
           })}
         </div>
       </div>
+
+      {/* Global Comments Modal for Mobile */}
+      {showComments && (
+        <>
+          {/* Mobile Backdrop */}
+          <div 
+            className="lg:hidden fixed inset-0 bg-black/60 z-[90]"
+            onClick={() => setShowComments(false)}
+          />
+          
+          <div
+            ref={commentsRef}
+            className="fixed inset-x-0 bottom-0 mb-[52px] lg:hidden z-[100] w-full h-[70vh] bg-[#262626] rounded-t-3xl flex flex-col overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Mobile Handle Bar */}
+            <div className="flex justify-center pt-2 pb-1">
+              <div className="w-10 h-1 bg-[#A8A8A8] rounded-full" />
+            </div>
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#363636]">
+              <button onClick={() => setShowComments(false)} className="text-white hover:opacity-70">
+                <X className="w-5 h-5" />
+              </button>
+              <span className="text-[15px] font-semibold text-white">Commenti</span>
+              <div className="w-5" />
+            </div>
+
+            {/* Comments List */}
+            <div className="flex-1 overflow-y-auto px-4 py-3">
+              {isLoadingComments ? (
+                <div className="text-center text-[#A8A8A8] py-6 text-sm">Caricamento commenti...</div>
+              ) : comments.length === 0 ? (
+                <div className="text-center text-[#A8A8A8] py-6 text-sm">Nessun commento ancora. Sii il primo!</div>
+              ) : (
+                <>
+                  {comments.map((comment) => (
+                    <div key={comment.id} className="mb-4">
+                      <div className="flex gap-2.5">
+                        <Link href={`/profile/${comment.profile_username}`}>
+                          <ProfilePicture src={comment.profile_image_url} alt={comment.profile_username} size={32} />
+                        </Link>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <Link href={`/profile/${comment.profile_username}`} className="font-semibold text-sm text-white hover:opacity-70">
+                                  {comment.profile_username}
+                                </Link>
+                                {comment.profile_is_verified && <VerifiedBadge size={10} />}
+                                <span className="text-xs text-[#A8A8A8]">{formatTimeAgo(comment.created_at)}</span>
+                              </div>
+                              <p className="text-sm text-white mt-0.5 leading-[1.4] break-words">{comment.text}</p>
+                              <div className="flex items-center gap-3 mt-1.5">
+                                <span className="text-xs text-[#A8A8A8]">Mi piace: {comment.likes_count}</span>
+                                <button className="text-xs text-[#A8A8A8] font-semibold hover:text-white">Rispondi</button>
+                              </div>
+                              <div className="flex flex-col items-center gap-4 self-end mb-4 lg:static lg:relative lg:right-auto lg:bottom-auto lg:flex-row lg:gap-4 lg:items-center lg:mb-4">
+                                <button className="flex items-center gap-2 mt-2 text-xs text-[#A8A8A8] hover:text-white">
+                                  <span className="w-5 h-[1px] bg-[#A8A8A8]"></span>
+                                  Visualizza tutte le {comment.replies?.length} risposte
+                                </button>
+                              </div>
+                            </div>
+                            <button onClick={() => handleCommentLike(comment.id)} className="flex-shrink-0 mt-1">
+                              <Heart className={`w-3.5 h-3.5 ${comment.is_liked_by_current_user ? 'fill-[#ED4956] text-[#ED4956]' : 'text-[#A8A8A8]'}`} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+
+            {/* Comment Input */}
+            <div className="border-t border-[#363636] px-3 py-2.5">
+              <div className="flex items-center gap-2.5">
+                <ProfilePicture src={null} alt="You" size={28} />
+                <input
+                  type="text"
+                  placeholder="Aggiungi un commento..."
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleCommentSubmit()}
+                  className="flex-1 bg-transparent text-sm text-white placeholder-[#A8A8A8] outline-none"
+                />
+                <button
+                  onClick={handleCommentSubmit}
+                  disabled={isSubmittingComment || !commentText.trim()}
+                  className="font-semibold text-sm hover:underline disabled:opacity-30 transition-opacity text-[#0095F6]"
+                >
+                  {isSubmittingComment ? 'Invio...' : 'Pubblica'}
+                </button>
+                <button className="text-[#A8A8A8] hover:text-white transition-colors">
+                  <svg
+                    aria-label="Emoji"
+                    fill="currentColor"
+                    height="24"
+                    role="img"
+                    viewBox="0 0 24 24"
+                    width="24"
+                  >
+                    <title>Emoji</title>
+                    <path d="M15.83 10.997a1.167 1.167 0 1 0 1.167 1.167 1.167 1.167 0 0 0-1.167-1.167Zm-6.5 1.167a1.167 1.167 0 1 0-1.166 1.167 1.167 1.167 0 0 0 1.166-1.167Zm5.163 3.24a3.406 3.406 0 0 1-4.982.007 1 1 0 1 0-1.557 1.256 5.397 5.397 0 0 0 8.09 0 1 1 0 0 0-1.55-1.263ZM12 .503a11.5 11.5 0 1 0 11.5 11.5A11.513 11.513 0 0 0 12 .503Zm0 21a9.5 9.5 0 1 1 9.5-9.5 9.51 9.51 0 0 1-9.5 9.5Z"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* CSS Animations */}
       <style jsx global>{`
