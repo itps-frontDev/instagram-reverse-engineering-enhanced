@@ -236,7 +236,7 @@ export default function Suggestions() {
                       : pendingIds.has(user.id)
                         ? 'Richiesta effettuata'
                         : followingIds.has(user.id) 
-                          ? 'Seguito' 
+                          ? 'Segui già' 
                           : 'Segui'}
                   </button>
 
