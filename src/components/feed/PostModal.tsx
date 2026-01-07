@@ -10,7 +10,12 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import ProfilePicture from '@/components/ProfilePicture';
 import VerifiedBadge from '@/components/common/VerifiedBadge';
+import ShareIcon from '@/components/common/ShareIcon';
+import TagIcon from '@/components/common/TagIcon';
+import StoryViewer from '@/components/feed/StoryViewer';
+import ProfilePreviewCard from '@/components/profile/ProfilePreviewCard';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Heart,
   MessageCircle,
@@ -50,6 +55,7 @@ export default function PostModal({
   hasNext,
   hasPrev,
 }: PostModalProps) {
+  const { profile: currentProfile } = useAuth();
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -58,11 +64,36 @@ export default function PostModal({
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [showTags, setShowTags] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(post.is_following_author);
+  const [isPending, setIsPending] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [isLikeAnimating, setIsLikeAnimating] = useState(false);
+  const [tags, setTags] = useState<Array<{id: number; tagged_username: string; x_position: number; y_position: number}>>([]);
+  const [tagsLoaded, setTagsLoaded] = useState(false);
+  const [showStoryViewer, setShowStoryViewer] = useState(false);
+  const [storyViewerUsername, setStoryViewerUsername] = useState<string | null>(null);
+  const [hoveredUsername, setHoveredUsername] = useState<string | null>(null);
+  const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetch(`/api/posts/${post.id}/tags`)
+        .then(res => res.json())
+        .then(data => {
+          setTags(data.tags || []);
+          setTagsLoaded(true);
+        })
+        .catch(err => console.error('Failed to load tags:', err));
+    }
+  }, [isOpen, post.id]);
 
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       setCurrentMediaIndex(0);
+      setShowStoryViewer(false);
+      setStoryViewerUsername(null);
       fetchComments();
     } else {
       document.body.style.overflow = 'unset';
@@ -185,6 +216,41 @@ export default function PostModal({
       return `${(count / 1000).toFixed(1)}K`;
     }
     return count.toString();
+  };
+
+  const formatLikesText = (count: number): string => {
+    if (count === 0) return '';
+    if (count === 1) return 'Piace a 1 persona';
+    if (count < 1000) return `Piace a ${count} persone`;
+    if (count < 1000000) return `Piace a ${(count / 1000).toFixed(1)}K persone`;
+    return `Piace a ${(count / 1000000).toFixed(1)}M persone`;
+  };
+
+  const handleFollow = async () => {
+    if (isFollowLoading) return;
+
+    setIsFollowLoading(true);
+    try {
+      const response = await fetch('/api/profiles/actions/follow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ targetProfileId: post.profile_id }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.status === 'pending') {
+          setIsPending(true);
+        } else {
+          setIsFollowing(true);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to follow:', error);
+    } finally {
+      setIsFollowLoading(false);
+    }
   };
 
   const formatTimeAgo = (dateString: string) => {
@@ -371,6 +437,35 @@ export default function PostModal({
                   />
                 ))}
               </div>
+              
+              {/* Tag Icon - Bottom Left - Only show if there are tags */}
+              {tagsLoaded && tags.length > 0 && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowTags(!showTags);
+                  }}
+                  className="absolute bottom-4 left-4 w-7 h-7 flex items-center justify-center bg-black/60 rounded-full z-10"
+                  aria-label="Mostra tag"
+                >
+                  <TagIcon size={12} className="text-white" />
+                </button>
+              )}
+
+              {/* Tags Overlay */}
+              {showTags && tags.map((tag) => (
+                <div
+                  key={tag.id}
+                  className="absolute bg-black/80 text-white text-sm px-3 py-1.5 rounded-md pointer-events-none z-10"
+                  style={{
+                    left: `${tag.x_position * 100}%`,
+                    top: `${tag.y_position * 100}%`,
+                    transform: 'translate(-50%, -50%)'
+                  }}
+                >
+                  {tag.tagged_username}
+                </div>
+              ))}
             </>
           )}
         </div>
@@ -380,21 +475,81 @@ export default function PostModal({
           {/* Post Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-[#262626] max-[639px]:px-2">
             <div className="flex items-center gap-3">
-              <Link href={`/profile/${post.profile_username}`}>
-                <ProfilePicture
-                  src={post.profile_image_url}
-                  alt={post.profile_username || 'Profile picture'}
-                  size={32}
-                />
-              </Link>
-              <div className="flex items-center gap-2">
+              <ProfilePicture
+                src={post.profile_image_url}
+                alt={post.profile_username || 'Profile picture'}
+                size={32}
+                hasStory={post.profile_has_active_story}
+                username={post.profile_username}
+                onStoryClick={() => {
+                  if (post.profile_has_active_story) {
+                    setStoryViewerUsername(post.profile_username);
+                    setShowStoryViewer(true);
+                  }
+                }}
+              />
+              <div className="flex items-center gap-2 relative">
                 <Link
                   href={`/profile/${post.profile_username}`}
-                  className="font-semibold text-sm text-[#262626] dark:text-[#FAFAFA] hover:opacity-50"
+                  className="font-semibold text-sm text-[#262626] dark:text-[#FAFAFA]"
+                  onMouseEnter={() => {
+                    const timeout = setTimeout(() => {
+                      setHoveredUsername(post.profile_username);
+                    }, 500);
+                    setHoverTimeout(timeout);
+                  }}
+                  onMouseLeave={() => {
+                    if (hoverTimeout) {
+                      clearTimeout(hoverTimeout);
+                      setHoverTimeout(null);
+                    }
+                    setHoveredUsername(null);
+                  }}
                 >
                   {post.profile_username}
                 </Link>
+                {hoveredUsername === post.profile_username && (
+                  <div 
+                    className="absolute top-full left-0 mt-2 z-50"
+                    onMouseEnter={() => {
+                      if (hoverTimeout) {
+                        clearTimeout(hoverTimeout);
+                        setHoverTimeout(null);
+                      }
+                    }}
+                    onMouseLeave={() => {
+                      setHoveredUsername(null);
+                    }}
+                  >
+                    <ProfilePreviewCard username={post.profile_username} />
+                  </div>
+                )}
                 {post.profile_is_verified && <VerifiedBadge size={14} />}
+                {!isFollowing && !isPending && currentProfile && post.profile_id !== currentProfile.id && (
+                  <>
+                    <span className="text-[#737373] dark:text-[#737373]">•</span>
+                    <button 
+                      onClick={handleFollow}
+                      disabled={isFollowLoading}
+                      className="font-semibold text-sm hover:underline disabled:opacity-50"
+                      style={{ color: 'rgb(112, 141, 255)' }}
+                    >
+                      {isFollowLoading ? '...' : 'Segui'}
+                    </button>
+                  </>
+                )}
+                {isPending && (
+                  <>
+                    <span className="text-[#737373] dark:text-[#737373]">•</span>
+                    <button 
+                      disabled
+                      className="font-semibold text-sm opacity-70"
+                      style={{ color: 'rgb(112, 141, 255)' }}
+                    >
+                      Richiesta effettuata
+                    </button>
+                  </>
+                )}
               </div>
             </div>
             <button type="button" className="hover:opacity-50 transition-opacity">
@@ -415,13 +570,42 @@ export default function PostModal({
                   />
                 </Link>
                 <div className="flex-1">
-                  <div className="text-sm">
+                  <div className="text-sm relative">
                     <Link
                       href={`/profile/${post.profile_username}`}
-                      className="font-semibold text-[#262626] dark:text-[#FAFAFA] hover:opacity-50 mr-2"
+                      className="font-semibold text-[#262626] dark:text-[#FAFAFA] mr-2 hover:underline"
+                      onMouseEnter={() => {
+                        const timeout = setTimeout(() => {
+                          setHoveredUsername(`caption-${post.profile_username}`);
+                        }, 500);
+                        setHoverTimeout(timeout);
+                      }}
+                      onMouseLeave={() => {
+                        if (hoverTimeout) {
+                          clearTimeout(hoverTimeout);
+                          setHoverTimeout(null);
+                        }
+                        setHoveredUsername(null);
+                      }}
                     >
                       {post.profile_username}
                     </Link>
+                    {hoveredUsername === `caption-${post.profile_username}` && (
+                      <div 
+                        className="absolute top-full left-0 mt-2 z-50"
+                        onMouseEnter={() => {
+                          if (hoverTimeout) {
+                            clearTimeout(hoverTimeout);
+                            setHoverTimeout(null);
+                          }
+                        }}
+                        onMouseLeave={() => {
+                          setHoveredUsername(null);
+                        }}
+                      >
+                        <ProfilePreviewCard username={post.profile_username} />
+                      </div>
+                    )}
                     <span className="text-[#262626] dark:text-[#FAFAFA]">
                       {post.caption}
                     </span>
@@ -449,21 +633,56 @@ export default function PostModal({
                 <React.Fragment key={comment.id}>
                   {/* Commento Principale */}
                 <div key={comment.id} className="flex gap-3 mb-4">
-                  <Link href={`/profile/${comment.profile_username}`}>
-                    <ProfilePicture
-                      src={comment.profile_image_url}
-                      alt={comment.profile_username || 'Profile picture'}
-                      size={32}
-                    />
-                  </Link>
+                  <ProfilePicture
+                    src={comment.profile_image_url}
+                    alt={comment.profile_username || 'Profile picture'}
+                    size={32}
+                    hasStory={comment.profile_has_active_story}
+                    username={comment.profile_username}
+                    onStoryClick={() => {
+                      if (comment.profile_has_active_story) {
+                        setStoryViewerUsername(comment.profile_username);
+                        setShowStoryViewer(true);
+                      }
+                    }}
+                  />
                   <div className="flex-1">
-                    <div className="text-sm">
+                    <div className="text-sm relative">
                       <Link
                         href={`/profile/${comment.profile_username}`}
-                        className="font-semibold text-[#262626] dark:text-[#FAFAFA] hover:opacity-50 mr-2"
+                        className="font-semibold text-[#262626] dark:text-[#FAFAFA] mr-2 hover:underline"
+                        onMouseEnter={() => {
+                          const timeout = setTimeout(() => {
+                            setHoveredUsername(`comment-${comment.id}`);
+                          }, 500);
+                          setHoverTimeout(timeout);
+                        }}
+                        onMouseLeave={() => {
+                          if (hoverTimeout) {
+                            clearTimeout(hoverTimeout);
+                            setHoverTimeout(null);
+                          }
+                          setHoveredUsername(null);
+                        }}
                       >
                         {comment.profile_username}
                       </Link>
+                      {hoveredUsername === `comment-${comment.id}` && (
+                        <div 
+                          className="absolute top-full left-0 mt-2 z-50"
+                          onMouseEnter={() => {
+                            if (hoverTimeout) {
+                              clearTimeout(hoverTimeout);
+                              setHoverTimeout(null);
+                            }
+                          }}
+                          onMouseLeave={() => {
+                            setHoveredUsername(null);
+                          }}
+                        >
+                          <ProfilePreviewCard username={comment.profile_username} />
+                        </div>
+                      )}
                       {comment.profile_is_verified && <span className="-ml-1 mr-1 inline-block"><VerifiedBadge size={12} /></span>}
                       <span className="text-[#262626] dark:text-[#FAFAFA]">
                         {comment.text}
@@ -473,7 +692,7 @@ export default function PostModal({
                       <span>{formatTimeAgo(comment.created_at)}</span>
                       {comment.likes_count > 0 && (
                         <span className="font-semibold">
-                          {comment.likes_count} {comment.likes_count === 1 ? 'Mi piace' : 'Mi piace'}
+                          {comment.likes_count === 1 ? 'Piace a 1 persona' : `Piace a ${comment.likes_count} persone`}
                         </span>
                       )}
                       <button 
@@ -499,21 +718,56 @@ export default function PostModal({
                   <div className="ml-11 mt-2 space-y-2">
                     {replies.map((reply) => (
                       <div key={reply.id} className="flex gap-3">
-                        <Link href={`/profile/${reply.profile_username}`}>
-                          <ProfilePicture
-                            src={reply.profile_image_url}
-                            alt={reply.profile_username || 'Profile picture'}
-                            size={28}
-                          />
-                        </Link>
+                        <ProfilePicture
+                          src={reply.profile_image_url}
+                          alt={reply.profile_username || 'Profile picture'}
+                          size={28}
+                          hasStory={reply.profile_has_active_story}
+                          username={reply.profile_username}
+                          onStoryClick={() => {
+                            if (reply.profile_has_active_story) {
+                              setStoryViewerUsername(reply.profile_username);
+                              setShowStoryViewer(true);
+                            }
+                          }}
+                        />
                         <div className="flex-1">
-                          <div className="text-sm">
+                          <div className="text-sm relative">
                             <Link
                               href={`/profile/${reply.profile_username}`}
-                              className="font-semibold text-[#262626] dark:text-[#FAFAFA] hover:opacity-50 mr-2"
+                              className="font-semibold text-[#262626] dark:text-[#FAFAFA] mr-2 hover:underline"
+                              onMouseEnter={() => {
+                                const timeout = setTimeout(() => {
+                                  setHoveredUsername(`reply-${reply.id}`);
+                                }, 500);
+                                setHoverTimeout(timeout);
+                              }}
+                              onMouseLeave={() => {
+                                if (hoverTimeout) {
+                                  clearTimeout(hoverTimeout);
+                                  setHoverTimeout(null);
+                                }
+                                setHoveredUsername(null);
+                              }}
                             >
                               {reply.profile_username}
                             </Link>
+                            {hoveredUsername === `reply-${reply.id}` && (
+                              <div 
+                                className="absolute top-full left-0 mt-2 z-50"
+                                onMouseEnter={() => {
+                                  if (hoverTimeout) {
+                                    clearTimeout(hoverTimeout);
+                                    setHoverTimeout(null);
+                                  }
+                                }}
+                                onMouseLeave={() => {
+                                  setHoveredUsername(null);
+                                }}
+                              >
+                                <ProfilePreviewCard username={reply.profile_username} />
+                              </div>
+                            )}
                             {reply.profile_is_verified && <span className="-ml-1 mr-1 inline-block"><VerifiedBadge size={12} /></span>}
                             <span className="text-[#262626] dark:text-[#FAFAFA]">
                               {reply.text}
@@ -523,7 +777,7 @@ export default function PostModal({
                             <span>{formatTimeAgo(reply.created_at)}</span>
                             {reply.likes_count > 0 && (
                               <span className="font-semibold">
-                                {reply.likes_count} Mi piace
+                                {reply.likes_count === 1 ? 'Piace a 1 persona' : `Piace a ${reply.likes_count} persone`}
                               </span>
                             )}
                             <button 
@@ -561,39 +815,33 @@ export default function PostModal({
             <div className="flex items-center justify-between pb-2">
               <div className="flex items-center gap-4">
                 <button
-                  onClick={() => onLike(post.id)}
-                  className="hover:opacity-50 transition-opacity"
+                  onClick={() => {
+                    if (!post.is_liked_by_current_user) {
+                      setIsLikeAnimating(true);
+                      setTimeout(() => setIsLikeAnimating(false), 400);
+                    }
+                    onLike(post.id);
+                  }}
+                  className="hover:scale-95 active:scale-90 transition-transform"
                 >
                   <Heart
                     className={`w-6 h-6 ${
                       post.is_liked_by_current_user
                         ? 'fill-[#ED4956] text-[#ED4956]'
                         : 'text-[#262626] dark:text-[#FAFAFA]'
-                    }`}
+                    } ${isLikeAnimating ? 'like-animation' : ''}`}
                   />
                 </button>
-                <button className="hover:opacity-50 transition-opacity cursor-pointer">
-                  <MessageCircle className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA]" />
+                <button className="hover:scale-103 transition-transform cursor-pointer">
+                  <MessageCircle className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA] icon-mirrored" />
                 </button>
-                <button className="hover:opacity-50 transition-opacity -translate-y-0.5">
-                  <svg
-                    className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA] rotate-[60deg]"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                    />
-                  </svg>
+                <button className="hover:scale-103 transition-transform">
+                  <ShareIcon className="text-[#262626] dark:text-[#FAFAFA]" />
                 </button>
               </div>
               <button
                 onClick={() => onSave(post.id)}
-                className="hover:opacity-50 transition-opacity"
+                className="hover:scale-103 transition-transform"
               >
                 <Bookmark
                   className={`w-6 h-6 ${
@@ -608,7 +856,7 @@ export default function PostModal({
             {/* Likes Count */}
             {!post.is_likes_hidden && post.likes_count > 0 && (
               <div className="text-sm font-semibold text-[#262626] dark:text-[#FAFAFA] pb-2">
-                {formatLikesCount(post.likes_count)} Mi piace
+                {formatLikesText(post.likes_count)}
               </div>
             )}
 
@@ -660,6 +908,17 @@ export default function PostModal({
           </div>
         </div>
       </div>
+
+      {/* Story Viewer */}
+      {showStoryViewer && storyViewerUsername && (
+        <StoryViewer
+          profileUsername={storyViewerUsername}
+          onClose={() => {
+            setShowStoryViewer(false);
+            setStoryViewerUsername(null);
+          }}
+        />
+      )}
     </div>
   );
 }

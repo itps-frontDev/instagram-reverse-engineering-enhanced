@@ -154,11 +154,7 @@ function LoginForm() {
                   <button
                     type="submit"
                     disabled={!isFormValid || loading}
-                    className={`w-full h-8 rounded-lg text-sm font-semibold mt-2 transition-all ${
-                      isFormValid && !loading
-                        ? 'bg-[#0095F6] text-white hover:bg-[#1877F2] active:opacity-70'
-                        : 'bg-[#4CB5F9] text-white/60 cursor-not-allowed pointer-events-none'
-                    }`}
+                    className="w-full h-8 rounded-lg text-sm mt-2 btn-instagram-primary"
                   >
                     {loading ? 'Accesso in corso...' : 'Accedi'}
                   </button>

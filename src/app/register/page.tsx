@@ -125,7 +125,8 @@ export default function RegisterPage() {
                   {/* Facebook Login */}
                   <button
                     type="button"
-                    className="w-full h-[32px] flex items-center justify-center gap-2 bg-[#0095F6] hover:bg-[#1877F2] text-white rounded-lg mb-4 transition-all"
+                    disabled={true}
+                    className="w-full h-[32px] flex items-center justify-center gap-2 btn-instagram-primary rounded-lg mb-4"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
                       <path d="M24 0H0v24h24V0zm-6.5 12h-2.25v8.5h-3.5V12H9.5V9h2.25V7.25c0-2.25 1.25-3.75 3.75-3.75h2.25V7h-1.5c-.75 0-1 .25-1 1v1h2.5l-.25 3z"/>
@@ -161,6 +162,27 @@ export default function RegisterPage() {
                         aria-label="Numero di cellulare o e-mail"
                       />
                     </div>
+                    <div className="mb-[6px] relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        name="password"
+                        placeholder="Password"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full h-[38px] px-2 text-xs bg-[#FAFAFA] dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-[3px] text-[#262626] dark:text-white placeholder-[#8E8E8E] focus:outline-none focus:border-[#A8A8A8] dark:focus:border-[#A8A8A8]"
+                        aria-label="Password"
+                      />
+                      {formData.password.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#262626] dark:text-white"
+                        >
+                          {showPassword ? 'Nascondi' : 'Mostra'}
+                        </button>
+                      )}
+                    </div>
                     <div className="mb-[6px]">
                       <input
                         type="text"
@@ -184,27 +206,6 @@ export default function RegisterPage() {
                         className="w-full h-[38px] px-2 text-xs bg-[#FAFAFA] dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-[3px] text-[#262626] dark:text-white placeholder-[#8E8E8E] focus:outline-none focus:border-[#A8A8A8] dark:focus:border-[#A8A8A8]"
                         aria-label="Nome utente"
                       />
-                    </div>
-                    <div className="mb-[6px] relative">
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        name="password"
-                        placeholder="Password"
-                        value={formData.password}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full h-[38px] px-2 text-xs bg-[#FAFAFA] dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-[3px] text-[#262626] dark:text-white placeholder-[#8E8E8E] focus:outline-none focus:border-[#A8A8A8] dark:focus:border-[#A8A8A8]"
-                        aria-label="Password"
-                      />
-                      {formData.password.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#262626] dark:text-white"
-                        >
-                          {showPassword ? 'Nascondi' : 'Mostra'}
-                        </button>
-                      )}
                     </div>
 
                     {/* Terms Text */}
@@ -245,11 +246,7 @@ export default function RegisterPage() {
                     <button
                       type="submit"
                       disabled={!isStepOneValid}
-                      className={`w-full h-[32px] rounded-lg text-sm font-semibold transition-all ${
-                        isStepOneValid
-                          ? 'bg-[#0095F6] text-white hover:bg-[#1877F2]'
-                          : 'bg-[#0095F6]/30 text-white cursor-not-allowed'
-                      }`}
+                      className="w-full h-[32px] rounded-lg text-sm btn-instagram-primary"
                     >
                       Avanti
                     </button>
@@ -356,7 +353,7 @@ export default function RegisterPage() {
               Hai già un account?{' '}
               <Link
                 href="/login"
-                className="font-semibold text-[#0095F6] hover:text-[#1877F2]"
+                className="font-semibold text-[rgb(102,118,249)]"
               >
                 Accedi
               </Link>
@@ -417,7 +414,7 @@ export default function RegisterPage() {
               <option>Italiano</option>
               <option>English</option>
             </select>
-            <span>© 2025 Instagram from Meta</span>
+            <span>© 2026 Instagram FROM META</span>
           </div>
         </div>
       </footer>

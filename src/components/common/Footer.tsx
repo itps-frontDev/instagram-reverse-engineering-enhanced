@@ -56,7 +56,7 @@ export default function Footer() {
               </option>
             ))}
           </select>
-          <span>© 2026 Instagram from Meta</span>
+          <p className="text-xs">© {new Date().getFullYear()} INSTAGRAM FROM META</p>
         </div>
       </div>
     </footer>

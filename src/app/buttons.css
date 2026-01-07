@@ -15,6 +15,15 @@
     background-color: rgb(64, 83, 239);
   }
 
+  /* Primary button - Disabled state */
+  .btn-instagram-primary:disabled {
+    background-color: rgb(74, 93, 249);
+    color: rgb(255, 255, 255);
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
   /* Secondary button - Light gray (Edit Profile, View Archive) */
   .btn-instagram-secondary {
     background-color: rgb(240, 242, 245);

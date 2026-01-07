@@ -20,6 +20,7 @@ import StoriesHighlights from '@/components/profile/StoriesHighlights';
 import ProfileImageModal from '@/components/profile/ProfileImageModal';
 import PostModal from '@/components/feed/PostModal';
 import CreatePostModal from '@/components/feed/CreatePostModal';
+import StoryViewer from '@/components/feed/StoryViewer';
 import Footer from '@/components/common/Footer';
 import {
   Profile,
@@ -66,6 +67,7 @@ export default function ProfilePage({
   const [selectedPost, setSelectedPost] = useState<FeedPost | null>(null);
   const [showPostModal, setShowPostModal] = useState(false);
   const [showCreatePostModal, setShowCreatePostModal] = useState(false);
+  const [showStoryViewer, setShowStoryViewer] = useState(false);
 
   // Fetch profile data on mount
   useEffect(() => {
@@ -590,6 +592,7 @@ export default function ProfilePage({
               onFollow={handleFollow}
               onUnfollow={handleUnfollow}
               onProfileImageClick={handleProfileImageClick}
+              onStoryClick={() => setShowStoryViewer(true)}
               isUploadingImage={isUploadingImage}
             />
           </div>
@@ -645,6 +648,14 @@ export default function ProfilePage({
           </div>
         </div>
       </div>
+
+      {/* Story Viewer */}
+      {showStoryViewer && profile && (
+        <StoryViewer
+          profileUsername={profile.username}
+          onClose={() => setShowStoryViewer(false)}
+        />
+      )}
 
       {/* Footer - nascosto su mobile */}
       <div className={`hidden lg:block ${profile?.is_private && !followStatus.isFollowing && !followStatus.isOwnProfile ? 'mt-150' : ''}`}>

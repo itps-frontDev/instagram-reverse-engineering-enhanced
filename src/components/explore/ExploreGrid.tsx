@@ -63,7 +63,7 @@ export default function ExploreGrid({
 
           return (
             <button
-              key={post.id}
+              key={`explore-post-${post.id}-${index}`}
               onClick={() => setSelectedPostIndex(index)}
               className="group relative aspect-square bg-gray-100 overflow-hidden cursor-pointer"
             >
@@ -106,7 +106,7 @@ export default function ExploreGrid({
                   <span>{formatCount(post.likes_count)}</span>
                 </div>
                 <div className="flex items-center gap-2 text-white font-semibold">
-                  <MessageCircle className="w-6 h-6" fill="white" />
+                  <MessageCircle className="w-6 h-6" fill="white" style={{ transform: 'scaleX(-1)' }} />
                   <span>{formatCount(post.comments_count)}</span>
                 </div>
               </div>

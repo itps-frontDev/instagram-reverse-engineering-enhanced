@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { queryAll } from '@/lib/db';
+import { getCurrentProfile } from '@/lib/auth';
 
 interface SearchProfile {
   id: number;
@@ -17,6 +18,7 @@ interface SearchProfile {
   is_verified: boolean;
   is_private: boolean;
   followers_count: number;
+  is_following: number | null;
 }
 
 // ============================================================================
@@ -36,6 +38,7 @@ interface SearchProfile {
  */
 export async function GET(request: NextRequest) {
   try {
+    const currentProfile = await getCurrentProfile();
     const searchParams = request.nextUrl.searchParams;
     const query = searchParams.get('q');
     const type = searchParams.get('type') || 'account';
@@ -67,7 +70,16 @@ export async function GET(request: NextRequest) {
         profile_image_url,
         is_verified,
         is_private,
-        followers_count
+        followers_count,
+        ${
+          currentProfile
+            ? `(SELECT 1 FROM follows 
+               WHERE follower_profile_id = ? 
+               AND following_profile_id = profiles.id 
+               AND status = 'accepted' 
+               AND deleted_at IS NULL) as is_following`
+            : 'NULL as is_following'
+        }
       FROM profiles
       WHERE deleted_at IS NULL
         AND (
@@ -82,11 +94,20 @@ export async function GET(request: NextRequest) {
         END,
         followers_count DESC
       LIMIT 20`,
-      [searchTerm, searchTerm, query.trim(), `${query.trim().toLowerCase()}%`]
+      currentProfile
+        ? [currentProfile.id, searchTerm, searchTerm, query.trim(), `${query.trim().toLowerCase()}%`]
+        : [searchTerm, searchTerm, query.trim(), `${query.trim().toLowerCase()}%`]
     );
 
+    // Trasforma is_following e is_verified in boolean
+    const transformedResults = results.map((r) => ({
+      ...r,
+      is_verified: Boolean(r.is_verified),
+      is_following: Boolean(r.is_following),
+    }));
+
     return NextResponse.json(
-      { results },
+      { results: transformedResults },
       { status: 200 }
     );
   } catch (error) {

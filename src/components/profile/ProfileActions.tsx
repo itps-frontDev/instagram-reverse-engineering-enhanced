@@ -33,7 +33,8 @@ export default function ProfileActions({
   onFollow,
   onUnfollow,
   isLoading = false,
-}: ProfileActionsProps) {
+  profileId,
+}: ProfileActionsProps & { profileId?: number }) {
   const router = useRouter();
   const [showDropdown, setShowDropdown] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -54,6 +55,13 @@ export default function ProfileActions({
       await onUnfollow();
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleMessage = () => {
+    if (profileId) {
+      // Naviga alla pagina direct con il profilo selezionato
+      router.push(`/direct?profile=${profileId}`);
     }
   };
 
@@ -125,14 +133,21 @@ export default function ProfileActions({
         </div>
 
         {/* Message Button */}
-        <button className="btn-instagram-secondary flex-1 !h-8 md:!h-10.5 text-sm">
+        <button 
+          className="btn-instagram-secondary flex-1 !h-8 md:!h-10.5 text-sm"
+          onClick={handleMessage}
+        >
           Messaggio
         </button>
 
         {/* Add Person Button */}
-        <button className="btn-instagram-secondary !h-8 md:!h-10.5 !w-8 md:!w-10.5 flex items-center justify-center">
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+        <button className="btn-instagram-secondary !h-8 !w-8  flex items-center justify-center">
+          <svg aria-label="Account simili" fill="currentColor" height="20" role="img" viewBox="0 0 24 24" width="20">
+            <title>Account simili</title>
+            <path d="M19.006 8.252a3.5 3.5 0 1 1-3.499-3.5 3.5 3.5 0 0 1 3.5 3.5Z" fill="none" stroke="currentColor" strokeMiterlimit="10" strokeWidth="2"></path>
+            <path d="M22 19.5v-.447a4.05 4.05 0 0 0-4.05-4.049h-4.906a4.05 4.05 0 0 0-4.049 4.049v.447" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
+            <line fill="none" stroke="currentColor" strokeLinecap="round" strokeMiterlimit="10" strokeWidth="2" x1="5.001" x2="5.001" y1="7.998" y2="14.003"></line>
+            <line fill="none" stroke="currentColor" strokeLinecap="round" strokeMiterlimit="10" strokeWidth="2" x1="8.004" x2="2.003" y1="11" y2="11"></line>
           </svg>
         </button>
       </div>
@@ -165,9 +180,23 @@ export default function ProfileActions({
         {actionLoading ? 'Caricamento...' : (isFollowedBy ? 'Segui anche tu' : 'Segui')}
       </button>
       {!isPrivate && (
-        <button className="btn-instagram-secondary flex-1 !h-8 md:!h-10.5 text-sm">
-          Messaggio
-        </button>
+        <>
+          <button 
+            className="btn-instagram-secondary flex-1 !h-8 md:!h-10.5 text-sm"
+            onClick={handleMessage}
+          >
+            Messaggio
+          </button>
+          <button className="btn-instagram-secondary !h-8 md:!h-10.5 !w-8 md:!w-10.5 !p-3  flex items-center justify-center">
+            <svg aria-label="Account simili" fill="currentColor" height="20" role="img" viewBox="0 0 24 24" width="20">
+              <title>Account simili</title>
+              <path d="M19.006 8.252a3.5 3.5 0 1 1-3.499-3.5 3.5 3.5 0 0 1 3.5 3.5Z" fill="none" stroke="currentColor" strokeMiterlimit="10" strokeWidth="2"></path>
+              <path d="M22 19.5v-.447a4.05 4.05 0 0 0-4.05-4.049h-4.906a4.05 4.05 0 0 0-4.049 4.049v.447" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
+              <line fill="none" stroke="currentColor" strokeLinecap="round" strokeMiterlimit="10" strokeWidth="2" x1="5.001" x2="5.001" y1="7.998" y2="14.003"></line>
+              <line fill="none" stroke="currentColor" strokeLinecap="round" strokeMiterlimit="10" strokeWidth="2" x1="8.004" x2="2.003" y1="11" y2="11"></line>
+            </svg>
+          </button>
+        </>
       )}
     </div>
   );

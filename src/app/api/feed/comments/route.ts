@@ -32,6 +32,7 @@ interface CommentRow {
   profile_full_name: string | null;
   profile_image_url: string | null;
   profile_is_verified: number;
+  profile_has_active_story: number;
   is_liked: number | null;
 }
 
@@ -85,6 +86,13 @@ export async function GET(request: NextRequest) {
         p.full_name as profile_full_name,
         p.profile_image_url,
         p.is_verified as profile_is_verified,
+        (
+          SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
+          FROM stories s
+          WHERE s.profile_id = p.id
+            AND s.expires_at > datetime('now')
+            AND s.deleted_at IS NULL
+        ) as profile_has_active_story,
         (SELECT 1 FROM likes
          WHERE likeable_type = 'comment'
          AND likeable_id = c.id
@@ -115,6 +123,7 @@ export async function GET(request: NextRequest) {
       profile_full_name: c.profile_full_name,
       profile_image_url: c.profile_image_url,
       profile_is_verified: Boolean(c.profile_is_verified),
+      profile_has_active_story: Boolean(c.profile_has_active_story),
       is_liked_by_current_user: Boolean(c.is_liked),
     }));
 

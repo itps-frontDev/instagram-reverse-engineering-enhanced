@@ -24,6 +24,7 @@ export interface FeedPost {
   profile_full_name: string | null;
   profile_image_url: string | null;
   profile_is_verified: boolean;
+  profile_has_active_story: boolean;
 
   // Media (first image/video)
   media: PostMedia[];
@@ -31,6 +32,7 @@ export interface FeedPost {
   // Current user interaction
   is_liked_by_current_user: boolean;
   is_saved_by_current_user: boolean;
+  is_following_author: boolean;
 }
 
 export interface PostMedia {
@@ -56,6 +58,7 @@ export interface Comment {
   profile_full_name: string | null;
   profile_image_url: string | null;
   profile_is_verified: boolean;
+  profile_has_active_story: boolean;
 
   // Current user interaction
   is_liked_by_current_user: boolean;

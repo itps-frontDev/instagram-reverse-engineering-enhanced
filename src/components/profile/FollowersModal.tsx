@@ -224,7 +224,7 @@ export default function FollowersModal({
     >
       <div
         className="bg-white dark:bg-[#212328] rounded-xl w-[400px] max-w-[90vw] overflow-hidden flex flex-col"
-        style={{ maxHeight: '600px' }}
+        style={{ maxHeight: '600px', minHeight: '400px' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header con X chiusura */}
@@ -271,7 +271,7 @@ export default function FollowersModal({
               }}
             >
               <div>
-                <svg aria-label="Chiudi" fill="currentColor" height="18" role="img" viewBox="0 0 24 24" width="18">
+                <svg aria-label="Chiudi" fill="currentColor" height="18" role="img" viewBox="0 0 24 24" width="18" className="text-[rgb(12,16,20)] dark:text-[rgb(248,249,249)]">
                   <title>Chiudi</title>
                   <polyline fill="none" points="20.643 3.357 12 12 3.353 20.647" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3"></polyline>
                   <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" x1="20.649" x2="3.354" y1="20.649" y2="3.354"></line>
@@ -325,7 +325,7 @@ export default function FollowersModal({
                 }
               }}
             >
-              <svg aria-label="Cancella" fill="currentColor" height="14" role="img" viewBox="0 0 24 24" width="14">
+              <svg aria-label="Cancella" fill="currentColor" height="14" role="img" viewBox="0 0 24 24" width="14" className="text-[rgb(12,16,20)] dark:text-[rgb(248,249,249)]">
                 <title>Cancella</title>
                 <path d="M12.001.504c-6.34 0-11.5 5.16-11.5 11.5s5.16 11.5 11.5 11.5 11.5-5.158 11.5-11.5-5.16-11.5-11.5-11.5Zm4.707 14.793a1 1 0 1 1-1.414 1.414l-3.293-3.293-3.293 3.293a.997.997 0 0 1-1.414 0 1 1 0 0 1 0-1.414l3.293-3.293-3.293-3.293a1 1 0 1 1 1.414-1.414l3.293 3.293 3.293-3.293a1 1 0 1 1 1.414 1.414l-3.293 3.293 3.293 3.293Z"></path>
               </svg>

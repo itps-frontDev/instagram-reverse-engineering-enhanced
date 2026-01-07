@@ -150,19 +150,19 @@ export default function Suggestions() {
               </p>
             </div>
           </Link>
-          <Link
-            href="/api/auth/logout"
-            className="text-xs font-semibold text-[#0095F6] hover:text-[#1877F2]"
+          <button
+            onClick={(e) => e.preventDefault()}
+            className="text-xs font-semibold text-follow hover:underline"
           >
-            Cambia
-          </Link>
+            Passa a
+          </button>
         </div>
 
         {/* Suggestions */}
         <div className="mt-6">
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm font-semibold text-[#8E8E8E] dark:text-gray-400">
-              Suggerimenti per te
+              Suggeriti per te
             </p>
             <button className="text-xs font-semibold text-[#262626] dark:text-white hover:text-[#8E8E8E]">
               Mostra tutti
@@ -225,10 +225,10 @@ export default function Suggestions() {
                   <button 
                     onClick={() => (followingIds.has(user.id) || pendingIds.has(user.id)) ? handleUnfollow(user.id) : handleFollow(user.id)}
                     disabled={loadingFollowIds.has(user.id)}
-                    className={`text-xs font-semibold transition-colors ${
+                    className={`text-xs font-semibold ${
                       followingIds.has(user.id) || pendingIds.has(user.id)
-                        ? 'text-[#84a0fe] dark:text-white hover:text-[#1877F2]'
-                        : 'text-[#84a0fe] hover:text-[#1877F2]'
+                        ? 'text-[#84a0fe] dark:text-white'
+                        : 'text-[#84a0fe]'
                     } disabled:opacity-50`}
                   >
                     {loadingFollowIds.has(user.id) 
@@ -307,7 +307,7 @@ export default function Suggestions() {
             </a>
           </div>
 
-          <p className="text-xs">© 2025 INSTAGRAM FROM META</p>
+          <p className="text-xs">© {new Date().getFullYear()} INSTAGRAM FROM META</p>
         </div>
       </div>
     </aside>

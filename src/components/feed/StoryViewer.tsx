@@ -21,12 +21,14 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import ProfilePicture from '@/components/ProfilePicture';
+import VerifiedBadge from '@/components/common/VerifiedBadge';
 
 interface Story {
   id: number;
   profile_id: number;
   username: string;
   profile_image_url: string | null;
+  is_verified?: boolean;
   media_url: string;
   media_type: 'image' | 'video';
   duration_seconds: number;
@@ -299,7 +301,10 @@ export default function StoryViewer({
   }
 
   return (
-    <div className="fixed inset-0 bg-[#1a1a1a] z-[60] flex items-center justify-center overflow-x-hidden">
+    <div 
+      className="fixed inset-0 bg-[#1a1a1a] z-[60] flex items-center justify-center overflow-x-hidden"
+      onClick={(e) => e.stopPropagation()}
+    >
       
       {/* Instagram Logo - solo desktop */}
       <div className="hidden md:block absolute top-4 left-4 z-20">
@@ -323,7 +328,10 @@ export default function StoryViewer({
       
       {/* Close button */}
       <button
-        onClick={onClose}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
         className="absolute top-5 md:top-3 right-3 text-white hover:transform hover:scale-110 hover:bg-opacity-20 p-2 transition-all z-40 drop-shadow-lg"
         aria-label="Chiudi"
       >
@@ -450,15 +458,25 @@ export default function StoryViewer({
           <div className="flex-1">
             <Link 
               href={`/profile/${currentStory.username}`}
-              className="text-white font-semibold text-sm drop-shadow-lg hover:opacity-80 transition-opacity"
+              className="text-white font-semibold text-sm drop-shadow-lg hover:opacity-80 transition-opacity flex items-center gap-1"
             >
               {currentStory.username}
+              {currentStory.is_verified && (
+                <VerifiedBadge size={12} />
+              )}
             </Link>
             <p className="text-white text-xs opacity-80 drop-shadow-lg">
-              {new Date(currentStory.created_at).toLocaleTimeString('it-IT', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
+              {(() => {
+                const now = new Date();
+                const storyDate = new Date(currentStory.created_at);
+                const diffMs = now.getTime() - storyDate.getTime();
+                const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                if (diffHours < 1) {
+                  const diffMins = Math.floor(diffMs / (1000 * 60));
+                  return `${diffMins}m`;
+                }
+                return `${diffHours}h`;
+              })()}
             </p>
           </div>
         </div>

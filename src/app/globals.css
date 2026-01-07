@@ -38,6 +38,11 @@
   --text-secondary: var(--color-text-secondary);
   --border-primary: var(--color-border);
   --border-secondary: var(--color-border);
+
+  /* New UI Colors for Fix Implementation */
+  --color-modal-dark: rgb(33, 35, 40);        /* Dark mode modal background */
+  --color-link-muted: rgb(129, 121, 149);     /* Muted blue for links */
+  --color-search-clear: rgb(248, 249, 249);   /* Clear button in dark mode */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -125,6 +130,35 @@ body {
   /* Border Utilities */
   .border-instagram {
     @apply border-[var(--color-border)];
+  }
+
+  /* Link Muted Utility */
+  .text-link-muted {
+    @apply text-[rgb(129,121,149)] cursor-pointer;
+  }
+
+  /* Modal Dark Background */
+  .bg-modal-dark {
+    @apply bg-[rgb(33,35,40)];
+  }
+
+  /* Mirrored Icon (for comments) */
+  .icon-mirrored {
+    transform: scaleX(-1);
+  }
+
+  .icon-mirrored:hover {
+    transform: scaleX(-1) scale(1.1);
+  }
+
+  /* Follow Button Color */
+  .text-follow {
+    @apply text-[#84a0fe];
+  }
+
+  /* Clear Button in Dark Mode (Search X) */
+  .text-search-clear-dark {
+    @apply dark:text-[rgb(248,249,249)];
   }
 }
 

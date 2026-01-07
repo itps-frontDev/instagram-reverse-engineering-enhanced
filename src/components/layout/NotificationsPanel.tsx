@@ -11,6 +11,7 @@ import { useState, useEffect, useRef } from 'react';
 import ProfilePicture from '@/components/ProfilePicture';
 import VerifiedBadge from '@/components/common/VerifiedBadge';
 import Link from 'next/link';
+import NotificationsSkeleton from '@/components/common/skeletons/NotificationsSkeleton';
 
 interface Notification {
   id: number;
@@ -149,30 +150,61 @@ export default function NotificationsPanel({ isOpen, onClose, onMarkAllAsRead }:
     return date.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
   };
 
+  // Raggruppa notifiche per sezioni temporali
+  const groupNotifications = () => {
+    const now = new Date();
+    const groups: { [key: string]: Notification[] } = {
+      'Oggi': [],
+      'Ieri': [],
+      'Questa settimana': [],
+      'Questo mese': [],
+      'Prima': [],
+    };
+
+    notifications.forEach((notification) => {
+      const date = new Date(notification.created_at);
+      const diffMs = now.getTime() - date.getTime();
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 0) {
+        groups['Oggi'].push(notification);
+      } else if (diffDays === 1) {
+        groups['Ieri'].push(notification);
+      } else if (diffDays < 7) {
+        groups['Questa settimana'].push(notification);
+      } else if (diffDays < 30) {
+        groups['Questo mese'].push(notification);
+      } else {
+        groups['Prima'].push(notification);
+      }
+    });
+
+    // Filtra solo i gruppi non vuoti
+    return Object.entries(groups).filter(([_, items]) => items.length > 0);
+  };
+
   return (
     <div
       ref={panelRef}
-      className={`fixed left-0 top-0 h-screen bg-[var(--bg-primary)] border-r border-[#DBDBDB] dark:border-[#262626] transition-all duration-300 ease-in-out overflow-hidden z-40 ${
+      className={`fixed left-0 top-0 h-screen bg-[var(--bg-primary)] border-r border-[#DBDBDB] dark:border-[#262626] transition-all duration-300 ease-in-out overflow-hidden z-40 rounded-r-2xl ${
         isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-full pointer-events-none'
       }`}
       style={{
         width: isOpen ? '397px' : '0px',
         marginLeft: '80px', // Spazio per la sidebar contratta
+        boxShadow: isOpen ? '4px 0px 24px 0px rgba(0, 0, 0, 0.15)' : 'none',
       }}
     >
       <div className="flex flex-col h-full">
         {/* Header */}
-        <div className="px-6 py-6 border-b border-[#DBDBDB] dark:border-[#262626]">
+        <div className="px-6 py-6">
           <h2 className="text-2xl font-semibold text-[#262626] dark:text-white">Notifiche</h2>
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
-            // Loading skeleton
-            <div className="px-4 py-8 text-center">
-              <div className="inline-block w-6 h-6 border-2 border-[#DBDBDB] border-t-[#262626] dark:border-[#262626] dark:border-t-white rounded-full animate-spin" />
-            </div>
+            <NotificationsSkeleton />
           ) : notifications.length === 0 ? (
             // No notifications
             <div className="px-6 py-16 text-center">
@@ -181,53 +213,53 @@ export default function NotificationsPanel({ isOpen, onClose, onMarkAllAsRead }:
               </p>
             </div>
           ) : (
-            // Notifications List
+            // Notifications List with temporal sections
             <div className="px-2 py-2">
-              {notifications.map((notification) => (
-                <Link
-                  key={notification.id}
-                  href={getNotificationLink(notification)}
-                  onClick={onClose}
-                  className={`flex items-center gap-3 w-full py-3 px-4 hover:bg-[#F2F2F2] dark:hover:bg-[#121212] rounded-lg transition ${
-                    !notification.is_read ? 'bg-[#F8F9FA] dark:bg-[#1A1A1A]' : ''
-                  }`}
-                >
-                  <div className="w-11 h-11 rounded-full bg-[#DBDBDB] dark:bg-[#262626] flex items-center justify-center overflow-hidden flex-shrink-0">
-                    {notification.sender_profile_image_url ? (
-                      <ProfilePicture
-                        src={notification.sender_profile_image_url}
-                        alt={notification.sender_username || 'User'}
-                        size={44}
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-purple-400 to-pink-400" />
-                    )}
-                  </div>
-                  <div className="flex-1 text-left overflow-hidden">
-                    <div className="flex items-start gap-2">
-                      <div className="flex-1 min-w-0">
+              {groupNotifications().map(([section, items]) => (
+                <div key={section} className="mb-6">
+                  {/* Section Header */}
+                  <h3 className="px-4 py-2 text-sm font-semibold text-[#262626] dark:text-white">
+                    {section}
+                  </h3>
+                  {/* Notifications in this section */}
+                  {items.map((notification) => (
+                    <Link
+                      key={notification.id}
+                      href={getNotificationLink(notification)}
+                      onClick={onClose}
+                      className={`flex items-center gap-3 w-full py-3 px-4 hover:bg-[#F2F2F2] dark:hover:bg-[#121212] rounded-lg transition ${
+                        !notification.is_read ? 'bg-[#F8F9FA] dark:bg-[#1A1A1A]' : ''
+                      }`}
+                    >
+                      <div className="w-11 h-11 rounded-full bg-[#DBDBDB] dark:bg-[#262626] flex items-center justify-center overflow-hidden flex-shrink-0">
+                        {notification.sender_profile_image_url ? (
+                          <ProfilePicture
+                            src={notification.sender_profile_image_url}
+                            alt={notification.sender_username || 'User'}
+                            size={44}
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-purple-400 to-pink-400" />
+                        )}
+                      </div>
+                      <div className="flex-1 text-left overflow-hidden">
                         <p className="text-sm text-[#262626] dark:text-white">
-                          <span className="font-semibold inline-flex items-center gap-1">
-                            {notification.sender_username}
-                            {notification.sender_is_verified && (
-                              <VerifiedBadge size={12} />
-                            )}
-                          </span>
+                          <span className="font-semibold">{notification.sender_username}</span>
                           {' '}
-                          <span className="text-[#262626] dark:text-white">
-                            {getNotificationText(notification)}
+                          <span className="text-[#8E8E8E] dark:text-[#A8A8A8]">
+                            {getNotificationText(notification.type)}
                           </span>
                         </p>
-                        <p className="text-xs text-[#8E8E8E] mt-1">
+                        <p className="text-xs text-[#8E8E8E] dark:text-[#A8A8A8] mt-0.5">
                           {getTimeAgo(notification.created_at)}
                         </p>
                       </div>
-                      {!notification.is_read && (
-                        <div className="w-2 h-2 rounded-full bg-[#0095F6] flex-shrink-0 mt-1" />
+                      {notification.sender_is_verified && (
+                        <VerifiedBadge size={12} />
                       )}
-                    </div>
-                  </div>
-                </Link>
+                    </Link>
+                  ))}
+                </div>
               ))}
             </div>
           )}
