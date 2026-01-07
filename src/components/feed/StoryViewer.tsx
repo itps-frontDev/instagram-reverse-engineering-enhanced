@@ -637,10 +637,7 @@ export default function StoryViewer({
             {/* Share button */}
             <button
               onClick={handleSendMessage}
-              disabled={!messageText.trim()}
-              className={`flex-shrink-0 hover:scale-110 transition-transform drop-shadow-lg ${
-                !messageText.trim() ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
+              className="flex-shrink-0 hover:scale-110 transition-transform drop-shadow-lg"
               aria-label="Condividi storia"
             >
               <ShareIcon size={28} className="text-white" />
