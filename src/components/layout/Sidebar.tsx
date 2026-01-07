@@ -18,12 +18,7 @@ import SearchPanel from '@/components/layout/SearchPanel';
 import NotificationsPanel from '@/components/layout/NotificationsPanel';
 import ShareIcon from '@/components/common/ShareIcon';
 import {
-  Home,
-  Search,
-  Compass,
-  Film,
   Heart,
-  PlusSquare,
   Menu,
   Instagram,
 } from 'lucide-react';
