@@ -7,13 +7,14 @@ import { getCurrentProfile } from '@/lib/auth';
 import { queryAll } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
-  const profile = await getCurrentProfile();
-  if (!profile) {
-    return NextResponse.json({ chats: [] }, { 
-      status: 401,
-      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
-    });
-  }
+  try {
+    const profile = await getCurrentProfile();
+    if (!profile) {
+      return NextResponse.json({ chats: [] }, { 
+        status: 401,
+        headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
+      });
+    }
 
   // Recupera tutte le chat dove l'utente è partecipante attivo con ultimo messaggio e info altro partecipante
   const chats = await queryAll<{
@@ -111,8 +112,18 @@ export async function GET(req: NextRequest) {
   // Combina: prima le chat con messaggi (ordinate per data), poi i follower senza chat
   const allContacts = [...mappedChats, ...mappedFollowers];
 
-  return NextResponse.json(
-    { chats: allContacts, currentProfileId: profile.id },
-    { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
-  );
+    return NextResponse.json(
+      { chats: allContacts, currentProfileId: profile.id },
+      { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
+    );
+  } catch (error) {
+    console.error('[API] Error in /api/direct/chats:', error);
+    return NextResponse.json(
+      { chats: [], error: 'Failed to fetch chats' },
+      { 
+        status: 500,
+        headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
+      }
+    );
+  }
 }

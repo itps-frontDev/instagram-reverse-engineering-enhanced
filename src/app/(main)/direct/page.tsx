@@ -60,7 +60,12 @@ export default function DirectPage() {
         cache: 'no-store',
         headers: { 'Cache-Control': 'no-cache' }
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        if (res.status !== 401) {
+          console.error('[DirectPage] Failed to fetch chats:', res.status);
+        }
+        return;
+      }
       const data = await res.json();
       const chats = (data.chats || []) as any[];
       
@@ -79,7 +84,10 @@ export default function DirectPage() {
       
       setContacts(mapped);
     } catch (e) {
-      console.error('[DirectPage] Error fetching chats:', e);
+      // Silent fail on network errors
+      if (e instanceof Error && e.message !== 'Failed to fetch') {
+        console.error('[DirectPage] Error fetching chats:', e);
+      }
     }
   }, []);
 

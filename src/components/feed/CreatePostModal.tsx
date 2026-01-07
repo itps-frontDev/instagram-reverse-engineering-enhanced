@@ -580,10 +580,10 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
               </div>
               
               {/* Form dettagli a destra */}
-              <div className="w-[340px] flex flex-col bg-white dark:bg-modal-dark max-[639px]:w-full max-[639px]:flex-1 max-[639px]:overflow-y-auto">
+              <div className="w-[340px] flex flex-col bg-white dark:bg-[rgb(33,35,40)] max-[639px]:w-full max-[639px]:flex-1 max-[639px]:overflow-y-auto">
                 {/* Profilo */}
                 {currentProfile && (
-                  <div className="flex items-center gap-3 p-4 border-b border-gray-200 dark:border-[#363636] max-[639px]:p-2 max-[639px]:gap-2">
+                  <div className="flex items-center gap-3 p-4 max-[639px]:p-2 max-[639px]:gap-2">
                     <ProfilePicture
                       src={currentProfile.profile_image_url}
                       alt={currentProfile.username}
@@ -598,7 +598,7 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
                 )}
                 
                 {/* Caption textarea */}
-                <div className="flex-1 p-4 max-[639px]:p-2">
+                <div className="flex-1 p-4 max-[639px]:p-2 dark:bg-[rgb(33,35,40)]">
                   <textarea
                     value={caption}
                     onChange={(e) => setCaption(e.target.value)}
@@ -612,7 +612,7 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
 
                   {/* Toggle audio per video */}
                   {uploadedImage && uploadedImage.startsWith('data:video') && (
-                    <div className="mt-6 pt-4 border-t border-gray-200 dark:border-[#363636]">
+                    <div className="mt-6 pt-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="text-lgef text-[#262626] dark:text-white">Audio attivo</span>
