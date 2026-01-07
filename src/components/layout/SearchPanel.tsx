@@ -20,6 +20,7 @@ interface SearchResult {
   is_verified: boolean;
   is_private: boolean;
   followers_count: number;
+  is_following?: boolean;
 }
 
 interface SearchPanelProps {
@@ -34,6 +35,7 @@ export default function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
   const [recentSearches, setRecentSearches] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
   // Detect when mounted on client to avoid hydration mismatch
@@ -122,37 +124,53 @@ export default function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
   return (
     <div
       ref={panelRef}
-      className={`fixed left-0 top-0 h-screen bg-[var(--bg-primary)] border-r border-[#DBDBDB] dark:border-[#262626] transition-all duration-300 ease-in-out overflow-hidden z-40 ${
+      className={`fixed left-0 top-0 h-screen bg-[var(--bg-primary)] border-r border-[#DBDBDB] dark:border-[#262626] transition-all duration-300 ease-in-out overflow-hidden z-40 rounded-r-2xl ${
         isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-full pointer-events-none'
       }`}
       style={{
         width: isOpen ? (mounted && window.innerWidth < 640 ? '100vw' : '397px') : '0px',
         marginLeft: mounted && window.innerWidth >= 640 ? '80px' : '0px',
+        boxShadow: isOpen ? '4px 0px 24px 0px rgba(0, 0, 0, 0.15)' : 'none',
       }}
     >
       <div className="flex flex-col h-full">
         {/* Header */}
-        <div className="px-6 py-6 border-b border-[#DBDBDB] dark:border-[#262626]">
+        <div className="px-6 py-6">
           <h2 className="text-2xl font-semibold text-[#262626] dark:text-white mb-6">Cerca</h2>
           
           {/* Search Input */}
           <div className="relative">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8E8E8E]" />
+            <SearchIcon className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8E8E8E] transition-opacity ${isFocused ? 'opacity-0' : 'opacity-100'}`} />
             <input
               type="text"
               placeholder="Cerca"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full pl-10 pr-10 py-2 bg-[#EFEFEF] dark:bg-[#262626] border-none rounded-lg outline-none text-[#262626] dark:text-white placeholder-[#8E8E8E] text-sm"
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              className={`w-full h-[40px] pr-10 py-2 bg-[rgb(243,245,247)] dark:bg-[rgb(37,41,46)] border-none rounded-[25px] outline-none text-[#262626] dark:text-white placeholder-[#8E8E8E] text-base transition-all ${isFocused ? 'pl-4' : 'pl-10'}`}
               autoFocus
             />
-            {query && (
-              <button
+            {query !== '' && (
+              <div
+                className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+                aria-disabled="false"
+                aria-label="Cancella la casella di ricerca"
+                role="button"
+                tabIndex={0}
                 onClick={() => setQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8E8E8E] hover:text-[#262626] dark:hover:text-white"
+                onMouseDown={(e) => e.preventDefault()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    setQuery('');
+                  }
+                }}
               >
-                <X className="w-4 h-4" />
-              </button>
+                <svg aria-label="Cancella" fill="currentColor" height="14" role="img" viewBox="0 0 24 24" width="14" className="text-[rgb(12,16,20)] dark:text-[rgb(248,249,249)]">
+                  <title>Cancella</title>
+                  <path d="M12.001.504c-6.34 0-11.5 5.16-11.5 11.5s5.16 11.5 11.5 11.5 11.5-5.158 11.5-11.5-5.16-11.5-11.5-11.5Zm4.707 14.793a1 1 0 1 1-1.414 1.414l-3.293-3.293-3.293 3.293a.997.997 0 0 1-1.414 0 1 1 0 0 1 0-1.414l3.293-3.293-3.293-3.293a1 1 0 1 1 1.414-1.414l3.293 3.293 3.293-3.293a1 1 0 1 1 1.414 1.414l-3.293 3.293 3.293 3.293Z"></path>
+                </svg>
+              </div>
             )}
           </div>
         </div>
@@ -223,17 +241,11 @@ export default function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
                       }}
                       className="flex items-center gap-3 w-full py-2 px-4 hover:bg-[#F2F2F2] dark:hover:bg-[#121212] rounded-lg transition"
                     >
-                      <div className="w-11 h-11 rounded-full bg-[#DBDBDB] dark:bg-[#262626] flex items-center justify-center overflow-hidden flex-shrink-0">
-                        {result.profile_image_url ? (
-                          <ProfilePicture
-                            src={result.profile_image_url}
-                            alt={result.username}
-                            size={44}
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-purple-400 to-pink-400" />
-                        )}
-                      </div>
+                      <ProfilePicture
+                        src={result.profile_image_url || ''}
+                        alt={result.username}
+                        size={44}
+                      />
                       <div className="flex-1 text-left overflow-hidden">
                         <div className="flex items-center gap-1">
                           <p className="font-semibold text-[#262626] dark:text-white text-sm truncate">
@@ -245,7 +257,7 @@ export default function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
                         </div>
                         <p className="text-xs text-[#8E8E8E] truncate">
                           {result.full_name || result.username}
-                          {result.is_private && ' • Privato'}
+                          {result.is_following && ' • Segui già'}
                         </p>
                       </div>
                     </Link>
@@ -261,7 +273,7 @@ export default function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
                 {recentSearches.length > 0 && (
                   <button 
                     onClick={clearAllRecent}
-                    className="text-sm text-[#0095F6] font-semibold hover:text-[#00376B] transition"
+                    className="text-sm text-[rgb(116,140,221)] font-semibold hover:text-[rgb(116,140,221)] dark:hover:text-[rgb(116,140,221)]"
                   >
                     Cancella tutto
                   </button>
@@ -279,7 +291,7 @@ export default function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
                   {recentSearches.map((result) => (
                     <div
                       key={result.id}
-                      className="flex items-center gap-3 w-full py-2 px-2 hover:bg-[#F2F2F2] dark:hover:bg-[#121212] rounded-lg transition group"
+                      className="flex items-center gap-3 w-full py-2 px-2 hover:bg-[#F2F2F2] dark:hover:bg-[#121212] rounded-lg transition"
                     >
                       <Link
                         href={`/profile/${result.username}`}
@@ -289,17 +301,11 @@ export default function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
                         }}
                         className="flex items-center gap-3 flex-1 overflow-hidden"
                       >
-                        <div className="w-11 h-11 rounded-full bg-[#DBDBDB] dark:bg-[#262626] flex items-center justify-center overflow-hidden flex-shrink-0">
-                          {result.profile_image_url ? (
-                            <ProfilePicture
-                              src={result.profile_image_url}
-                              alt={result.username}
-                              size={44}
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-purple-400 to-pink-400" />
-                          )}
-                        </div>
+                        <ProfilePicture
+                          src={result.profile_image_url || ''}
+                          alt={result.username}
+                          size={44}
+                        />
                         <div className="flex-1 text-left overflow-hidden">
                           <div className="flex items-center gap-1">
                             <p className="font-semibold text-[#262626] dark:text-white text-sm truncate">
@@ -311,13 +317,13 @@ export default function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
                           </div>
                           <p className="text-xs text-[#8E8E8E] truncate">
                             {result.full_name || result.username}
-                            {result.is_private && ' • Privato'}
+                            {result.is_following && ' • Segui già'}
                           </p>
                         </div>
                       </Link>
                       <button
                         onClick={() => removeFromRecent(result.id)}
-                        className="opacity-0 group-hover:opacity-100 p-2 text-[#8E8E8E] hover:text-[#262626] dark:hover:text-white transition flex-shrink-0"
+                        className="p-2 text-[#8E8E8E] hover:text-[#262626] dark:hover:text-white transition flex-shrink-0"
                         aria-label="Rimuovi"
                       >
                         <X className="w-4 h-4" />

@@ -359,8 +359,8 @@ export async function seedStories(profileIds: number[]) {
 
     for (let j = 0; j < numStories; j++) {
       const mediaUrl = `https://picsum.photos/seed/story${profileId}img${j}/1080/1920`;
-      const mediaType = Math.random() < 0.85 ? 'image' : 'video'; // 85% images, 15% videos
-      const duration = mediaType === 'image' ? 5 : Math.floor(Math.random() * 21) + 10; // 10-30s for videos
+      const mediaType = 'image'; // All images since we're using picsum.photos
+      const duration = 5; // 5 seconds for images
 
       await execute(
         `INSERT INTO stories (profile_id, media_url, media_type, duration_seconds, created_at, expires_at)

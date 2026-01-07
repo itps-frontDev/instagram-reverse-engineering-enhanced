@@ -16,12 +16,12 @@ import { createPortal } from 'react-dom';
 import CreatePostModal from '@/components/feed/CreatePostModal';
 import SearchPanel from '@/components/layout/SearchPanel';
 import NotificationsPanel from '@/components/layout/NotificationsPanel';
+import ShareIcon from '@/components/common/ShareIcon';
 import {
   Home,
   Search,
   Compass,
   Film,
-  MessageCircle,
   Heart,
   PlusSquare,
   Menu,
@@ -77,55 +77,72 @@ export default function Sidebar() {
         if (response.ok) {
           const data = await response.json();
           setUnreadCount(data.count || 0);
+        } else {
+          // Silent fail - don't log on auth errors
+          if (response.status !== 401) {
+            console.error('Error fetching unread notifications:', response.status);
+          }
         }
       } catch (error) {
-        console.error('Error fetching unread notifications:', error);
+        // Silent fail - network errors shouldn't break the UI
+        // Only log if it's not a network error
+        if (error instanceof Error && error.message !== 'Failed to fetch') {
+          console.error('Error fetching unread notifications:', error);
+        }
       }
     };
 
     const fetchUnreadChats = async () => {
       try {
         const response = await fetch('/api/direct/chats');
-        if (response.ok) {
-          const data = await response.json();
-          const chats = data.chats || [];
-          // Conta le chat con messaggi non letti
-          // Non mostrare il badge se l'utente è già sulla pagina dei messaggi
-          if (!pathname.startsWith('/direct')) {
-            // Ottieni le chat lette da localStorage
-            const readChats = JSON.parse(localStorage.getItem('readChats') || '{}');
-            
-            const unread = chats.filter((chat: any) => {
-              // Ignora chat senza messaggi
-              if (!chat.last_message_text || !chat.last_message_at) return false;
-              
-              // Ignora messaggi inviati da me
-              if (chat.isFromMe) return false;
-              
-              // Usa solo l'ID della chat come chiave
-              const chatKey = `chat_${chat.id}`;
-              const lastReadTime = readChats[chatKey] || 0;
-              
-              // Converti last_message_at in timestamp se è una stringa datetime
-              let lastMessageTime: number;
-              if (typeof chat.last_message_at === 'number') {
-                lastMessageTime = chat.last_message_at;
-              } else {
-                lastMessageTime = new Date(chat.last_message_at).getTime();
-              }
-              
-              console.log('[Sidebar] Chat:', chat.id, 'LastMsg:', lastMessageTime, 'LastRead:', lastReadTime, 'Unread:', lastMessageTime > lastReadTime);
-              
-              return lastMessageTime > lastReadTime;
-            }).length;
-            
-            setUnreadChatsCount(unread);
-          } else {
-            setUnreadChatsCount(0);
+        if (!response.ok) {
+          // Silent fail - don't log on auth errors
+          if (response.status !== 401) {
+            console.error('Error fetching chats:', response.status);
           }
+          return;
+        }
+        const data = await response.json();
+        const chats = data.chats || [];
+        // Conta le chat con messaggi non letti
+        // Non mostrare il badge se l'utente è già sulla pagina dei messaggi
+        if (!pathname.startsWith('/direct')) {
+          // Ottieni le chat lette da localStorage
+          const readChats = JSON.parse(localStorage.getItem('readChats') || '{}');
+          
+          const unread = chats.filter((chat: any) => {
+            // Ignora chat senza messaggi
+            if (!chat.last_message_text || !chat.last_message_at) return false;
+            
+            // Ignora messaggi inviati da me
+            if (chat.isFromMe) return false;
+            
+            // Usa solo l'ID della chat come chiave
+            const chatKey = `chat_${chat.id}`;
+            const lastReadTime = readChats[chatKey] || 0;
+            
+            // Converti last_message_at in timestamp se è una stringa datetime
+            let lastMessageTime: number;
+            if (typeof chat.last_message_at === 'number') {
+              lastMessageTime = chat.last_message_at;
+            } else {
+              lastMessageTime = new Date(chat.last_message_at).getTime();
+            }
+            
+            console.log('[Sidebar] Chat:', chat.id, 'LastMsg:', lastMessageTime, 'LastRead:', lastReadTime, 'Unread:', lastMessageTime > lastReadTime);
+            
+            return lastMessageTime > lastReadTime;
+          }).length;
+          
+          setUnreadChatsCount(unread);
+        } else {
+          setUnreadChatsCount(0);
         }
       } catch (error) {
-        console.error('Error fetching unread chats:', error);
+        // Silent fail on network errors
+        if (error instanceof Error && error.message !== 'Failed to fetch') {
+          console.error('Error fetching unread chats:', error);
+        }
       }
     };
 
@@ -220,7 +237,17 @@ export default function Sidebar() {
       {/* Navigation Items */}
       <nav className="flex-1 space-y-1">
         {navItems.map((item) => {
-          const isActive = pathname === item.href;
+          // Se i pannelli laterali sono aperti, solo quell'azione è attiva
+          let isActive = false;
+          if (showSearchPanel && item.action === 'search') {
+            isActive = true;
+          } else if (showNotificationsPanel && item.action === 'notifications') {
+            isActive = true;
+          } else if (!showSearchPanel && !showNotificationsPanel && pathname === item.href) {
+            // Solo quando nessun pannello è aperto, usa il pathname
+            isActive = true;
+          }
+          
           const content = (
             <>
               {item.icon === 'custom-home' ? (
@@ -263,26 +290,9 @@ export default function Sidebar() {
                 </svg>
               ) : item.icon === 'custom-message' ? (
                 <div className="relative">
-                  <svg
-                    className={`w-[26px] h-[26px] text-[#262626] dark:text-white`}
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                    style={{ transform: 'rotate(13deg)' }}
-                  >
-                    {isActive ? (
-                      <>
-                        <path d="M21.5 2.5Q18 12 15.5 20Q15 21.5 14 21Q12.5 17 11 13Q7 11.5 3 10Q2 9 2.5 8.5Q11 5.5 21.5 2.5Z" fill="currentColor"/>
-                        <path d="M16 7Q14 9.5 11.5 11.5" stroke="#000000" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                      </>
-                    ) : (
-                      <>
-                        <path d="M21.5 2.5Q16 8 11 13" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M21.5 2.5Q18 12 15.5 20Q15 21.5 14 21Q12.5 17 11 13Q7 11.5 3 10Q2 9 2.5 8.5Q11 5.5 21.5 2.5Z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                      </>
-                    )}
-                  </svg>
+                  <ShareIcon size={26} className="text-[#262626] dark:text-white" filled={isActive} />
                   {unreadChatsCount > 0 && (
-                    <div className="absolute -top-1 -right-3 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                    <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
                       {unreadChatsCount > 9 ? '9+' : unreadChatsCount}
                     </div>
                   )}
@@ -401,6 +411,11 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href!}
+              onClick={() => {
+                // Chiudi i pannelli laterali quando si naviga
+                setShowSearchPanel(false);
+                setShowNotificationsPanel(false);
+              }}
               className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all duration-200 ${
                 isActive
                   ? 'font-bold'
@@ -416,6 +431,11 @@ export default function Sidebar() {
         {!isLoading && profile && (
           <Link
             href={`/profile/${profile.username}`}
+            onClick={() => {
+              // Chiudi i pannelli laterali quando si naviga
+              setShowSearchPanel(false);
+              setShowNotificationsPanel(false);
+            }}
             className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all duration-200 ${
               pathname.startsWith(`/profile/${profile.username}`)
                 ? 'font-bold'

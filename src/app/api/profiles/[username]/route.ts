@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { queryOne } from '@/lib/db';
 import { Profile, GetProfileResponse } from '@/lib/types/profile';
+import { getCurrentProfileId } from '@/lib/auth';
 
 // ============================================================================
 // GET /api/profiles/[username]
@@ -43,11 +44,16 @@ export async function GET(
     }
 
     // Fetch profile from database
-    type ProfileQueryResult = Omit<Profile, 'has_reels' | 'is_private' | 'is_verified'> & {
+    type ProfileQueryResult = Omit<Profile, 'has_reels' | 'has_active_story' | 'has_viewed_story' | 'is_private' | 'is_verified'> & {
       has_reels: number;
+      has_active_story: number;
+      has_viewed_story: number;
       is_private: number;
       is_verified: number;
     };
+    
+    // Get current user's profile ID (if authenticated)
+    const currentProfileId = await getCurrentProfileId();
     
     const profile = await queryOne<ProfileQueryResult>(
       `SELECT
@@ -72,10 +78,26 @@ export async function GET(
           WHERE p.profile_id = profiles.id
             AND pm.media_type = 'video'
             AND p.deleted_at IS NULL
-        ) as has_reels
+        ) as has_reels,
+        (
+          SELECT COUNT(*) > 0
+          FROM stories s
+          WHERE s.profile_id = profiles.id
+            AND s.deleted_at IS NULL
+            AND datetime(s.created_at, '+24 hours') > datetime('now')
+        ) as has_active_story,
+        (
+          SELECT COUNT(*) > 0
+          FROM story_views sv
+          INNER JOIN stories s ON s.id = sv.story_id
+          WHERE s.profile_id = profiles.id
+            AND sv.viewer_profile_id = ?
+            AND s.deleted_at IS NULL
+            AND datetime(s.created_at, '+24 hours') > datetime('now')
+        ) as has_viewed_story
       FROM profiles
       WHERE username = ? AND deleted_at IS NULL`,
-      [username]
+      [currentProfileId || 0, username]
     );
 
     // Profile not found
@@ -91,6 +113,7 @@ export async function GET(
       id: profile.id,
       user_id: profile.user_id,
       username: profile.username,
+      has_viewed_story: Boolean(profile.has_viewed_story),
       full_name: profile.full_name,
       bio: profile.bio,
       profile_image_url: profile.profile_image_url,
@@ -103,6 +126,7 @@ export async function GET(
       created_at: profile.created_at,
       updated_at: profile.updated_at,
       has_reels: Boolean(profile.has_reels),
+      has_active_story: Boolean(profile.has_active_story),
     };
 
     // Return profile data

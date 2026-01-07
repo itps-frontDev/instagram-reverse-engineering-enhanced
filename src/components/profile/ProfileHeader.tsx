@@ -14,6 +14,8 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+import ProfilePicture from '@/components/ProfilePicture';
 import ProfileStats from './ProfileStats';
 import ProfileActions from './ProfileActions';
 import ProfileBio from './ProfileBio';
@@ -34,6 +36,7 @@ export default function ProfileHeader({
   onUnfollow,
   isLoading = false,
   onProfileImageClick,
+  onStoryClick,
   isUploadingImage = false,
 }: ProfileHeaderProps) {
   const [modalType, setModalType] = useState<'followers' | 'following' | null>(null);
@@ -46,6 +49,7 @@ export default function ProfileHeader({
     setTimeout(() => setIsBumping(false), 150);
 
     // Azioni (aprire modale/file picker) solo per profilo proprio
+    // Le storie vengono gestite direttamente da ProfilePicture tramite onStoryClick
     if (followStatus.isOwnProfile && onProfileImageClick) {
       onProfileImageClick();
     }
@@ -64,13 +68,13 @@ export default function ProfileHeader({
               role="button"
               tabIndex={0}
             >
-              <Image
-                src={profile.profile_image_url || '/images/default-pfp.jpg'}
+              <ProfilePicture
+                src={profile.profile_image_url}
                 alt={profile.username}
-                fill
-                className="rounded-full object-cover"
-                sizes="(max-width: 768px) 77px, 150px"
-                priority
+                size={150}
+                hasStory={!followStatus.isOwnProfile && profile.has_active_story && (!profile.is_private || followStatus.isFollowing)}
+                storyViewed={profile.has_viewed_story}
+                onStoryClick={onStoryClick}
               />
               {/* Overlay grigiastro con icona fotocamera - solo per profilo proprio senza immagine custom */}
               {followStatus.isOwnProfile && (!profile.profile_image_url || profile.profile_image_url === '/images/default-pfp.jpg') && !isUploadingImage && (
@@ -116,19 +120,21 @@ export default function ProfileHeader({
 
               {/* Icona Opzioni - Rotellina per profilo proprio, 3 puntini per visitatori */}
               {followStatus.isOwnProfile ? (
-                <svg
-                  aria-label="Opzioni"
-                  className="ml-2 w-6 h-6 text-[rgb(12,16,20)] dark:text-[rgb(245,245,245)] cursor-pointer"
-                  fill="currentColor"
-                  height="24"
-                  role="img"
-                  viewBox="0 0 24 24"
-                  width="24"
-                >
-                  <title>Opzioni</title>
-                  <circle cx="12" cy="12" fill="none" r="8.635" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></circle>
-                  <path d="M14.232 3.656a1.269 1.269 0 0 1-.796-.66L12.93 2h-1.86l-.505.996a1.269 1.269 0 0 1-.796.66m-.001 16.688a1.269 1.269 0 0 1 .796.66l.505.996h1.862l.505-.996a1.269 1.269 0 0 1 .796-.66M3.656 9.768a1.269 1.269 0 0 1-.66.796L2 11.07v1.862l.996.505a1.269 1.269 0 0 1 .66.796m16.688-.001a1.269 1.269 0 0 1 .660-.796L22 12.93v-1.86l-.996-.505a1.269 1.269 0 0 1-.66-.796M7.678 4.522a1.269 1.269 0 0 1-1.03.096l-1.06-.348L4.27 5.587l.348 1.062a1.269 1.269 0 0 1-.096 1.03m11.8 11.799a1.269 1.269 0 0 1 1.03-.096l1.06.348 1.318-1.317-.348-1.062a1.269 1.269 0 0 1 .096-1.03m-14.956.001a1.269 1.269 0 0 1 .096 1.03l-.348 1.06 1.317 1.318 1.062-.348a1.269 1.269 0 0 1 1.03.096m11.799-11.8a1.269 1.269 0 0 1-.096-1.03l.348-1.06-1.317-1.318-1.062.348a1.269 1.269 0 0 1-1.03-.096" fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="2"></path>
-                </svg>
+                <Link href="/accounts/edit" className="ml-2">
+                  <svg
+                    aria-label="Opzioni"
+                    className="w-6 h-6 text-[rgb(12,16,20)] dark:text-[rgb(245,245,245)] cursor-pointer hover:opacity-70 transition-opacity"
+                    fill="currentColor"
+                    height="24"
+                    role="img"
+                    viewBox="0 0 24 24"
+                    width="24"
+                  >
+                    <title>Opzioni</title>
+                    <circle cx="12" cy="12" fill="none" r="8.635" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></circle>
+                    <path d="M14.232 3.656a1.269 1.269 0 0 1-.796-.66L12.93 2h-1.86l-.505.996a1.269 1.269 0 0 1-.796.66m-.001 16.688a1.269 1.269 0 0 1 .796.66l.505.996h1.862l.505-.996a1.269 1.269 0 0 1 .796-.66M3.656 9.768a1.269 1.269 0 0 1-.66.796L2 11.07v1.862l.996.505a1.269 1.269 0 0 1 .66.796m16.688-.001a1.269 1.269 0 0 1 .660-.796L22 12.93v-1.86l-.996-.505a1.269 1.269 0 0 1-.66-.796M7.678 4.522a1.269 1.269 0 0 1-1.03.096l-1.06-.348L4.27 5.587l.348 1.062a1.269 1.269 0 0 1-.096 1.03m11.8 11.799a1.269 1.269 0 0 1 1.03-.096l1.06.348 1.318-1.317-.348-1.062a1.269 1.269 0 0 1 .096-1.03m-14.956.001a1.269 1.269 0 0 1 .096 1.03l-.348 1.06 1.317 1.318 1.062-.348a1.269 1.269 0 0 1 1.03.096m11.799-11.8a1.269 1.269 0 0 1-.096-1.03l.348-1.06-1.317-1.318-1.062.348a1.269 1.269 0 0 1-1.03-.096" fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="2"></path>
+                  </svg>
+                </Link>
               ) : (
                 <button
                   className="ml-2 flex items-center justify-center cursor-pointer rounded-lg p-2"
@@ -195,6 +201,8 @@ export default function ProfileHeader({
             onFollow={onFollow}
             onUnfollow={onUnfollow}
             isLoading={isLoading}
+            profileId={profile.id}
+            username={profile.username}
           />
         </div>
 

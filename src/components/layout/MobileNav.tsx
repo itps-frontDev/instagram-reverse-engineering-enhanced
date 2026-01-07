@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import CreatePostModal from '@/components/feed/CreatePostModal';
+import ShareIcon from '@/components/common/ShareIcon';
 
 export default function MobileNav() {
   const pathname = usePathname();
@@ -113,24 +114,7 @@ export default function MobileNav() {
                   <path d="M21 11h-8V3a1 1 0 1 0-2 0v8H3a1 1 0 1 0 0 2h8v8a1 1 0 1 0 2 0v-8h8a1 1 0 1 0 0-2Z" />
                 </svg>
               ) : item.icon === 'custom-message' ? (
-                <svg
-                  className={`w-6 h-6 text-[var(--text-primary)]`}
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                  style={{ transform: 'rotate(13deg)' }}
-                >
-                  {isActive ? (
-                    <>
-                      <path d="M21.5 2.5Q18 12 15.5 20Q15 21.5 14 21Q12.5 17 11 13Q7 11.5 3 10Q2 9 2.5 8.5Q11 5.5 21.5 2.5Z" fill="currentColor"/>
-                      <path d="M16 7Q14 9.5 11.5 11.5" stroke="#000000" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                    </>
-                  ) : (
-                    <>
-                      <path d="M21.5 2.5Q16 8 11 13" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M21.5 2.5Q18 12 15.5 20Q15 21.5 14 21Q12.5 17 11 13Q7 11.5 3 10Q2 9 2.5 8.5Q11 5.5 21.5 2.5Z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                    </>
-                  )}
-                </svg>
+                <ShareIcon size={24} className="text-[var(--text-primary)]" filled={isActive} />
               ) : null}
             </>
           );
@@ -165,17 +149,12 @@ export default function MobileNav() {
             className="flex items-center justify-center w-full h-full"
           >
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-              {profile.profile_image_url ? (
-                <img
-                  src={profile.profile_image_url}
-                  alt={profile.username}
-                  className="w-full h-full rounded-full object-cover"
-                />
-              ) : (
-                <span className="text-white text-xs font-semibold">
-                  {profile.username.charAt(0).toUpperCase()}
-                </span>
-              )}
+              <img
+                src={profile.profile_image_url && profile.profile_image_url.trim() !== '' ? profile.profile_image_url : '/images/default-pfp.jpg'}
+                alt={profile.username}
+                className="w-full h-full rounded-full object-cover"
+                onError={e => { (e.currentTarget as HTMLImageElement).src = '/images/default-pfp.jpg'; }}
+              />
             </div>
           </Link>
         )}

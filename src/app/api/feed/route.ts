@@ -27,8 +27,10 @@ interface PostRow {
   profile_full_name: string | null;
   profile_image_url: string | null;
   profile_is_verified: number;
+  profile_has_active_story: number;
   is_liked: number | null;
   is_saved: number | null;
+  is_following: number | null;
 }
 
 interface MediaRow {
@@ -72,6 +74,12 @@ export async function GET(request: NextRequest) {
         pr.full_name as profile_full_name,
         pr.profile_image_url,
         pr.is_verified as profile_is_verified,
+        (SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
+         FROM stories s
+         WHERE s.profile_id = p.profile_id
+         AND s.deleted_at IS NULL
+         AND datetime(s.created_at, '+24 hours') > datetime('now')
+        ) as profile_has_active_story,
         (SELECT 1 FROM likes
          WHERE likeable_type = 'post'
          AND likeable_id = p.id
@@ -80,7 +88,12 @@ export async function GET(request: NextRequest) {
         (SELECT 1 FROM saved_posts
          WHERE post_id = p.id
          AND profile_id = ?
-         AND deleted_at IS NULL) as is_saved
+         AND deleted_at IS NULL) as is_saved,
+        (SELECT 1 FROM follows
+         WHERE follower_profile_id = ?
+         AND following_profile_id = p.profile_id
+         AND status = 'accepted'
+         AND deleted_at IS NULL) as is_following
       FROM posts p
       INNER JOIN profiles pr ON p.profile_id = pr.id
       WHERE p.deleted_at IS NULL
@@ -107,7 +120,7 @@ export async function GET(request: NextRequest) {
         )
       ORDER BY p.created_at DESC
       LIMIT ? OFFSET ?`,
-      [currentProfile.id, currentProfile.id, currentProfile.id, currentProfile.id, currentProfile.id, currentProfile.id, limit + 1, offset]
+      [currentProfile.id, currentProfile.id, currentProfile.id, currentProfile.id, currentProfile.id, currentProfile.id, currentProfile.id, limit + 1, offset]
     );
 
     // Check if there are more posts
@@ -153,9 +166,11 @@ export async function GET(request: NextRequest) {
       profile_full_name: post.profile_full_name,
       profile_image_url: post.profile_image_url,
       profile_is_verified: Boolean(post.profile_is_verified),
+      profile_has_active_story: Boolean(post.profile_has_active_story),
       media: mediaByPost.get(post.id) || [],
       is_liked_by_current_user: Boolean(post.is_liked),
       is_saved_by_current_user: Boolean(post.is_saved),
+      is_following_author: Boolean(post.is_following),
     }));
 
     const response: GetFeedResponse = {

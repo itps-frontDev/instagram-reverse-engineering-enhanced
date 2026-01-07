@@ -16,23 +16,27 @@
 
 'use client';
 
-import { X, ChevronLeft, ChevronRight, Volume2, VolumeX, Eye, Heart, Send } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Volume2, VolumeX, Eye, Heart } from 'lucide-react';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import ProfilePicture from '@/components/ProfilePicture';
+import VerifiedBadge from '@/components/common/VerifiedBadge';
+import ShareIcon from '@/components/common/ShareIcon';
 
 interface Story {
   id: number;
   profile_id: number;
   username: string;
   profile_image_url: string | null;
+  is_verified?: boolean;
   media_url: string;
   media_type: 'image' | 'video';
   duration_seconds: number;
   views_count: number;
   created_at: string;
   expires_at: string;
+  is_liked_by_me?: boolean;
 }
 
 interface StoryViewerProps {
@@ -64,6 +68,8 @@ export default function StoryViewer({
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [transitionDirection, setTransitionDirection] = useState<'left' | 'right' | null>(null);
   const [isReturning, setIsReturning] = useState(false);
+  const [showMessageSent, setShowMessageSent] = useState(false);
+  const [videoError, setVideoError] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const progressIntervalRef = useRef<number | null>(null);
   const autoPauseTimeoutRef = useRef<number | null>(null);
@@ -90,6 +96,12 @@ export default function StoryViewer({
           if (initialStoryId && profileStories.length > 0) {
             const idx = profileStories.findIndex((s: Story) => s.id === initialStoryId);
             setCurrentIndex(idx >= 0 ? idx : 0);
+            // Set initial like state
+            const initialStory = profileStories[idx >= 0 ? idx : 0];
+            setIsLiked(initialStory?.is_liked_by_me || false);
+          } else if (profileStories.length > 0) {
+            // Set like state for first story if no initialStoryId
+            setIsLiked(profileStories[0]?.is_liked_by_me || false);
           }
         }
       } catch (e) {
@@ -107,7 +119,11 @@ export default function StoryViewer({
   // Reset index when username changes
   useEffect(() => {
     setCurrentIndex(0);
-  }, [profileUsername]);
+    // Reset like state when changing user
+    if (stories.length > 0) {
+      setIsLiked(stories[0]?.is_liked_by_me || false);
+    }
+  }, [profileUsername, stories]);
 
   // Load preview stories from other users
   useEffect(() => {
@@ -174,6 +190,9 @@ export default function StoryViewer({
   const goToPrevious = useCallback(() => {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
+      // Update like state for the new story
+      const prevStory = stories[currentIndex - 1];
+      setIsLiked(prevStory?.is_liked_by_me || false);
     } else {
       // Prima storia di questo utente
       if (allUsernames.length > 0 && onUserChange && currentUserIndex > 0) {
@@ -204,6 +223,9 @@ export default function StoryViewer({
   const goToNext = useCallback(() => {
     if (currentIndex < stories.length - 1) {
       setCurrentIndex(currentIndex + 1);
+      // Update like state for the new story
+      const nextStory = stories[currentIndex + 1];
+      setIsLiked(nextStory?.is_liked_by_me || false);
     } else {
       // Fine delle storie di questo utente
       if (allUsernames.length > 0 && onUserChange && currentUserIndex < allUsernames.length - 1) {
@@ -275,6 +297,67 @@ export default function StoryViewer({
     };
   }, [currentStory, currentIndex, stories.length, duration, loading, onClose, goToNext]);
 
+  // Send message function
+  const handleSendMessage = useCallback(async () => {
+    if (!messageText.trim() || !currentStory) return;
+
+    try {
+      // Get or create chat with story owner
+      const chatRes = await fetch('/api/direct/get-or-create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ otherProfileId: currentStory.profile_id }),
+      });
+
+      if (!chatRes.ok) throw new Error('Failed to get/create chat');
+      const { chatId } = await chatRes.json();
+
+      // Send message
+      const sendRes = await fetch('/api/direct/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chatId, text: messageText }),
+      });
+
+      if (!sendRes.ok) throw new Error('Failed to send message');
+
+      // Clear input and show feedback
+      setMessageText('');
+      setShowMessageSent(true);
+      setTimeout(() => setShowMessageSent(false), 2000);
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  }, [messageText, currentStory]);
+
+  // Toggle like function
+  const handleToggleLike = useCallback(async () => {
+    if (!currentStory) return;
+
+    try {
+      // Optimistic update
+      const newLikedState = !isLiked;
+      setIsLiked(newLikedState);
+
+      // Call API to persist like
+      const res = await fetch(`/api/stories/${currentStory.id}/like`, {
+        method: 'POST',
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to toggle like');
+      }
+
+      const data = await res.json();
+      // Update state with server response
+      setIsLiked(data.liked);
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      // Revert on error
+      setIsLiked(!isLiked);
+    }
+  }, [currentStory, isLiked]);
+
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -299,7 +382,10 @@ export default function StoryViewer({
   }
 
   return (
-    <div className="fixed inset-0 bg-[#1a1a1a] z-[60] flex items-center justify-center overflow-x-hidden">
+    <div 
+      className="fixed inset-0 bg-[#1a1a1a] z-[60] flex items-center justify-center overflow-x-hidden"
+      onClick={(e) => e.stopPropagation()}
+    >
       
       {/* Instagram Logo - solo desktop */}
       <div className="hidden md:block absolute top-4 left-4 z-20">
@@ -323,7 +409,10 @@ export default function StoryViewer({
       
       {/* Close button */}
       <button
-        onClick={onClose}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
         className="absolute top-5 md:top-3 right-3 text-white hover:transform hover:scale-110 hover:bg-opacity-20 p-2 transition-all z-40 drop-shadow-lg"
         aria-label="Chiudi"
       >
@@ -365,7 +454,7 @@ export default function StoryViewer({
           {/* Preview User info overlay */}
           <div className="absolute top-47 left-2 right-2 flex flex-col items-center gap-2.5">
             {/* Profile picture */}
-            <div className="p-1 rounded-full border-2 border-gray-700">
+            <div className="p-1 rounded-full border-2 border-gray-700 flex items-center justify-center">
               <ProfilePicture
                 src={preview.profile_image_url}
                 alt={preview.username}
@@ -414,12 +503,38 @@ export default function StoryViewer({
           </div>
         ) : (
           <video
+            key={currentStory.id}
             ref={videoRef}
             src={currentStory.media_url}
             className="w-full h-full object-cover"
             autoPlay
+            playsInline
+            loop
             muted={isMuted}
+            onLoadedData={() => {
+              setVideoError(false);
+              if (videoRef.current) {
+                videoRef.current.play().catch(err => {
+                  console.error('Video play error:', err);
+                  setVideoError(true);
+                });
+              }
+            }}
+            onError={(e) => {
+              console.error('Video loading error:', e);
+              setVideoError(true);
+            }}
           />
+        )}
+
+        {/* Video Error Message */}
+        {currentStory.media_type === 'video' && videoError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-800 text-white z-10">
+            <div className="text-center">
+              <p className="text-sm">Impossibile caricare il video</p>
+              <p className="text-xs mt-2 opacity-70">{currentStory.media_url}</p>
+            </div>
+          </div>
         )}
 
 
@@ -450,15 +565,25 @@ export default function StoryViewer({
           <div className="flex-1">
             <Link 
               href={`/profile/${currentStory.username}`}
-              className="text-white font-semibold text-sm drop-shadow-lg hover:opacity-80 transition-opacity"
+              className="text-white font-semibold text-sm drop-shadow-lg hover:opacity-80 transition-opacity flex items-center gap-1"
             >
               {currentStory.username}
+              {currentStory.is_verified && (
+                <VerifiedBadge size={12} />
+              )}
             </Link>
             <p className="text-white text-xs opacity-80 drop-shadow-lg">
-              {new Date(currentStory.created_at).toLocaleTimeString('it-IT', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
+              {(() => {
+                const now = new Date();
+                const storyDate = new Date(currentStory.created_at);
+                const diffMs = now.getTime() - storyDate.getTime();
+                const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                if (diffHours < 1) {
+                  const diffMins = Math.floor(diffMs / (1000 * 60));
+                  return `${diffMins}m`;
+                }
+                return `${diffHours}h`;
+              })()}
             </p>
           </div>
         </div>
@@ -486,6 +611,11 @@ export default function StoryViewer({
             type="text"
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && messageText.trim()) {
+                handleSendMessage();
+              }
+            }}
             placeholder={`Rispondi a ${currentStory.username}`}
             className="flex-1 max-w-[570px] bg-transparent border-2 border-white/70 rounded-full px-3 md:px-4 py-2 md:py-3 text-white placeholder-white/80 text-sm md:text-sm focus:outline-none focus:border-white"
           />
@@ -495,7 +625,7 @@ export default function StoryViewer({
 
             {/* Like button */}
             <button
-              onClick={() => setIsLiked(!isLiked)}
+              onClick={handleToggleLike}
               className="flex-shrink-0 hover:scale-110 transition-transform drop-shadow-lg"
               aria-label={isLiked ? 'Rimuovi like' : 'Metti like'}
             >
@@ -506,13 +636,21 @@ export default function StoryViewer({
 
             {/* Share button */}
             <button
+              onClick={handleSendMessage}
               className="flex-shrink-0 hover:scale-110 transition-transform drop-shadow-lg"
               aria-label="Condividi storia"
             >
-              <Send className="w-7 h-7 md:w-6.5 md:h-6.5 text-white" />
+              <ShareIcon size={28} className="text-white" />
             </button>
           </div>
         </div>
+
+        {/* Message Sent Feedback */}
+        {showMessageSent && (
+          <div className="absolute bottom-20 md:bottom-24 left-1/2 -translate-x-1/2 bg-black bg-opacity-80 text-white px-6 py-3 rounded-lg text-sm font-medium z-50 animate-fade-in">
+            Messaggio inviato
+          </div>
+        )}
       </div>
 
       {/* Next Users Previews - Right */}
@@ -550,7 +688,7 @@ export default function StoryViewer({
           {/* Preview User info overlay */}
           <div className="absolute top-47 left-2 right-2 flex flex-col items-center gap-2.5">
             {/* Profile picture */}
-            <div className="p-1 rounded-full border-2 border-gray-700">
+            <div className="p-1 rounded-full border-2 border-gray-700 flex items-center justify-center">
               <ProfilePicture
                 src={preview.profile_image_url}
                 alt={preview.username}

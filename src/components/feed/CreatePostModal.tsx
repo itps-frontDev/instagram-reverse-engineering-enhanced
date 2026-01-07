@@ -31,6 +31,12 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
   const [caption, setCaption] = useState('');
   const [hasAudio, setHasAudio] = useState(true);
   const [currentProfile, setCurrentProfile] = useState<{ username: string; full_name: string | null; profile_image_url: string | null } | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return document.documentElement.classList.contains('dark');
+    }
+    return false;
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const multipleFileInputRef = useRef<HTMLInputElement>(null);
   const mediaRef = useRef<HTMLDivElement>(null);
@@ -44,6 +50,26 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
   useEffect(() => {
     if (isOpen) {
       fetchCurrentProfile();
+      // Set initial dark mode state
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+      
+      // Add observer to watch for class changes
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+            setIsDarkMode(document.documentElement.classList.contains('dark'));
+          }
+        });
+      });
+      
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class']
+      });
+      
+      return () => {
+        observer.disconnect();
+      };
     }
   }, [isOpen]);
 
@@ -357,11 +383,11 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
 
       {/* Modal */}
       <div 
-        className="relative z-10 bg-white dark:bg-[#262626] rounded-3xl w-full mx-4 overflow-hidden shadow-2xl transition-all duration-300 max-[639px]:mx-2 max-[639px]:rounded-lg max-[639px]:max-w-[88vw] max-[639px]:max-h-[55vh]"
-        style={{ maxWidth: modalWidth }}
+        className="relative z-10 bg-white dark:bg-[rgb(33,35,40)] rounded-3xl w-full mx-4 overflow-hidden shadow-2xl transition-all duration-300 max-[639px]:mx-2 max-[639px]:rounded-lg max-[639px]:max-w-[88vw] max-[639px]:max-h-[55vh]"
+        style={{ maxWidth: modalWidth, backgroundColor: typeof window !== 'undefined' && document.documentElement.classList.contains('dark') ? 'rgb(33,35,40)' : undefined }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-[#363636] dark:bg-[#0c1014] max-[639px]:px-2 max-[639px]:py-1.5">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-[rgb(54,54,54)] dark:bg-[rgb(12,16,20)] max-[639px]:px-2 max-[639px]:py-1.5">
           {uploadedImage ? (
             <>
               <button
@@ -388,7 +414,7 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
               <button
                 onClick={phase === 'crop' ? handleNext : handleShare}
                 disabled={isUploading}
-                className="text-[#4165d4] hover:opacity-70 transition-opacity font-semibold disabled:opacity-50 disabled:cursor-not-allowed max-[639px]:text-sm"
+                className="text-[rgb(133,161,255)] font-semibold disabled:opacity-50 disabled:cursor-not-allowed max-[639px]:text-sm hover:underline"
               >
                 {isUploading ? 'Caricamento...' : phase === 'crop' ? 'Avanti' : 'Condividi'}
               </button>
@@ -401,7 +427,7 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
         </div>
 
         {/* Bordo separatore */}
-        <div className="w-full h-px bg-[#363636] opacity-10" />
+        <div className="w-full h-px bg-[#363636] dark:bg-[rgb(54,54,54)] opacity-10" />
 
         {/* Content */}
         {uploadedImage ? (
@@ -447,14 +473,15 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
                 onClick={() => setShowMediaManager(!showMediaManager)}
                 className="absolute bottom-4 right-4 p-2 bg-[#262626] rounded-full hover:bg-[#363636] transition-colors max-[639px]:bottom-2 max-[639px]:right-2 max-[639px]:p-1"
               >
-                <svg className="w-6 h-6 text-white max-[639px]:w-4 max-[639px]:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                <svg className="w-5 h-5 text-white max-[639px]:w-3.5 max-[639px]:h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                  <title>Apri galleria dei contenuti multimediali</title>
+                  <path d="M19 15V5a4.004 4.004 0 0 0-4-4H5a4.004 4.004 0 0 0-4 4v10a4.004 4.004 0 0 0 4 4h10a4.004 4.004 0 0 0 4-4ZM3 15V5a2.002 2.002 0 0 1 2-2h10a2.002 2.002 0 0 1 2 2v10a2.002 2.002 0 0 1-2 2H5a2.002 2.002 0 0 1-2-2Zm18.862-8.773A.501.501 0 0 0 21 6.57v8.431a6 6 0 0 1-6 6H6.58a.504.504 0 0 0-.35.863A3.944 3.944 0 0 0 9 23h6a8 8 0 0 0 8-8V9a3.95 3.95 0 0 0-1.138-2.773Z" fillRule="evenodd" />
                 </svg>
               </button>
 
               {/* Mini modale gestione media */}
               {showMediaManager && (
-                <div className="absolute bottom-20 right-4 bg-white dark:bg-[#1c1d1e] rounded-lg shadow-2xl p-3 w-auto max-h-96 overflow-y-auto border border-gray-200 dark:border-[#363636]">
+                <div className="absolute bottom-20 right-4 bg-[#1c1d1e] rounded-lg shadow-2xl p-3 w-auto max-h-96 overflow-y-auto border border-[#363636]">
                   <div className="flex items-start gap-2">
                     {uploadedImages.map((image, index) => (
                       <div 
@@ -495,9 +522,9 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
                     {/* Bottone aggiungi */}
                     <button
                       onClick={handleAddMore}
-                      className="w-10 h-10 rounded-full border border-gray-300 dark:border-gray-600 hover:border-[#4150f7] dark:hover:border-[#4150f7] flex items-center justify-center transition-colors cursor-pointer"
+                      className="w-10 h-10 rounded-full border border-gray-600 hover:border-[#4150f7] flex items-center justify-center transition-colors cursor-pointer"
                     >
-                      <span className="text-xl leading-none text-gray-400 dark:text-gray-500">+</span>
+                      <span className="text-xl leading-none text-gray-500">+</span>
                     </button>
                   </div>
                   
@@ -553,10 +580,10 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
               </div>
               
               {/* Form dettagli a destra */}
-              <div className="w-[340px] flex flex-col bg-white dark:bg-[#262626] max-[639px]:w-full max-[639px]:flex-1 max-[639px]:overflow-y-auto">
+              <div className="w-[340px] flex flex-col bg-white dark:bg-[rgb(33,35,40)] max-[639px]:w-full max-[639px]:flex-1 max-[639px]:overflow-y-auto">
                 {/* Profilo */}
                 {currentProfile && (
-                  <div className="flex items-center gap-3 p-4 border-b border-gray-200 dark:border-[#363636] max-[639px]:p-2 max-[639px]:gap-2">
+                  <div className="flex items-center gap-3 p-4 max-[639px]:p-2 max-[639px]:gap-2">
                     <ProfilePicture
                       src={currentProfile.profile_image_url}
                       alt={currentProfile.username}
@@ -571,7 +598,7 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
                 )}
                 
                 {/* Caption textarea */}
-                <div className="flex-1 p-4 max-[639px]:p-2">
+                <div className="flex-1 p-4 max-[639px]:p-2 dark:bg-[rgb(33,35,40)]">
                   <textarea
                     value={caption}
                     onChange={(e) => setCaption(e.target.value)}
@@ -585,7 +612,7 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
 
                   {/* Toggle audio per video */}
                   {uploadedImage && uploadedImage.startsWith('data:video') && (
-                    <div className="mt-6 pt-4 border-t border-gray-200 dark:border-[#363636]">
+                    <div className="mt-6 pt-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="text-lgef text-[#262626] dark:text-white">Audio attivo</span>
@@ -613,7 +640,7 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
         ) : (
           // Initial upload view
           <div
-            className={`flex flex-col items-center justify-center p-32 min-h-[850px] transition-colors ${
+            className={`flex flex-col items-center justify-center p-32 min-h-[850px] transition-colors dark:bg-modal-dark ${
               isDragging ? 'bg-gray-50 dark:bg-[#1a1a1a]' : ''
             } max-[639px]:p-3 max-[639px]:py-4 max-[639px]:min-h-[400px]`}
             onDragEnter={handleDragEnter}
@@ -643,7 +670,7 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
                 >
                   <circle cx="6" cy="8" r="1.5" fill="none" stroke="currentColor" />
                   <path d="M2.5 19 L8 12 L12 16 L16 10 L22 17" fill="none" />
-                  <rect x="2" y="4" width="18" height="16" rx="2" fill="none" />
+                  <rect x="2" y="4" width="18" height="16" rx="2" fill="none" stroke="currentColor" strokeWidth="0.65" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
 
@@ -660,8 +687,8 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
                   viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <rect x="3" y="3" width="18" height="18" rx="4" ry="4" fill="#262626" stroke="white" strokeWidth="0.65" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M9 8 Q9.5 8 10 8.5 L16 11.5 Q16.5 12 16.5 12 Q16.5 12 16 12.5 L10 15.5 Q9.5 16 9 16 Q9 16 9 15.5 L9 8.5 Q9 8 9 8" fill="none" stroke="white" strokeWidth="0.65"/>
+                  <rect x="3" y="3" width="18" height="18" rx="4" ry="4" className="fill-white dark:fill-[#212328]" stroke="currentColor" strokeWidth="0.65" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M9 8 Q9.5 8 10 8.5 L16 11.5 Q16.5 12 16.5 12 Q16.5 12 16 12.5 L10 15.5 Q9.5 16 9 16 Q9 16 9 15.5 L9 8.5 Q9 8 9 8" fill="none" stroke="currentColor" strokeWidth="0.65" className="text-[#262626] dark:text-white"/>
                 </svg>
               </div>
             </div>

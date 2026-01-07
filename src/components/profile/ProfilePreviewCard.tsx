@@ -8,8 +8,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import ProfilePicture from '@/components/ProfilePicture';
 import VerifiedBadge from '@/components/common/VerifiedBadge';
+import ShareIcon from '@/components/common/ShareIcon';
 
 interface ProfilePreviewCardProps {
   username: string;
@@ -46,6 +48,7 @@ export default function ProfilePreviewCard({
   isPending = false,
   isLoading = false
 }: ProfilePreviewCardProps) {
+  const router = useRouter();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -67,6 +70,12 @@ export default function ProfilePreviewCard({
 
     loadProfile();
   }, [username]);
+
+  const handleMessage = () => {
+    if (profile?.username) {
+      router.push(`/direct?username=${profile.username}`);
+    }
+  };
 
   if (loading || !profile) {
     return (
@@ -176,19 +185,38 @@ export default function ProfilePreviewCard({
         </div>
       ) : null}
 
-      {/* Follow Button */}
+      {/* Follow/Message Buttons */}
       <div className="p-2">
-        <button
-          onClick={(isFollowing || isPending) ? onUnfollow : onFollow}
-          disabled={isLoading}
-          className={`w-full py-2 px-2 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50 ${
-            isFollowing || isPending
-              ? 'bg-gray-100 dark:bg-[#363636] text-[#262626] dark:text-white hover:bg-gray-200 dark:hover:bg-[#454545]'
-              : 'bg-[#3558c7] text-white hover:bg-[#4150f7]'
-          }`}
-        >
-          {isLoading ? '...' : isPending ? 'Richiesta effettuata' : isFollowing ? 'Seguito' : 'Segui'}
-        </button>
+        {isFollowing && !isPending ? (
+          <div className="flex gap-2">
+            <button
+              onClick={handleMessage}
+              className="flex-1 py-2 px-2 rounded-lg font-semibold text-sm transition-colors bg-[#3558c7] text-white hover:bg-[#4150f7] flex items-center justify-center gap-2"
+            >
+              <ShareIcon size={18} className="text-white" filled={false} />
+              Messaggio
+            </button>
+            <button
+              onClick={onUnfollow}
+              disabled={isLoading}
+              className="flex-1 py-2 px-2 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50 bg-gray-100 dark:bg-[#363636] text-[#262626] dark:text-white hover:bg-gray-200 dark:hover:bg-[#454545]"
+            >
+              {isLoading ? '...' : 'Segui già'}
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={(isFollowing || isPending) ? onUnfollow : onFollow}
+            disabled={isLoading}
+            className={`w-full py-2 px-2 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50 ${
+              isFollowing || isPending
+                ? 'bg-gray-100 dark:bg-[#363636] text-[#262626] dark:text-white hover:bg-gray-200 dark:hover:bg-[#454545]'
+                : 'bg-[#3558c7] text-white hover:bg-[#4150f7]'
+            }`}
+          >
+            {isLoading ? '...' : isPending ? 'Richiesta effettuata' : isFollowing ? 'Segui già' : 'Segui'}
+          </button>
+        )}
       </div>
     </div>
   );

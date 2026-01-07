@@ -1,5 +1,6 @@
 
 import React, { useRef, useEffect } from 'react';
+import Link from 'next/link';
 
 export interface MessageItem {
   id: number;
@@ -14,6 +15,7 @@ interface MessageListProps {
   currentProfileId: number;
   contactProfileImage?: string;
   contactName?: string;
+  contactUsername?: string;
 }
 
 // Funzione per formattare il timestamp
@@ -53,7 +55,7 @@ function formatTimeSeparator(dateString: string): string {
   }
 }
 
-export default function MessageList({ messages, currentProfileId, contactProfileImage, contactName }: MessageListProps) {
+export default function MessageList({ messages, currentProfileId, contactProfileImage, contactName, contactUsername }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef<number>(0);
   const isInitialLoadRef = useRef<boolean>(true);
@@ -84,7 +86,48 @@ export default function MessageList({ messages, currentProfileId, contactProfile
   );
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-1">
+    <div className="flex-1 overflow-y-auto px-4 flex flex-col">
+      {/* Header profilo - sempre in alto all'inizio */}
+      {contactUsername && (
+        <div className="flex flex-col items-center justify-center py-6 px-4 mb-4">
+          <Link href={`/profile/${contactUsername}`}>
+            {contactProfileImage ? (
+              <img
+                src={contactProfileImage}
+                alt={contactName || ''}
+                className="w-20 h-20 rounded-full object-cover mb-3"
+              />
+            ) : (
+              <div className="w-20 h-20 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--text-primary)] font-semibold text-2xl mb-3">
+                {contactName?.charAt(0).toUpperCase()}
+              </div>
+            )}
+          </Link>
+          <div className="text-center mb-3">
+            <Link
+              href={`/profile/${contactUsername}`}
+              className="text-base font-semibold text-[var(--text-primary)] block"
+            >
+              {contactName}
+            </Link>
+            <p className="text-sm text-[var(--text-secondary)] mt-1">
+              {contactUsername} · Instagram
+            </p>
+          </div>
+          <Link
+            href={`/profile/${contactUsername}`}
+            className="px-4 py-2 bg-[#EFEFEF] dark:bg-[#363636] hover:bg-[#DBDBDB] dark:hover:bg-[#262626] text-[var(--text-primary)] text-sm font-semibold rounded-lg transition-colors"
+          >
+            Visualizza profilo
+          </Link>
+        </div>
+      )}
+      
+      {/* Spacer per spingere i messaggi verso il basso quando ce ne sono pochi */}
+      <div className="flex-1" />
+      
+      {/* Messaggi */}
+      <div className="flex flex-col gap-1 py-4">
       {sortedMessages.map((msg, index) => {
         const prevMsg = index > 0 ? sortedMessages[index - 1] : null;
         const showTimeSeparator = shouldShowTimeSeparator(msg, prevMsg);
@@ -111,16 +154,32 @@ export default function MessageList({ messages, currentProfileId, contactProfile
               {!isFromMe && (
                 <div className="w-7 h-7 flex-shrink-0">
                   {isLastInGroup ? (
-                    contactProfileImage ? (
-                      <img
-                        src={contactProfileImage}
-                        alt={contactName || ''}
-                        className="w-7 h-7 rounded-full object-cover"
-                      />
+                    contactUsername ? (
+                      <Link href={`/profile/${contactUsername}`}>
+                        {contactProfileImage ? (
+                          <img
+                            src={contactProfileImage}
+                            alt={contactName || ''}
+                            className="w-7 h-7 rounded-full object-cover cursor-pointer"
+                          />
+                        ) : (
+                          <div className="w-7 h-7 rounded-full bg-[#3C3C3C] flex items-center justify-center text-white text-xs font-semibold cursor-pointer">
+                            {contactName?.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </Link>
                     ) : (
-                      <div className="w-7 h-7 rounded-full bg-[#3C3C3C] flex items-center justify-center text-white text-xs font-semibold">
-                        {contactName?.charAt(0).toUpperCase()}
-                      </div>
+                      contactProfileImage ? (
+                        <img
+                          src={contactProfileImage}
+                          alt={contactName || ''}
+                          className="w-7 h-7 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-7 h-7 rounded-full bg-[#3C3C3C] flex items-center justify-center text-white text-xs font-semibold">
+                          {contactName?.charAt(0).toUpperCase()}
+                        </div>
+                      )
                     )
                   ) : (
                     <div className="w-7 h-7" /> // Spazio vuoto per allineamento
@@ -142,6 +201,7 @@ export default function MessageList({ messages, currentProfileId, contactProfile
         );
       })}
       <div ref={bottomRef} />
+      </div>
     </div>
   );
 }

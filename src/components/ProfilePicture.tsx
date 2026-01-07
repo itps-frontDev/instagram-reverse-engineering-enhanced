@@ -5,54 +5,88 @@ interface ProfilePictureProps {
   alt?: string;
   size?: number;
   className?: string;
+  hasStory?: boolean;
+  storyViewed?: boolean; // true if story has been viewed
+  username?: string;
+  onStoryClick?: () => void;
 }
 
-export default function ProfilePicture({ src, alt = 'Profile picture', size = 32, className = '' }: ProfilePictureProps) {
-  const hasValidSrc = src && src.trim() !== '';
+export default function ProfilePicture({ 
+  src, 
+  alt = 'Profile picture', 
+  size = 32, 
+  className = '', 
+  hasStory = false,
+  storyViewed = false,
+  username,
+  onStoryClick
+}: ProfilePictureProps) {
+  // Use default profile picture if src is missing or invalid
+  const imageSrc = src && src.trim() !== '' ? src : '/images/default-pfp.jpg';
 
-  // Se non c'è immagine, mostra l'icona utente base
-  if (!hasValidSrc) {
+  if (hasStory) {
+    // Render with story ring like in Stories component
+    const borderWidth = size >= 75 ? 3 : 2.5;
+    const innerPadding = size >= 75 ? 2.5 : 2;
+    const innerSize = size - (borderWidth + innerPadding) * 2;
+    
+    // Use gray ring if story has been viewed, gradient otherwise
+    const ringClass = storyViewed 
+      ? 'bg-gray-300 dark:bg-gray-600' 
+      : 'bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500';
+
     return (
-      <div
-        className={`rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center ${className}`}
-        style={{
-          width: size,
-          height: size,
-          minWidth: size,
-          minHeight: size,
-        }}
+      <button
+        onClick={onStoryClick}
+        className="relative inline-block focus:outline-none"
+        style={{ width: size, height: size }}
+        disabled={!onStoryClick}
+        type="button"
       >
-        <svg
-          width={size * 0.6}
-          height={size * 0.6}
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
+        <div 
+          className={`rounded-full ${ringClass} cursor-pointer`}
+          style={{
+            width: size,
+            height: size,
+            padding: `${borderWidth}px`,
+          }}
         >
-          <circle cx="12" cy="8" r="4" fill="currentColor" className="text-gray-400 dark:text-gray-500" />
-          <path
-            d="M4 20C4 16.6863 6.68629 14 10 14H14C17.3137 14 20 16.6863 20 20V21H4V20Z"
-            fill="currentColor"
-            className="text-gray-400 dark:text-gray-500"
-          />
-        </svg>
-      </div>
+          <div 
+            className="w-full h-full rounded-full bg-white dark:bg-[#0c1014] flex items-center justify-center"
+            style={{
+              padding: `${innerPadding}px`,
+            }}
+          >
+            <Image
+              src={imageSrc}
+              alt={alt}
+              width={innerSize}
+              height={innerSize}
+              className={`rounded-full ${className}`}
+              style={{
+                boxSizing: 'border-box',
+                display: 'block',
+              }}
+            />
+          </div>
+        </div>
+      </button>
     );
   }
 
   return (
-    <Image
-      src={src}
-      alt={alt}
-      width={size}
-      height={size}
-      className={`rounded-full ${className}`}
-      style={{
-        boxSizing: 'border-box',
-        width: size,
-        height: size,
-        display: 'block',
-      }}
-    />
+    <div className="relative inline-block">
+      <Image
+        src={imageSrc}
+        alt={alt}
+        width={size}
+        height={size}
+        className={`rounded-full ${className}`}
+        style={{
+          boxSizing: 'border-box',
+          display: 'block',
+        }}
+      />
+    </div>
   );
 }

@@ -8,6 +8,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import ExploreGrid from '@/components/explore/ExploreGrid';
+import MobileSearchBar from '@/components/feed/MobileSearchBar';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 import type { FeedPost, GetFeedResponse } from '@/lib/types/feed';
 
 export default function ExplorePage() {
@@ -202,32 +204,39 @@ export default function ExplorePage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 pt-8 pb-8">
-      <h1 className="text-2xl font-semibold mb-6">Esplora</h1>
+    <div className="w-full min-h-screen">
+      {/* Mobile Search Bar - visible only on mobile */}
+      <MobileSearchBar />
       
-      <ExploreGrid
-        posts={posts}
-        onLike={handleLike}
-        onSave={handleSave}
-        onComment={handleComment}
-      />
+      <div className="max-w-5xl mx-auto px-4 pt-8 pb-8">
+        <h1 className="text-2xl font-semibold mb-6 hidden lg:block">Esplora</h1>
+        
+        <ExploreGrid
+          posts={posts}
+          onLike={handleLike}
+          onSave={handleSave}
+          onComment={handleComment}
+        />
 
-      {/* Loading indicator for infinite scroll */}
-      {isLoadingMore && (
-        <div className="grid grid-cols-3 gap-1 md:gap-2 mt-1 md:mt-2">
-          {Array(9)
-            .fill(null)
-            .map((_, i) => (
-              <div
-                key={i}
-                className="aspect-square bg-gray-200 animate-pulse rounded"
-              />
-            ))}
+        {/* Loading indicator for infinite scroll */}
+        {isLoadingMore && (
+          <div className="grid grid-cols-3 gap-1 md:gap-2 mt-1 md:mt-2">
+            {Array(9)
+              .fill(null)
+              .map((_, i) => (
+                <div
+                  key={i}
+                  className="aspect-square bg-gray-200 animate-pulse rounded"
+                />
+              ))}
+          </div>
+        )}
+
+        {/* Intersection observer target */}
+        <div ref={observerTarget} className="h-16 flex items-center justify-center">
+          {(isLoadingMore || isLoading) && hasMore && <LoadingSpinner size={32} />}
         </div>
-      )}
-
-      {/* Intersection observer target */}
-      <div ref={observerTarget} className="h-20" />
+      </div>
     </div>
   );
 }

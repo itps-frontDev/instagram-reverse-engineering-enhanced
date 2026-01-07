@@ -1,28 +1,84 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import MessageList, { MessageItem } from "@/components/direct/MessageList";
 import MessageInput from "@/components/direct/MessageInput";
 import { useAuth } from "@/contexts/AuthContext";
 import ChatContactList, { ChatContact } from "@/components/direct/ChatContactList";
+import ShareIcon from "@/components/common/ShareIcon";
+import ChatSkeleton from "@/components/direct/ChatSkeleton";
 import { Search, PenSquare, ChevronDown, ArrowLeft, Phone, Video, Info } from "lucide-react";
 
 export default function DirectPage() {
   const { profile } = useAuth();
+  const searchParams = useSearchParams();
   const [contacts, setContacts] = useState<ChatContact[]>([]);
   const [selectedId, setSelectedId] = useState<number | undefined>(undefined);
   const [selectedChatId, setSelectedChatId] = useState<number | undefined>(undefined); // ID della chat vera
+  const [selectedContactData, setSelectedContactData] = useState<ChatContact | undefined>(undefined); // Dati del contatto selezionato
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   // Ref per mantenere selectedId senza causare re-render del polling
   const selectedIdRef = React.useRef<number | undefined>(undefined);
+  // Ref per tracciare l'username già caricato e prevenire duplicati
+  const loadedUsernameRef = React.useRef<string | null>(null);
   
   // Aggiorna il ref quando selectedId cambia
   useEffect(() => {
     selectedIdRef.current = selectedId;
   }, [selectedId]);
+  
+  // Se c'è un parametro username nell'URL, seleziona automaticamente quel profilo
+  // e carica le informazioni del profilo se non è già nella lista dei contatti
+  useEffect(() => {
+    const usernameParam = searchParams.get('username');
+    if (usernameParam && usernameParam !== loadedUsernameRef.current) {
+      loadedUsernameRef.current = usernameParam;
+      
+      // Carica le informazioni del profilo usando l'API esistente
+      fetch(`/api/profiles/${usernameParam}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.profile) {
+            const profileId = data.profile.id;
+            setSelectedId(profileId);
+            
+            // Crea l'oggetto contatto
+            const newContact: ChatContact = {
+              id: data.profile.id,
+              name: data.profile.full_name || data.profile.username,
+              username: data.profile.username,
+              profile_image_url: data.profile.profile_image_url,
+              last_message_text: '',
+              last_message_at: undefined,
+              isFromMe: false,
+            };
+            
+            // Imposta immediatamente i dati del contatto selezionato
+            setSelectedContactData(newContact);
+            
+            // Usa callback per verificare se il profilo è già nella lista
+            setContacts(prev => {
+              const existingContact = prev.find(c => c.id === profileId);
+              if (!existingContact) {
+                return [newContact, ...prev];
+              }
+              return prev;
+            });
+          }
+        })
+        .catch(e => console.error('[DirectPage] Error loading profile:', e));
+    } else if (!usernameParam && loadedUsernameRef.current) {
+      // Reset quando non c'è più il parametro username
+      loadedUsernameRef.current = null;
+    }
+  }, [searchParams]);
 
   // Marca una chat come letta quando viene selezionata
   useEffect(() => {
@@ -42,7 +98,12 @@ export default function DirectPage() {
         cache: 'no-store',
         headers: { 'Cache-Control': 'no-cache' }
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        if (res.status !== 401) {
+          console.error('[DirectPage] Failed to fetch chats:', res.status);
+        }
+        return;
+      }
       const data = await res.json();
       const chats = (data.chats || []) as any[];
       
@@ -61,7 +122,10 @@ export default function DirectPage() {
       
       setContacts(mapped);
     } catch (e) {
-      console.error('[DirectPage] Error fetching chats:', e);
+      // Silent fail on network errors
+      if (e instanceof Error && e.message !== 'Failed to fetch') {
+        console.error('[DirectPage] Error fetching chats:', e);
+      }
     }
   }, []);
 
@@ -74,6 +138,16 @@ export default function DirectPage() {
     
     return () => clearInterval(interval);
   }, [fetchChats]);
+
+  // Aggiorna selectedContactData quando viene selezionato un contatto dalla lista esistente
+  useEffect(() => {
+    if (selectedId && !selectedContactData) {
+      const contact = contacts.find(c => c.id === selectedId);
+      if (contact) {
+        setSelectedContactData(contact);
+      }
+    }
+  }, [selectedId, contacts, selectedContactData]);
 
   // Quando viene selezionato un contatto (profilo), crea o ottiene la chat
   useEffect(() => {
@@ -170,7 +244,8 @@ export default function DirectPage() {
     c.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const selectedContact = contacts.find(c => c.id === selectedId);
+  // Usa selectedContactData se disponibile, altrimenti cerca nei contacts
+  const selectedContact = selectedContactData || contacts.find(c => c.id === selectedId);
 
   return (
     <div className="fixed inset-0 left-0 lg:left-[80px] bottom-14 lg:bottom-0 flex bg-[var(--bg-primary)]">
@@ -201,21 +276,43 @@ export default function DirectPage() {
         {/* Search bar - solo su lg+ */}
         <div className="hidden lg:block px-4 pb-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-secondary)]" />
+            <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-secondary)] transition-opacity ${isSearchFocused ? 'opacity-0' : 'opacity-100'}`} />
             <input
               type="text"
               placeholder="Cerca"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#F3F5F7] dark:bg-[#25292E] text-[var(--text-primary)] placeholder-[var(--text-secondary)] rounded-full pl-10 pr-4 py-2 text-sm outline-none"
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setIsSearchFocused(false)}
+              className={`w-full bg-[#F3F5F7] dark:bg-[#25292E] text-[var(--text-primary)] placeholder-[var(--text-secondary)] rounded-full pr-10 py-2 text-sm outline-none transition-all ${isSearchFocused ? 'pl-3' : 'pl-10'}`}
             />
+            {searchQuery !== '' && (
+              <div
+                className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+                aria-disabled="false"
+                aria-label="Cancella la casella di ricerca"
+                role="button"
+                tabIndex={0}
+                onClick={() => setSearchQuery('')}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    setSearchQuery('');
+                  }
+                }}
+              >
+                <svg aria-label="Cancella" fill="currentColor" height="14" role="img" viewBox="0 0 24 24" width="14" className="text-[rgb(12,16,20)] dark:text-[rgb(248,249,249)]">
+                  <title>Cancella</title>
+                  <path d="M12.001.504c-6.34 0-11.5 5.16-11.5 11.5s5.16 11.5 11.5 11.5 11.5-5.158 11.5-11.5-5.16-11.5-11.5-11.5Zm4.707 14.793a1 1 0 1 1-1.414 1.414l-3.293-3.293-3.293 3.293a.997.997 0 0 1-1.414 0 1 1 0 0 1 0-1.414l3.293-3.293-3.293-3.293a1 1 0 1 1 1.414-1.414l3.293 3.293 3.293-3.293a1 1 0 1 1 1.414 1.414l-3.293 3.293 3.293 3.293Z"></path>
+                </svg>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Messaggi / Richieste header - solo su lg+ */}
         <div className="hidden lg:flex px-4 py-2 items-center justify-between">
           <span className="text-base font-bold text-[var(--text-primary)]">Messaggi</span>
-          <button className="text-sm font-semibold text-[#BDBDBD] hover:text-[var(--text-primary)] transition-colors">
+          <button className="text-sm font-semibold text-[#737373] dark:text-[#BDBDBD] hover:text-[var(--text-primary)] transition-colors">
             Richieste
           </button>
         </div>
@@ -262,25 +359,33 @@ export default function DirectPage() {
           <>
             {/* Header chat con info contatto */}
             <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--border-primary)]">
-              {selectedContact?.profile_image_url ? (
-                <img
-                  src={selectedContact.profile_image_url}
-                  alt={selectedContact.name}
-                  className="w-11 h-11 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-11 h-11 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--text-primary)] font-semibold">
-                  {selectedContact?.name?.charAt(0).toUpperCase()}
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold text-[var(--text-primary)] text-base truncate">
-                  {selectedContact?.name}
-                </div>
-                {selectedContact?.username && (
-                  <div className="text-sm text-[var(--text-secondary)] truncate">
-                    @{selectedContact.username}
+              <Link href={`/profile/${selectedContact?.username}`}>
+                {selectedContact?.profile_image_url ? (
+                  <img
+                    src={selectedContact.profile_image_url}
+                    alt={selectedContact.name}
+                    className="w-11 h-11 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-11 h-11 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--text-primary)] font-semibold">
+                    {selectedContact?.name?.charAt(0).toUpperCase()}
                   </div>
+                )}
+              </Link>
+              <div className="flex-1 min-w-0">
+                <Link 
+                  href={`/profile/${selectedContact?.username}`}
+                  className="font-semibold text-[var(--text-primary)] text-base truncate block"
+                >
+                  {selectedContact?.name}
+                </Link>
+                {selectedContact?.username && (
+                  <Link
+                    href={`/profile/${selectedContact?.username}`}
+                    className="text-sm text-[var(--text-secondary)] truncate block"
+                  >
+                    {selectedContact.username}
+                  </Link>
                 )}
               </div>
               {/* Action icons */}
@@ -296,15 +401,52 @@ export default function DirectPage() {
                 </button>
               </div>
             </div>
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col overflow-hidden" ref={messagesContainerRef}>
               {loadingMessages ? (
-                <div className="flex-1 flex items-center justify-center text-[var(--text-secondary)]">Caricamento...</div>
+                <ChatSkeleton />
+              ) : messages.length === 0 ? (
+                // Header iniziale chat (quando non ci sono messaggi)
+                <div className="flex-1 flex flex-col items-center justify-center gap-4 px-4">
+                  <Link href={`/profile/${selectedContact?.username}`}>
+                    {selectedContact?.profile_image_url ? (
+                      <img
+                        src={selectedContact.profile_image_url}
+                        alt={selectedContact.name}
+                        className="w-24 h-24 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--text-primary)] font-semibold text-3xl cursor-pointer hover:opacity-80 transition-opacity">
+                        {selectedContact?.name?.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </Link>
+                  <div className="text-center">
+                    <Link
+                      href={`/profile/${selectedContact?.username}`}
+                      className="text-base font-semibold text-[var(--text-primary)] hover:opacity-70 transition-opacity"
+                    >
+                      {selectedContact?.name}
+                    </Link>
+                    {selectedContact?.username && (
+                      <p className="text-sm text-[var(--text-secondary)] mt-1">
+                        {selectedContact.username} · Instagram
+                      </p>
+                    )}
+                  </div>
+                  <Link
+                    href={`/profile/${selectedContact?.username}`}
+                    className="px-4 py-2 bg-[#F3F5F7] dark:bg-[#262626] text-[var(--text-primary)] hover:bg-[#E4E6EB] dark:hover:bg-[#3A3B3C] text-sm font-semibold rounded-lg transition-colors"
+                  >
+                    Visualizza profilo
+                  </Link>
+                </div>
               ) : (
                 <MessageList 
                   messages={messages} 
                   currentProfileId={profile?.id || 0}
                   contactProfileImage={selectedContact?.profile_image_url}
                   contactName={selectedContact?.name}
+                  contactUsername={selectedContact?.username}
                 />
               )}
             </div>
@@ -314,16 +456,7 @@ export default function DirectPage() {
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
             {/* Icon */}
             <div className="w-24 h-24 rounded-full border-2 border-[var(--text-primary)] flex items-center justify-center">
-              <svg 
-                className="w-12 h-12 text-[var(--text-primary)]" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="1.5"
-              >
-                <path d="M22 2L11 13" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M22 2L15 22L11 13L2 9L22 2Z" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <ShareIcon size={48} className="text-[var(--text-primary)]" />
             </div>
             {/* Text */}
             <div className="text-center">
@@ -332,7 +465,7 @@ export default function DirectPage() {
             </div>
             {/* Button */}
             <button 
-              className="px-4 py-2 bg-[#0095F6] hover:bg-[#1877F2] text-white font-semibold text-sm rounded-lg transition-colors"
+              className="px-4  btn-instagram-primary text-sm rounded-lg"
               onClick={() => {
                 // TODO: Open new message modal
               }}

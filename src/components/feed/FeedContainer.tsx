@@ -6,9 +6,10 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Post from './Post';
 import FeedPostSkeleton from '@/components/common/skeletons/FeedPostSkeleton';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 import type { FeedPost } from '@/lib/types/feed';
 
 export default function FeedContainer() {
@@ -17,6 +18,7 @@ export default function FeedContainer() {
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [offset, setOffset] = useState(0);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
   const fetchPosts = async (currentOffset: number = 0) => {
     try {
@@ -50,6 +52,23 @@ export default function FeedContainer() {
   useEffect(() => {
     fetchPosts(0);
   }, []);
+
+  useEffect(() => {
+    if (!hasMore || loading) return;
+    const observer = new window.IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading) {
+          fetchPosts(offset);
+        }
+      },
+      { threshold: 0.1 }
+    );
+    const currentTarget = observerTarget.current;
+    if (currentTarget) observer.observe(currentTarget);
+    return () => {
+      if (currentTarget) observer.unobserve(currentTarget);
+    };
+  }, [offset, hasMore, loading]);
 
   const handleLike = async (postId: number) => {
     try {
@@ -180,16 +199,9 @@ export default function FeedContainer() {
           onComment={handleComment}
         />
       ))}
-
       {hasMore && (
-        <div className="pt-4">
-          <button
-            onClick={() => fetchPosts(offset)}
-            disabled={loading}
-            className="w-full py-3 text-[#0095F6] font-semibold hover:text-[#004C8B] disabled:opacity-50"
-          >
-            {loading ? 'Caricamento...' : 'Carica altri post'}
-          </button>
+        <div ref={observerTarget} className="h-16 flex items-center justify-center">
+          {loading ? <LoadingSpinner size={32} /> : null}
         </div>
       )}
     </div>
