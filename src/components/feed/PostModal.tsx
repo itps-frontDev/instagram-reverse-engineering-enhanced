@@ -90,13 +90,31 @@ export default function PostModal({
 
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      // Blocca lo scroll solo su mobile (sotto 1024px)
+      if (window.innerWidth < 1024) {
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
+        document.body.style.top = `-${window.scrollY}px`;
+      } else {
+        document.body.style.overflow = 'hidden';
+      }
       setCurrentMediaIndex(0);
       setShowStoryViewer(false);
       setStoryViewerUsername(null);
       fetchComments();
     } else {
-      document.body.style.overflow = 'unset';
+      // Ripristina lo scroll
+      if (window.innerWidth < 1024) {
+        const scrollY = document.body.style.top;
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.top = '';
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      } else {
+        document.body.style.overflow = 'unset';
+      }
     }
 
     return () => {
