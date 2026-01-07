@@ -25,6 +25,7 @@ import {
   Music,
   AtSign,
 } from 'lucide-react';
+import ShareIcon from '@/components/common/ShareIcon';
 
 interface ReelMedia {
   id: number;
@@ -716,7 +717,26 @@ export default function ReelsPage() {
                                 onKeyDown={(e) => e.key === 'Enter' && handleCommentSubmit()}
                                 className="flex-1 bg-transparent text-sm text-white placeholder-[#A8A8A8] outline-none"
                               />
-                              <button className="text-lg">😊</button>
+                              <button
+                                onClick={handleCommentSubmit}
+                                disabled={isSubmittingComment || !commentText.trim()}
+                                className="font-semibold text-sm hover:underline disabled:opacity-30 transition-opacity text-[#0095F6]"
+                              >
+                                {isSubmittingComment ? 'Invio...' : 'Pubblica'}
+                              </button>
+                              <button className="text-[#A8A8A8] hover:text-white transition-colors">
+                                <svg
+                                  aria-label="Emoji"
+                                  fill="currentColor"
+                                  height="24"
+                                  role="img"
+                                  viewBox="0 0 24 24"
+                                  width="24"
+                                >
+                                  <title>Emoji</title>
+                                  <path d="M15.83 10.997a1.167 1.167 0 1 0 1.167 1.167 1.167 1.167 0 0 0-1.167-1.167Zm-6.5 1.167a1.167 1.167 0 1 0-1.166 1.167 1.167 1.167 0 0 0 1.166-1.167Zm5.163 3.24a3.406 3.406 0 0 1-4.982.007 1 1 0 1 0-1.557 1.256 5.397 5.397 0 0 0 8.09 0 1 1 0 0 0-1.55-1.263ZM12 .503a11.5 11.5 0 1 0 11.5 11.5A11.513 11.513 0 0 0 12 .503Zm0 21a9.5 9.5 0 1 1 9.5-9.5 9.51 9.51 0 0 1-9.5 9.5Z"></path>
+                                </svg>
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -728,18 +748,7 @@ export default function ReelsPage() {
                       onClick={(e) => e.stopPropagation()}
                       className="flex flex-col items-center gap-1"
                     >
-                      <svg
-                        className="w-7 h-7 text-[var(--color-text-primary)]"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M21.5 2.5Q16 8 11 13"/>
-                        <path d="M21.5 2.5Q18 12 15.5 20Q15 21.5 14 21Q12.5 17 11 13Q7 11.5 3 10Q2 9 2.5 8.5Q11 5.5 21.5 2.5Z"/>
-                      </svg>
+                      <ShareIcon size={28} className="text-[var(--color-text-primary)]" />
                     </button>
 
                     {/* Save Button */}
