@@ -1,10 +1,9 @@
+"use client";
 /**
  * @fileoverview Post component for feed
  *
  * Displays a single post with header, media, actions, and comments.
  */
-
-'use client';
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
@@ -54,6 +53,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [showUnfollowModal, setShowUnfollowModal] = useState(false);
 
   useEffect(() => {
     fetch(`/api/posts/${post.id}/tags`)
@@ -123,6 +123,34 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
     }
   };
 
+  const handleUnfollow = () => {
+    setShowUnfollowModal(true);
+  };
+
+  const confirmUnfollow = async () => {
+    if (isFollowLoading) return;
+
+    setIsFollowLoading(true);
+    setShowUnfollowModal(false);
+    try {
+      const response = await fetch('/api/profiles/actions/unfollow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ targetProfileId: post.profile_id }),
+      });
+
+      if (response.ok) {
+        setIsFollowing(false);
+        setIsPending(false);
+      }
+    } catch (error) {
+      console.error('Failed to unfollow:', error);
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
+
   const formatLikesCount = (count: number) => {
     if (count >= 1000000) {
       return `${(count / 1000000).toFixed(1)}M`;
@@ -149,16 +177,16 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
     <article className="mb-3">
       {/* Post Header */}
       <div className="flex items-center justify-between px-4 py-3 max-[639px]:px-2">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <ProfilePicture
             src={post.profile_image_url}
             alt={post.profile_username || 'Profile picture'}
-            size={32}
+            size={40}
             hasStory={post.profile_has_active_story}
             username={post.profile_username}
             onStoryClick={post.profile_has_active_story ? () => setShowStoryViewer(true) : undefined}
           />
-          <div className="flex items-center gap-2 relative">
+          <div className="flex items-center gap-1 relative">
             <Link
               href={`/profile/${post.profile_username}`}
               className="font-semibold text-sm text-[#262626] dark:text-[#FAFAFA] max-[639px]:text-xs max-[639px]:truncate max-[639px]:max-w-[120px]"
@@ -201,21 +229,13 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {!isFollowing && !isPending && currentProfile && post.profile_id !== currentProfile.id && (
-            <button 
-              onClick={handleFollow}
+          {currentProfile && post.profile_id !== currentProfile.id && (
+            <button
+              onClick={isFollowing ? handleUnfollow : handleFollow}
               disabled={isFollowLoading}
-              className="text-sm font-semibold text-follow hover:underline disabled:opacity-50"
+              className={`text-sm font-semibold text-follow hover:underline disabled:opacity-50`}
             >
-              {isFollowLoading ? '...' : 'Segui'}
-            </button>
-          )}
-          {isPending && (
-            <button 
-              disabled
-              className="text-sm font-semibold text-[#84a0fe] dark:text-white opacity-70"
-            >
-              Richiesta effettuata
+              {isFollowLoading ? '...' : isFollowing ? 'Segui già' : 'Segui'}
             </button>
           )}
           <button type="button" className="hover:scale-110 transition-transform">
@@ -227,7 +247,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
       {/* Post Media */}
       {post.media.length > 0 && (
         <div
-          className="relative w-full aspect-square rounded-xl bg-gray-100 dark:bg-gray-800 overflow-hidden mt-2 mb-2"
+          className="relative w-full aspect-[3/4] rounded-lg bg-gray-100 dark:bg-gray-800 overflow-hidden mb-2"
           onDoubleClick={handleLike}
         >
           {post.media[0].media_type === 'video' ? (
@@ -405,6 +425,51 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
         onSave={onSave}
         onComment={onComment}
       />
+
+      {/* Unfollow Confirmation Modal */}
+      {showUnfollowModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/75 dark:bg-[rgba(12,16,20,0.75)]"
+            onClick={() => setShowUnfollowModal(false)}
+          />
+          
+          <div 
+            className="relative bg-white dark:bg-[#262626] rounded-xl w-full max-w-[500px] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-col items-center p-8 pb-4">
+              <ProfilePicture
+                src={post.profile_image_url}
+                alt={post.profile_username || 'Profile picture'}
+                size={90}
+                hasStory={false}
+              />
+              <p className="text-sm text-[#262626] dark:text-[#FAFAFA] mt-6 mb-6 text-center">
+                Non vuoi seguire più @{post.profile_username}?
+              </p>
+            </div>
+            <div className="border-t border-gray-300 dark:border-[#363636]">
+              <button
+                onClick={confirmUnfollow}
+                disabled={isFollowLoading}
+                className="w-full py-3 text-sm font-bold text-[#ED4956] transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                {isFollowLoading ? '...' : 'Non seguire più'}
+              </button>
+            </div>
+            <div className="border-t border-gray-300 dark:border-[#363636]">
+              <button
+                onClick={() => setShowUnfollowModal(false)}
+                className="w-full py-3 text-sm text-[#262626] dark:text-[#FAFAFA] transition-colors cursor-pointer"
+              >
+                Annulla
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </article>
   );
 }
