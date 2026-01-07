@@ -149,17 +149,12 @@ export default function MobileNav() {
             className="flex items-center justify-center w-full h-full"
           >
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-              {profile.profile_image_url ? (
-                <img
-                  src={profile.profile_image_url}
-                  alt={profile.username}
-                  className="w-full h-full rounded-full object-cover"
-                />
-              ) : (
-                <span className="text-white text-xs font-semibold">
-                  {profile.username.charAt(0).toUpperCase()}
-                </span>
-              )}
+              <img
+                src={profile.profile_image_url && profile.profile_image_url.trim() !== '' ? profile.profile_image_url : '/images/default-pfp.jpg'}
+                alt={profile.username}
+                className="w-full h-full rounded-full object-cover"
+                onError={e => { (e.currentTarget as HTMLImageElement).src = '/images/default-pfp.jpg'; }}
+              />
             </div>
           </Link>
         )}
