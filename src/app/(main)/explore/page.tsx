@@ -9,6 +9,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import ExploreGrid from '@/components/explore/ExploreGrid';
 import MobileSearchBar from '@/components/feed/MobileSearchBar';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 import type { FeedPost, GetFeedResponse } from '@/lib/types/feed';
 
 export default function ExplorePage() {
@@ -232,7 +233,9 @@ export default function ExplorePage() {
         )}
 
         {/* Intersection observer target */}
-        <div ref={observerTarget} className="h-20" />
+        <div ref={observerTarget} className="h-16 flex items-center justify-center">
+          {(isLoadingMore || isLoading) && hasMore && <LoadingSpinner size={32} />}
+        </div>
       </div>
     </div>
   );
