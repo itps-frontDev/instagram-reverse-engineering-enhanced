@@ -34,7 +34,8 @@ export default function ProfileActions({
   onUnfollow,
   isLoading = false,
   profileId,
-}: ProfileActionsProps & { profileId?: number }) {
+  username,
+}: ProfileActionsProps & { profileId?: number; username?: string }) {
   const router = useRouter();
   const [showDropdown, setShowDropdown] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -59,9 +60,9 @@ export default function ProfileActions({
   };
 
   const handleMessage = () => {
-    if (profileId) {
-      // Naviga alla pagina direct con il profilo selezionato
-      router.push(`/direct?profile=${profileId}`);
+    if (username) {
+      // Naviga alla pagina direct con il profilo selezionato (usa username)
+      router.push(`/direct?username=${username}`);
     }
   };
 

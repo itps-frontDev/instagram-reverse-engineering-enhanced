@@ -203,6 +203,7 @@ export default function ProfileHeader({
             onUnfollow={onUnfollow}
             isLoading={isLoading}
             profileId={profile.id}
+            username={profile.username}
           />
         </div>
 

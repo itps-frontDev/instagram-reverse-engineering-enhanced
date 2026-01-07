@@ -16,6 +16,7 @@ export default function DirectPage() {
   const [contacts, setContacts] = useState<ChatContact[]>([]);
   const [selectedId, setSelectedId] = useState<number | undefined>(undefined);
   const [selectedChatId, setSelectedChatId] = useState<number | undefined>(undefined); // ID della chat vera
+  const [selectedContactData, setSelectedContactData] = useState<ChatContact | undefined>(undefined); // Dati del contatto selezionato
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
@@ -25,20 +26,57 @@ export default function DirectPage() {
 
   // Ref per mantenere selectedId senza causare re-render del polling
   const selectedIdRef = React.useRef<number | undefined>(undefined);
+  // Ref per tracciare l'username già caricato e prevenire duplicati
+  const loadedUsernameRef = React.useRef<string | null>(null);
   
   // Aggiorna il ref quando selectedId cambia
   useEffect(() => {
     selectedIdRef.current = selectedId;
   }, [selectedId]);
   
-  // Se c'è un parametro profile nell'URL, seleziona automaticamente quel profilo
+  // Se c'è un parametro username nell'URL, seleziona automaticamente quel profilo
+  // e carica le informazioni del profilo se non è già nella lista dei contatti
   useEffect(() => {
-    const profileParam = searchParams.get('profile');
-    if (profileParam) {
-      const profileId = parseInt(profileParam, 10);
-      if (!isNaN(profileId)) {
-        setSelectedId(profileId);
-      }
+    const usernameParam = searchParams.get('username');
+    if (usernameParam && usernameParam !== loadedUsernameRef.current) {
+      loadedUsernameRef.current = usernameParam;
+      
+      // Carica le informazioni del profilo usando l'API esistente
+      fetch(`/api/profiles/${usernameParam}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.profile) {
+            const profileId = data.profile.id;
+            setSelectedId(profileId);
+            
+            // Crea l'oggetto contatto
+            const newContact: ChatContact = {
+              id: data.profile.id,
+              name: data.profile.full_name || data.profile.username,
+              username: data.profile.username,
+              profile_image_url: data.profile.profile_image_url,
+              last_message_text: '',
+              last_message_at: undefined,
+              isFromMe: false,
+            };
+            
+            // Imposta immediatamente i dati del contatto selezionato
+            setSelectedContactData(newContact);
+            
+            // Usa callback per verificare se il profilo è già nella lista
+            setContacts(prev => {
+              const existingContact = prev.find(c => c.id === profileId);
+              if (!existingContact) {
+                return [newContact, ...prev];
+              }
+              return prev;
+            });
+          }
+        })
+        .catch(e => console.error('[DirectPage] Error loading profile:', e));
+    } else if (!usernameParam && loadedUsernameRef.current) {
+      // Reset quando non c'è più il parametro username
+      loadedUsernameRef.current = null;
     }
   }, [searchParams]);
 
@@ -100,6 +138,16 @@ export default function DirectPage() {
     
     return () => clearInterval(interval);
   }, [fetchChats]);
+
+  // Aggiorna selectedContactData quando viene selezionato un contatto dalla lista esistente
+  useEffect(() => {
+    if (selectedId && !selectedContactData) {
+      const contact = contacts.find(c => c.id === selectedId);
+      if (contact) {
+        setSelectedContactData(contact);
+      }
+    }
+  }, [selectedId, contacts, selectedContactData]);
 
   // Quando viene selezionato un contatto (profilo), crea o ottiene la chat
   useEffect(() => {
@@ -196,7 +244,8 @@ export default function DirectPage() {
     c.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const selectedContact = contacts.find(c => c.id === selectedId);
+  // Usa selectedContactData se disponibile, altrimenti cerca nei contacts
+  const selectedContact = selectedContactData || contacts.find(c => c.id === selectedId);
 
   return (
     <div className="fixed inset-0 left-0 lg:left-[80px] bottom-14 lg:bottom-0 flex bg-[var(--bg-primary)]">
