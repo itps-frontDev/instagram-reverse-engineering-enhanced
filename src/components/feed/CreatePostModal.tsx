@@ -31,7 +31,12 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
   const [caption, setCaption] = useState('');
   const [hasAudio, setHasAudio] = useState(true);
   const [currentProfile, setCurrentProfile] = useState<{ username: string; full_name: string | null; profile_image_url: string | null } | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return document.documentElement.classList.contains('dark');
+    }
+    return false;
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const multipleFileInputRef = useRef<HTMLInputElement>(null);
   const mediaRef = useRef<HTMLDivElement>(null);
@@ -682,7 +687,7 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
                   viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <rect x="3" y="3" width="18" height="18" rx="4" ry="4" fill={isDarkMode ? '#212328' : '#fff'} stroke="currentColor" strokeWidth="0.65" strokeLinecap="round" strokeLinejoin="round" />
+                  <rect x="3" y="3" width="18" height="18" rx="4" ry="4" className="fill-white dark:fill-[#212328]" stroke="currentColor" strokeWidth="0.65" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M9 8 Q9.5 8 10 8.5 L16 11.5 Q16.5 12 16.5 12 Q16.5 12 16 12.5 L10 15.5 Q9.5 16 9 16 Q9 16 9 15.5 L9 8.5 Q9 8 9 8" fill="none" stroke="currentColor" strokeWidth="0.65" className="text-[#262626] dark:text-white"/>
                 </svg>
               </div>
