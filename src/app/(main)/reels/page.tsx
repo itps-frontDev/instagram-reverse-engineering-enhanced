@@ -494,7 +494,7 @@ export default function ReelsPage() {
                 <div className="relative flex items-center gap-4">
                   {/* Video Container - responsive height for mobile nav */}
                   <div 
-                    className="relative w-[420px] h-[calc(100vh-80px)] lg:h-[calc(100vh-40px)] max-h-[900px] rounded-lg overflow-hidden"
+                    className="relative w-[421px] h-[748px] max-h-[calc(100vh-80px)] lg:max-h-[calc(100vh-40px)] rounded-lg overflow-hidden"
                     onDoubleClick={() => handleDoubleTap(reel.id)}
                     onClick={() => setIsPlaying(prev => !prev)}
                   >
