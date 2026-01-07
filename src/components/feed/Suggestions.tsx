@@ -136,11 +136,13 @@ export default function Suggestions() {
         {/* Current User Info */}
         <div className="flex items-center justify-between">
           <Link href={`/profile/${profile.username}`} className="flex items-center gap-3">
-            <ProfilePicture
-              src={profile.profile_image_url}
-              alt={profile.username}
-              size={48}
-            />
+            <div className="rounded-full overflow-hidden">
+              <ProfilePicture
+                src={profile.profile_image_url}
+                alt={profile.username}
+                size={48}
+              />
+            </div>
             <div>
               <p className="font-semibold text-sm text-[#262626] dark:text-white">
                 {profile.username}
@@ -207,11 +209,13 @@ export default function Suggestions() {
                   }}
                 >
                   <Link href={`/profile/${user.username}`} className="flex items-center gap-3 flex-1">
-                    <ProfilePicture
-                      src={user.profile_image_url}
-                      alt={user.username}
-                      size={32}
-                    />
+                    <div className="rounded-full overflow-hidden">
+                      <ProfilePicture
+                        src={user.profile_image_url}
+                        alt={user.username}
+                        size={32}
+                      />
+                    </div>
                     <div>
                       <p className="font-semibold text-sm text-[#262626] dark:text-white flex items-center gap-1">
                         {user.username}

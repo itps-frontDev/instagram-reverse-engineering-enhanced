@@ -63,7 +63,7 @@ export default function ProfileHeader({
           {/* Profile Picture */}
           <div className="flex justify-start flex-shrink-0">
             <div
-              className={`relative w-[110px] h-[110px] md:w-[150px] md:h-[150px] cursor-pointer transition-transform duration-150 ${isBumping ? 'scale-95' : ''}`}
+              className={`relative w-[110px] h-[110px] md:w-[150px] md:h-[150px] cursor-pointer transition-transform duration-150 rounded-full overflow-hidden ${isBumping ? 'scale-95' : ''}`}
               onClick={handleProfileImageClick}
               role="button"
               tabIndex={0}

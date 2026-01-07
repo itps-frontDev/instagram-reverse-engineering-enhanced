@@ -52,7 +52,7 @@ export default function ProfilePicture({
           }}
         >
           <div 
-            className="w-full h-full rounded-full bg-white dark:bg-[#0c1014] flex items-center justify-center"
+            className="w-full h-full rounded-full bg-white dark:bg-[#0c1014] flex items-center justify-center overflow-hidden"
             style={{
               padding: `${innerPadding}px`,
             }}
@@ -62,7 +62,7 @@ export default function ProfilePicture({
               alt={alt}
               width={innerSize}
               height={innerSize}
-              className={`rounded-full ${className}`}
+              className={`rounded-full object-cover ${className}`}
               style={{
                 boxSizing: 'border-box',
                 display: 'block',
@@ -75,16 +75,19 @@ export default function ProfilePicture({
   }
 
   return (
-    <div className="relative inline-block">
+    <div 
+      className="relative inline-block rounded-full overflow-hidden"
+      style={{ width: size, height: size }}
+    >
       <Image
         src={imageSrc}
         alt={alt}
         width={size}
         height={size}
-        className={`rounded-full ${className}`}
+        className={`object-cover ${className}`}
         style={{
-          boxSizing: 'border-box',
-          display: 'block',
+          width: '100%',
+          height: '100%',
         }}
       />
     </div>
