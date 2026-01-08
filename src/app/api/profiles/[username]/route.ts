@@ -84,7 +84,7 @@ export async function GET(
           FROM stories s
           WHERE s.profile_id = profiles.id
             AND s.deleted_at IS NULL
-            AND datetime(s.created_at, '+24 hours') > datetime('now')
+            AND s.expires_at > datetime('now')
         ) as has_active_story,
         (
           SELECT COUNT(*) > 0
@@ -93,7 +93,7 @@ export async function GET(
           WHERE s.profile_id = profiles.id
             AND sv.viewer_profile_id = ?
             AND s.deleted_at IS NULL
-            AND datetime(s.created_at, '+24 hours') > datetime('now')
+            AND s.expires_at > datetime('now')
         ) as has_viewed_story
       FROM profiles
       WHERE username = ? AND deleted_at IS NULL`,

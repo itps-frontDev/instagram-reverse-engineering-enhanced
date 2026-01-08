@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
          FROM stories s
          WHERE s.profile_id = p.profile_id
          AND s.deleted_at IS NULL
-         AND datetime(s.created_at, '+24 hours') > datetime('now')
+         AND s.expires_at > datetime('now')
         ) as profile_has_active_story,
         (SELECT 1 FROM likes
          WHERE likeable_type = 'post'
