@@ -370,7 +370,16 @@ export default function StoryViewer({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [goToPrevious, goToNext, onClose]);
 
-  if (loading || !currentStory) {
+  // Se il caricamento è finito e non ci sono storie, chiudi la modale
+  const [loadFailed, setLoadFailed] = useState(false);
+
+  useEffect(() => {
+    if (!loading && stories.length === 0) {
+      setLoadFailed(true);
+    }
+  }, [loading, stories.length]);
+
+  if (loading) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center">
         <div className="text-white text-center">
@@ -379,6 +388,30 @@ export default function StoryViewer({
         </div>
       </div>
     );
+  }
+
+  if (loadFailed) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center">
+        <div className="text-white text-center max-w-xs mx-auto p-6 rounded-lg bg-black bg-opacity-80 border border-gray-700">
+          <div className="mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto mb-2" width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" /></svg>
+            <p className="font-semibold text-lg">Impossibile caricare le storie</p>
+            <p className="text-sm mt-2 opacity-80">Non ci sono storie disponibili per questo utente oppure si è verificato un errore durante il caricamento.</p>
+          </div>
+          <button
+            className="mt-4 px-4 py-2 bg-white text-black rounded font-medium hover:bg-gray-200 transition"
+            onClick={onClose}
+          >
+            Chiudi
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentStory) {
+    return null;
   }
 
   return (
