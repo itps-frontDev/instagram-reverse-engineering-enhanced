@@ -22,6 +22,7 @@ export async function GET() {
         s.profile_id,
         p.username,
         p.profile_image_url,
+        p.is_verified,
         s.media_url,
         s.media_type,
         s.duration_seconds,
@@ -59,7 +60,13 @@ export async function GET() {
      */
     const rows = await queryAll(sql, [currentProfile.id, currentProfile.id, currentProfile.id]);
 
-    return NextResponse.json({ stories: rows });
+    // Convert is_verified to boolean
+    const stories = rows.map((story: any) => ({
+      ...story,
+      is_verified: Boolean(story.is_verified)
+    }));
+
+    return NextResponse.json({ stories });
   } catch (error) {
     console.error('[api/stories] GET error', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

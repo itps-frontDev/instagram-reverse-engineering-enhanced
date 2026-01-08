@@ -602,7 +602,7 @@ export default function StoryViewer({
             >
               {currentStory.username}
               {currentStory.is_verified && (
-                <VerifiedBadge size={12} />
+                <VerifiedBadge size={12} color="white" />
               )}
             </Link>
             <p className="text-white text-xs opacity-80 drop-shadow-lg">
