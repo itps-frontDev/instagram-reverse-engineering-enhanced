@@ -253,6 +253,55 @@ export default function StoryViewer({
     }
   }, [currentIndex, stories.length, allUsernames.length, currentUserIndex, onUserChange, onClose]);
 
+  // Jump to a specific profile by clicking its preview
+  const goToProfileByIndex = useCallback((targetUserIndex: number, direction: 'left' | 'right') => {
+    if (onUserChange && targetUserIndex >= 0 && targetUserIndex < allUsernames.length) {
+      // Attiva transizione verso la direzione specifica
+      setIsTransitioning(true);
+      setTransitionDirection(direction);
+      // Cambia utente alla fine della transizione
+      setTimeout(() => {
+        onUserChange(targetUserIndex);
+        // Attiva fase di ritorno
+        setIsReturning(true);
+        setIsTransitioning(false);
+        // Dopo un frame, disattiva ritorno per animare verso centro
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setIsReturning(false);
+            setTransitionDirection(null);
+          });
+        });
+      }, 150);
+    }
+  }, [allUsernames.length, onUserChange]);
+
+  // Jump directly to next profile (by clicking arrow, not scrolling stories)
+  const goToNextProfile = useCallback(() => {
+    if (allUsernames.length > 0 && onUserChange && currentUserIndex < allUsernames.length - 1) {
+      // Attiva transizione verso sinistra
+      setIsTransitioning(true);
+      setTransitionDirection('left');
+      // Cambia utente alla fine della transizione
+      setTimeout(() => {
+        onUserChange(currentUserIndex + 1);
+        // Attiva fase di ritorno
+        setIsReturning(true);
+        setIsTransitioning(false);
+        // Dopo un frame, disattiva ritorno per animare verso centro
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setIsReturning(false);
+            setTransitionDirection(null);
+          });
+        });
+      }, 150);
+    } else {
+      // Chiudi se non ci sono altri utenti
+      onClose();
+    }
+  }, [allUsernames.length, currentUserIndex, onUserChange, onClose]);
+
   // Handle auto-advance to next story
   useEffect(() => {
     if (!currentStory || loading) return;
@@ -456,11 +505,11 @@ export default function StoryViewer({
       {prevUserPreviews.map((preview, index) => (
         <button
           key={`prev-${index}`}
-          onClick={goToPrevious}
+          onClick={() => goToProfileByIndex(currentUserIndex - (index + 1), 'right')}
           className={`fixed top-1/2 -translate-y-1/2 w-[277px] h-[490px] rounded-lg overflow-hidden transition-all hidden md:block ${
             isTransitioning && transitionDirection === 'right' && index === 0
               ? 'duration-500 ease-out z-30'
-              : 'duration-300 z-20 hover:scale-105'
+              : 'duration-300 z-20 cursor-pointer'
           }`}
           style={{ 
             left: `calc(50% - 345px - ${520 + index * 357}px)`,
@@ -690,11 +739,11 @@ export default function StoryViewer({
       {nextUserPreviews.map((preview, index) => (
         <button
           key={`next-${index}`}
-          onClick={goToNext}
+          onClick={() => goToProfileByIndex(currentUserIndex + (index + 1), 'left')}
           className={`fixed top-1/2 -translate-y-1/2 w-[277px] h-[490px] rounded-lg overflow-hidden transition-all hidden md:block ${
             isTransitioning && transitionDirection === 'left' && index === 0
               ? 'duration-500 ease-out z-30'
-              : 'duration-300 z-20 hover:scale-105'
+              : 'duration-300 z-20 cursor-pointer'
           }`}
           style={{ 
             right: `calc(50% - 345px - ${520 + index * 357}px)`,
