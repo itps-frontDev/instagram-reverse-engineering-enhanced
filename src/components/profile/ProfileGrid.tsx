@@ -6,6 +6,7 @@
 
 'use client';
 
+import { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Heart, MessageCircle, Play } from 'lucide-react';
 import { ProfileGridProps } from '@/lib/types/profile';
@@ -22,6 +23,32 @@ export default function ProfileGrid({
   onCreatePost,
   onPostClick,
 }: ProfileGridProps) {
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    if (!hasMore || !onLoadMore || isLoading) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoading) {
+          onLoadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [hasMore, isLoading, onLoadMore]);
   if (isLoading && posts.length === 0) {
     return (
       <div className="grid grid-cols-3 gap-[1px] md:gap-[3px]">
@@ -102,16 +129,22 @@ export default function ProfileGrid({
         ))}
       </div>
 
-      {/* Load More */}
-      {hasMore && onLoadMore && (
-        <div className="py-8 text-center">
-          <button
-            onClick={onLoadMore}
-            className="text-[#0095f6] font-semibold text-sm hover:opacity-70"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Loading...' : 'Load More'}
-          </button>
+      {/* Infinite scroll loading indicator */}
+      {hasMore && (
+        <div 
+          ref={observerTarget}
+          className="py-8 text-center"
+        >
+          {isLoading && (
+            <div className="grid grid-cols-3 gap-[1px] md:gap-[3px]">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="aspect-[3/4] bg-gray-200 dark:bg-gray-800 animate-pulse"
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
