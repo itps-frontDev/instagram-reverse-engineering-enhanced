@@ -191,7 +191,9 @@ export default function DirectPage() {
     };
 
     setLoadingMessages(true);
-    fetchMessages().finally(() => setLoadingMessages(false));
+    setTimeout(() => {
+      fetchMessages().finally(() => setLoadingMessages(false));
+    }, 100);
 
     // Poll ogni 2 secondi per nuovi messaggi
     const interval = setInterval(fetchMessages, 2000);
