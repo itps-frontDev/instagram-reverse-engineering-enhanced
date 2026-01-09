@@ -636,7 +636,7 @@ export default function ReelsPage() {
                         className="flex flex-col items-center gap-1 z-10"
                         id={`comments-btn-${reel.id}`}
                       >
-                        <MessageCircle className="w-7 h-7 text-[var(--color-text-primary)]" />
+                        <MessageCircle className="w-7 h-7 text-[var(--color-text-primary)] icon-mirrored" />
                         <span className="text-[var(--color-text-primary)] text-xs font-medium">
                           {reel.comments_count}
                         </span>

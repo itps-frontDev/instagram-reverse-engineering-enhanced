@@ -106,7 +106,7 @@ export default function ExploreGrid({
                   <span>{formatCount(post.likes_count)}</span>
                 </div>
                 <div className="flex items-center gap-2 text-white font-semibold">
-                  <MessageCircle className="w-6 h-6" fill="white" style={{ transform: 'scaleX(-1)' }} />
+                  <MessageCircle className="w-6 h-6 icon-mirrored" fill="white" />
                   <span>{formatCount(post.comments_count)}</span>
                 </div>
               </div>

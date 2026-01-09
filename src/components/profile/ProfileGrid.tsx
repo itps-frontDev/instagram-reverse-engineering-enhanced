@@ -94,7 +94,7 @@ export default function ProfileGrid({
                 <span>{post.likes_count}</span>
               </div>
               <div className="flex items-center gap-2 text-white font-semibold">
-                <MessageCircle className="w-6 h-6 fill-white" />
+                <MessageCircle className="w-6 h-6 fill-white icon-mirrored" />
                 <span>{post.comments_count}</span>
               </div>
             </div>
