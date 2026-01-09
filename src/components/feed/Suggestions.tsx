@@ -140,12 +140,12 @@ export default function Suggestions() {
               <ProfilePicture
                 src={profile.profile_image_url}
                 alt={profile.username}
-                size={48}
+                size={52}
               />
             </div>
             <div>
               <p className="font-semibold text-sm text-[#262626] dark:text-white">
-                {profile.username}
+                <span className="text-[15px]">{profile.username}</span>
               </p>
               <p className="text-xs text-[#8E8E8E] dark:text-gray-400">
                 {profile.full_name || profile.username}
@@ -213,12 +213,12 @@ export default function Suggestions() {
                       <ProfilePicture
                         src={user.profile_image_url}
                         alt={user.username}
-                        size={32}
+                        size={40}
                       />
                     </div>
                     <div>
                       <p className="font-semibold text-sm text-[#262626] dark:text-white flex items-center gap-1">
-                        {user.username}
+                        <span className="text-[15px]">{user.username}</span>
                         {user.is_verified && <VerifiedBadge size={12} />}
                       </p>
                       <p className="text-xs text-[#8E8E8E] dark:text-gray-400">
