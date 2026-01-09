@@ -1,4 +1,5 @@
 import React from "react";
+import ProfilePicture from "@/components/ProfilePicture";
 
 export interface ChatContact {
   id: number;
@@ -49,17 +50,11 @@ export default function ChatContactList({ contacts, onSelect, selectedId }: Chat
           }`}
           onClick={() => onSelect(c.id)}
         >
-          {c.profile_image_url ? (
-            <img
-              src={c.profile_image_url}
-              alt={c.name}
-              className="w-14 h-14 rounded-full object-cover flex-shrink-0"
-            />
-          ) : (
-            <div className="w-14 h-14 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--text-primary)] font-semibold text-lg flex-shrink-0">
-              {c.name?.charAt(0).toUpperCase()}
-            </div>
-          )}
+          <ProfilePicture
+            src={c.profile_image_url}
+            alt={c.name}
+            size={56}
+          />
           <div className="flex-1 min-w-0">
             <div className="font-normal text-[var(--text-primary)] text-sm truncate">{c.name}</div>
             <div className="text-sm text-[var(--text-secondary)] truncate">

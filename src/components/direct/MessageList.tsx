@@ -1,6 +1,7 @@
 
 import React, { useRef, useEffect } from 'react';
 import Link from 'next/link';
+import ProfilePicture from '@/components/ProfilePicture';
 
 export interface MessageItem {
   id: number;
@@ -90,18 +91,12 @@ export default function MessageList({ messages, currentProfileId, contactProfile
       {/* Header profilo - sempre in alto all'inizio */}
       {contactUsername && (
         <div className="flex flex-col items-center justify-center py-6 px-4 mb-4">
-          <Link href={`/profile/${contactUsername}`}>
-            {contactProfileImage ? (
-              <img
-                src={contactProfileImage}
-                alt={contactName || ''}
-                className="w-20 h-20 rounded-full object-cover mb-3"
-              />
-            ) : (
-              <div className="w-20 h-20 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--text-primary)] font-semibold text-2xl mb-3">
-                {contactName?.charAt(0).toUpperCase()}
-              </div>
-            )}
+          <Link href={`/profile/${contactUsername}`} className="mb-3">
+            <ProfilePicture
+              src={contactProfileImage}
+              alt={contactName || ''}
+              size={80}
+            />
           </Link>
           <div className="text-center mb-3">
             <Link
@@ -156,30 +151,18 @@ export default function MessageList({ messages, currentProfileId, contactProfile
                   {isLastInGroup ? (
                     contactUsername ? (
                       <Link href={`/profile/${contactUsername}`}>
-                        {contactProfileImage ? (
-                          <img
-                            src={contactProfileImage}
-                            alt={contactName || ''}
-                            className="w-7 h-7 rounded-full object-cover cursor-pointer"
-                          />
-                        ) : (
-                          <div className="w-7 h-7 rounded-full bg-[#3C3C3C] flex items-center justify-center text-white text-xs font-semibold cursor-pointer">
-                            {contactName?.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                      </Link>
-                    ) : (
-                      contactProfileImage ? (
-                        <img
+                        <ProfilePicture
                           src={contactProfileImage}
                           alt={contactName || ''}
-                          className="w-7 h-7 rounded-full object-cover"
+                          size={28}
                         />
-                      ) : (
-                        <div className="w-7 h-7 rounded-full bg-[#3C3C3C] flex items-center justify-center text-white text-xs font-semibold">
-                          {contactName?.charAt(0).toUpperCase()}
-                        </div>
-                      )
+                      </Link>
+                    ) : (
+                      <ProfilePicture
+                        src={contactProfileImage}
+                        alt={contactName || ''}
+                        size={28}
+                      />
                     )
                   ) : (
                     <div className="w-7 h-7" /> // Spazio vuoto per allineamento

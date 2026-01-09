@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import ChatContactList, { ChatContact } from "@/components/direct/ChatContactList";
 import ShareIcon from "@/components/common/ShareIcon";
 import ChatSkeleton from "@/components/direct/ChatSkeleton";
+import ProfilePicture from "@/components/ProfilePicture";
 import { Search, PenSquare, ChevronDown, ArrowLeft, Phone, Video, Info } from "lucide-react";
 
 export default function DirectPage() {
@@ -141,13 +142,15 @@ export default function DirectPage() {
 
   // Aggiorna selectedContactData quando viene selezionato un contatto dalla lista esistente
   useEffect(() => {
-    if (selectedId && !selectedContactData) {
+    if (selectedId) {
       const contact = contacts.find(c => c.id === selectedId);
       if (contact) {
         setSelectedContactData(contact);
       }
+    } else {
+      setSelectedContactData(undefined);
     }
-  }, [selectedId, contacts, selectedContactData]);
+  }, [selectedId, contacts]);
 
   // Quando viene selezionato un contatto (profilo), crea o ottiene la chat
   useEffect(() => {
@@ -360,17 +363,11 @@ export default function DirectPage() {
             {/* Header chat con info contatto */}
             <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--border-primary)]">
               <Link href={`/profile/${selectedContact?.username}`}>
-                {selectedContact?.profile_image_url ? (
-                  <img
-                    src={selectedContact.profile_image_url}
-                    alt={selectedContact.name}
-                    className="w-11 h-11 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-11 h-11 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--text-primary)] font-semibold">
-                    {selectedContact?.name?.charAt(0).toUpperCase()}
-                  </div>
-                )}
+                <ProfilePicture
+                  src={selectedContact?.profile_image_url}
+                  alt={selectedContact?.name || ''}
+                  size={44}
+                />
               </Link>
               <div className="flex-1 min-w-0">
                 <Link 
@@ -407,18 +404,12 @@ export default function DirectPage() {
               ) : messages.length === 0 ? (
                 // Header iniziale chat (quando non ci sono messaggi)
                 <div className="flex-1 flex flex-col items-center justify-center gap-4 px-4">
-                  <Link href={`/profile/${selectedContact?.username}`}>
-                    {selectedContact?.profile_image_url ? (
-                      <img
-                        src={selectedContact.profile_image_url}
-                        alt={selectedContact.name}
-                        className="w-24 h-24 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                      />
-                    ) : (
-                      <div className="w-24 h-24 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--text-primary)] font-semibold text-3xl cursor-pointer hover:opacity-80 transition-opacity">
-                        {selectedContact?.name?.charAt(0).toUpperCase()}
-                      </div>
-                    )}
+                  <Link href={`/profile/${selectedContact?.username}`} className="hover:opacity-80 transition-opacity">
+                    <ProfilePicture
+                      src={selectedContact?.profile_image_url}
+                      alt={selectedContact?.name || ''}
+                      size={96}
+                    />
                   </Link>
                   <div className="text-center">
                     <Link
