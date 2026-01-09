@@ -161,15 +161,8 @@ export default function ExplorePage() {
     return (
       <div className="max-w-5xl mx-auto px-4 pt-8">
         <h1 className="text-2xl font-semibold mb-6">Esplora</h1>
-        <div className="grid grid-cols-3 gap-1 md:gap-2">
-          {Array(30)
-            .fill(null)
-            .map((_, i) => (
-              <div
-                key={i}
-                className="aspect-square bg-gray-200 animate-pulse rounded"
-              />
-            ))}
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <LoadingSpinner size={48} />
         </div>
       </div>
     );

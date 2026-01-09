@@ -11,6 +11,7 @@ import { Heart, MessageCircle, Play } from 'lucide-react';
 import { ProfileGridProps } from '@/lib/types/profile';
 import ProfileEmptyState from './ProfileEmptyState';
 import CarouselIcon from '@/components/common/CarouselIcon';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 
 export default function ProfileGrid({
   posts,
@@ -24,13 +25,8 @@ export default function ProfileGrid({
 }: ProfileGridProps) {
   if (isLoading && posts.length === 0) {
     return (
-      <div className="grid grid-cols-3 gap-[1px] md:gap-[3px]">
-        {Array.from({ length: 12 }).map((_, i) => (
-          <div
-            key={i}
-            className="aspect-[3/4] bg-gray-200 dark:bg-gray-800 animate-pulse"
-          />
-        ))}
+      <div className="flex flex-col items-center justify-center py-12">
+        <LoadingSpinner size={48} />
       </div>
     );
   }
@@ -110,7 +106,7 @@ export default function ProfileGrid({
             className="text-[#0095f6] font-semibold text-sm hover:opacity-70"
             disabled={isLoading}
           >
-            {isLoading ? 'Loading...' : 'Load More'}
+            {isLoading ? <LoadingSpinner size={20} /> : 'Load More'}
           </button>
         </div>
       )}

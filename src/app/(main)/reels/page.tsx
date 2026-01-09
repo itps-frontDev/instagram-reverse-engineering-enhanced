@@ -26,6 +26,7 @@ import {
   AtSign,
 } from 'lucide-react';
 import ShareIcon from '@/components/common/ShareIcon';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 
 interface ReelMedia {
   id: number;
@@ -423,10 +424,10 @@ export default function ReelsPage() {
 
   const currentReel = reels[currentIndex];
 
-  if (isLoading && reels.length === 0) {
+  if (isLoading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-[var(--color-bg-primary)] lg:left-[80px] xl:left-[336px] pb-14 lg:pb-0">
-        <div className="text-[var(--color-text-primary)]">Caricamento reels...</div>
+      <div className="flex items-center justify-center min-h-screen fixed inset-0 bg-[var(--color-bg-primary)] overflow-hidden lg:left-[80px] xl:left-[336px] pb-14 lg:pb-0">
+        <LoadingSpinner size={48} />
       </div>
     );
   }
@@ -443,13 +444,7 @@ export default function ReelsPage() {
   }
 
   return (
-    <div 
-      ref={containerRef}
-      className="fixed inset-0 bg-[var(--color-bg-primary)] overflow-hidden lg:left-[80px] xl:left-[336px] pb-14 lg:pb-0"
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-    >
+    <div ref={containerRef} className="fixed inset-0 bg-[var(--color-bg-primary)] overflow-hidden touch-pan-y select-none pb-14 lg:pb-0 lg:left-[80px] xl:left-[336px]">
       {/* Main Reels Container */}
       <div className="relative h-full w-full flex items-center justify-center">
         {/* Reels Stack with Sliding Animation */}

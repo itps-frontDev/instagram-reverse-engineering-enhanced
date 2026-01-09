@@ -22,6 +22,7 @@ import PostModal from '@/components/feed/PostModal';
 import CreatePostModal from '@/components/feed/CreatePostModal';
 import StoryViewer from '@/components/feed/StoryViewer';
 import Footer from '@/components/common/Footer';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 import {
   Profile,
   Post,
@@ -553,7 +554,7 @@ export default function ProfilePage({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">Loading...</div>
+        <LoadingSpinner size={48} />
       </div>
     );
   }
@@ -578,6 +579,7 @@ export default function ProfilePage({
     );
   }
 
+  // Only render the rest when not loading
   return (
     <>
       <div className="w-full flex flex-col items-center pb-12 lg:max-w-7xl mx-auto flex-1">
