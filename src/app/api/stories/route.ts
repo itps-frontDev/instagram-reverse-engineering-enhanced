@@ -38,7 +38,12 @@ export async function GET() {
             AND likeable_type = 'story' 
             AND likeable_id = s.id 
             AND deleted_at IS NULL
-        ) THEN 1 ELSE 0 END as is_liked_by_me
+        ) THEN 1 ELSE 0 END as is_liked_by_me,
+        CASE WHEN EXISTS (
+          SELECT 1 FROM story_views
+          WHERE story_id = s.id
+            AND viewer_profile_id = ?
+        ) THEN 1 ELSE 0 END as is_viewed
       FROM stories s
       JOIN profiles p ON p.id = s.profile_id
       WHERE (
@@ -55,7 +60,12 @@ export async function GET() {
       ORDER BY s.created_at DESC
     `;
 
-    const rows = await queryAll(sql, [currentProfile.id, currentProfile.id, currentProfile.id]);
+    const rows = await queryAll(sql, [
+      currentProfile.id, 
+      currentProfile.id, 
+      currentProfile.id, 
+      currentProfile.id
+    ]);
 
     // Convert is_verified to boolean
     const stories = rows.map((story: any) => ({

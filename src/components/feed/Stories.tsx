@@ -31,10 +31,19 @@ interface StoryItem {
   views_count: number;
   created_at: string;
   expires_at: string;
+  is_viewed?: number;
+}
+
+interface ProfileStories {
+  profile_id: number;
+  username: string;
+  profile_image_url: string | null;
+  stories: StoryItem[];
+  allViewed: boolean;
 }
 
 export default function Stories() {
-  const [stories, setStories] = useState<StoryItem[]>([]);
+  const [profileStories, setProfileStories] = useState<ProfileStories[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [selectedUsername, setSelectedUsername] = useState<string | null>(null);
@@ -62,20 +71,41 @@ export default function Stories() {
         if (!mounted) return;
         if (res.ok) {
           const data = await res.json();
-          // Group stories by profile - take only first story per profile for carousel
-          const storyMap = new Map<number, StoryItem>();
+          
+          // Group stories by profile
+          const profileMap = new Map<number, ProfileStories>();
           (data.stories || []).forEach((story: StoryItem) => {
-            if (!storyMap.has(story.profile_id)) {
-              storyMap.set(story.profile_id, story);
+            if (!profileMap.has(story.profile_id)) {
+              profileMap.set(story.profile_id, {
+                profile_id: story.profile_id,
+                username: story.username,
+                profile_image_url: story.profile_image_url,
+                stories: [],
+                allViewed: true
+              });
+            }
+            const profile = profileMap.get(story.profile_id)!;
+            profile.stories.push(story);
+            // Se anche una sola storia non è vista, allViewed = false
+            if (!story.is_viewed) {
+              profile.allViewed = false;
             }
           });
-          setStories(Array.from(storyMap.values()));
+
+          // Converti in array e ordina: non viste prima, viste dopo
+          const profilesArray = Array.from(profileMap.values());
+          profilesArray.sort((a, b) => {
+            if (a.allViewed === b.allViewed) return 0;
+            return a.allViewed ? 1 : -1; // Non viste prima
+          });
+
+          setProfileStories(profilesArray);
         } else {
-          setStories([]);
+          setProfileStories([]);
         }
       } catch (e) {
         console.error('Failed to fetch stories:', e);
-        setStories([]);
+        setProfileStories([]);
       } finally {
         if (mounted) {
           setLoading(false);
@@ -86,10 +116,10 @@ export default function Stories() {
     return () => { mounted = false; };
   }, []);
 
-  const totalPages = Math.ceil(stories.length / storiesPerPage);
+  const totalPages = Math.ceil(profileStories.length / storiesPerPage);
   const startIndex = currentPage * storiesPerPage;
   const endIndex = startIndex + storiesPerPage;
-  const visibleStories = stories.slice(startIndex, endIndex);
+  const visibleProfiles = profileStories.slice(startIndex, endIndex);
 
   const goToNextPage = () => {
     if (currentPage < totalPages - 1) {
@@ -103,11 +133,11 @@ export default function Stories() {
     }
   };
 
-  const handleStoryClick = (story: StoryItem) => {
-    const userIndex = stories.findIndex(s => s.username === story.username);
+  const handleStoryClick = (profile: ProfileStories) => {
+    const userIndex = profileStories.findIndex(p => p.username === profile.username);
     setSelectedUserIndex(userIndex);
-    setSelectedUsername(story.username);
-    setSelectedStoryId(story.id);
+    setSelectedUsername(profile.username);
+    setSelectedStoryId(profile.stories[0].id);
   };
 
   const handleCloseViewer = () => {
@@ -116,10 +146,10 @@ export default function Stories() {
   };
 
   const handleUserChange = (newIndex: number) => {
-    if (newIndex >= 0 && newIndex < stories.length) {
+    if (newIndex >= 0 && newIndex < profileStories.length) {
       setSelectedUserIndex(newIndex);
-      setSelectedUsername(stories[newIndex].username);
-      setSelectedStoryId(stories[newIndex].id);
+      setSelectedUsername(profileStories[newIndex].username);
+      setSelectedStoryId(profileStories[newIndex].stories[0].id);
     } else {
       handleCloseViewer();
     }
@@ -129,7 +159,7 @@ export default function Stories() {
     return <StoriesSkeleton />;
   }
 
-  if (stories.length === 0) {
+  if (profileStories.length === 0) {
     return null;
   }
 
@@ -161,20 +191,26 @@ export default function Stories() {
           )}
 
           <div className="flex gap-4 justify-center w-full max-[639px]:gap-3 max-[639px]:px-6">
-            {visibleStories.map((item) => (
+            {visibleProfiles.map((profile) => (
               <button
-                key={item.id}
-                onClick={() => handleStoryClick(item)}
+                key={profile.profile_id}
+                onClick={() => handleStoryClick(profile)}
                 className="flex flex-col items-center gap-1 flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
               >
                 {/* Story Avatar with Gradient Border */}
                 <div className="relative group/story">
-                  <div className="w-[86px] h-[86px] rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[3px] cursor-pointer transition-transform max-[639px]:w-[90px] max-[639px]:h-[90px] max-[639px]:p-[2.5px]">
+                  <div 
+                    className={`w-[86px] h-[86px] rounded-full p-[3px] cursor-pointer transition-transform max-[639px]:w-[90px] max-[639px]:h-[90px] max-[639px]:p-[2.5px] ${
+                      profile.allViewed 
+                        ? 'bg-gray-300 dark:bg-gray-600' 
+                        : 'bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500'
+                    }`}
+                  >
                     <div className="w-full h-full rounded-full bg-white dark:bg-[#0c1014] flex items-center justify-center">
                       <div className="w-[75px] h-[75px] max-[639px]:w-[80px] max-[639px]:h-[80px]">
                         <ProfilePicture
-                          src={item.profile_image_url}
-                          alt={item.username}
+                          src={profile.profile_image_url}
+                          alt={profile.username}
                           size={window.innerWidth < 640 ? 80 : 75}
                         />
                       </div>
@@ -184,7 +220,7 @@ export default function Stories() {
 
                 {/* Username */}
                 <span className="text-xs truncate w-[82px] text-center text-[var(--text-primary)] font-normal max-[639px]:text-[11px] max-[639px]:w-[90px]">
-                  {item.username}
+                  {profile.username}
                 </span>
               </button>
             ))}
@@ -198,7 +234,7 @@ export default function Stories() {
           profileUsername={selectedUsername}
           onClose={handleCloseViewer}
           initialStoryId={selectedStoryId}
-          allUsernames={stories.map(s => s.username)}
+          allUsernames={profileStories.map(p => p.username)}
           currentUserIndex={selectedUserIndex}
           onUserChange={handleUserChange}
         />
