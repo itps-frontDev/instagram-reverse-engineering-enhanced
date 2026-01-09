@@ -7,6 +7,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+
 import Image from 'next/image';
 import ProfilePicture from '@/components/ProfilePicture';
 import VerifiedBadge from '@/components/common/VerifiedBadge';
@@ -69,6 +70,8 @@ export default function PostModal({
   const [isPending, setIsPending] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [isLikeAnimating, setIsLikeAnimating] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState<Comment | null>(null);
   const [tags, setTags] = useState<Array<{id: number; tagged_username: string; x_position: number; y_position: number}>>([]);
   const [tagsLoaded, setTagsLoaded] = useState(false);
   const [showStoryViewer, setShowStoryViewer] = useState(false);
@@ -334,7 +337,7 @@ export default function PostModal({
       )}
 
       <div
-        className="relative bg-white dark:bg-[#212328] rounded-lg max-w-[78vw] w-full h-[96vh] flex overflow-hidden max-[639px]:max-w-[95vw] max-[639px]:flex-col"
+        className="relative bg-white dark:bg-[#212328] rounded-lg max-w-[70vw] w-full h-[96vh] flex overflow-hidden max-[639px]:max-w-[95vw] max-[639px]:flex-col"
         onClick={(e) => e.stopPropagation()}
       >
 
@@ -489,7 +492,7 @@ export default function PostModal({
         </div>
 
         {/* Right Side - Comments */}
-        <div className="w-[450px] flex flex-col border-l border-gray-200 dark:border-[#262626] max-[639px]:w-full max-[639px]:border-l-0 max-[639px]:border-t">
+        <div className="w-[480px] flex flex-col border-l border-gray-200 dark:border-[#262626] max-[639px]:w-full max-[639px]:border-l-0 max-[639px]:border-t">
           {/* Post Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-[#262626] max-[639px]:px-2">
             <div className="flex items-center gap-3">
@@ -648,88 +651,144 @@ export default function PostModal({
                   const replies = comments.filter((c) => c.parent_id === comment.id);
                   
                   return (
-                <React.Fragment key={comment.id}>
-                  {/* Commento Principale */}
-                <div key={comment.id} className="flex gap-3 mb-4">
-                  <ProfilePicture
-                    src={comment.profile_image_url}
-                    alt={comment.profile_username || 'Profile picture'}
-                    size={32}
-                    hasStory={comment.profile_has_active_story}
-                    username={comment.profile_username}
-                    onStoryClick={() => {
-                      if (comment.profile_has_active_story) {
-                        setStoryViewerUsername(comment.profile_username);
-                        setShowStoryViewer(true);
-                      }
-                    }}
-                  />
-                  <div className="flex-1">
-                    <div className="text-sm relative">
-                      <Link
-                        href={`/profile/${comment.profile_username}`}
-                        className="font-semibold text-[#262626] dark:text-[#FAFAFA] mr-2 hover:underline"
-                        onMouseEnter={() => {
-                          const timeout = setTimeout(() => {
-                            setHoveredUsername(`comment-${comment.id}`);
-                          }, 500);
-                          setHoverTimeout(timeout);
-                        }}
-                        onMouseLeave={() => {
-                          if (hoverTimeout) {
-                            clearTimeout(hoverTimeout);
-                            setHoverTimeout(null);
-                          }
-                          setHoveredUsername(null);
-                        }}
-                      >
-                        {comment.profile_username}
-                      </Link>
-                      {hoveredUsername === `comment-${comment.id}` && (
-                        <div 
-                          className="absolute top-full left-0 mt-2 z-50"
-                          onMouseEnter={() => {
-                            if (hoverTimeout) {
-                              clearTimeout(hoverTimeout);
-                              setHoverTimeout(null);
+                    <React.Fragment key={comment.id}>
+                      {/* Commento Principale */}
+                      <div key={comment.id} className="flex gap-3 mb-4">
+                        <ProfilePicture
+                          src={comment.profile_image_url}
+                          alt={comment.profile_username || 'Profile picture'}
+                          size={32}
+                          hasStory={comment.profile_has_active_story}
+                          username={comment.profile_username}
+                          onStoryClick={() => {
+                            if (comment.profile_has_active_story) {
+                              setStoryViewerUsername(comment.profile_username);
+                              setShowStoryViewer(true);
                             }
                           }}
-                          onMouseLeave={() => {
-                            setHoveredUsername(null);
-                          }}
+                        />
+                        <div className="flex-1">
+                          <div className="text-sm relative">
+                            <Link
+                              href={`/profile/${comment.profile_username}`}
+                              className="font-semibold text-[#262626] dark:text-[#FAFAFA] mr-2 hover:underline"
+                              onMouseEnter={() => {
+                                const timeout = setTimeout(() => {
+                                  setHoveredUsername(`comment-${comment.id}`);
+                                }, 500);
+                                setHoverTimeout(timeout);
+                              }}
+                              onMouseLeave={() => {
+                                if (hoverTimeout) {
+                                  clearTimeout(hoverTimeout);
+                                  setHoverTimeout(null);
+                                }
+                                setHoveredUsername(null);
+                              }}
+                            >
+                              {comment.profile_username}
+                            </Link>
+                            {hoveredUsername === `comment-${comment.id}` && (
+                              <div 
+                                className="absolute top-full left-0 mt-2 z-50"
+                                onMouseEnter={() => {
+                                  if (hoverTimeout) {
+                                    clearTimeout(hoverTimeout);
+                                    setHoverTimeout(null);
+                                  }
+                                }}
+                                onMouseLeave={() => {
+                                  setHoveredUsername(null);
+                                }}
+                              >
+                                <ProfilePreviewCard username={comment.profile_username} />
+                              </div>
+                            )}
+                            {comment.profile_is_verified && <span className="-ml-1 mr-1 inline-block"><VerifiedBadge size={12} /></span>}
+                            <span className="text-[#262626] dark:text-[#FAFAFA]">
+                              {comment.text}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-[#8E8E8E] dark:text-[#A8A8A8] mt-1">
+                            <span>{formatTimeAgo(comment.created_at)}</span>
+                            {comment.likes_count > 0 && (
+                              <span className="font-semibold">
+                                {comment.likes_count === 1 ? 'Piace a 1 persona' : `Piace a ${comment.likes_count} persone`}
+                              </span>
+                            )}
+                            <button 
+                              onClick={() => setReplyingTo(comment)}
+                              className="font-semibold hover:opacity-50"
+                            >
+                              Rispondi
+                            </button>
+                            {/* Bottone 3 puntini solo per i propri commenti */}
+                            {currentProfile?.id === comment.profile_id && (
+                              <button
+                                className="ml-1 p-1 rounded-full hover:bg-[#23272b] transition-colors"
+                                onClick={() => { setCommentToDelete(comment); setShowDeleteModal(true); }}
+                                aria-label="Opzioni commento"
+                              >
+                                <MoreHorizontal className="w-5 h-5 text-[#8E8E8E] dark:text-[#A8A8A8]" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => handleCommentLike(comment.id)}
+                          className="hover:opacity-50 transition-opacity self-start"
                         >
-                          <ProfilePreviewCard username={comment.profile_username} />
+                          <Heart
+                            className={`w-3 h-3 ${comment.is_liked_by_current_user ? 'fill-[#ED4956] text-[#ED4956]' : 'text-[#8E8E8E] dark:text-[#A8A8A8]'}`}
+                          />
+                        </button>
+                      </div>
+                      {/* Modale eliminazione commento inline */}
+                      {showDeleteModal && (
+                        <div
+                          role="dialog"
+                          aria-modal="true"
+                          className="fixed inset-0 z-[9999] flex items-center justify-center"
+                          style={{ backgroundColor: 'rgba(12, 16, 20, 0.45)', backdropFilter: 'blur(0px)', WebkitBackdropFilter: 'blur(0px)' }}
+                          onClick={() => { setShowDeleteModal(false); setCommentToDelete(null); }}
+                        >
+                          <div
+                            className="bg-[#212328] rounded-xl w-[520px] max-w-[98vw] overflow-hidden"
+                            onClick={e => e.stopPropagation()}
+                          >
+                            <button
+                              className="w-full h-14 border-b border-[#363636] text-[#ed4956] font-bold text-base hover:bg-[#23272b] transition-colors"
+                              style={{ fontSize: '1rem' }}
+                              onClick={async () => {
+                                if (!commentToDelete) return;
+                                try {
+                                  const res = await fetch(`/api/feed/comments/${commentToDelete.id}`, {
+                                    method: 'DELETE',
+                                  });
+                                  if (res.ok) {
+                                    setComments((prev) => prev.filter((c) => c.id !== commentToDelete.id));
+                                  } else {
+                                    // opzionale: gestisci errore
+                                  }
+                                } catch (e) {
+                                  // opzionale: gestisci errore
+                                }
+                                setShowDeleteModal(false);
+                                setCommentToDelete(null);
+                              }}
+                            >
+                              Elimina
+                            </button>
+                            <button
+                              className="w-full h-14 text-[#f8f9f9] text-base hover:bg-[#23272b] transition-colors rounded-b-xl"
+                              style={{ fontSize: '1rem' }}
+                              onClick={() => { setShowDeleteModal(false); setCommentToDelete(null); }}
+                            >
+                              Annulla
+                            </button>
+                          </div>
                         </div>
                       )}
-                      {comment.profile_is_verified && <span className="-ml-1 mr-1 inline-block"><VerifiedBadge size={12} /></span>}
-                      <span className="text-[#262626] dark:text-[#FAFAFA]">
-                        {comment.text}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-[#8E8E8E] dark:text-[#A8A8A8] mt-1">
-                      <span>{formatTimeAgo(comment.created_at)}</span>
-                      {comment.likes_count > 0 && (
-                        <span className="font-semibold">
-                          {comment.likes_count === 1 ? 'Piace a 1 persona' : `Piace a ${comment.likes_count} persone`}
-                        </span>
-                      )}
-                      <button 
-                        onClick={() => setReplyingTo(comment)}
-                        className="font-semibold hover:opacity-50"
-                      >
-                        Rispondi
-                      </button>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => handleCommentLike(comment.id)}
-                    className="hover:opacity-50 transition-opacity self-start"
-                  >
-                    <Heart
-                      className={`w-3 h-3 ${comment.is_liked_by_current_user ? 'fill-[#ED4956] text-[#ED4956]' : 'text-[#8E8E8E] dark:text-[#A8A8A8]'}`}
-                    />
-                  </button>
-                </div>
                 
                 {/* Risposte (nested) */}
                 {replies.length > 0 && (
@@ -804,6 +863,16 @@ export default function PostModal({
                             >
                               Rispondi
                             </button>
+                            {/* Bottone 3 puntini solo per le proprie risposte */}
+                            {currentProfile?.id === reply.profile_id && (
+                              <button
+                                className="ml-1 p-1 rounded-full hover:bg-[#23272b] transition-colors"
+                                onClick={() => { setCommentToDelete(reply); setShowDeleteModal(true); }}
+                                aria-label="Opzioni risposta"
+                              >
+                                <MoreHorizontal className="w-5 h-5 text-[#8E8E8E] dark:text-[#A8A8A8]" />
+                              </button>
+                            )}
                           </div>
                         </div>
                         <button 
