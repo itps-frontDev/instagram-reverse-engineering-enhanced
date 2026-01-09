@@ -17,6 +17,7 @@ import StoryViewer from '@/components/feed/StoryViewer';
 import ProfilePreviewCard from '@/components/profile/ProfilePreviewCard';
 import PostOptionsModal from '@/components/feed/PostOptionsModal';
 import DeletePostModal from '@/components/feed/DeletePostModal';
+import EditPostModal from '@/components/feed/EditPostModal';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -89,6 +90,7 @@ export default function PostModal({
   const [showCommentOptionsModal, setShowCommentOptionsModal] = useState<number | null>(null);
   const [showDeleteCommentModal, setShowDeleteCommentModal] = useState(false);
   const [isDeletingComment, setIsDeletingComment] = useState(false);
+  const [showEditPostModal, setShowEditPostModal] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -364,7 +366,7 @@ export default function PostModal({
         className="absolute inset-0 bg-black/75 dark:bg-[rgba(12,16,20,0.75)]"
         onClick={() => {
           // Chiudi solo il post modal se NESSUN modale secondario è aperto
-          if (!showDeleteModal && !showPostOptionsModal && !showDeletePostModal) {
+          if (!showDeleteModal && !showPostOptionsModal && !showDeletePostModal && !showEditPostModal) {
             onClose();
           }
         }}
@@ -373,7 +375,7 @@ export default function PostModal({
       {/* Close Button - Outside modal */}
       <button
         onClick={() => {
-          if (!showDeleteModal && !showPostOptionsModal && !showDeletePostModal) {
+          if (!showDeleteModal && !showPostOptionsModal && !showDeletePostModal && !showEditPostModal) {
             onClose();
           }
         }}
@@ -651,7 +653,11 @@ export default function PostModal({
             <button 
               type="button" 
               className="hover:opacity-50 transition-opacity"
-              onClick={() => setShowPostOptionsModal(true)}
+              onClick={() => {
+                if (isOwnPost) {
+                  setShowPostOptionsModal(true);
+                }
+              }}
             >
               <MoreHorizontal className="w-6 h-6" />
             </button>
@@ -797,7 +803,7 @@ export default function PostModal({
                             <span>{formatTimeAgo(comment.created_at)}</span>
                             {comment.likes_count > 0 && (
                               <span className="font-semibold">
-                                {comment.likes_count === 1 ? 'Piace a 1 persona' : `Piace a ${comment.likes_count} persone`}
+                                {isOwnPost ? `Mi piace: ${comment.likes_count}` : (comment.likes_count === 1 ? 'Piace a 1 persona' : `Piace a ${comment.likes_count} persone`)}
                               </span>
                             )}
                             <button 
@@ -808,20 +814,17 @@ export default function PostModal({
                             </button>
                             {/* Bottone 3 puntini per il proprietario del post o del commento, visibile solo su hover */}
                             {(isOwnPost || currentProfile?.id === comment.profile_id) && (
-                              <span
-                                onMouseEnter={() => setHoveredCommentId(comment.id)}
-                                onMouseLeave={() => setHoveredCommentId(null)}
+                              <button
+                                className="ml-1 p-2 rounded-full transition-all hover:scale-110"
+                                onClick={() => { setCommentToDelete(comment); setShowDeleteModal(true); }}
+                                aria-label="Opzioni commento"
+                                style={{
+                                  opacity: hoveredCommentId === comment.id ? 1 : 0,
+                                  visibility: hoveredCommentId === comment.id ? 'visible' : 'hidden'
+                                }}
                               >
-                                {(hoveredCommentId === comment.id) && (
-                                  <button
-                                    className="ml-1 p-1 rounded-full transition-transform hover:scale-110"
-                                    onClick={() => { setCommentToDelete(comment); setShowDeleteModal(true); }}
-                                    aria-label="Opzioni commento"
-                                  >
-                                    <MoreHorizontal className="w-4 h-4 text-[#8E8E8E] dark:text-[#A8A8A8]" />
-                                  </button>
-                                )}
-                              </span>
+                                <MoreHorizontal className="w-3.5 h-3.5 text-[#8E8E8E] dark:text-[#A8A8A8]" />
+                              </button>
                             )}
                           </div>
                         </div>
@@ -834,52 +837,6 @@ export default function PostModal({
                           />
                         </button>
                       </div>
-                      {/* Modale eliminazione commento inline */}
-                      {showDeleteModal && commentToDelete?.id === comment.id && (
-                        <div
-                          role="dialog"
-                          aria-modal="true"
-                          className="fixed inset-0 z-[9999] flex items-center justify-center"
-                          style={{ backgroundColor: 'rgba(12, 16, 20, 0.45)', backdropFilter: 'blur(0px)', WebkitBackdropFilter: 'blur(0px)' }}
-                          onClick={() => { setShowDeleteModal(false); setCommentToDelete(null); }}
-                        >
-                          <div
-                            className="rounded-xl w-[520px] max-w-[98vw] overflow-hidden bg-white dark:bg-[#212328]"
-                            onClick={e => e.stopPropagation()}
-                          >
-                            <button
-                              className="w-full h-14 border-b border-gray-300 dark:border-[#363636] text-[#ed4956] font-bold text-base hover:bg-gray-50 dark:hover:bg-[#23272b] transition-colors"
-                              style={{ fontSize: '1rem' }}
-                              onClick={async () => {
-                                if (!commentToDelete) return;
-                                try {
-                                  const res = await fetch(`/api/feed/comments/${commentToDelete.id}`, {
-                                    method: 'DELETE',
-                                  });
-                                  if (res.ok) {
-                                    setComments((prev) => prev.filter((c) => c.id !== commentToDelete.id));
-                                  } else {
-                                    // opzionale: gestisci errore
-                                  }
-                                } catch (e) {
-                                  // opzionale: gestisci errore
-                                }
-                                setShowDeleteModal(false);
-                                setCommentToDelete(null);
-                              }}
-                            >
-                              Elimina
-                            </button>
-                            <button
-                              className="w-full h-14 text-[#262626] dark:text-[#f8f9f9] text-base hover:bg-gray-50 dark:hover:bg-[#23272b] transition-colors rounded-b-xl"
-                              style={{ fontSize: '1rem' }}
-                              onClick={() => { setShowDeleteModal(false); setCommentToDelete(null); }}
-                            >
-                              Annulla
-                            </button>
-                          </div>
-                        </div>
-                      )}
                 
                 {/* Risposte (nested) */}
                 {replies.length > 0 && (
@@ -948,7 +905,7 @@ export default function PostModal({
                             <span>{formatTimeAgo(reply.created_at)}</span>
                             {reply.likes_count > 0 && (
                               <span className="font-semibold">
-                                {reply.likes_count === 1 ? 'Piace a 1 persona' : `Piace a ${reply.likes_count} persone`}
+                                {isOwnPost ? `Mi piace: ${reply.likes_count}` : (reply.likes_count === 1 ? 'Piace a 1 persona' : `Piace a ${reply.likes_count} persone`)}
                               </span>
                             )}
                             <button 
@@ -959,20 +916,17 @@ export default function PostModal({
                             </button>
                             {/* Bottone 3 puntini per il proprietario del post o della risposta, visibile solo su hover */}
                             {(isOwnPost || currentProfile?.id === reply.profile_id) && (
-                              <span
-                                onMouseEnter={() => setHoveredCommentId(reply.id)}
-                                onMouseLeave={() => setHoveredCommentId(null)}
+                              <button
+                                className="ml-1 p-2 rounded-full transition-all hover:scale-110"
+                                onClick={() => { setCommentToDelete(reply); setShowDeleteModal(true); }}
+                                aria-label="Opzioni risposta"
+                                style={{
+                                  opacity: hoveredCommentId === reply.id ? 1 : 0,
+                                  visibility: hoveredCommentId === reply.id ? 'visible' : 'hidden'
+                                }}
                               >
-                                {(hoveredCommentId === reply.id) && (
-                                  <button
-                                    className="ml-1 p-1 rounded-full transition-transform hover:scale-110"
-                                    onClick={() => { setCommentToDelete(reply); setShowDeleteModal(true); }}
-                                    aria-label="Opzioni risposta"
-                                  >
-                                    <MoreHorizontal className="w-4 h-4 text-[#8E8E8E] dark:text-[#A8A8A8]" />
-                                  </button>
-                                )}
-                              </span>
+                                <MoreHorizontal className="w-3.5 h-3.5 text-[#8E8E8E] dark:text-[#A8A8A8]" />
+                              </button>
                             )}
                           </div>
                         </div>
@@ -1091,6 +1045,55 @@ export default function PostModal({
     </div>
   </div>
 
+  {/* Modale eliminazione commento */}
+  {showDeleteModal && commentToDelete && (
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-[9999] flex items-center justify-center"
+      style={{ backgroundColor: 'rgba(12, 16, 20, 0.45)', backdropFilter: 'blur(0px)', WebkitBackdropFilter: 'blur(0px)' }}
+      onClick={() => { setShowDeleteModal(false); setCommentToDelete(null); }}
+    >
+      <div
+        className="rounded-xl w-[520px] max-w-[98vw] overflow-hidden bg-white dark:bg-[#212328]"
+        onClick={e => e.stopPropagation()}
+      >
+        <button
+          className="w-full h-14 border-b border-gray-300 dark:border-[#363636] text-[#ed4956] font-bold text-base hover:bg-gray-50 dark:hover:bg-[#23272b] transition-colors"
+          style={{ fontSize: '1rem' }}
+          onClick={async () => {
+            if (!commentToDelete) return;
+            try {
+              const res = await fetch(`/api/feed/comments/${commentToDelete.id}`, {
+                method: 'DELETE',
+              });
+              if (res.ok) {
+                // Ricarica i commenti per assicurarsi che siano sincronizzati
+                await fetchComments();
+              } else {
+                alert('Impossibile eliminare il commento');
+              }
+            } catch (e) {
+              console.error('Errore durante l\'eliminazione:', e);
+              alert('Impossibile eliminare il commento');
+            }
+            setShowDeleteModal(false);
+            setCommentToDelete(null);
+          }}
+        >
+          Elimina
+        </button>
+        <button
+          className="w-full h-14 text-[#262626] dark:text-[#f8f9f9] text-base hover:bg-gray-50 dark:hover:bg-[#23272b] transition-colors rounded-b-xl"
+          style={{ fontSize: '1rem' }}
+          onClick={() => { setShowDeleteModal(false); setCommentToDelete(null); }}
+        >
+          Annulla
+        </button>
+      </div>
+    </div>
+  )}
+
   {/* Story Viewer */}
   {showStoryViewer && storyViewerUsername && (
     <StoryViewer
@@ -1103,19 +1106,34 @@ export default function PostModal({
   )}
 
   {/* Post Options Modal */}
+  <PostOptionsModal
+    isOpen={showPostOptionsModal}
+    onClose={() => setShowPostOptionsModal(false)}
+    onEdit={() => {
+      setShowPostOptionsModal(false);
+      setShowEditPostModal(true);
+    }}
+    onDelete={() => {
+      setShowPostOptionsModal(false);
+      setShowDeletePostModal(true);
+    }}
+    canEdit={isOwnPost}
+  />
+
+  {/* Edit Post Modal */}
   {isOwnPost && (
-    <PostOptionsModal
-      isOpen={showPostOptionsModal}
-      onClose={() => setShowPostOptionsModal(false)}
-      onEdit={() => {
-        // TODO: Implementare modifica post
-        console.log('Edit post');
+    <EditPostModal
+      isOpen={showEditPostModal}
+      onClose={() => setShowEditPostModal(false)}
+      postId={post.id}
+      currentCaption={post.caption || ''}
+      mediaUrl={post.media[0]?.media_url || ''}
+      mediaType={post.media[0]?.media_type || 'image'}
+      onSave={(newCaption) => {
+        // Aggiorna la caption localmente
+        post.caption = newCaption;
+        setShowEditPostModal(false);
       }}
-      onDelete={() => {
-        setShowPostOptionsModal(false);
-        setShowDeletePostModal(true);
-      }}
-      canEdit={true}
     />
   )}
 
@@ -1129,4 +1147,3 @@ export default function PostModal({
 </div>
   );
 }
-
