@@ -482,7 +482,7 @@ export default function ReelsPage() {
             return (
               <div
                 key={reel.id}
-                className="absolute inset-0 w-full h-full flex items-center justify-center transition-all duration-400 ease-out pt-20"
+                className="absolute inset-0 w-full h-full flex items-center justify-center transition-all duration-400 ease-out pt-0 lg:pt-20"
                 style={{
                   transform: `translateY(${translateY}) scale(${scale})`,
                   opacity,
@@ -491,11 +491,10 @@ export default function ReelsPage() {
                 }}
               >
                 {/* Single Reel Container with Side Actions */}
-                <div className="relative flex items-center gap-4">
+                <div className="relative flex items-center gap-4 lg:gap-4 w-full h-full lg:w-auto lg:h-auto justify-center">
                   {/* Video Container - responsive height for mobile nav */}
                   <div 
-                    className="relative w-[421px] h-[748.2px] rounded-lg overflow-hidden bg-black shadow-[0_0_40px_rgba(255,255,255,0.3)]"
-                    style={{ minWidth: 421, minHeight: 748.2, maxWidth: 421, maxHeight: 748.2 }}
+                    className="relative reel-frame-mobile lg:w-[421px] lg:h-[748.2px] lg:rounded-lg overflow-hidden bg-black lg:shadow-[0_0_40px_rgba(255,255,255,0.3)]"
                     onDoubleClick={() => handleDoubleTap(reel.id)}
                     onClick={() => setIsPlaying(prev => !prev)}
                   >
@@ -600,8 +599,8 @@ export default function ReelsPage() {
                     )}
                   </div>
 
-                  {/* Side Actions Panel - Outside video on the right, aligned to bottom */}
-                  <div className="flex flex-col items-center gap-4 self-end mb-4">
+                  {/* Side Actions Panel - Mobile: in basso a destra dentro il frame, Desktop: come prima */}
+                  <div className="reel-actions-mobile flex flex-col items-center gap-4 self-end mb-4">
                     {/* Like Button */}
                     <button
                       onClick={(e) => {

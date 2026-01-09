@@ -248,6 +248,78 @@ body {
 }
 
 /* Smooth fade in for comments panel */
+
+/* =============================================
+   REELS MOBILE FIX - Frame adattivo + icone in basso a destra
+   ============================================= */
+@media (max-width: 639px) {
+  /* Frame del reel: occupa tutto il viewport meno la nav bar in basso */
+  .reel-frame-mobile {
+    width: 100vw !important;
+    min-width: 100vw !important;
+    max-width: 100vw !important;
+    height: calc(100vh - 52px) !important;
+    min-height: calc(100vh - 52px) !important;
+    max-height: calc(100vh - 52px) !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+
+  /* Video adattivo dentro il frame */
+  .reel-frame-mobile video {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 0 !important;
+  }
+
+  /* Icone azione: posizionate in basso a destra, sopra il video */
+  .reel-actions-mobile {
+    position: fixed !important;
+    right: 12px !important;
+    bottom: 140px !important;
+    left: auto !important;
+    top: auto !important;
+    z-index: 50 !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 18px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    pointer-events: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Icone bianche su video */
+  .reel-actions-mobile svg {
+    color: white !important;
+  }
+  .reel-actions-mobile span {
+    color: white !important;
+  }
+  .reel-actions-mobile button {
+    color: white !important;
+  }
+
+  /* Nascondi scrollbar su mobile */
+  html, body {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none !important;
+  }
+}
+
 @keyframes fadeInUp {
   from {
     opacity: 0;
