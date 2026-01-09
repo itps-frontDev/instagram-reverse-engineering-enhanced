@@ -12,7 +12,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import ProfilePicture from '@/components/ProfilePicture';
@@ -40,8 +40,8 @@ export default function ProfileHeader({
   isUploadingImage = false,
 }: ProfileHeaderProps) {
   const [modalType, setModalType] = useState<'followers' | 'following' | null>(null);
-
   const [isBumping, setIsBumping] = useState(false);
+  const [profilePictureSize, setProfilePictureSize] = useState(150);
 
   const handleProfileImageClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Bump effect sempre attivo
@@ -54,6 +54,15 @@ export default function ProfileHeader({
       onProfileImageClick();
     }
   };
+
+  useEffect(() => {
+    const handleResize = () => {
+      setProfilePictureSize(window.innerWidth < 768 ? 110 : 150);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <>
@@ -68,10 +77,11 @@ export default function ProfileHeader({
               role="button"
               tabIndex={0}
             >
+              {/* Responsive Profile Picture size: 150 desktop, 110 mobile */}
               <ProfilePicture
                 src={profile.profile_image_url}
                 alt={profile.username}
-                size={150}
+                size={profilePictureSize}
                 hasStory={!followStatus.isOwnProfile && profile.has_active_story && (!profile.is_private || followStatus.isFollowing)}
                 storyViewed={profile.has_viewed_story}
                 onStoryClick={onStoryClick}

@@ -62,10 +62,13 @@ export default function ProfilePicture({
               alt={alt}
               width={innerSize}
               height={innerSize}
-              className={`rounded-full object-cover ${className}`}
+              className={`rounded-full object-cover w-full h-full ${className}`}
               style={{
                 boxSizing: 'border-box',
                 display: 'block',
+                objectFit: 'cover',
+                width: '100%',
+                height: '100%',
               }}
             />
           </div>

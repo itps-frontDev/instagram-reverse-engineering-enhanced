@@ -170,13 +170,12 @@ export default function Stories() {
                 {/* Story Avatar with Gradient Border */}
                 <div className="relative group/story">
                   <div className="w-[86px] h-[86px] rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[3px] cursor-pointer transition-transform max-[639px]:w-[90px] max-[639px]:h-[90px] max-[639px]:p-[2.5px]">
-                    <div className="w-full h-full rounded-full bg-white dark:bg-[#0c1014] p-[2.5px] flex items-center justify-center">
+                    <div className="w-full h-full rounded-full bg-white dark:bg-[#0c1014] flex items-center justify-center">
                       <div className="w-[75px] h-[75px] max-[639px]:w-[80px] max-[639px]:h-[80px]">
                         <ProfilePicture
                           src={item.profile_image_url}
                           alt={item.username}
-                          size={75}
-                          className="max-[639px]:!w-[80px] max-[639px]:!h-[80px]"
+                          size={window.innerWidth < 640 ? 80 : 75}
                         />
                       </div>
                     </div>
