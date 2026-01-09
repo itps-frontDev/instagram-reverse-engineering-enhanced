@@ -15,7 +15,10 @@ export async function GET() {
       return NextResponse.json({ stories: [] });
     }
 
-    // Show stories from followed profiles (accepted) OR public profiles (not own)
+    // Show stories from:
+    // 1. Own stories
+    // 2. Stories from followed profiles (accepted)
+    // 3. Stories from public profiles
     const sql = `
       SELECT
         s.id,
@@ -39,25 +42,19 @@ export async function GET() {
       FROM stories s
       JOIN profiles p ON p.id = s.profile_id
       WHERE (
-        s.profile_id IN (
+        s.profile_id = ?
+        OR s.profile_id IN (
           SELECT following_profile_id FROM follows 
           WHERE follower_profile_id = ? 
             AND status = 'accepted'
         )
-        OR (p.is_private = 0 AND s.profile_id != ?)
+        OR p.is_private = 0
       )
-        AND s.expires_at > datetime('now')
-      ORDER BY s.created_at DESC
-      LIMIT 200
-    `;
-    /**
-            WHERE follower_profile_id = ${currentProfile.id} 
-          AND deleted_at IS NULL 
-          AND status = 'accepted'
-      )
+        AND s.expires_at > datetime('now', 'localtime')
         AND s.deleted_at IS NULL
-     
-     */
+      ORDER BY s.created_at DESC
+    `;
+
     const rows = await queryAll(sql, [currentProfile.id, currentProfile.id, currentProfile.id]);
 
     // Convert is_verified to boolean
