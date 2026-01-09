@@ -98,6 +98,7 @@ export async function POST(request: NextRequest) {
     // Verify story exists and is accessible
     const story = await queryOne<{ id: number; profile_id: number }>(
       `SELECT s.id, s.profile_id FROM stories s
+       JOIN profiles p ON p.id = s.profile_id
        WHERE s.id = ? 
          AND s.deleted_at IS NULL
          AND s.expires_at > datetime('now')
@@ -109,8 +110,9 @@ export async function POST(request: NextRequest) {
                AND status = 'accepted'
            )
            OR s.profile_id = ?
+           OR (p.is_private = 0 AND s.profile_id != ?)
          )`,
-      [story_id, currentProfile.id, currentProfile.id]
+      [story_id, currentProfile.id, currentProfile.id, currentProfile.id]
     );
 
     if (!story) {
