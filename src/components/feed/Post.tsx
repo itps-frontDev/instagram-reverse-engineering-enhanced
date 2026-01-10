@@ -13,6 +13,8 @@ import MoreOptionsIcon from '@/components/common/MoreOptionsIcon';
 import ShareIcon from '@/components/common/ShareIcon';
 import TagIcon from '@/components/common/TagIcon';
 import ProfilePreviewCard from '@/components/profile/ProfilePreviewCard';
+import PostOptionsModal from '@/components/feed/PostOptionsModal';
+import DeletePostModal from '@/components/feed/DeletePostModal';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -54,6 +56,9 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
   const [showUnfollowModal, setShowUnfollowModal] = useState(false);
+  const [showPostOptionsModal, setShowPostOptionsModal] = useState(false);
+  const [showDeletePostModal, setShowDeletePostModal] = useState(false);
+  const [isDeletingPost, setIsDeletingPost] = useState(false);
 
   useEffect(() => {
     fetch(`/api/posts/${post.id}/tags`)
@@ -173,6 +178,31 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
     return `${Math.floor(seconds / 604800)}sett`;
   };
 
+  // Gestione eliminazione post
+  const handleDeletePost = async () => {
+    setIsDeletingPost(true);
+    try {
+      const response = await fetch(`/api/posts/${post.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!response.ok) throw new Error('Failed to delete post');
+
+      // Chiudi tutti i modali e ricarica la pagina
+      setShowDeletePostModal(false);
+      setShowPostOptionsModal(false);
+      window.location.reload();
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      alert('Impossibile eliminare il post');
+    } finally {
+      setIsDeletingPost(false);
+    }
+  };
+
+  const isOwnPost = currentProfile && post.profile_id === currentProfile.id;
+
   return (
     <article className="mb-3">
       {/* Post Header */}
@@ -238,7 +268,11 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
               {isFollowLoading ? '...' : isFollowing ? 'Segui già' : 'Segui'}
             </button>
           )}
-          <button type="button" className="hover:scale-110 transition-transform">
+          <button 
+            type="button" 
+            className="hover:scale-110 transition-transform"
+            onClick={() => isOwnPost && setShowPostOptionsModal(true)}
+          >
             <MoreOptionsIcon size={24} />
           </button>
         </div>
@@ -470,6 +504,31 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
           </div>
         </div>
       )}
+
+      {/* Post Options Modal */}
+      {isOwnPost && (
+        <PostOptionsModal
+          isOpen={showPostOptionsModal}
+          onClose={() => setShowPostOptionsModal(false)}
+          onEdit={() => {
+            // TODO: Implementare modifica post
+            console.log('Edit post');
+          }}
+          onDelete={() => {
+            setShowPostOptionsModal(false);
+            setShowDeletePostModal(true);
+          }}
+          canEdit={true}
+        />
+      )}
+
+      {/* Delete Post Confirmation Modal */}
+      <DeletePostModal
+        isOpen={showDeletePostModal}
+        onClose={() => setShowDeletePostModal(false)}
+        onConfirm={handleDeletePost}
+        isDeleting={isDeletingPost}
+      />
     </article>
   );
 }
