@@ -89,7 +89,27 @@ export async function GET(request: NextRequest) {
         p.is_verified as profile_is_verified,
         p.is_private as profile_is_private,
         (
-          SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
+          SELECT CASE 
+            WHEN COUNT(*) > 0 AND EXISTS (
+              SELECT 1 FROM stories s2
+              WHERE s2.profile_id = p.id
+              AND s2.deleted_at IS NULL
+              AND s2.expires_at > datetime('now')
+              AND (
+                s2.profile_id = ? OR
+                s2.profile_id IN (
+                  SELECT following_profile_id FROM follows
+                  WHERE follower_profile_id = ?
+                  AND status = 'accepted'
+                ) OR
+                p.is_private = 0
+              )
+              AND NOT EXISTS (
+                SELECT 1 FROM story_views sv
+                WHERE sv.story_id = s2.id
+                AND sv.viewer_profile_id = ?
+              )
+            ) THEN 1 ELSE 0 END
           FROM stories s
           WHERE s.profile_id = p.id
             AND s.expires_at > datetime('now')
@@ -107,7 +127,7 @@ export async function GET(request: NextRequest) {
         AND p.deleted_at IS NULL
       ORDER BY c.created_at ASC
       LIMIT ? OFFSET ?`,
-      [currentProfile.id, postId, limit + 1, offset]
+      [currentProfile.id, currentProfile.id, currentProfile.id, currentProfile.id, postId, limit + 1, offset]
     );
 
     const hasMore = commentsRows.length > limit;

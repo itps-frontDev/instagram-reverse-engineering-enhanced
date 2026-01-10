@@ -46,6 +46,7 @@ export async function GET(
     // Fetch profile from database
     type ProfileQueryResult = Omit<Profile, 'has_reels' | 'has_active_story' | 'has_viewed_story' | 'is_private' | 'is_verified'> & {
       has_reels: number;
+      has_any_active_story: number;
       has_active_story: number;
       has_viewed_story: number;
       is_private: number;
@@ -85,6 +86,31 @@ export async function GET(
           WHERE s.profile_id = profiles.id
             AND s.deleted_at IS NULL
             AND s.expires_at > datetime('now')
+        ) as has_any_active_story,
+        (
+          SELECT CASE 
+            WHEN COUNT(*) > 0 AND EXISTS (
+              SELECT 1 FROM stories s2
+              WHERE s2.profile_id = profiles.id
+              AND s2.deleted_at IS NULL
+              AND s2.expires_at > datetime('now')              AND (
+                s2.profile_id = ? OR
+                s2.profile_id IN (
+                  SELECT following_profile_id FROM follows
+                  WHERE follower_profile_id = ?
+                  AND status = 'accepted'
+                ) OR
+                profiles.is_private = 0
+              )              AND NOT EXISTS (
+                SELECT 1 FROM story_views sv2
+                WHERE sv2.story_id = s2.id
+                AND sv2.viewer_profile_id = ?
+              )
+            ) THEN 1 ELSE 0 END
+          FROM stories s
+          WHERE s.profile_id = profiles.id
+            AND s.deleted_at IS NULL
+            AND s.expires_at > datetime('now')
         ) as has_active_story,
         (
           SELECT COUNT(*) > 0
@@ -97,7 +123,7 @@ export async function GET(
         ) as has_viewed_story
       FROM profiles
       WHERE username = ? AND deleted_at IS NULL`,
-      [currentProfileId || 0, username]
+      [currentProfileId || 0, currentProfileId || 0, currentProfileId || 0, currentProfileId || 0, username]
     );
 
     // Profile not found
@@ -126,6 +152,7 @@ export async function GET(
       created_at: profile.created_at,
       updated_at: profile.updated_at,
       has_reels: Boolean(profile.has_reels),
+      has_any_active_story: Boolean(profile.has_any_active_story),
       has_active_story: Boolean(profile.has_active_story),
     };
 
