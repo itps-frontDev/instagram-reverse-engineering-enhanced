@@ -41,6 +41,7 @@ interface Story {
 
 interface StoryViewerProps {
   profileUsername: string;
+  profileId?: number;
   onClose: () => void;
   initialStoryId?: number;
   allUsernames?: string[];
@@ -50,6 +51,7 @@ interface StoryViewerProps {
 
 export default function StoryViewer({
   profileUsername,
+  profileId,
   onClose,
   initialStoryId,
   allUsernames = [],
@@ -79,19 +81,26 @@ export default function StoryViewer({
     let mounted = true;
     async function load() {
       try {
-        const res = await fetch('/api/stories');
+        let res;
+        if (profileId) {
+          res = await fetch(`/api/stories/${profileId}/public`);
+        } else {
+          res = await fetch('/api/stories');
+        }
         if (!mounted) return;
         if (res.ok) {
           const data = await res.json();
-          // Filter stories by profile username
-          const profileStories = (data.stories || [])
-            .filter((s: Story) => s.username === profileUsername)
-            .sort((a: Story, b: Story) => 
-              new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-            );
-          
+          let profileStories;
+          if (profileId) {
+            profileStories = data.stories || [];
+          } else {
+            profileStories = (data.stories || [])
+              .filter((s: Story) => s.username === profileUsername)
+              .sort((a: Story, b: Story) => 
+                new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+              );
+          }
           setStories(profileStories);
-          
           // Find initial story index
           if (initialStoryId && profileStories.length > 0) {
             const idx = profileStories.findIndex((s: Story) => s.id === initialStoryId);
@@ -114,7 +123,7 @@ export default function StoryViewer({
     }
     load();
     return () => { mounted = false; };
-  }, [profileUsername, initialStoryId]);
+  }, [profileUsername, profileId, initialStoryId]);
 
   // Reset index when username changes
   useEffect(() => {

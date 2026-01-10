@@ -33,6 +33,7 @@ interface CommentRow {
   profile_image_url: string | null;
   profile_is_verified: number;
   profile_has_active_story: number;
+  profile_is_private: number;
   is_liked: number | null;
 }
 
@@ -86,6 +87,7 @@ export async function GET(request: NextRequest) {
         p.full_name as profile_full_name,
         p.profile_image_url,
         p.is_verified as profile_is_verified,
+        p.is_private as profile_is_private,
         (
           SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
           FROM stories s
@@ -124,6 +126,7 @@ export async function GET(request: NextRequest) {
       profile_image_url: c.profile_image_url,
       profile_is_verified: Boolean(c.profile_is_verified),
       profile_has_active_story: Boolean(c.profile_has_active_story),
+      profile_is_private: Boolean(c.profile_is_private),
       is_liked_by_current_user: Boolean(c.is_liked),
     }));
 

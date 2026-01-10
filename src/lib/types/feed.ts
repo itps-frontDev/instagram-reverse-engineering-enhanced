@@ -25,6 +25,7 @@ export interface FeedPost {
   profile_image_url: string | null;
   profile_is_verified: boolean;
   profile_has_active_story: boolean;
+  profile_is_private: boolean;
 
   // Media (first image/video)
   media: PostMedia[];
@@ -59,6 +60,7 @@ export interface Comment {
   profile_image_url: string | null;
   profile_is_verified: boolean;
   profile_has_active_story: boolean;
+  profile_is_private: boolean;
 
   // Current user interaction
   is_liked_by_current_user: boolean;

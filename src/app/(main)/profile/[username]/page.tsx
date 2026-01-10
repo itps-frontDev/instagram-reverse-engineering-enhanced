@@ -655,6 +655,7 @@ export default function ProfilePage({
       {showStoryViewer && profile && (
         <StoryViewer
           profileUsername={profile.username}
+          profileId={profile.id}
           onClose={() => setShowStoryViewer(false)}
         />
       )}

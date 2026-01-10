@@ -15,7 +15,7 @@ export async function GET() {
       return NextResponse.json({ stories: [] });
     }
 
-    // Show stories from followed profiles (accepted) OR own stories
+    // Show stories from followed profiles (accepted), own stories, OR public profiles
     const sql = `
       SELECT
         s.id,
@@ -46,6 +46,7 @@ export async function GET() {
             AND deleted_at IS NULL
         )
         OR s.profile_id = ?
+        OR (p.is_private = 0)
       )
         AND s.deleted_at IS NULL
         AND s.expires_at > datetime('now')

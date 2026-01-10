@@ -28,6 +28,7 @@ interface PostRow {
   profile_image_url: string | null;
   profile_is_verified: number;
   profile_has_active_story: number;
+  profile_is_private: number;
   is_liked: number | null;
   is_saved: number | null;
   is_following: number | null;
@@ -74,6 +75,7 @@ export async function GET(request: NextRequest) {
         pr.full_name as profile_full_name,
         pr.profile_image_url,
         pr.is_verified as profile_is_verified,
+        pr.is_private as profile_is_private,
         (SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
          FROM stories s
          WHERE s.profile_id = p.profile_id
@@ -167,6 +169,7 @@ export async function GET(request: NextRequest) {
       profile_image_url: post.profile_image_url,
       profile_is_verified: Boolean(post.profile_is_verified),
       profile_has_active_story: Boolean(post.profile_has_active_story),
+      profile_is_private: Boolean(post.profile_is_private),
       media: mediaByPost.get(post.id) || [],
       is_liked_by_current_user: Boolean(post.is_liked),
       is_saved_by_current_user: Boolean(post.is_saved),

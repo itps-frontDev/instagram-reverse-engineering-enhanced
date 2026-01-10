@@ -76,6 +76,7 @@ export default function PostModal({
   const [tagsLoaded, setTagsLoaded] = useState(false);
   const [showStoryViewer, setShowStoryViewer] = useState(false);
   const [storyViewerUsername, setStoryViewerUsername] = useState<string | null>(null);
+  const [storyViewerProfileId, setStoryViewerProfileId] = useState<number | null>(null);
   const [hoveredUsername, setHoveredUsername] = useState<string | null>(null);
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
 
@@ -500,11 +501,12 @@ export default function PostModal({
                 src={post.profile_image_url}
                 alt={post.profile_username || 'Profile picture'}
                 size={32}
-                hasStory={post.profile_has_active_story}
+                hasStory={post.profile_has_active_story && (!post.profile_is_private || isFollowing)}
                 username={post.profile_username}
                 onStoryClick={() => {
-                  if (post.profile_has_active_story) {
+                  if (post.profile_has_active_story && (!post.profile_is_private || isFollowing)) {
                     setStoryViewerUsername(post.profile_username);
+                    setStoryViewerProfileId(post.profile_id);
                     setShowStoryViewer(true);
                   }
                 }}
@@ -658,11 +660,12 @@ export default function PostModal({
                           src={comment.profile_image_url}
                           alt={comment.profile_username || 'Profile picture'}
                           size={32}
-                          hasStory={comment.profile_has_active_story}
+                          hasStory={comment.profile_has_active_story && (!comment.profile_is_private || isFollowing)}
                           username={comment.profile_username}
                           onStoryClick={() => {
-                            if (comment.profile_has_active_story) {
+                            if (comment.profile_has_active_story && (!comment.profile_is_private || isFollowing)) {
                               setStoryViewerUsername(comment.profile_username);
+                              setStoryViewerProfileId(comment.profile_id);
                               setShowStoryViewer(true);
                             }
                           }}
@@ -799,11 +802,12 @@ export default function PostModal({
                           src={reply.profile_image_url}
                           alt={reply.profile_username || 'Profile picture'}
                           size={28}
-                          hasStory={reply.profile_has_active_story}
+                          hasStory={reply.profile_has_active_story && (!reply.profile_is_private || isFollowing)}
                           username={reply.profile_username}
                           onStoryClick={() => {
-                            if (reply.profile_has_active_story) {
+                            if (reply.profile_has_active_story && (!reply.profile_is_private || isFollowing)) {
                               setStoryViewerUsername(reply.profile_username);
+                              setStoryViewerProfileId(reply.profile_id);
                               setShowStoryViewer(true);
                             }
                           }}
@@ -997,12 +1001,14 @@ export default function PostModal({
       </div>
 
       {/* Story Viewer */}
-      {showStoryViewer && storyViewerUsername && (
+      {showStoryViewer && storyViewerUsername && storyViewerProfileId && (
         <StoryViewer
           profileUsername={storyViewerUsername}
+          profileId={storyViewerProfileId}
           onClose={() => {
             setShowStoryViewer(false);
             setStoryViewerUsername(null);
+            setStoryViewerProfileId(null);
           }}
         />
       )}
