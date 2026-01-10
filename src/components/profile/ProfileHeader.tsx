@@ -82,8 +82,8 @@ export default function ProfileHeader({
                 src={profile.profile_image_url}
                 alt={profile.username}
                 size={profilePictureSize}
-                hasStory={!followStatus.isOwnProfile && profile.has_any_active_story && (!profile.is_private || followStatus.isFollowing)}
-                storyViewed={!profile.has_active_story && profile.has_any_active_story}
+                hasStory={!followStatus.isOwnProfile && profile.has_active_story && (!profile.is_private || followStatus.isFollowing)}
+                storyViewed={profile.has_viewed_story}
                 onStoryClick={onStoryClick}
               />
               {/* Overlay grigiastro con icona fotocamera - solo per profilo proprio senza immagine custom */}

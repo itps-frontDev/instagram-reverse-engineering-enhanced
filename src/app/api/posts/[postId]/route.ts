@@ -3,7 +3,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { queryOne, queryAll, execute } from '@/lib/db';
+import { queryOne, queryAll } from '@/lib/db';
 import type { FeedPost } from '@/lib/types/feed';
 import { getCurrentProfileId } from '@/lib/auth';
 
@@ -136,8 +136,6 @@ export async function GET(
       profile_full_name: post.profile_full_name,
       profile_image_url: post.profile_image_url,
       profile_is_verified: Boolean(post.profile_is_verified),
-      profile_has_active_story: false, // Not needed for single post view
-      is_following_author: false, // Not needed for single post view
       media: media,
       is_liked_by_current_user: isLiked,
       is_saved_by_current_user: isSaved,
@@ -148,126 +146,6 @@ export async function GET(
     console.error('Error fetching post:', error);
     return NextResponse.json(
       { error: 'Failed to fetch post' },
-      { status: 500 }
-    );
-  }
-}
-
-/**
- * DELETE endpoint to soft-delete a post
- */
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ postId: string }> }
-) {
-  try {
-    const { postId } = await params;
-    const postIdNum = parseInt(postId);
-
-    if (isNaN(postIdNum)) {
-      return NextResponse.json({ error: 'Invalid post ID' }, { status: 400 });
-    }
-
-    // Get current user
-    const currentProfileId = await getCurrentProfileId();
-    if (!currentProfileId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Verify the post belongs to the current user
-    const post = await queryOne<{ profile_id: number }>(
-      `SELECT profile_id FROM posts WHERE id = ? AND deleted_at IS NULL`,
-      [postIdNum]
-    );
-
-    if (!post) {
-      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
-    }
-
-    if (post.profile_id !== currentProfileId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    // Soft delete the post
-    await execute(
-      `UPDATE posts SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?`,
-      [postIdNum]
-    );
-
-    // Also soft delete associated media
-    await execute(
-      `UPDATE post_media SET deleted_at = CURRENT_TIMESTAMP WHERE post_id = ?`,
-      [postIdNum]
-    );
-
-    return NextResponse.json({ success: true, message: 'Post deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting post:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete post' },
-      { status: 500 }
-    );
-  }
-}
-
-/**
- * PATCH endpoint to update post caption
- */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ postId: string }> }
-) {
-  try {
-    const { postId } = await params;
-    const postIdNum = parseInt(postId);
-
-    if (isNaN(postIdNum)) {
-      return NextResponse.json({ error: 'Invalid post ID' }, { status: 400 });
-    }
-
-    // Get current user
-    const currentProfileId = await getCurrentProfileId();
-    if (!currentProfileId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Verify the post belongs to the current user
-    const post = await queryOne<{ profile_id: number }>(
-      `SELECT profile_id FROM posts WHERE id = ? AND deleted_at IS NULL`,
-      [postIdNum]
-    );
-
-    if (!post) {
-      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
-    }
-
-    if (post.profile_id !== currentProfileId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    // Parse request body
-    const body = await request.json();
-    const { caption } = body;
-
-    if (caption === undefined) {
-      return NextResponse.json({ error: 'Caption is required' }, { status: 400 });
-    }
-
-    if (caption.length > 2200) {
-      return NextResponse.json({ error: 'Caption too long (max 2200 characters)' }, { status: 400 });
-    }
-
-    // Update the caption
-    await execute(
-      `UPDATE posts SET caption = ? WHERE id = ?`,
-      [caption, postIdNum]
-    );
-
-    return NextResponse.json({ success: true, message: 'Post updated successfully', caption });
-  } catch (error) {
-    console.error('Error updating post:', error);
-    return NextResponse.json(
-      { error: 'Failed to update post' },
       { status: 500 }
     );
   }

@@ -26,8 +26,7 @@ export interface Profile {
   following_count: number;
   posts_count: number;
   has_reels?: boolean; // Whether profile has any video posts
-  has_any_active_story?: boolean; // Whether profile has any active stories (regardless of views)
-  has_active_story?: boolean; // Whether profile has active stories not yet viewed by current user
+  has_active_story?: boolean; // Whether profile has active stories (within 24h)
   has_viewed_story?: boolean; // Whether current user has viewed this profile's stories
   created_at?: string;
   updated_at?: string;

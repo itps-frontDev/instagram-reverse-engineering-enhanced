@@ -13,7 +13,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
     if (!commentId) {
       return NextResponse.json({ error: 'Invalid comment id' }, { status: 400 });
     }
-    // Verifica che il commento esista
+    // Verifica che il commento esista e sia dell'utente
     const comment = await queryOne<{ id: number; profile_id: number; post_id: number; parent_id: number | null }>(
       'SELECT id, profile_id, post_id, parent_id FROM comments WHERE id = ? AND deleted_at IS NULL',
       [commentId]
@@ -21,17 +21,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
     if (!comment) {
       return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
     }
-    
-    // Verifica che l'utente sia il proprietario del commento O del post
-    const post = await queryOne<{ profile_id: number }>(
-      'SELECT profile_id FROM posts WHERE id = ? AND deleted_at IS NULL',
-      [comment.post_id]
-    );
-    
-    const isCommentOwner = comment.profile_id === currentProfile.id;
-    const isPostOwner = post && post.profile_id === currentProfile.id;
-    
-    if (!isCommentOwner && !isPostOwner) {
+    if (comment.profile_id !== currentProfile.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     // Soft delete

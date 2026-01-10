@@ -76,27 +76,7 @@ export async function GET(request: NextRequest) {
         pr.profile_image_url,
         pr.is_verified as profile_is_verified,
         pr.is_private as profile_is_private,
-        (SELECT CASE 
-          WHEN COUNT(*) > 0 AND EXISTS (
-            SELECT 1 FROM stories s2
-            WHERE s2.profile_id = p.profile_id
-            AND s2.deleted_at IS NULL
-            AND s2.expires_at > datetime('now')
-            AND (
-              s2.profile_id = ? OR
-              s2.profile_id IN (
-                SELECT following_profile_id FROM follows
-                WHERE follower_profile_id = ?
-                AND status = 'accepted'
-              ) OR
-              pr.is_private = 0
-            )
-            AND NOT EXISTS (
-              SELECT 1 FROM story_views sv
-              WHERE sv.story_id = s2.id
-              AND sv.viewer_profile_id = ?
-            )
-          ) THEN 1 ELSE 0 END
+        (SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
          FROM stories s
          WHERE s.profile_id = p.profile_id
          AND s.deleted_at IS NULL
@@ -142,20 +122,7 @@ export async function GET(request: NextRequest) {
         )
       ORDER BY p.created_at DESC
       LIMIT ? OFFSET ?`,
-      [
-        currentProfile.id, // for own stories in story check
-        currentProfile.id, // for follows in story check
-        currentProfile.id, // for story_views check
-        currentProfile.id, // for is_liked
-        currentProfile.id, // for is_saved
-        currentProfile.id, // for is_following
-        currentProfile.id, // for own post check
-        currentProfile.id, // for own post subquery
-        currentProfile.id, // for follows check
-        currentProfile.id, // for public profiles exclude own
-        limit + 1, 
-        offset
-      ]
+      [currentProfile.id, currentProfile.id, currentProfile.id, currentProfile.id, currentProfile.id, currentProfile.id, currentProfile.id, limit + 1, offset]
     );
 
     // Check if there are more posts
