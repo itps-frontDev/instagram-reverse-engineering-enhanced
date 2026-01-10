@@ -51,7 +51,6 @@ export async function GET() {
             AND status = 'accepted'
             AND deleted_at IS NULL
         )
-        OR p.is_private = 0
       )
         AND s.expires_at > datetime('now', 'localtime')
         AND s.deleted_at IS NULL

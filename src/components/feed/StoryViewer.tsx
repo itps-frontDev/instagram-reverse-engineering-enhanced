@@ -37,6 +37,7 @@ interface Story {
   created_at: string;
   expires_at: string;
   is_liked_by_me?: boolean;
+  is_viewed?: number;
 }
 
 interface StoryViewerProps {
@@ -47,6 +48,7 @@ interface StoryViewerProps {
   allUsernames?: string[];
   currentUserIndex?: number;
   onUserChange?: (newIndex: number) => void;
+  onAllStoriesViewed?: (profileId: number) => void;
 }
 
 export default function StoryViewer({
@@ -57,6 +59,7 @@ export default function StoryViewer({
   allUsernames = [],
   currentUserIndex = 0,
   onUserChange,
+  onAllStoriesViewed,
 }: StoryViewerProps) {
   const [stories, setStories] = useState<Story[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -127,9 +130,9 @@ export default function StoryViewer({
 
   // Reset index when username changes
   useEffect(() => {
-    setCurrentIndex(0);
-    // Reset like state when changing user
-    if (stories.length > 0) {
+    // Solo se stories cambia per un nuovo utente, non per update locale
+    if (stories.length > 0 && currentIndex >= stories.length) {
+      setCurrentIndex(0);
       setIsLiked(stories[0]?.is_liked_by_me || false);
     }
   }, [profileUsername, stories]);
@@ -182,11 +185,29 @@ export default function StoryViewer({
   useEffect(() => {
     if (!currentStory) return;
 
+    let firstView = !currentStory.is_viewed;
+    if (!firstView) return; // Evita chiamate ripetute
+
     async function recordView() {
       try {
         await fetch(`/api/stories/${currentStory.id}/view`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+        });
+        // Aggiorna lo stato della storia come vista
+        setStories((prevStories) => {
+          const updated = [...prevStories];
+          if (updated[currentIndex]) {
+            updated[currentIndex] = {
+              ...updated[currentIndex],
+              is_viewed: 1
+            };
+          }
+          // Se tutte le storie sono ora viste, notifica il container
+          if (onAllStoriesViewed && updated.every(s => s.is_viewed)) {
+            onAllStoriesViewed(updated[0].profile_id);
+          }
+          return updated;
         });
       } catch (e) {
         console.error('Failed to record story view:', e);
@@ -194,7 +215,7 @@ export default function StoryViewer({
     }
 
     recordView();
-  }, [currentStory]);
+  }, [currentStory, currentIndex, onAllStoriesViewed]);
 
   const goToPrevious = useCallback(() => {
     if (currentIndex > 0) {

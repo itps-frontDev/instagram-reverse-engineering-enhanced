@@ -1046,6 +1046,46 @@ export default function PostModal({
           </button>
         </div>
       </div>
+
+      {/* Post Options Modal */}
+      <PostOptionsModal
+        isOpen={showPostOptionsModal}
+        onClose={() => setShowPostOptionsModal(false)}
+        onEdit={() => {
+          setShowPostOptionsModal(false);
+          setShowEditPostModal(true);
+        }}
+        onDelete={() => {
+          setShowPostOptionsModal(false);
+          setShowDeletePostModal(true);
+        }}
+        canEdit={!!isOwnPost}
+      />
+
+      {/* Edit Post Modal */}
+      {isOwnPost && (
+        <EditPostModal
+          isOpen={showEditPostModal}
+          onClose={() => setShowEditPostModal(false)}
+          postId={post.id}
+          currentCaption={post.caption || ''}
+          mediaUrl={post.media[0]?.media_url || ''}
+          mediaType={post.media[0]?.media_type || 'image'}
+          onSave={(newCaption) => {
+            // Aggiorna la caption localmente
+            post.caption = newCaption;
+            setShowEditPostModal(false);
+          }}
+        />
+      )}
+
+      {/* Delete Post Confirmation Modal */}
+      <DeletePostModal
+        isOpen={showDeletePostModal}
+        onClose={() => setShowDeletePostModal(false)}
+        onConfirm={handleDeletePost}
+        isDeleting={isDeletingPost}
+      />
     </div>
   </div>
 

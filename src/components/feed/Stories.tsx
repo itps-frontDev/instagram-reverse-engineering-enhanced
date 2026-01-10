@@ -155,6 +155,27 @@ export default function Stories() {
     }
   };
 
+  // Aggiorna stato locale delle storie dopo la visualizzazione
+  const handleStoriesViewed = (profileId: number) => {
+    // Deferisci l'aggiornamento dello stato al prossimo tick per evitare errori React
+    setTimeout(() => {
+      setProfileStories((prev) => {
+        return prev.map((profile) => {
+          if (profile.profile_id === profileId) {
+            // Marca tutte le storie come viste
+            const updatedStories = profile.stories.map((s) => ({ ...s, is_viewed: 1 }));
+            return {
+              ...profile,
+              stories: updatedStories,
+              allViewed: true
+            };
+          }
+          return profile;
+        });
+      });
+    }, 0);
+  };
+
   if (loading) {
     return <StoriesSkeleton />;
   }
@@ -237,6 +258,7 @@ export default function Stories() {
           allUsernames={profileStories.map(p => p.username)}
           currentUserIndex={selectedUserIndex}
           onUserChange={handleUserChange}
+          onAllStoriesViewed={(profileId) => handleStoriesViewed(profileId)}
         />
       )}
     </>
