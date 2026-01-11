@@ -47,7 +47,7 @@ export default function NotificationsPanel({ isOpen, onClose, onMarkAllAsRead }:
   const [isLoading, setIsLoading] = useState(false);
   const [followStates, setFollowStates] = useState<Record<number, FollowState>>({});
   const [showUnfollowModal, setShowUnfollowModal] = useState(false);
-  const [selectedUnfollowUser, setSelectedUnfollowUser] = useState<{ profileId: number; username: string; profileImage: string | null } | null>(null);
+  const [selectedUnfollowUser, setSelectedUnfollowUser] = useState<{ profileId: number; username: string; profileImage: string | undefined } | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   // Carica notifiche quando il pannello si apre
@@ -538,7 +538,7 @@ export default function NotificationsPanel({ isOpen, onClose, onMarkAllAsRead }:
                                 setSelectedUnfollowUser({
                                   profileId: notification.sender_profile_id!,
                                   username: notification.sender_username || '',
-                                  profileImage: notification.sender_profile_image_url
+                                  profileImage: notification.sender_profile_image_url ?? undefined
                                 });
                                 setShowUnfollowModal(true);
                               }}
@@ -557,7 +557,7 @@ export default function NotificationsPanel({ isOpen, onClose, onMarkAllAsRead }:
                                 setSelectedUnfollowUser({
                                   profileId: notification.sender_profile_id!,
                                   username: notification.sender_username || '',
-                                  profileImage: notification.sender_profile_image_url
+                                  profileImage: notification.sender_profile_image_url ?? undefined
                                 });
                                 setShowUnfollowModal(true);
                               }}
@@ -645,7 +645,7 @@ export default function NotificationsPanel({ isOpen, onClose, onMarkAllAsRead }:
                                 setSelectedUnfollowUser({
                                   profileId: notification.sender_profile_id!,
                                   username: notification.sender_username || '',
-                                  profileImage: notification.sender_profile_image_url
+                                  profileImage: notification.sender_profile_image_url ?? undefined
                                 });
                                 setShowUnfollowModal(true);
                               }}
@@ -664,7 +664,7 @@ export default function NotificationsPanel({ isOpen, onClose, onMarkAllAsRead }:
                                 setSelectedUnfollowUser({
                                   profileId: notification.sender_profile_id!,
                                   username: notification.sender_username || '',
-                                  profileImage: notification.sender_profile_image_url
+                                  profileImage: notification.sender_profile_image_url ?? undefined
                                 });
                                 setShowUnfollowModal(true);
                               }}

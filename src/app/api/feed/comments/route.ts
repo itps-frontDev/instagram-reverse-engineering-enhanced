@@ -269,7 +269,9 @@ export async function POST(request: NextRequest) {
         p.full_name as profile_full_name,
         p.profile_image_url,
         p.is_verified as profile_is_verified,
-        0 as is_liked
+        p.is_private as profile_is_private,
+        0 as is_liked,
+        0 as profile_has_active_story
       FROM comments c
       INNER JOIN profiles p ON c.profile_id = p.id
       WHERE c.id = ?`,
@@ -292,6 +294,7 @@ export async function POST(request: NextRequest) {
       profile_full_name: commentRow.profile_full_name,
       profile_image_url: commentRow.profile_image_url,
       profile_is_verified: Boolean(commentRow.profile_is_verified),
+      profile_is_private: Boolean(commentRow.profile_is_private),
       is_liked_by_current_user: false,
       profile_has_active_story: false,
     };

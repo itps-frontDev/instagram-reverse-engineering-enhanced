@@ -26,6 +26,9 @@ interface PostRow {
   profile_full_name: string | null;
   profile_image_url: string | null;
   profile_is_verified: number;
+  profile_is_private: number;
+  profile_has_active_story: number | null;
+  is_following_author: number | null;
   is_liked: number | null;
   is_saved: number | null;
 }
@@ -71,6 +74,16 @@ export async function GET(request: NextRequest) {
         pr.full_name as profile_full_name,
         pr.profile_image_url,
         pr.is_verified as profile_is_verified,
+        pr.is_private as profile_is_private,
+        (SELECT 1 FROM stories
+         WHERE profile_id = pr.id
+         AND deleted_at IS NULL
+         AND datetime(expires_at) > datetime('now')) as profile_has_active_story,
+        (SELECT 1 FROM follows
+         WHERE follower_profile_id = ?
+         AND following_profile_id = pr.id
+         AND status = 'accepted'
+         AND deleted_at IS NULL) as is_following_author,
         (SELECT 1 FROM likes
          WHERE likeable_type = 'post'
          AND likeable_id = p.id
@@ -88,7 +101,7 @@ export async function GET(request: NextRequest) {
         AND p.profile_id != ?
       ORDER BY RANDOM()
       LIMIT ? OFFSET ?`,
-      [currentProfile.id, currentProfile.id, currentProfile.id, limit + 1, offset]
+      [currentProfile.id, currentProfile.id, currentProfile.id, currentProfile.id, limit + 1, offset]
     );
 
     // Check if there are more posts
@@ -134,6 +147,9 @@ export async function GET(request: NextRequest) {
       profile_full_name: post.profile_full_name,
       profile_image_url: post.profile_image_url,
       profile_is_verified: Boolean(post.profile_is_verified),
+      profile_is_private: Boolean(post.profile_is_private),
+      profile_has_active_story: Boolean(post.profile_has_active_story),
+      is_following_author: Boolean(post.is_following_author),
       media: mediaByPost.get(post.id) || [],
       is_liked_by_current_user: Boolean(post.is_liked),
       is_saved_by_current_user: Boolean(post.is_saved),

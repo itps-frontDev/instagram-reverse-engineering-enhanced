@@ -213,7 +213,7 @@ export default function ProfileHeader({
             isLoading={isLoading}
             profileId={profile.id}
             username={profile.username}
-            profileImage={profile.profile_image_url}
+            profileImage={profile.profile_image_url ?? undefined}
           />
         </div>
 
