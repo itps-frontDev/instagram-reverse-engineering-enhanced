@@ -56,6 +56,17 @@ export async function POST(
 
     // Create notification (only if not liking own post)
     if (post && post.profile_id !== profileId) {
+      // Rimuovi eventuali notifiche like duplicate esistenti per questo post
+      await execute(
+        `DELETE FROM notifications 
+         WHERE recipient_profile_id = ? 
+         AND sender_profile_id = ? 
+         AND type = 'like_post'
+         AND reference_type = 'post'
+         AND reference_id = ?`,
+        [post.profile_id, profileId, postIdNum]
+      );
+      
       await execute(
         `INSERT INTO notifications (recipient_profile_id, sender_profile_id, type, reference_type, reference_id)
          VALUES (?, ?, 'like_post', 'post', ?)`,

@@ -131,11 +131,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create notification for the target user
+    // Create notification for the target user (remove duplicates first)
+    const notificationType = followStatus === 'pending' ? 'follow_request' : 'follow';
+    
+    // Delete any existing notification of the same type from this sender to this recipient
+    await execute(
+      `DELETE FROM notifications 
+       WHERE recipient_profile_id = ? 
+       AND sender_profile_id = ? 
+       AND type IN ('follow', 'follow_request')
+       AND reference_type = 'profile'`,
+      [targetProfileId, currentProfile.id]
+    );
+    
+    // Create new notification
     await execute(
       `INSERT INTO notifications (recipient_profile_id, sender_profile_id, type, reference_type, reference_id)
        VALUES (?, ?, ?, ?, ?)`,
-      [targetProfileId, currentProfile.id, 'follow', 'profile', currentProfile.id]
+      [targetProfileId, currentProfile.id, notificationType, 'profile', currentProfile.id]
     );
 
     // Return success response

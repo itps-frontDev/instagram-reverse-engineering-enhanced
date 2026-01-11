@@ -6,6 +6,9 @@
 
 'use client';
 
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+
 interface UnfollowModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -23,9 +26,24 @@ export default function UnfollowModal({
   username = '',
   profileImage,
 }: UnfollowModalProps) {
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
 
-  return (
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
+  if (!isOpen || !mounted) return null;
+
+  const modalContent = (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       {/* Backdrop */}
       <div 
@@ -39,15 +57,13 @@ export default function UnfollowModal({
       >
         {/* Header con immagine profilo */}
         <div className="flex flex-col items-center p-8 pb-4">
-          {profileImage && (
-            <div className="w-[90px] h-[90px] rounded-full overflow-hidden mb-5">
-              <img 
-                src={profileImage} 
-                alt={username}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
+          <div className="w-[90px] h-[90px] rounded-full overflow-hidden mb-5">
+            <img 
+              src={profileImage || '/images/default-pfp.jpg'} 
+              alt={username}
+              className="w-full h-full object-cover"
+            />
+          </div>
           <h2 className="text-sm text-[#262626] dark:text-[#FAFAFA] text-center">
             Se cambi idea, dovrai chiedere di nuovo di seguire @{username}.
           </h2>
@@ -77,4 +93,6 @@ export default function UnfollowModal({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
