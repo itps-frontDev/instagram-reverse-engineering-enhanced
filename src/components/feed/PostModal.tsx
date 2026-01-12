@@ -421,7 +421,7 @@ export default function PostModal({
 
         {/* Left Side - Media (Image or Video) */}
         <div className="flex-1 bg-gray-100 dark:bg-black flex items-center justify-center relative group/media max-[639px]:max-h-[50vh]">
-          {post.media.length > 0 && (
+          {post.media.length > 0 && post.media[currentMediaIndex] && (
             <>
               {post.media[currentMediaIndex].media_type === 'video' ? (
                 <div className="relative w-full h-full">
