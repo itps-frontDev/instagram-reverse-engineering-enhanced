@@ -21,6 +21,7 @@ interface PostRow {
   profile_full_name: string | null;
   profile_image_url: string | null;
   profile_is_verified: number;
+  profile_is_private: number;
 }
 
 interface MediaRow {
@@ -67,7 +68,8 @@ export async function GET(
         pr.username as profile_username,
         pr.full_name as profile_full_name,
         pr.profile_image_url,
-        pr.is_verified as profile_is_verified
+        pr.is_verified as profile_is_verified,
+        pr.is_private as profile_is_private
       FROM posts p
       INNER JOIN profiles pr ON pr.id = p.profile_id
       WHERE p.id = ? AND p.deleted_at IS NULL`,
@@ -137,6 +139,7 @@ export async function GET(
       profile_image_url: post.profile_image_url,
       profile_is_verified: Boolean(post.profile_is_verified),
       profile_has_active_story: false, // Not needed for single post view
+      profile_is_private: Boolean(post.profile_is_private),
       is_following_author: false, // Not needed for single post view
       media: media,
       is_liked_by_current_user: isLiked,
