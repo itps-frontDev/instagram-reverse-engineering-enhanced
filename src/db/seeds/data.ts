@@ -1,12 +1,12 @@
 /**
- * @fileoverview Test data for seeding
+ * @fileoverview Dati di test per il seeding
  *
- * Contains all test data organized by entity.
- * Modify this file to add/change test users, posts, etc.
+ * Contiene tutti i dati di test organizzati per entità.
+ * Modifica questo file per aggiungere o aggiornare utenti, post e altri dataset.
  */
 
 // ============================================================================
-// DATA GENERATORS
+// GENERATORI DI DATI
 // ============================================================================
 
 const FIRST_NAMES = [
@@ -96,7 +96,7 @@ function generateDateOfBirth(): string {
 }
 
 // ============================================================================
-// USERS - Generate 80 users (expanded from 55)
+// UTENTI - Genera 80 account (da 55)
 // ============================================================================
 
 const NUM_USERS = 80;
@@ -115,7 +115,7 @@ export const TEST_USERS = Array.from({ length: NUM_USERS }, (_, i) => {
 });
 
 // ============================================================================
-// PROFILES - Generate 80 profiles with PROFILE PICTURES
+// PROFILI - 80 profili con foto
 // ============================================================================
 
 export const TEST_PROFILES = Array.from({ length: NUM_USERS }, (_, i) => {
@@ -124,22 +124,22 @@ export const TEST_PROFILES = Array.from({ length: NUM_USERS }, (_, i) => {
   const username = generateUsername(firstName, lastName, i);
   const fullName = `${firstName} ${lastName}`;
   
-  // 95% degli utenti hanno profile picture, solo 5% (circa 4 utenti) senza
-  const hasProfilePicture = i >= 4; // Primi 4 utenti senza pfp
+  // 95% degli utenti hanno una foto profilo, solo 5% (circa 4 utenti) senza
+  const hasProfilePicture = i >= 4; // Primi 4 utenti senza immagine
 
   return {
     username,
     full_name: fullName,
     bio: randomBool(0.7) ? randomElement(BIO_TEMPLATES) : null,
     website_url: randomBool(0.3) ? `https://${username}.com` : null,
-    is_private: randomBool(0.25), // 25% private accounts
-    is_verified: randomBool(0.15), // 15% verified accounts
+    is_private: randomBool(0.25), // 25% di profili privati
+    is_verified: randomBool(0.15), // 15% di profili verificati
     profile_image_url: hasProfilePicture ? `https://i.pravatar.cc/300?u=${username}` : null,
   };
 });
 
 // ============================================================================
-// POSTS - Caption templates (EXPANDED)
+// POST - Template caption (ampliati)
 // ============================================================================
 
 const POST_CAPTIONS = [
@@ -195,28 +195,28 @@ const POST_CAPTIONS = [
   'Today was a good day',
 ];
 
-// Each profile will get 8-15 posts dynamically generated in seeders (INCREASED)
+// Ogni profilo riceve 8-15 post generati dinamicamente nei seeders (valore aumentato)
 export const POST_ASSIGNMENTS = Array.from({ length: NUM_USERS }, (_, i) => ({
   profileIndex: i,
-  count: randomInt(8, 15), // INCREASED from 5-10
+  count: randomInt(8, 15), // In precedenza 5-10
 }));
 
 // ============================================================================
-// STORIES - With 99 YEAR EXPIRATION for demos
+// STORIE - Con scadenza a 99 anni per le demo
 // ============================================================================
 
-// Calculate expiration date 99 years from now
+// Calcola la data di scadenza tra 99 anni
 const STORY_EXPIRATION_DATE = new Date();
 STORY_EXPIRATION_DATE.setFullYear(STORY_EXPIRATION_DATE.getFullYear() + 99);
 const STORY_EXPIRATION = STORY_EXPIRATION_DATE.toISOString().split('T')[0] + ' 23:59:59';
 
 export const STORY_CONFIG = {
   expiresAt: STORY_EXPIRATION,
-  storiesPerProfile: { min: 3, max: 8 }, // INCREASED from 3-6
+  storiesPerProfile: { min: 3, max: 8 }, // Prima 3-6
 };
 
 // ============================================================================
-// MESSAGE TEMPLATES
+// TEMPLATE MESSAGGI
 // ============================================================================
 
 export const MESSAGE_TEMPLATES = [
@@ -243,7 +243,7 @@ export const MESSAGE_TEMPLATES = [
 ];
 
 // ============================================================================
-// COMMENT TEMPLATES
+// TEMPLATE COMMENTI
 // ============================================================================
 
 export const COMMENT_TEMPLATES = [
@@ -275,7 +275,7 @@ export const COMMENT_TEMPLATES = [
 ];
 
 // ============================================================================
-// HASHTAG TEMPLATES
+// TEMPLATE HASHTAG
 // ============================================================================
 
 export const HASHTAG_TEMPLATES = [
@@ -288,7 +288,7 @@ export const HASHTAG_TEMPLATES = [
 ];
 
 // ============================================================================
-// LOCATION TEMPLATES
+// TEMPLATE LOCALITÀ
 // ============================================================================
 
 export const LOCATION_TEMPLATES = [

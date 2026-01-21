@@ -1,9 +1,9 @@
 // ============================================================================
-// POSTS
+// POST
 // ============================================================================
 
 export async function seedPosts(profileIds: number[]) {
-  console.log('\n🌱 Seeding posts...');
+  console.log('\n🌱 Popolamento dei post...');
 
   const POST_CAPTIONS = [
     'Another beautiful day ☀️',
@@ -38,10 +38,10 @@ export async function seedPosts(profileIds: number[]) {
 
     for (let j = 0; j < numPosts; j++) {
       const caption = POST_CAPTIONS[Math.floor(Math.random() * POST_CAPTIONS.length)];
-      const likesCount = Math.floor(Math.random() * 491) + 10; // 10-500
-      const commentsCount = Math.floor(Math.random() * 51); // 0-50
-      const hasMultipleMedia = Math.random() < 0.3; // 30% chance of multiple images
-      const mediaCount = hasMultipleMedia ? Math.floor(Math.random() * 4) + 2 : 1; // 2-5 images or 1
+      const likesCount = Math.floor(Math.random() * 491) + 10; // 10-500 mi piace simulati
+      const commentsCount = Math.floor(Math.random() * 51); // 0-50 commenti simulati
+      const hasMultipleMedia = Math.random() < 0.3; // 30% di probabilità di avere più media
+      const mediaCount = hasMultipleMedia ? Math.floor(Math.random() * 4) + 2 : 1; // 2-5 immagini oppure 1
 
       const result = await execute(
         `INSERT INTO posts (profile_id, caption, likes_count, comments_count)
@@ -52,7 +52,7 @@ export async function seedPosts(profileIds: number[]) {
       const postId = result.lastID;
       allPostIds.push(postId);
 
-      // Add media for this post
+      // Aggiunge i media associati al post
       for (let k = 0; k < mediaCount; k++) {
         const mediaUrl = `https://picsum.photos/seed/post${postId}img${k}/1080/1350`;
         await execute(
@@ -65,28 +65,28 @@ export async function seedPosts(profileIds: number[]) {
       totalPosts++;
     }
 
-    // Update posts_count
+    // Aggiorna il posts_count del profilo
     await execute(
       'UPDATE profiles SET posts_count = ? WHERE id = ?',
       [numPosts, profileId]
     );
 
     if ((i + 1) % 10 === 0) {
-      console.log(`   ✓ Generated posts for ${i + 1}/${profileIds.length} profiles...`);
+      console.log(`   ✓ Generati post per ${i + 1}/${profileIds.length} profili...`);
     }
   }
 
-  console.log(`   ✓ Created ${totalPosts} posts successfully!`);
+  console.log(`   ✓ Creati ${totalPosts} post con successo!`);
 
-  return allPostIds; // Return post IDs for tagging
+  return allPostIds; // IDs dei post utili per i tag successivi
 }
 
 // ============================================================================
-// VIDEO REELS
+// VIDEO REEL
 // ============================================================================
 
 export async function seedVideoReels(profileIds: number[]) {
-  console.log('\n🌱 Seeding video reels...');
+  console.log('\n🌱 Popolamento dei video reel...');
 
   const REEL_CAPTIONS = [
     '🎬 Check this out!',
@@ -111,7 +111,7 @@ export async function seedVideoReels(profileIds: number[]) {
     'Pure happiness 💙',
   ];
 
-  // Sample video URLs (using test video URLs from various sources)
+  // URL di esempio per i video (fonti pubbliche di test)
   const VIDEO_URLS = [
     'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
     'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
@@ -127,20 +127,20 @@ export async function seedVideoReels(profileIds: number[]) {
 
   let totalReels = 0;
   const allReelIds: number[] = [];
-  const TARGET_REELS = 20; // Only create 20 reels total
+  const TARGET_REELS = 20; // Creiamo solo 20 reel in totale
 
-  // Give only some users video reels (20 total)
+  // Solo una parte degli utenti riceve un reel video
   const selectedProfiles = profileIds.slice(0, TARGET_REELS);
   for (let i = 0; i < selectedProfiles.length; i++) {
     const profileId = selectedProfiles[i];
-    const numReels = 1; // 1 reel per selected user
+    const numReels = 1; // 1 reel per ogni profilo selezionato
 
     for (let j = 0; j < numReels; j++) {
       const caption = REEL_CAPTIONS[Math.floor(Math.random() * REEL_CAPTIONS.length)];
-      const likesCount = Math.floor(Math.random() * 100000) + 1000; // 1K-100K likes
-      const commentsCount = Math.floor(Math.random() * 1000) + 50; // 50-1000 comments
+      const likesCount = Math.floor(Math.random() * 100000) + 1000; // 1K-100K mi piace
+      const commentsCount = Math.floor(Math.random() * 1000) + 50; // 50-1000 commenti
       const videoUrl = VIDEO_URLS[Math.floor(Math.random() * VIDEO_URLS.length)];
-      const duration = Math.floor(Math.random() * 55) + 5; // 5-60 seconds
+      const duration = Math.floor(Math.random() * 55) + 5; // 5-60 secondi
 
       const result = await execute(
         `INSERT INTO posts (profile_id, caption, likes_count, comments_count)
@@ -151,7 +151,7 @@ export async function seedVideoReels(profileIds: number[]) {
       const postId = result.lastID;
       allReelIds.push(postId);
 
-      // Add video media for this reel
+      // Aggiunge il media video per il reel
       await execute(
         `INSERT INTO post_media (post_id, media_url, media_type, duration_seconds, position)
          VALUES (?, ?, 'video', ?, 0)`,
@@ -161,7 +161,7 @@ export async function seedVideoReels(profileIds: number[]) {
       totalReels++;
     }
 
-    // Update posts_count
+    // Aggiorna il posts_count del profilo
     await execute(
       `UPDATE profiles SET posts_count = posts_count + (
         SELECT COUNT(*) FROM posts WHERE profile_id = ? AND deleted_at IS NULL
@@ -170,19 +170,19 @@ export async function seedVideoReels(profileIds: number[]) {
     );
 
     if ((i + 1) % 20 === 0) {
-      console.log(`   ✓ Generated reels for ${i + 1}/${profileIds.length} profiles...`);
+      console.log(`   ✓ Generati reel per ${i + 1}/${profileIds.length} profili...`);
     }
   }
 
-  console.log(`   ✓ Created ${totalReels} video reels successfully!`);
+  console.log(`   ✓ Creati ${totalReels} video reel con successo!`);
 
   return allReelIds;
 }
 
 /**
- * @fileoverview Seed functions
+ * @fileoverview Funzioni di seeding
  *
- * Contains all seeding logic organized by entity.
+ * Contiene tutta la logica di popolamento organizzata per entità.
  */
 
 import bcrypt from 'bcryptjs';
@@ -198,11 +198,11 @@ import {
 } from './data';
 
 // ============================================================================
-// USERS
+// UTENTI
 // ============================================================================
 
 export async function seedUsers() {
-  console.log('🌱 Seeding users...');
+  console.log('🌱 Popolamento degli utenti...');
 
   const userIds: number[] = [];
 
@@ -216,18 +216,18 @@ export async function seedUsers() {
     );
 
     userIds.push(result.lastID);
-    console.log(`   ✓ Created user: ${user.email} (ID: ${result.lastID})`);
+    console.log(`   ✓ Creato utente: ${user.email} (ID: ${result.lastID})`);
   }
 
   return userIds;
 }
 
 // ============================================================================
-// PROFILES
+// PROFILI
 // ============================================================================
 
 export async function seedProfiles(userIds: number[]) {
-  console.log('\n🌱 Seeding profiles...');
+  console.log('\n🌱 Popolamento dei profili...');
 
   const profileIds: number[] = [];
 
@@ -260,31 +260,31 @@ export async function seedProfiles(userIds: number[]) {
 }
 
 // ============================================================================
-// FOLLOWS
+// FOLLOW
 // ============================================================================
 
 export async function seedFollows(profileIds: number[]) {
-  console.log('\n🌱 Seeding follows with complex social graph...');
+  console.log('\n🌱 Popolamento dei follow con grafo sociale realistico...');
 
-  const FOLLOW_PROBABILITY = 0.30; // 30% chance of following
-  const PENDING_REQUEST_PROBABILITY = 0.15; // 15% of follows to private accounts will be pending
+  const FOLLOW_PROBABILITY = 0.30; // 30% di probabilità di seguire
+  const PENDING_REQUEST_PROBABILITY = 0.15; // 15% dei follow verso privati rimane in sospeso
 
   let totalFollows = 0;
   let totalPending = 0;
 
-  // Generate follows between all profiles
+  // Genera follow fra tutti i profili
   for (let i = 0; i < profileIds.length; i++) {
     for (let j = 0; j < profileIds.length; j++) {
-      if (i === j) continue; // Don't follow yourself
+      if (i === j) continue; // Evita di seguire se stessi
 
-      // Random chance to follow
+      // Probabilità casuale di seguire
       if (Math.random() > FOLLOW_PROBABILITY) continue;
 
       const followerProfileId = profileIds[i];
       const followingProfileId = profileIds[j];
       const targetIsPrivate = TEST_PROFILES[j].is_private;
 
-      // If target is private, some follows will be pending
+      // Se il profilo è privato, parte delle richieste rimane pending
       const isPending = targetIsPrivate && Math.random() < PENDING_REQUEST_PROBABILITY;
       const status = isPending ? 'pending' : 'accepted';
 
@@ -301,19 +301,19 @@ export async function seedFollows(profileIds: number[]) {
           totalFollows++;
         }
       } catch (e) {
-        // Ignore unique constraint errors
+        // Ignora gli errori di vincolo unico
       }
     }
 
     if ((i + 1) % 10 === 0) {
-      console.log(`   ✓ Generated follows for ${i + 1}/${profileIds.length} profiles...`);
+      console.log(`   ✓ Generati follow per ${i + 1}/${profileIds.length} profili...`);
     }
   }
 
-  console.log(`   ✓ Created ${totalFollows} accepted follows and ${totalPending} pending requests!`);
+  console.log(`   ✓ Creati ${totalFollows} follow accettati e ${totalPending} richieste in sospeso!`);
 
-  // Update followers/following counts
-  console.log('\n📊 Updating follow counts...');
+  // Aggiorna i contatori di follower/following
+  console.log('\n📊 Aggiornamento dei contatori follow...');
   for (let i = 0; i < profileIds.length; i++) {
     const profileId = profileIds[i];
     await execute(
@@ -331,19 +331,19 @@ export async function seedFollows(profileIds: number[]) {
     );
 
     if ((i + 1) % 10 === 0) {
-      console.log(`   ✓ Updated counts for ${i + 1}/${profileIds.length} profiles...`);
+      console.log(`   ✓ Aggiornati i conteggi per ${i + 1}/${profileIds.length} profili...`);
     }
   }
 
-  console.log('   ✓ All follow counts updated successfully!');
+  console.log('   ✓ Tutti i contatori follow aggiornati!');
 }
 
 // ============================================================================
-// STORIES
+// STORIE
 // ============================================================================
 
 export async function seedStories(profileIds: number[]) {
-  console.log('\n🌱 Seeding stories with 99-year expiration...');
+  console.log('\n🌱 Popolamento delle storie con scadenza a 99 anni...');
 
   const now = new Date();
   const createdAt = now.toISOString();
@@ -351,7 +351,7 @@ export async function seedStories(profileIds: number[]) {
 
   let totalStories = 0;
 
-  // Generate 3-8 stories per profile (INCREASED)
+  // Genera 3-8 storie per profilo (valori aumentati)
   for (let i = 0; i < profileIds.length; i++) {
     const profileId = profileIds[i];
     const username = TEST_PROFILES[i]?.username ?? `user${i}`;
@@ -359,8 +359,8 @@ export async function seedStories(profileIds: number[]) {
 
     for (let j = 0; j < numStories; j++) {
       const mediaUrl = `https://picsum.photos/seed/story${profileId}img${j}/1080/1920`;
-      const mediaType = 'image'; // All images since we're using picsum.photos
-      const duration = 5; // 5 seconds for images
+      const mediaType = 'image'; // Tutte immagini dato l'uso di picsum.photos
+      const duration = 5; // 5 secondi per ogni immagine
 
       await execute(
         `INSERT INTO stories (profile_id, media_url, media_type, duration_seconds, created_at, expires_at)
@@ -372,33 +372,33 @@ export async function seedStories(profileIds: number[]) {
     }
 
     if ((i + 1) % 10 === 0) {
-      console.log(`   ✓ Generated stories for ${i + 1}/${profileIds.length} profiles...`);
+      console.log(`   ✓ Storie generate per ${i + 1}/${profileIds.length} profili...`);
     }
   }
 
-  console.log(`   ✓ Created ${totalStories} stories (expiring in 99 years!)!`);
+  console.log(`   ✓ Create ${totalStories} storie (scadenza fra 99 anni!)!`);
 }
 
 // ============================================================================
-// POST TAGS
+// TAG DEI POST
 // ============================================================================
 
 export async function seedPostTags(allPostIds: number[], profileIds: number[]) {
-  console.log('\n🌱 Seeding post tags...');
+  console.log('\n🌱 Popolamento dei tag sui post...');
 
-  const TAG_PROBABILITY = 0.4; // 40% of posts will have tags
+  const TAG_PROBABILITY = 0.4; // Il 40% dei post avrà dei tag
   let totalTags = 0;
 
   for (const postId of allPostIds) {
-    if (Math.random() > TAG_PROBABILITY) continue; // Skip some posts
+    if (Math.random() > TAG_PROBABILITY) continue; // Salta alcuni post
 
-    const numTags = Math.floor(Math.random() * 3) + 1; // 1-3 tags per post
+    const numTags = Math.floor(Math.random() * 3) + 1; // 1-3 tag per post
     const taggedProfiles = new Set<number>();
 
     for (let i = 0; i < numTags; i++) {
       const taggedProfileId = profileIds[Math.floor(Math.random() * profileIds.length)];
 
-      // Avoid tagging the same profile twice in one post
+      // Evita di taggare lo stesso profilo due volte nello stesso post
       if (taggedProfiles.has(taggedProfileId)) continue;
       taggedProfiles.add(taggedProfileId);
 
@@ -413,29 +413,29 @@ export async function seedPostTags(allPostIds: number[], profileIds: number[]) {
         );
         totalTags++;
       } catch (e) {
-        // Ignore unique constraint errors
+        // Ignora gli errori di vincolo unico
       }
     }
   }
 
-  console.log(`   ✓ Created ${totalTags} post tags successfully!`);
+  console.log(`   ✓ Creati ${totalTags} tag sui post con successo!`);
 }
 
 // ============================================================================
-// POST LIKES
+// MI PIACE AI POST
 // ============================================================================
 
 export async function seedPostLikes(allPostIds: number[], profileIds: number[]) {
-  console.log('\n🌱 Seeding post likes...');
+  console.log('\n🌱 Popolamento dei mi piace ai post...');
 
-  const LIKE_PROBABILITY = 0.35; // 35% chance of liking a post
+  const LIKE_PROBABILITY = 0.35; // 35% di probabilità di mettere mi piace
   let totalLikes = 0;
   let skippedPrivate = 0;
 
-  // Load business logic data
+  // Recupera i dati necessari alla logica
   const { queryAll } = await import('@/lib/db');
   
-  // Get all posts with their profile info
+  // Recupera tutti i post con le info del profilo
   const posts = await queryAll<{ id: number; profile_id: number; is_private: number }>(
     `SELECT p.id, p.profile_id, pr.is_private 
      FROM posts p 
@@ -443,7 +443,7 @@ export async function seedPostLikes(allPostIds: number[], profileIds: number[]) 
   );
   const postMap = new Map(posts.map(p => [p.id, p]));
   
-  // Get all accepted follows: Map<follower_id, Set<following_id>>
+  // Recupera tutti i follow accettati: Map<follower_id, Set<following_id>>
   const follows = await queryAll<{ follower_profile_id: number; following_profile_id: number }>(
     `SELECT follower_profile_id, following_profile_id 
      FROM follows 
@@ -466,7 +466,7 @@ export async function seedPostLikes(allPostIds: number[], profileIds: number[]) 
       const post = postMap.get(postId);
       if (!post) continue;
       
-      // Business logic: can only like if profile is public OR you follow them
+      // Logica: puoi mettere mi piace solo se il profilo è pubblico o lo segui
       const canLike = !post.is_private || userFollows.has(post.profile_id) || post.profile_id === profileId;
       if (!canLike) {
         skippedPrivate++;
@@ -481,39 +481,39 @@ export async function seedPostLikes(allPostIds: number[], profileIds: number[]) 
         );
         totalLikes++;
 
-        // Update likes_count on post
+        // Aggiorna il likes_count del post
         await execute(
           `UPDATE posts SET likes_count = likes_count + 1 WHERE id = ?`,
           [postId]
         );
       } catch (e) {
-        // Ignore unique constraint errors
+        // Ignora gli errori di vincolo unico
       }
     }
 
     if ((profileIds.indexOf(profileId) + 1) % 10 === 0) {
-      console.log(`   ✓ Generated likes for ${profileIds.indexOf(profileId) + 1}/${profileIds.length} profiles...`);
+      console.log(`   ✓ Generati mi piace per ${profileIds.indexOf(profileId) + 1}/${profileIds.length} profili...`);
     }
   }
 
-  console.log(`   ✓ Created ${totalLikes} post likes (skipped ${skippedPrivate} private posts)!`);
+  console.log(`   ✓ Creati ${totalLikes} mi piace sui post (saltati ${skippedPrivate} post privati)!`);
 }
 
 // ============================================================================
-// SAVED POSTS
+// POST SALVATI
 // ============================================================================
 
 export async function seedSavedPosts(allPostIds: number[], profileIds: number[]) {
-  console.log('\n🌱 Seeding saved posts...');
+  console.log('\n🌱 Popolamento dei post salvati...');
 
-  const SAVE_PROBABILITY = 0.015; // 1.5% chance of saving a post (~10 per user)
+  const SAVE_PROBABILITY = 0.015; // 1,5% di probabilità di salvare un post (~10 per utente)
   let totalSaved = 0;
   let skippedPrivate = 0;
 
-  // Load business logic data
+  // Recupera i dati necessari alla logica
   const { queryAll } = await import('@/lib/db');
   
-  // Get all posts with their profile info
+  // Recupera tutti i post con le info del profilo
   const posts = await queryAll<{ id: number; profile_id: number; is_private: number }>(
     `SELECT p.id, p.profile_id, pr.is_private 
      FROM posts p 
@@ -521,7 +521,7 @@ export async function seedSavedPosts(allPostIds: number[], profileIds: number[])
   );
   const postMap = new Map(posts.map(p => [p.id, p]));
   
-  // Get all accepted follows
+  // Recupera tutti i follow accettati
   const follows = await queryAll<{ follower_profile_id: number; following_profile_id: number }>(
     `SELECT follower_profile_id, following_profile_id 
      FROM follows 
@@ -544,7 +544,7 @@ export async function seedSavedPosts(allPostIds: number[], profileIds: number[])
       const post = postMap.get(postId);
       if (!post) continue;
       
-      // Business logic: can only save if profile is public OR you follow them
+      // Logica: puoi salvare solo se il profilo è pubblico o lo segui
       const canSave = !post.is_private || userFollows.has(post.profile_id) || post.profile_id === profileId;
       if (!canSave) {
         skippedPrivate++;
@@ -559,32 +559,32 @@ export async function seedSavedPosts(allPostIds: number[], profileIds: number[])
         );
         totalSaved++;
       } catch (e) {
-        // Ignore unique constraint errors
+        // Ignora gli errori di vincolo unico
       }
     }
 
     if ((profileIds.indexOf(profileId) + 1) % 10 === 0) {
-      console.log(`   ✓ Generated saved posts for ${profileIds.indexOf(profileId) + 1}/${profileIds.length} profiles...`);
+      console.log(`   ✓ Generati post salvati per ${profileIds.indexOf(profileId) + 1}/${profileIds.length} profili...`);
     }
   }
 
-  console.log(`   ✓ Created ${totalSaved} saved posts (skipped ${skippedPrivate} private posts)!`);
+  console.log(`   ✓ Creati ${totalSaved} post salvati (saltati ${skippedPrivate} post privati)!`);
 }
 
 // ============================================================================
-// POST COMMENTS
+// COMMENTI AI POST
 // ============================================================================
 
 export async function seedPostComments(allPostIds: number[], profileIds: number[]) {
-  console.log('\n🌱 Seeding post comments...');
+  console.log('\n🌱 Popolamento dei commenti ai post...');
 
   let totalComments = 0;
   let skippedPrivate = 0;
 
-  // Load business logic data
+  // Recupera i dati necessari alla logica
   const { queryAll } = await import('@/lib/db');
   
-  // Get all posts with their profile info
+  // Recupera tutti i post con le info del profilo
   const posts = await queryAll<{ id: number; profile_id: number; is_private: number }>(
     `SELECT p.id, p.profile_id, pr.is_private 
      FROM posts p 
@@ -592,7 +592,7 @@ export async function seedPostComments(allPostIds: number[], profileIds: number[
   );
   const postMap = new Map(posts.map(p => [p.id, p]));
   
-  // Get all accepted follows
+  // Recupera tutti i follow accettati
   const follows = await queryAll<{ follower_profile_id: number; following_profile_id: number }>(
     `SELECT follower_profile_id, following_profile_id 
      FROM follows 
@@ -610,12 +610,12 @@ export async function seedPostComments(allPostIds: number[], profileIds: number[
     const post = postMap.get(postId);
     if (!post) continue;
     
-    const numComments = Math.floor(Math.random() * 8); // 0-7 comments per post
+    const numComments = Math.floor(Math.random() * 8); // 0-7 commenti per post
 
     for (let i = 0; i < numComments; i++) {
       const profileId = profileIds[Math.floor(Math.random() * profileIds.length)];
       
-      // Business logic: can only comment if profile is public OR you follow them
+      // Logica: puoi commentare solo se il profilo è pubblico o lo segui
       const userFollows = followMap.get(profileId) || new Set();
       const canComment = !post.is_private || userFollows.has(post.profile_id) || post.profile_id === profileId;
       if (!canComment) {
@@ -633,31 +633,31 @@ export async function seedPostComments(allPostIds: number[], profileIds: number[
         );
         totalComments++;
 
-        // Update comments_count on post
+        // Aggiorna il comments_count del post
         await execute(
           `UPDATE posts SET comments_count = comments_count + 1 WHERE id = ?`,
           [postId]
         );
       } catch (e) {
-        // Ignore errors
+        // Ignora gli errori
       }
     }
   }
 
-  console.log(`   ✓ Created ${totalComments} post comments (skipped ${skippedPrivate} attempts on private posts)!`);
+  console.log(`   ✓ Creati ${totalComments} commenti ai post (saltati ${skippedPrivate} tentativi su profili privati)!`);
 }
 
 // ============================================================================
-// COMMENT LIKES
+// MI PIACE AI COMMENTI
 // ============================================================================
 
 export async function seedCommentLikes(profileIds: number[]) {
-  console.log('\n🌱 Seeding comment likes...');
+  console.log('\n🌱 Popolamento dei mi piace ai commenti...');
 
-  const LIKE_COMMENT_PROBABILITY = 0.08; // 8% chance of liking a comment (~15 per user)
+  const LIKE_COMMENT_PROBABILITY = 0.08; // 8% di probabilità di mettere mi piace (~15 per utente)
   let totalCommentLikes = 0;
 
-  // Get all comment IDs first - must use queryAll
+  // Recupera tutti gli ID dei commenti usando queryAll
   const { queryAll } = await import('@/lib/db');
   const comments = await queryAll<{ id: number }>('SELECT id FROM comments');
   
@@ -673,28 +673,28 @@ export async function seedCommentLikes(profileIds: number[]) {
         );
         totalCommentLikes++;
 
-        // Update likes_count on comment
+        // Aggiorna il likes_count del commento
         await execute(
           `UPDATE comments SET likes_count = likes_count + 1 WHERE id = ?`,
           [comment.id]
         );
       } catch (e) {
-        // Ignore unique constraint errors
+        // Ignora gli errori di vincolo unico
       }
     }
   }
 
-  console.log(`   ✓ Created ${totalCommentLikes} comment likes successfully!`);
+  console.log(`   ✓ Creati ${totalCommentLikes} mi piace sui commenti con successo!`);
 }
 
 // ============================================================================
-// DIRECT MESSAGES & CHATS
+// DIRECT E CHAT
 // ============================================================================
 
 export async function seedDirectMessages(profileIds: number[]) {
-  console.log('\n🌱 Seeding direct messages and chats...');
+  console.log('\n🌱 Popolamento dei direct e delle chat...');
 
-  const CHAT_PROBABILITY = 0.20; // 20% chance of having a chat with another user
+  const CHAT_PROBABILITY = 0.20; // 20% di probabilità di avviare una chat con un altro utente
   let totalChats = 0;
   let totalMessages = 0;
 
@@ -705,7 +705,7 @@ export async function seedDirectMessages(profileIds: number[]) {
       const profile1Id = profileIds[i];
       const profile2Id = profileIds[j];
 
-      // Create chat
+      // Crea la chat
       const chatResult = await execute(
         `INSERT INTO chats (created_at) VALUES (datetime('now'))`,
         []
@@ -713,7 +713,7 @@ export async function seedDirectMessages(profileIds: number[]) {
       const chatId = chatResult.lastID;
       totalChats++;
 
-      // Add both participants
+      // Aggiunge entrambi i partecipanti
       await execute(
         `INSERT INTO chat_participants (chat_id, profile_id) VALUES (?, ?)`,
         [chatId, profile1Id]
@@ -723,7 +723,7 @@ export async function seedDirectMessages(profileIds: number[]) {
         [chatId, profile2Id]
       );
 
-      // Add 3-10 messages to the chat
+      // Inserisce da 3 a 10 messaggi nella chat
       const numMessages = Math.floor(Math.random() * 8) + 3;
       for (let k = 0; k < numMessages; k++) {
         const senderId = Math.random() < 0.5 ? profile1Id : profile2Id;
@@ -739,29 +739,29 @@ export async function seedDirectMessages(profileIds: number[]) {
     }
 
     if ((i + 1) % 10 === 0) {
-      console.log(`   ✓ Generated chats for ${i + 1}/${profileIds.length} profiles...`);
+      console.log(`   ✓ Conversazioni generate per ${i + 1}/${profileIds.length} profili...`);
     }
   }
 
-  console.log(`   ✓ Created ${totalChats} chats with ${totalMessages} messages successfully!`);
+  console.log(`   ✓ Create ${totalChats} chat con ${totalMessages} messaggi complessivi!`);
 }
 
 // ============================================================================
-// STORY VIEWS
+// VISUALIZZAZIONI STORIE
 // ============================================================================
 
 export async function seedStoryViews(profileIds: number[]) {
-  console.log('\n🌱 Seeding story views...');
+  console.log('\n🌱 Popolamento delle visualizzazioni delle storie...');
 
-  const VIEW_PROBABILITY = 0.40; // 40% chance of viewing a story
+  const VIEW_PROBABILITY = 0.40; // 40% di probabilità di visualizzare una storia
   let totalViews = 0;
   let skippedNotFollowing = 0;
 
-  // Get all story IDs
+  // Recupera tutte le storie
   const { queryAll } = await import('@/lib/db');
   const stories = await queryAll<{ id: number; profile_id: number }>('SELECT id, profile_id FROM stories');
   
-  // Get all accepted follows - stories are only visible to followers
+  // Recupera tutti i follow accettati: le storie sono disponibili solo ai follower
   const follows = await queryAll<{ follower_profile_id: number; following_profile_id: number }>(
     `SELECT follower_profile_id, following_profile_id 
      FROM follows 
@@ -777,11 +777,11 @@ export async function seedStoryViews(profileIds: number[]) {
 
   for (const story of stories) {
     for (const profileId of profileIds) {
-      // Can view own stories
+      // Un profilo può sempre vedere le proprie storie
       if (story.profile_id === profileId) {
-        if (Math.random() < 0.3) continue; // 30% chance to skip own story
+        if (Math.random() < 0.3) continue; // 30% di probabilità di non guardare la propria storia
       } else {
-        // Business logic: can only view stories from profiles you follow
+        // Logica: puoi vedere storie solo dai profili che segui
         const userFollows = followMap.get(profileId) || new Set();
         if (!userFollows.has(story.profile_id)) {
           skippedNotFollowing++;
@@ -799,17 +799,17 @@ export async function seedStoryViews(profileIds: number[]) {
         );
         totalViews++;
         
-        // Update views_count on story
+        // Aggiorna il views_count della storia
         await execute(
           `UPDATE stories SET views_count = views_count + 1 WHERE id = ?`,
           [story.id]
         );
       } catch (e) {
-        // Ignore unique constraint errors
+        // Ignora gli errori di vincolo unico
       }
     }
   }
 
-  console.log(`   ✓ Created ${totalViews} story views (skipped ${skippedNotFollowing} from non-followed profiles)!`);
+  console.log(`   ✓ Registrate ${totalViews} visualizzazioni storie (saltati ${skippedNotFollowing} profili non seguiti)!`);
 }
 

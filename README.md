@@ -34,35 +34,41 @@ Il progetto ha lo scopo di applicare concetti fondamentali dello sviluppo Full-S
 
 - **Autenticazione JWT**
   - Registrazione con email/username/password
-  - Login con email/phone/username
+  - Login con email/telefono/username
   - Logout con invalidazione cookie
   - Password hashate con bcrypt (10 rounds)
 
 - **Sistema Profili**
-  - Profili pubblici e privati
-  - Badge verifica (verified)
-  - Bio con parsing @mentions e #hashtags
-  - Follow/Unfollow con stati: pending, accepted, rejected
-  - Contatori: followers, following, posts
+  - Profili pubblici/privati e badge verifica
+  - Bio con parsing @mention e #hashtag
+  - Follow con stati pending/accepted/rejected
+  - Contatori sincronizzati (followers, following, posts)
 
-- **Feed API**
-  - GET /api/feed - Posts da utenti seguiti + Explore (pubblici)
-  - POST /api/feed/like - Toggle like/unlike
-  - POST /api/feed/save - Toggle save/unsave
-  - GET/POST /api/feed/comments - Gestione commenti
+- **Feed & Post**
+  - API REST complete per like, commenti, salvataggi
+  - UI pixel-perfect con carousel media e skeleton
+  - Ricerca e explore integrati nel layout principale
 
-- **Componenti UI**
-  - Post component con like animato, save, commenti
-  - Colori esatti Instagram (#0095F6, #ED4956, #262626, etc.)
-  - Max-width 470px per post (identico Instagram web)
-  - Hover effects con opacity-50
+- **Stories**
+  - Viewer fullscreen con tracking visualizzazioni
+  - API pubbliche e private (`/api/stories`, `/api/stories/[id]/public`)
+  - Scadenza personalizzata per demo (99 anni) con seed massivo
+
+- **Messaggistica Direct**
+  - Chat 1:1, stato lettura e lista conversazioni
+  - Seed con cronologia realistica e notifiche
+  - API modulari: creazione chat, invio messaggi, listing
+
+- **Notifiche**
+  - Eventi follow/like/comment/story view
+  - Endpoint dedicati (`/api/notifications`) e UI badge
 
 ### 🚧 In Sviluppo
 
-- Stories
-- Messaggistica Direct (Socket.io)
-- Notifiche real-time
-- Upload media
+- Integrazione realtime (Socket.io/webhooks)
+- Upload media drag&drop con filtri
+- Reels a scorrimento verticale completo
+- Strumenti moderazione (report, blocco account)
 
 ---
 
@@ -101,14 +107,15 @@ Apri [http://localhost:3000](http://localhost:3000)
 
 ### Account di Test
 
-Tutti gli account usano password: `password123`
+Il seeding genera **80 profili casuali** (95% con foto) con password predefinita `password123`.
 
-| Username      | Email                | Tipo                | Posts |
-| :------------ | :------------------- | :------------------ | :---- |
-| johndoe       | john@example.com     | Pubblico, Verified  | 6     |
-| janedoe       | jane@example.com     | Pubblico            | 4     |
-| mikeprivate   | mike@example.com     | Privato             | 0     |
-| sarahpublic   | sarah@example.com    | Pubblico, Verified  | 4     |
+Per ottenere un elenco aggiornato dopo `pnpm db:seed` puoi interrogare il database SQLite:
+
+```bash
+pnpm exec sqlite3 data/instagram.db "SELECT username, email, is_private FROM profiles LIMIT 10;"
+```
+
+Consulta [src/db/seeds/data.ts](src/db/seeds/data.ts) per personalizzare nomi, bio e statistiche.
 
 ---
 

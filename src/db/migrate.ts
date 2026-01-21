@@ -1,16 +1,16 @@
 /**
- * @fileoverview Database migration and reset script.
+ * @fileoverview Script di migrazione e reset del database
  *
- * This script initializes the SQLite database by executing the schema.sql file.
- * It can also reset the database by deleting the existing file first.
+ * Inizializza il database SQLite eseguendo il file schema.sql.
+ * Può anche eseguire un reset eliminando il file esistente prima di ricrearlo.
  *
  * @module db/migrate
  *
  * @example
- * // Run migrations (create tables if not exist)
+ * // Esegue le migrazioni (crea le tabelle se mancanti)
  * pnpm db:migrate
  *
- * // Reset and recreate database
+ * // Reset completo e ricreazione del database
  * pnpm db:reset
  */
 
@@ -20,43 +20,43 @@ import { join } from "path";
 import { executeScript, queryAll } from "@/lib/db";
 
 // ============================================================================
-// CONFIGURATION
+// CONFIGURAZIONE
 // ============================================================================
 
-/** Base directory for data storage */
+/** Directory base per l'archiviazione dei dati */
 const DATA_DIR = join(process.cwd(), "data");
 
-/** Path to the SQLite database file */
+/** Percorso del file di database SQLite */
 const DB_PATH = join(DATA_DIR, "instagram.db");
 
-/** Path to the schema SQL file */
+/** Percorso del file SQL che contiene lo schema */
 const SCHEMA_PATH = join(process.cwd(), "src", "db", "schema.sql");
 
 // ============================================================================
-// SETUP
+// PREPARAZIONE
 // ============================================================================
 
-// Ensure data directory exists
+// Crea la directory dei dati se non esiste già
 if (!existsSync(DATA_DIR)) {
   mkdirSync(DATA_DIR, { recursive: true });
 }
 
 // ============================================================================
-// FUNCTIONS
+// FUNZIONI PRINCIPALI
 // ============================================================================
 
 /**
- * Deletes the existing database file and associated WAL files.
- * If files are locked, clears all data from tables instead.
+ * Elimina il file di database esistente e i file WAL associati.
+ * Se i file risultano bloccati, in alternativa svuota tutte le tabelle.
  *
- * SQLite with WAL mode creates additional files:
+ * SQLite in modalità WAL genera file aggiuntivi:
  * - instagram.db-wal (Write-Ahead Log)
  * - instagram.db-shm (Shared Memory)
  *
- * All three must be deleted for a clean reset.
+ * Tutti e tre vanno eliminati per ottenere un reset pulito.
  */
 async function resetDatabase(): Promise<void> {
-  console.log("🗑️  Resetting database...\n");
+  console.log("🗑️  Reset del database...\n");
 
   const filesToDelete = [DB_PATH, `${DB_PATH}-wal`, `${DB_PATH}-shm`];
   let hasErrors = false;
@@ -65,91 +65,91 @@ async function resetDatabase(): Promise<void> {
     try {
       await access(file);
       await unlink(file);
-      console.log(`   ✅ Deleted: ${file}`);
+      console.log(`   ✅ Eliminato: ${file}`);
     } catch (error: any) {
       if (error.code === 'ENOENT') {
-        // File doesn't exist, skip
+        // Il file non esiste, si prosegue
         continue;
       }
       
-      // File is locked or other error
+      // File bloccato o altro errore
       hasErrors = true;
     }
   }
 
   if (hasErrors) {
-    console.log('\n⚠️  Database files are locked (dev server running?)');
-    console.log('   Using alternative: Clearing all data from tables...\n');
+    console.log('\n⚠️  File del database bloccati (server dev in esecuzione?)');
+    console.log('   Fallback: svuoto tutte le tabelle...\n');
     
     try {
-      // Import db here to avoid circular dependency
+      // Import dinamico per evitare dipendenze circolari
       const { execute, queryAll } = await import('@/lib/db');
       
-      // Disable foreign keys temporarily
+      // Disabilita temporaneamente le foreign key
       await execute('PRAGMA foreign_keys = OFF');
       
-      // Get all tables
+      // Recupera tutte le tabelle utente
       const tables = await queryAll<{ name: string }>(
         "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
       );
       
-      // Delete all data from each table
+      // Elimina tutti i dati da ogni tabella
       for (const table of tables) {
         await execute(`DELETE FROM ${table.name}`);
-        console.log(`   ✅ Cleared: ${table.name}`);
+        console.log(`   ✅ Svuotata: ${table.name}`);
       }
       
-      // Re-enable foreign keys
+      // Riattiva le foreign key
       await execute('PRAGMA foreign_keys = ON');
       
-      // Reset sequences
+      // Reset delle sequenze autoincrement
       await execute('DELETE FROM sqlite_sequence');
       
-      console.log('\n✅ All data cleared successfully!\n');
+      console.log('\n✅ Dati eliminati con successo!\n');
     } catch (error) {
-      console.error('\n❌ Failed to clear data:', error);
+      console.error('\n❌ Impossibile svuotare i dati:', error);
       process.exit(1);
     }
     
     return;
   }
 
-  console.log("\n✅ Database reset complete!\n");
+  console.log("\n✅ Reset del database completato!\n");
 }
 
 /**
- * Creates the database and executes the schema SQL.
+ * Crea il database ed esegue lo schema SQL.
  *
- * Configures the database with:
- * - WAL mode for better concurrent performance
- * - Foreign keys enabled for referential integrity
+ * Configura il database con:
+ * - modalità WAL per prestazioni migliori in concorrenza
+ * - foreign key abilitate per l'integrità referenziale
  */
 async function createSchema(): Promise<void> {
-  console.log("🚀 Creating database schema...\n");
+  console.log("🚀 Creazione dello schema del database...\n");
 
-  // Verify schema file exists
+  // Verifica che il file dello schema esista
   if (!existsSync(SCHEMA_PATH)) {
-    console.error(`❌ Schema file not found: ${SCHEMA_PATH}`);
+    console.error(`❌ File schema non trovato: ${SCHEMA_PATH}`);
     process.exit(1);
   }
 
   try {
-    // Read and execute schema
+    // Legge ed esegue lo schema
     const sql = await readFile(SCHEMA_PATH, "utf-8");
     await executeScript(sql);
 
-    // Get list of created tables
+    // Elenco delle tabelle create
     const tables = await queryAll<{ name: string }>(
       "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
     );
 
-    console.log(`✅ Created ${tables.length} tables:\n`);
+    console.log(`✅ Create ${tables.length} tabelle:\n`);
     for (const table of tables) {
       console.log(`   • ${table.name}`);
     }
   } catch (error) {
     console.error(
-      "❌ Schema creation failed:",
+      "❌ Creazione dello schema fallita:",
       error instanceof Error ? error.message : error
     );
     process.exit(1);
@@ -157,61 +157,61 @@ async function createSchema(): Promise<void> {
 }
 
 /**
- * Displays usage information for the script.
+ * Mostra le istruzioni d'uso dello script.
  */
 function showHelp(): void {
   console.log(`
-📦 Instagram Clone - Database Setup
+📦 Instagram Clone - Configurazione Database
 
-Usage:
-  pnpm db:migrate          Create tables (if not exist)
-  pnpm db:reset            Delete and recreate database
+Utilizzo:
+  pnpm db:migrate          Crea le tabelle se mancanti
+  pnpm db:reset            Elimina e ricrea il database
 
-Options:
-  --reset, -r              Reset database before migration
-  --help, -h               Show this help message
+Opzioni:
+  --reset, -r              Esegue il reset prima della migrazione
+  --help, -h               Mostra questo messaggio
 
-Files:
+Percorsi:
   Database: ${DB_PATH}
   Schema:   ${SCHEMA_PATH}
 `);
 }
 
 // ============================================================================
-// MAIN
+// AVVIO SCRIPT
 // ============================================================================
 
 /**
- * Main entry point for the migration script.
+ * Punto di ingresso principale dello script di migrazione.
  *
- * Parses command line arguments and executes the appropriate operations.
+ * Analizza gli argomenti CLI ed esegue le operazioni richieste.
  */
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
 
-  // Show help
+  // Mostra la guida
   if (args.includes("--help") || args.includes("-h")) {
     showHelp();
     return;
   }
 
-  // Check for reset flag
+  // Verifica se è richiesto il reset
   const shouldReset = args.includes("--reset") || args.includes("-r");
 
-  console.log("\n📦 Instagram Clone - Database Setup\n");
+  console.log("\n📦 Instagram Clone - Configurazione Database\n");
   console.log("─".repeat(50) + "\n");
 
-  // Reset if requested
+  // Esegue il reset se richiesto
   if (shouldReset) {
     await resetDatabase();
   }
 
-  // Create schema
+  // Crea lo schema
   await createSchema();
 
   console.log("\n" + "─".repeat(50));
-  console.log("\n🎉 Database setup complete!");
-  console.log(`📁 Location: ${DB_PATH}\n`);
+  console.log("\n🎉 Configurazione del database completata!");
+  console.log(`📁 Percorso: ${DB_PATH}\n`);
 }
 
 // Run the script
