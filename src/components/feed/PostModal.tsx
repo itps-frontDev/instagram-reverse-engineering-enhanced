@@ -83,6 +83,7 @@ export default function PostModal({
   const [showStoryViewer, setShowStoryViewer] = useState(false);
   const [storyViewerUsername, setStoryViewerUsername] = useState<string | null>(null);
   const [storyViewerProfileId, setStoryViewerProfileId] = useState<number | null>(null);
+  const [viewedAllStoriesProfileIds, setViewedAllStoriesProfileIds] = useState<Set<number>>(new Set());
   const [hoveredUsername, setHoveredUsername] = useState<string | null>(null);
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
   const [showPostOptionsModal, setShowPostOptionsModal] = useState(false);
@@ -92,6 +93,30 @@ export default function PostModal({
   const [showDeleteCommentModal, setShowDeleteCommentModal] = useState(false);
   const [isDeletingComment, setIsDeletingComment] = useState(false);
   const [showEditPostModal, setShowEditPostModal] = useState(false);
+
+  // Inizializza lo stato con il profilo del post che ha già tutte le storie viste
+  useEffect(() => {
+    const initialViewedProfiles = new Set<number>();
+    if (post.profile_has_viewed_story) {
+      initialViewedProfiles.add(post.profile_id);
+    }
+    setViewedAllStoriesProfileIds(initialViewedProfiles);
+  }, [post.profile_id, post.profile_has_viewed_story]);
+
+  // Aggiungi i profili dei commenti che hanno già tutte le storie viste quando i commenti cambiano
+  useEffect(() => {
+    if (comments.length > 0) {
+      setViewedAllStoriesProfileIds(prev => {
+        const updated = new Set(prev);
+        comments.forEach(comment => {
+          if (comment.profile_has_viewed_story) {
+            updated.add(comment.profile_id);
+          }
+        });
+        return updated;
+      });
+    }
+  }, [comments.length]); // Usa solo la lunghezza per evitare problemi con l'array
 
   useEffect(() => {
     if (isOpen) {
@@ -578,10 +603,11 @@ export default function PostModal({
                 src={post.profile_image_url}
                 alt={post.profile_username || 'Profile picture'}
                 size={32}
-                hasStory={post.profile_has_active_story && (!post.profile_is_private || isFollowing)}
+                hasStory={post.profile_has_active_story && !viewedAllStoriesProfileIds.has(post.profile_id) && (!post.profile_is_private || isFollowing)}
+                storyViewed={viewedAllStoriesProfileIds.has(post.profile_id)}
                 username={post.profile_username}
                 onStoryClick={() => {
-                  if (post.profile_has_active_story && (!post.profile_is_private || isFollowing)) {
+                  if (post.profile_has_active_story && !viewedAllStoriesProfileIds.has(post.profile_id) && (!post.profile_is_private || isFollowing)) {
                     setStoryViewerUsername(post.profile_username);
                     setStoryViewerProfileId(post.profile_id);
                     setShowStoryViewer(true);
@@ -750,10 +776,11 @@ export default function PostModal({
                           src={comment.profile_image_url}
                           alt={comment.profile_username || 'Profile picture'}
                           size={32}
-                          hasStory={comment.profile_has_active_story && (!comment.profile_is_private || isFollowing)}
+                          hasStory={comment.profile_has_active_story && !viewedAllStoriesProfileIds.has(comment.profile_id) && (!comment.profile_is_private || isFollowing)}
+                          storyViewed={viewedAllStoriesProfileIds.has(comment.profile_id)}
                           username={comment.profile_username}
                           onStoryClick={() => {
-                            if (comment.profile_has_active_story && (!comment.profile_is_private || isFollowing)) {
+                            if (comment.profile_has_active_story && !viewedAllStoriesProfileIds.has(comment.profile_id) && (!comment.profile_is_private || isFollowing)) {
                               setStoryViewerUsername(comment.profile_username);
                               setStoryViewerProfileId(comment.profile_id);
                               setShowStoryViewer(true);
@@ -853,10 +880,11 @@ export default function PostModal({
                           src={reply.profile_image_url}
                           alt={reply.profile_username || 'Profile picture'}
                           size={28}
-                          hasStory={reply.profile_has_active_story && (!reply.profile_is_private || isFollowing)}
+                          hasStory={reply.profile_has_active_story && !viewedAllStoriesProfileIds.has(reply.profile_id) && (!reply.profile_is_private || isFollowing)}
+                          storyViewed={viewedAllStoriesProfileIds.has(reply.profile_id)}
                           username={reply.profile_username}
                           onStoryClick={() => {
-                            if (reply.profile_has_active_story && (!reply.profile_is_private || isFollowing)) {
+                            if (reply.profile_has_active_story && !viewedAllStoriesProfileIds.has(reply.profile_id) && (!reply.profile_is_private || isFollowing)) {
                               setStoryViewerUsername(reply.profile_username);
                               setStoryViewerProfileId(reply.profile_id);
                               setShowStoryViewer(true);
@@ -1147,6 +1175,9 @@ export default function PostModal({
             setShowStoryViewer(false);
             setStoryViewerUsername(null);
             setStoryViewerProfileId(null);
+          }}
+          onAllStoriesViewed={(profileId) => {
+            setViewedAllStoriesProfileIds(prev => new Set(prev).add(profileId));
           }}
         />
       )}

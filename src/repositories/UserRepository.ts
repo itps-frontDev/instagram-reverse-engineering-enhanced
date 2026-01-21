@@ -105,7 +105,7 @@ export const userRepository = {
       `SELECT id, email, phone_number
        FROM users
        WHERE email = ? AND deleted_at IS NULL`,
-      [email]
+      [email.trim().toLowerCase()]
     );
     return user || null;
   },
@@ -121,7 +121,7 @@ export const userRepository = {
       `SELECT id, email, phone_number
        FROM users
        WHERE phone_number = ? AND deleted_at IS NULL`,
-      [phone]
+      [phone.trim().toLowerCase()]
     );
     return user || null;
   },
@@ -138,6 +138,7 @@ export const userRepository = {
    * @returns Utente con profilo e password_hash, o null
    */
   async findByCredentials(identifier: string): Promise<UserWithProfile & { password_hash: string } | null> {
+    const normalizedIdentifier = identifier.trim().toLowerCase();
     const user = await queryOne<UserWithProfile & { password_hash: string }>(
       `SELECT
         u.id,
@@ -151,7 +152,7 @@ export const userRepository = {
       WHERE (u.email = ? OR u.phone_number = ? OR p.username = ?)
         AND u.deleted_at IS NULL
       LIMIT 1`,
-      [identifier, identifier, identifier]
+      [normalizedIdentifier, normalizedIdentifier, normalizedIdentifier]
     );
     return user || null;
   },
@@ -188,7 +189,12 @@ export const userRepository = {
     const result = await execute(
       `INSERT INTO users (email, phone_number, password_hash, date_of_birth)
        VALUES (?, ?, ?, ?)`,
-      [data.email || null, data.phone_number || null, data.password_hash, data.date_of_birth]
+      [
+        data.email ? data.email.trim().toLowerCase() : null,
+        data.phone_number ? data.phone_number.trim().toLowerCase() : null,
+        data.password_hash,
+        data.date_of_birth
+      ]
     );
     return result.lastID;
   },
@@ -213,11 +219,11 @@ export const userRepository = {
 
     if (data.email !== undefined) {
       fields.push('email = ?');
-      values.push(data.email);
+      values.push(data.email ? data.email.trim().toLowerCase() : null);
     }
     if (data.phone_number !== undefined) {
       fields.push('phone_number = ?');
-      values.push(data.phone_number);
+      values.push(data.phone_number ? data.phone_number.trim().toLowerCase() : null);
     }
     if (data.password_hash !== undefined) {
       fields.push('password_hash = ?');

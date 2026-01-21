@@ -40,12 +40,20 @@ import { queryOne, queryAll, execute } from '@/lib/db';
  * Ogni tipo ha una logica di rendering diversa nel frontend.
  */
 export type NotificationType = 
-  | 'like'           // Like su post
+  | 'like_post'      // Like su post
+  | 'like_comment'   // Like su commento
+  | 'like_story'     // Like su storia
   | 'comment'        // Commento su post
+  | 'comment_reply'  // Risposta a commento
   | 'follow'         // Nuovo follower
   | 'follow_request' // Richiesta di follow (profilo privato)
-  | 'mention'        // Menzione in commento o caption
-  | 'tag';           // Tag in una foto
+  | 'follow_accepted'// Richiesta di follow accettata
+  | 'mention_post'   // Menzione in caption post
+  | 'mention_comment'// Menzione in commento
+  | 'mention_story'  // Menzione in storia
+  | 'tag'            // Tag in una foto
+  | 'message'        // Nuovo messaggio
+  | 'story_view';    // Visualizzazione storia
 
 /**
  * Notifica base dal database.
@@ -89,10 +97,10 @@ export interface NotificationWithActor extends Notification {
  */
 export interface CreateNotificationData {
   recipient_profile_id: number;
-  actor_profile_id: number;
+  sender_profile_id: number;
   type: NotificationType;
-  post_id?: number;
-  comment_id?: number;
+  reference_type?: 'post' | 'comment' | 'story' | 'profile';
+  reference_id?: number;
 }
 
 // ============================================================================
@@ -113,38 +121,41 @@ export const notificationRepository = {
    */
   async create(data: CreateNotificationData): Promise<number | null> {
     // Evita auto-notifiche
-    if (data.recipient_profile_id === data.actor_profile_id) {
+    if (data.recipient_profile_id === data.sender_profile_id) {
       return null;
     }
 
-    // Evita notifiche duplicate recenti (stesso tipo, stesso attore, stesso post)
+    // Evita notifiche duplicate recenti (stesso tipo, stesso attore, stesso riferimento)
     const recent = await queryOne(
       `SELECT 1 FROM notifications
        WHERE recipient_profile_id = ?
-         AND actor_profile_id = ?
+         AND sender_profile_id = ?
          AND type = ?
-         AND (post_id = ? OR (post_id IS NULL AND ? IS NULL))
+         AND (reference_id = ? OR (reference_id IS NULL AND ? IS NULL))
+         AND (reference_type = ? OR (reference_type IS NULL AND ? IS NULL))
          AND created_at > datetime('now', '-1 hour')`,
       [
         data.recipient_profile_id,
-        data.actor_profile_id,
+        data.sender_profile_id,
         data.type,
-        data.post_id || null,
-        data.post_id || null,
+        data.reference_id || null,
+        data.reference_id || null,
+        data.reference_type || null,
+        data.reference_type || null,
       ]
     );
 
     if (recent) return null;
 
     const result = await execute(
-      `INSERT INTO notifications (recipient_profile_id, actor_profile_id, type, post_id, comment_id)
+      `INSERT INTO notifications (recipient_profile_id, sender_profile_id, type, reference_type, reference_id)
        VALUES (?, ?, ?, ?, ?)`,
       [
         data.recipient_profile_id,
-        data.actor_profile_id,
+        data.sender_profile_id,
         data.type,
-        data.post_id || null,
-        data.comment_id || null,
+        data.reference_type || null,
+        data.reference_id || null,
       ]
     );
 
@@ -169,21 +180,28 @@ export const notificationRepository = {
       `SELECT
         n.id,
         n.recipient_profile_id,
-        n.actor_profile_id,
+        n.sender_profile_id as actor_profile_id,
         n.type,
-        n.post_id,
-        n.comment_id,
+        n.reference_type,
+        n.reference_id,
+        CASE 
+          WHEN n.reference_type = 'post' THEN n.reference_id
+          ELSE NULL
+        END as post_id,
+        CASE 
+          WHEN n.reference_type = 'comment' THEN n.reference_id
+          ELSE NULL
+        END as comment_id,
         n.is_read,
         n.created_at,
         p.username AS actor_username,
         p.full_name AS actor_full_name,
         p.profile_image_url AS actor_profile_image_url,
         p.is_verified AS actor_is_verified,
-        (SELECT media_url FROM post_media WHERE post_id = n.post_id ORDER BY position LIMIT 1) AS post_media_url
+        (SELECT media_url FROM post_media pm INNER JOIN posts po ON pm.post_id = po.id WHERE po.id = CASE WHEN n.reference_type = 'post' THEN n.reference_id ELSE NULL END ORDER BY pm.position LIMIT 1) AS post_media_url
        FROM notifications n
-       INNER JOIN profiles p ON n.actor_profile_id = p.id
+       LEFT JOIN profiles p ON n.sender_profile_id = p.id
        WHERE n.recipient_profile_id = ?
-         AND p.deleted_at IS NULL
        ORDER BY n.created_at DESC
        LIMIT ? OFFSET ?`,
       [profileId, limit, offset]
@@ -334,7 +352,7 @@ export const notificationRepository = {
   ): Promise<boolean> {
     const result = await execute(
       `DELETE FROM notifications
-       WHERE actor_profile_id = ?
+       WHERE sender_profile_id = ?
          AND recipient_profile_id = ?
          AND type IN ('follow', 'follow_request')`,
       [actorProfileId, recipientProfileId]
@@ -352,14 +370,17 @@ export const notificationRepository = {
    */
   async deleteLikeNotification(
     actorProfileId: number,
-    postId: number
+    referenceId: number,
+    referenceType: 'post' | 'comment' = 'post'
   ): Promise<boolean> {
+    const likeType = referenceType === 'post' ? 'like_post' : 'like_comment';
     const result = await execute(
       `DELETE FROM notifications
-       WHERE actor_profile_id = ?
-         AND post_id = ?
-         AND type = 'like'`,
-      [actorProfileId, postId]
+       WHERE sender_profile_id = ?
+         AND reference_id = ?
+         AND reference_type = ?
+         AND type = ?`,
+      [actorProfileId, referenceId, referenceType, likeType]
     );
     return result.changes > 0;
   },
@@ -379,9 +400,10 @@ export const notificationRepository = {
   ): Promise<number | null> {
     return this.create({
       recipient_profile_id: postOwnerId,
-      actor_profile_id: likerId,
-      type: 'like',
-      post_id: postId,
+      sender_profile_id: likerId,
+      type: 'like_post',
+      reference_type: 'post',
+      reference_id: postId,
     });
   },
 
@@ -397,10 +419,10 @@ export const notificationRepository = {
   ): Promise<number | null> {
     return this.create({
       recipient_profile_id: postOwnerId,
-      actor_profile_id: commenterId,
+      sender_profile_id: commenterId,
       type: 'comment',
-      post_id: postId,
-      comment_id: commentId,
+      reference_type: 'comment',
+      reference_id: commentId,
     });
   },
 
@@ -414,8 +436,10 @@ export const notificationRepository = {
   ): Promise<number | null> {
     return this.create({
       recipient_profile_id: followedId,
-      actor_profile_id: followerId,
+      sender_profile_id: followerId,
       type: 'follow',
+      reference_type: 'profile',
+      reference_id: followerId,
     });
   },
 
@@ -429,8 +453,10 @@ export const notificationRepository = {
   ): Promise<number | null> {
     return this.create({
       recipient_profile_id: requestedId,
-      actor_profile_id: requesterId,
+      sender_profile_id: requesterId,
       type: 'follow_request',
+      reference_type: 'profile',
+      reference_id: requesterId,
     });
   },
 
@@ -446,10 +472,10 @@ export const notificationRepository = {
   ): Promise<number | null> {
     return this.create({
       recipient_profile_id: mentionedId,
-      actor_profile_id: mentionerId,
-      type: 'mention',
-      post_id: postId,
-      comment_id: commentId,
+      sender_profile_id: mentionerId,
+      type: commentId ? 'mention_comment' : 'mention_post',
+      reference_type: commentId ? 'comment' : 'post',
+      reference_id: commentId || postId,
     });
   },
 
@@ -464,9 +490,10 @@ export const notificationRepository = {
   ): Promise<number | null> {
     return this.create({
       recipient_profile_id: taggedId,
-      actor_profile_id: taggerId,
+      sender_profile_id: taggerId,
       type: 'tag',
-      post_id: postId,
+      reference_type: 'post',
+      reference_id: postId,
     });
   },
 
@@ -482,7 +509,7 @@ export const notificationRepository = {
     await execute(
       `DELETE FROM notifications
        WHERE recipient_profile_id = ?
-         AND actor_profile_id = ?
+         AND sender_profile_id = ?
          AND type = 'follow_accepted'`,
       [requesterId, accepterId]
     );
@@ -490,9 +517,9 @@ export const notificationRepository = {
     // Crea la nuova notifica usando INSERT diretto (non la create() base)
     // perché vogliamo sempre creare questa notifica specifica
     const result = await execute(
-      `INSERT INTO notifications (recipient_profile_id, actor_profile_id, type)
-       VALUES (?, ?, 'follow_accepted')`,
-      [requesterId, accepterId]
+      `INSERT INTO notifications (recipient_profile_id, sender_profile_id, type, reference_type, reference_id)
+       VALUES (?, ?, 'follow_accepted', 'profile', ?)`,
+      [requesterId, accepterId, accepterId]
     );
 
     return result.lastID;
@@ -513,7 +540,7 @@ export const notificationRepository = {
     const result = await execute(
       `UPDATE notifications
        SET type = 'follow'
-       WHERE actor_profile_id = ?
+       WHERE sender_profile_id = ?
          AND recipient_profile_id = ?
          AND type = 'follow_request'`,
       [senderId, recipientId]
@@ -535,7 +562,7 @@ export const notificationRepository = {
   ): Promise<boolean> {
     const result = await execute(
       `DELETE FROM notifications
-       WHERE actor_profile_id = ?
+       WHERE sender_profile_id = ?
          AND recipient_profile_id = ?
          AND (type = 'follow_request' OR type = 'follow')`,
       [senderId, recipientId]
@@ -561,6 +588,7 @@ export const notificationRepository = {
     sender_is_verified: boolean;
     reference_type: string | null;
     reference_id: number | null;
+    reference_post_id: number | null; // ID del post (anche per commenti)
     reference_image_url: string | null;
     reference_media_type: string | null;
     is_read: boolean;
@@ -576,6 +604,7 @@ export const notificationRepository = {
       sender_is_verified: number;
       reference_type: string | null;
       reference_id: number | null;
+      reference_post_id: number | null;
       reference_image_url: string | null;
       reference_media_type: string | null;
       is_read: number;
@@ -587,18 +616,26 @@ export const notificationRepository = {
         n.sender_profile_id,
         n.reference_type,
         n.reference_id,
+        CASE 
+          WHEN n.reference_type = 'post' THEN n.reference_id
+          WHEN n.reference_type = 'comment' THEN c.post_id
+          ELSE NULL
+        END as reference_post_id,
         n.is_read,
         n.created_at,
         p.username as sender_username,
         p.full_name as sender_full_name,
         p.profile_image_url as sender_profile_image_url,
         COALESCE(p.is_verified, 0) as sender_is_verified,
-        pm.media_url as reference_image_url,
-        pm.media_type as reference_media_type
+        COALESCE(pm_post.media_url, pm_comment.media_url) as reference_image_url,
+        COALESCE(pm_post.media_type, pm_comment.media_type) as reference_media_type
       FROM notifications n
       LEFT JOIN profiles p ON n.sender_profile_id = p.id AND p.deleted_at IS NULL
       LEFT JOIN posts ON n.reference_type = 'post' AND n.reference_id = posts.id AND posts.deleted_at IS NULL
-      LEFT JOIN post_media pm ON posts.id = pm.post_id AND pm.position = 0 AND pm.deleted_at IS NULL
+      LEFT JOIN post_media pm_post ON posts.id = pm_post.post_id AND pm_post.position = 0 AND pm_post.deleted_at IS NULL
+      LEFT JOIN comments c ON n.reference_type = 'comment' AND n.reference_id = c.id AND c.deleted_at IS NULL
+      LEFT JOIN posts posts_from_comment ON c.post_id = posts_from_comment.id AND posts_from_comment.deleted_at IS NULL
+      LEFT JOIN post_media pm_comment ON posts_from_comment.id = pm_comment.post_id AND pm_comment.position = 0 AND pm_comment.deleted_at IS NULL
       WHERE n.recipient_profile_id = ?
       ORDER BY n.created_at DESC
       LIMIT ?`,

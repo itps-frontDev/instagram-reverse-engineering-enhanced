@@ -443,15 +443,21 @@ export default function ProfilePage({
     });
 
     try {
-      const endpoint = wasLiked ? `/api/posts/${postId}/unlike` : `/api/posts/${postId}/like`;
+      const endpoint = `/api/posts/${postId}/like`;
       const res = await fetch(endpoint, { method: 'POST' });
       
       if (!res.ok) throw new Error('Failed to like/unlike post');
 
-      // Update post in posts array
+      const data = await res.json();
+      
+      // Update post in posts array with actual server response
       setPosts(prev => prev.map(p => 
         p.id === postId 
-          ? { ...p, likes_count: wasLiked ? p.likes_count - 1 : p.likes_count + 1 }
+          ? { 
+              ...p, 
+              is_liked_by_current_user: data.liked,
+              likes_count: data.likes_count 
+            }
           : p
       ));
     } catch (err) {
@@ -656,7 +662,11 @@ export default function ProfilePage({
         <StoryViewer
           profileUsername={profile.username}
           profileId={profile.id}
-          onClose={() => setShowStoryViewer(false)}
+          onClose={() => {
+            setShowStoryViewer(false);
+            // Ricarica il profilo per aggiornare lo stato delle storie
+            fetchProfileData();
+          }}
         />
       )}
 

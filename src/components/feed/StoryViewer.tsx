@@ -204,8 +204,11 @@ export default function StoryViewer({
             };
           }
           // Se tutte le storie sono ora viste, notifica il container
+          // Usa setTimeout per deferire l'aggiornamento dello stato al prossimo tick
           if (onAllStoriesViewed && updated.every(s => s.is_viewed)) {
-            onAllStoriesViewed(updated[0].profile_id);
+            setTimeout(() => {
+              onAllStoriesViewed(updated[0].profile_id);
+            }, 0);
           }
           return updated;
         });

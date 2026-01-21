@@ -63,7 +63,11 @@ export async function POST(request: NextRequest) {
   try {
     // Parse body JSON
     const body = await request.json();
-    const { email, password, birthDate, fullName, username } = body;
+    let { email, password, birthDate, fullName, username } = body;
+
+    // Normalizza email e username in minuscolo per evitare duplicati case-sensitive
+    email = email?.trim().toLowerCase();
+    username = username?.trim().toLowerCase();
 
     // Validazione campi obbligatori
     if (!email || !password || !username) {

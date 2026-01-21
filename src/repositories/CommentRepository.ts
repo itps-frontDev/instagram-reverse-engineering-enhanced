@@ -42,7 +42,7 @@ export interface Comment {
   id: number;
   post_id: number;
   profile_id: number;
-  parent_comment_id: number | null;
+  parent_id: number | null;
   text: string;
   likes_count: number;
   created_at: string;
@@ -67,6 +67,7 @@ export interface CommentWithProfile {
   profile_is_verified: boolean;
   profile_is_private: boolean;
   profile_has_active_story: boolean;
+  profile_has_viewed_story: boolean;
   is_liked: boolean;
 }
 
@@ -131,7 +132,7 @@ class CommentRepository {
    */
   async getById(commentId: number): Promise<CommentBase | null> {
     const comment = await queryOne<Comment>(
-      `SELECT id, post_id, profile_id, parent_comment_id as parent_id, text, likes_count, created_at
+      `SELECT id, post_id, profile_id, parent_id, text, likes_count, created_at
        FROM comments
        WHERE id = ? AND deleted_at IS NULL`,
       [commentId]
@@ -143,7 +144,7 @@ class CommentRepository {
       id: comment.id,
       post_id: comment.post_id,
       profile_id: comment.profile_id,
-      parent_id: comment.parent_comment_id,
+      parent_id: comment.parent_id,
       content: comment.text,
       likes_count: comment.likes_count,
       created_at: comment.created_at,
@@ -207,6 +208,14 @@ class CommentRepository {
             AND s.expires_at > datetime('now')
             AND s.deleted_at IS NULL
         ) as profile_has_active_story,
+        (SELECT COUNT(*) > 0
+         FROM story_views sv
+         INNER JOIN stories s ON s.id = sv.story_id
+         WHERE s.profile_id = p.id
+           AND sv.viewer_profile_id = ?
+           AND s.deleted_at IS NULL
+           AND datetime(s.expires_at) > datetime('now')
+        ) as profile_has_viewed_story,
         (SELECT 1 FROM likes
          WHERE likeable_type = 'comment'
          AND likeable_id = c.id
@@ -219,7 +228,7 @@ class CommentRepository {
         AND p.deleted_at IS NULL
       ORDER BY c.created_at ASC
       LIMIT ? OFFSET ?`,
-      [currentProfileId, currentProfileId, currentProfileId, currentProfileId, postId, limit, offset]
+      [currentProfileId, currentProfileId, currentProfileId, currentProfileId, currentProfileId, postId, limit, offset]
     );
 
     return comments.map((c: any) => ({
@@ -236,6 +245,7 @@ class CommentRepository {
       profile_is_verified: Boolean(c.profile_is_verified),
       profile_is_private: Boolean(c.profile_is_private),
       profile_has_active_story: Boolean(c.profile_has_active_story),
+      profile_has_viewed_story: Boolean(c.profile_has_viewed_story),
       is_liked: Boolean(c.is_liked),
     }));
   }
@@ -358,6 +368,7 @@ class CommentRepository {
       profile_is_verified: Boolean(comment.profile_is_verified),
       profile_is_private: Boolean(comment.profile_is_private),
       profile_has_active_story: false,
+      profile_has_viewed_story: false,
       is_liked: false,
     };
   }
@@ -458,10 +469,19 @@ class CommentRepository {
       );
     } else {
       // Crea nuovo like
-      await execute(
-        `INSERT INTO likes (profile_id, likeable_type, likeable_id) VALUES (?, 'comment', ?)`,
-        [profileId, commentId]
-      );
+      try {
+        await execute(
+          `INSERT INTO likes (profile_id, likeable_type, likeable_id) VALUES (?, 'comment', ?)`,
+          [profileId, commentId]
+        );
+      } catch (error: any) {
+        // Race condition: il like è stato creato da un'altra richiesta
+        if (error.code === 'SQLITE_CONSTRAINT') {
+          console.log('[Likes] Like già esistente (race condition), skip increment');
+          return null;
+        }
+        throw error;
+      }
     }
 
     // Incrementa contatore e ottieni nuovo valore
@@ -534,7 +554,7 @@ class CommentRepository {
        WHERE profile_id = ? AND likeable_type = 'comment' AND likeable_id = ? AND deleted_at IS NULL`,
       [profileId, commentId]
     );
-    return result !== null;
+    return !!result; // Converti a boolean: null/undefined → false, oggetto → true
   }
 }
 

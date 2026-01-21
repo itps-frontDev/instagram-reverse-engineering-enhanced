@@ -125,6 +125,7 @@ export interface FeedPostWithDetails {
   profile_is_verified: number;
   profile_is_private: number;
   profile_has_active_story: number;
+  profile_has_viewed_story: number;
   is_liked: number | null;
   is_saved: number | null;
   is_following: number | null;
@@ -150,6 +151,7 @@ export interface FeedPostForAPI {
   profile_image_url: string | null;
   profile_is_verified: boolean;
   profile_has_active_story: boolean;
+  profile_has_viewed_story: boolean;
   profile_is_private: boolean;
   media: PostMedia[];
   is_liked_by_current_user: boolean;
@@ -227,17 +229,12 @@ export const postRepository = {
     const post = await queryOne<Post>(
       `SELECT
         id, profile_id, caption, location,
-        likes_count, comments_count, is_pinned, comments_disabled,
+        likes_count, comments_count,
         created_at, updated_at
        FROM posts
        WHERE id = ? AND deleted_at IS NULL`,
       [id]
     );
-    
-    if (post) {
-      post.is_pinned = Boolean(post.is_pinned);
-      post.comments_disabled = Boolean(post.comments_disabled);
-    }
     
     return post || null;
   },
@@ -483,10 +480,19 @@ export const postRepository = {
       );
     } else {
       // Crea nuovo like
-      await execute(
-        `INSERT INTO likes (profile_id, likeable_type, likeable_id) VALUES (?, 'post', ?)`,
-        [profileId, postId]
-      );
+      try {
+        await execute(
+          `INSERT INTO likes (profile_id, likeable_type, likeable_id) VALUES (?, 'post', ?)`,
+          [profileId, postId]
+        );
+      } catch (error: any) {
+        // Race condition: il like è stato creato da un'altra richiesta
+        if (error.code === 'SQLITE_CONSTRAINT') {
+          console.log('[Likes] Like già esistente (race condition), skip increment');
+          return false;
+        }
+        throw error;
+      }
     }
     
     // Incrementa contatore
@@ -1348,6 +1354,27 @@ export const postRepository = {
             )
          ) THEN 1 ELSE 0 END
         ) as profile_has_active_story,
+        -- Subquery: l'utente corrente ha visualizzato TUTTE le storie attive?
+        (SELECT CASE
+           WHEN (SELECT COUNT(*) FROM stories s1 
+                 WHERE s1.profile_id = p.profile_id 
+                   AND s1.deleted_at IS NULL 
+                   AND datetime(s1.expires_at) > datetime('now')) = 0 
+           THEN 0
+           WHEN (SELECT COUNT(*) FROM stories s2 
+                 WHERE s2.profile_id = p.profile_id 
+                   AND s2.deleted_at IS NULL 
+                   AND datetime(s2.expires_at) > datetime('now')
+                   AND EXISTS (
+                     SELECT 1 FROM story_views sv 
+                     WHERE sv.story_id = s2.id 
+                       AND sv.viewer_profile_id = ?
+                   )) = (SELECT COUNT(*) FROM stories s3 
+                         WHERE s3.profile_id = p.profile_id 
+                           AND s3.deleted_at IS NULL 
+                           AND datetime(s3.expires_at) > datetime('now'))
+           THEN 1 ELSE 0 END
+        ) as profile_has_viewed_story,
         -- Subquery: l'utente corrente ha messo like?
         (SELECT 1 FROM likes
          WHERE likeable_type = 'post'
@@ -1395,6 +1422,7 @@ export const postRepository = {
         currentProfileId, // per controllo storie proprie
         currentProfileId, // per follows nel controllo storie
         currentProfileId, // per story_views check
+        currentProfileId, // per has_viewed_story check
         currentProfileId, // per is_liked
         currentProfileId, // per is_saved
         currentProfileId, // per is_following
@@ -1435,6 +1463,7 @@ export const postRepository = {
       profile_image_url: post.profile_image_url,
       profile_is_verified: Boolean(post.profile_is_verified),
       profile_has_active_story: Boolean(post.profile_has_active_story),
+      profile_has_viewed_story: Boolean(post.profile_has_viewed_story),
       profile_is_private: Boolean(post.profile_is_private),
       media,
       is_liked_by_current_user: Boolean(post.is_liked),
@@ -1504,6 +1533,7 @@ export const postRepository = {
       profile_is_private: post.profile_is_private,
       // Campi non disponibili in vista singolo post
       profile_has_active_story: false,
+      profile_has_viewed_story: false,
       is_following_author: false,
       // Status interazione utente
       is_liked_by_current_user: post.is_liked,

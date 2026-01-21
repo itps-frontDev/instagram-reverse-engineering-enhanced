@@ -24,6 +24,7 @@ interface Notification {
   sender_is_verified: boolean;
   reference_type: string | null;
   reference_id: number | null;
+  reference_post_id: number | null; // ID del post (per commenti)
   reference_image_url: string | null;
   reference_media_type: string | null;
   is_read: boolean;
@@ -185,9 +186,14 @@ export default function NotificationsPanel({ isOpen, onClose, onMarkAllAsRead }:
   };
 
   const getNotificationLink = (notification: Notification): string => {
-    // Se ha un reference (post, comment, story), vai al contenuto
+    // Se ha un reference post, vai direttamente al post
     if (notification.reference_type === 'post' && notification.reference_id) {
       return `/p/${notification.reference_id}`;
+    }
+    
+    // Se ha un reference comment, vai al post del commento
+    if (notification.reference_type === 'comment' && notification.reference_post_id) {
+      return `/p/${notification.reference_post_id}`;
     }
     
     // Altrimenti vai al profilo del sender

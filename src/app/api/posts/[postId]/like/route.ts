@@ -32,11 +32,11 @@ import { postRepository, notificationRepository } from '@/repositories';
 export const runtime = 'nodejs';
 
 /**
- * Gestisce richiesta POST per aggiungere like a un post.
+ * Gestisce richiesta POST per aggiungere/rimuovere like a un post (toggle).
  * 
  * @param request - Request Next.js
  * @param params - Contiene postId
- * @returns Messaggio di successo o errore
+ * @returns Stato del like e conteggio aggiornato
  */
 export async function POST(
   request: NextRequest,
@@ -56,14 +56,7 @@ export async function POST(
     const { postId } = await params;
     const postIdNum = parseInt(postId);
 
-    // Verifica se l'utente ha già messo like (tramite repository)
-    const alreadyLiked = await postRepository.hasLiked(postIdNum, profileId);
-    if (alreadyLiked) {
-      // Ritorna successo senza errore (comportamento idempotente)
-      return NextResponse.json({ message: 'Like già presente' });
-    }
-
-    // Recupera il post per verificare il proprietario
+    // Recupera il post per verificare esistenza e proprietario
     const post = await postRepository.findById(postIdNum);
     if (!post) {
       return NextResponse.json(
@@ -72,22 +65,48 @@ export async function POST(
       );
     }
 
-    // Aggiungi like tramite repository
-    // (gestisce anche incremento contatore likes_count)
-    await postRepository.like(postIdNum, profileId);
+    // Verifica se l'utente ha già messo like
+    const alreadyLiked = await postRepository.hasLiked(postIdNum, profileId);
 
-    // Crea notifica (solo se non è like al proprio post)
-    if (post.profile_id !== profileId) {
-      // Usa l'helper specifico per notifiche like
-      // Questo gestisce anche la rimozione di notifiche duplicate
-      await notificationRepository.createLikeNotification(
-        post.profile_id,
+    let liked: boolean;
+    let newLikesCount: number;
+
+    if (alreadyLiked) {
+      // Rimuove il like (soft delete)
+      await postRepository.unlike(postIdNum, profileId);
+      
+      // Elimina notifica di like
+      await notificationRepository.deleteLikeNotification(
         profileId,
-        postIdNum
+        postIdNum,
+        'post'
       );
+      
+      liked = false;
+      newLikesCount = Math.max(0, post.likes_count - 1);
+    } else {
+      // Aggiungi like tramite repository
+      await postRepository.like(postIdNum, profileId);
+
+      // Crea notifica (solo se non è like al proprio post)
+      if (post.profile_id !== profileId) {
+        await notificationRepository.createLikeNotification(
+          post.profile_id,
+          profileId,
+          postIdNum
+        );
+      }
+      
+      liked = true;
+      newLikesCount = post.likes_count + 1;
     }
 
-    return NextResponse.json({ message: 'Like aggiunto con successo' });
+    return NextResponse.json({ 
+      success: true,
+      liked,
+      likes_count: newLikesCount,
+      message: liked ? 'Like aggiunto con successo' : 'Like rimosso con successo'
+    });
   } catch (error) {
     console.error('[Likes] Errore aggiunta like:', error);
     return NextResponse.json(

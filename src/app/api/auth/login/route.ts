@@ -40,7 +40,10 @@ export const runtime = 'nodejs';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email: identifier, password, redirect } = body;
+    let { email: identifier, password, redirect } = body;
+
+    // Normalizza identifier in minuscolo per confronto case-insensitive
+    identifier = identifier?.trim().toLowerCase();
 
     // Validazione input
     if (!identifier || !password) {

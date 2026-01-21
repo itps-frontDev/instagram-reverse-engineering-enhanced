@@ -289,21 +289,18 @@ export default function ReelsPage() {
     if (!reel) return;
 
     try {
-      const endpoint = reel.is_liked_by_current_user 
-        ? `/api/posts/${reelId}/unlike`
-        : `/api/posts/${reelId}/like`;
-      
-      const response = await fetch(endpoint, { method: 'POST' });
+      // Usa sempre l'endpoint like che fa toggle automaticamente
+      const response = await fetch(`/api/posts/${reelId}/like`, { method: 'POST' });
       if (!response.ok) throw new Error('Failed to like');
 
+      const data = await response.json();
+      
       setReels(prev => prev.map(r => 
         r.id === reelId 
           ? {
               ...r,
-              is_liked_by_current_user: !r.is_liked_by_current_user,
-              likes_count: r.is_liked_by_current_user 
-                ? r.likes_count - 1 
-                : r.likes_count + 1,
+              is_liked_by_current_user: data.liked,
+              likes_count: data.likes_count,
             }
           : r
       ));

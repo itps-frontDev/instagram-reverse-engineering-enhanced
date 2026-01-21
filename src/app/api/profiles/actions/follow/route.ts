@@ -121,8 +121,10 @@ export async function POST(request: NextRequest) {
     // Poi crea la nuova notifica
     await notificationRepository.create({
       recipient_profile_id: targetProfileId,
-      actor_profile_id: currentProfile.id,
+      sender_profile_id: currentProfile.id,
       type: notificationType,
+      reference_type: 'profile',
+      reference_id: currentProfile.id,
     });
 
     // Risposta di successo

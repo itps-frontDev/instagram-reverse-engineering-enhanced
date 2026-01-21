@@ -100,6 +100,7 @@ export async function GET(request: NextRequest) {
       profile_image_url: c.profile_image_url,
       profile_is_verified: c.profile_is_verified,
       profile_has_active_story: c.profile_has_active_story,
+      profile_has_viewed_story: c.profile_has_viewed_story,
       profile_is_private: c.profile_is_private,
       is_liked_by_current_user: c.is_liked,
     }));
@@ -212,6 +213,7 @@ export async function POST(request: NextRequest) {
       profile_is_private: commentData.profile_is_private,
       is_liked_by_current_user: false,
       profile_has_active_story: false,
+      profile_has_viewed_story: false,
     };
 
     // 8. Costruisci risposta

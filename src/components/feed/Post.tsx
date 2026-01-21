@@ -49,6 +49,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
   const [isPending, setIsPending] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [showStoryViewer, setShowStoryViewer] = useState(false);
+  const [hasViewedAllStories, setHasViewedAllStories] = useState(post.profile_has_viewed_story);
   const [tags, setTags] = useState<Array<{id: number; tagged_username: string; x_position: number; y_position: number}>>([]);
   const [tagsLoaded, setTagsLoaded] = useState(false);
   const [hoveredUsername, setHoveredUsername] = useState(false);
@@ -212,9 +213,10 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
             src={post.profile_image_url}
             alt={post.profile_username || 'Profile picture'}
             size={40}
-            hasStory={post.profile_has_active_story}
+            hasStory={post.profile_has_active_story && !hasViewedAllStories}
+            storyViewed={hasViewedAllStories}
             username={post.profile_username}
-            onStoryClick={post.profile_has_active_story ? () => setShowStoryViewer(true) : undefined}
+            onStoryClick={post.profile_has_active_story && !hasViewedAllStories ? () => setShowStoryViewer(true) : undefined}
           />
           <div className="flex items-center gap-1 relative">
             <Link
@@ -447,6 +449,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
         <StoryViewer
           profileUsername={post.profile_username}
           onClose={() => setShowStoryViewer(false)}
+          onAllStoriesViewed={() => setHasViewedAllStories(true)}
         />
       )}
 

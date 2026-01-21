@@ -243,7 +243,7 @@ export const profileRepository = {
         created_at, updated_at
        FROM profiles
        WHERE username = ? COLLATE NOCASE AND deleted_at IS NULL`,
-      [username]
+      [username.trim().toLowerCase()]
     );
     
     if (profile) {
@@ -270,7 +270,7 @@ export const profileRepository = {
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
         data.user_id,
-        data.username,
+        data.username.trim().toLowerCase(),
         data.full_name || null,
         data.profile_image_url || null,
         data.bio || null,
@@ -300,7 +300,7 @@ export const profileRepository = {
 
     if (data.username !== undefined) {
       fields.push('username = ?');
-      values.push(data.username);
+      values.push(data.username.trim().toLowerCase());
     }
     if (data.full_name !== undefined) {
       fields.push('full_name = ?');
@@ -352,10 +352,11 @@ export const profileRepository = {
    * @returns true se lo username è già usato
    */
   async isUsernameTaken(username: string, excludeProfileId?: number): Promise<boolean> {
+    const normalizedUsername = username.trim().toLowerCase();
     const query = excludeProfileId
       ? `SELECT 1 FROM profiles WHERE username = ? COLLATE NOCASE AND id != ? AND deleted_at IS NULL`
       : `SELECT 1 FROM profiles WHERE username = ? COLLATE NOCASE AND deleted_at IS NULL`;
-    const params = excludeProfileId ? [username, excludeProfileId] : [username];
+    const params = excludeProfileId ? [normalizedUsername, excludeProfileId] : [normalizedUsername];
     const result = await queryOne(query, params);
     return !!result;
   },

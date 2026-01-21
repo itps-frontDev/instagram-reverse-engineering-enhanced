@@ -60,6 +60,21 @@ export default function SecurityForm({ user }: SecurityFormProps) {
     setErrors({ ...errors, phoneNumber: validatePhoneNumber(value) });
   };
 
+  const handleCurrentPasswordChange = (value: string) => {
+    setFormData({ ...formData, currentPassword: value });
+    setErrors({ ...errors, currentPassword: '' });
+  };
+
+  const handleNewPasswordChange = (value: string) => {
+    setFormData({ ...formData, newPassword: value });
+    setErrors({ ...errors, newPassword: '' });
+  };
+
+  const handleConfirmPasswordChange = (value: string) => {
+    setFormData({ ...formData, confirmPassword: value });
+    setErrors({ ...errors, confirmPassword: '' });
+  };
+
   // Check if form can be submitted - computed on every render
   const hasErrors = Object.values(errors).some(error => error !== '');
   const emailChanged = formData.email !== (user.email || '');
@@ -227,7 +242,7 @@ export default function SecurityForm({ user }: SecurityFormProps) {
                 id="currentPassword"
                 type={showCurrentPassword ? 'text' : 'password'}
                 value={formData.currentPassword}
-                onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
+                onChange={(e) => handleCurrentPasswordChange(e.target.value)}
                 className={`w-full px-3 py-2.5 pr-20 border rounded-lg bg-transparent focus:outline-none focus:ring-1 text-sm ${
                   errors.currentPassword
                     ? 'border-red-500 focus:ring-red-500'
@@ -262,7 +277,7 @@ export default function SecurityForm({ user }: SecurityFormProps) {
                 id="newPassword"
                 type={showNewPassword ? 'text' : 'password'}
                 value={formData.newPassword}
-                onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
+                onChange={(e) => handleNewPasswordChange(e.target.value)}
                 className={`w-full px-3 py-2.5 pr-20 border rounded-lg bg-transparent focus:outline-none focus:ring-1 text-sm ${
                   errors.newPassword
                     ? 'border-red-500 focus:ring-red-500'
@@ -298,7 +313,7 @@ export default function SecurityForm({ user }: SecurityFormProps) {
                 id="confirmPassword"
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                onChange={(e) => handleConfirmPasswordChange(e.target.value)}
                 className={`w-full px-3 py-2.5 pr-20 border rounded-lg bg-transparent focus:outline-none focus:ring-1 text-sm ${
                   errors.confirmPassword
                     ? 'border-red-500 focus:ring-red-500'

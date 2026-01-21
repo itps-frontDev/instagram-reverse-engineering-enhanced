@@ -80,7 +80,8 @@ export async function POST(request: NextRequest) {
       // Elimina notifica di like commento
       await notificationRepository.deleteLikeNotification(
         currentProfile.id,
-        comment.post_id
+        commentId,
+        'comment'
       );
 
       liked = false;
@@ -100,10 +101,10 @@ export async function POST(request: NextRequest) {
       if (comment.profile_id !== currentProfile.id) {
         await notificationRepository.create({
           recipient_profile_id: comment.profile_id,
-          actor_profile_id: currentProfile.id,
-          type: 'like',
-          post_id: comment.post_id,
-          comment_id: commentId,
+          sender_profile_id: currentProfile.id,
+          type: 'like_comment',
+          reference_type: 'comment',
+          reference_id: commentId,
         });
       }
 
