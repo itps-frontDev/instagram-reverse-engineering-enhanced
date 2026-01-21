@@ -1,14 +1,14 @@
 /**
- * @fileoverview Local file storage module for media uploads.
+ * @fileoverview Modulo di archiviazione file locale per upload media.
  *
- * This module handles saving, reading, and managing media files locally.
- * Files are organized by category and entity ID (user, post, story, etc.).
+ * Questo modulo gestisce il salvataggio, lettura e gestione di file media localmente.
+ * I file sono organizzati per categoria e ID entità (utente, post, storia, ecc.).
  *
- * IMPORTANT: Access control is NOT handled here. Permission checks must be
- * performed in the API routes that serve files, based on database lookups
- * (e.g., checking if user is private, if requester is a follower, etc.).
+ * IMPORTANTE: Il controllo degli accessi NON è gestito qui. I controlli dei permessi devono essere
+ * eseguiti nelle route API che servono i file, basandosi su lookup del database
+ * (es. verificare se l'utente è privato, se il richiedente è un follower, ecc.).
  *
- * Directory structure:
+ * Struttura delle directory:
  * ```
  * data/uploads/
  * ├── profiles/{user_id}/
@@ -25,7 +25,7 @@
  * @module lib/storage
  *
  * @example
- * // Save a file
+ * // Salva un file
  * import { saveFile } from '@/lib/storage';
  *
  * const result = saveFile(buffer, 'photo.jpg', 'posts', postId);
@@ -45,54 +45,54 @@ import { join, extname } from "path";
 import { randomUUID } from "crypto";
 
 // ============================================================================
-// CONFIGURATION
+// CONFIGURAZIONE
 // ============================================================================
 
-/** Base directory for all data storage */
+/** Directory base per tutta l'archiviazione dati */
 const DATA_DIR = join(process.cwd(), "data");
 
-/** Directory for uploaded media files */
+/** Directory per file media caricati */
 const UPLOADS_DIR = join(DATA_DIR, "uploads");
 
 // ============================================================================
-// TYPES
+// TIPI
 // ============================================================================
 
 /**
- * Categories of media files.
- * Each category has its own subdirectory.
+ * Categorie di file media.
+ * Ogni categoria ha la propria sottodirectory.
  */
 export type MediaCategory = "profiles" | "posts" | "stories" | "messages";
 
 /**
- * Result object returned after successfully saving a file.
+ * Oggetto risultato restituito dopo aver salvato con successo un file.
  */
 export interface UploadResult {
-  /** Generated unique filename with extension */
+  /** Nome file univoco generato con estensione */
   filename: string;
-  /** Relative path from uploads directory */
+  /** Percorso relativo dalla directory uploads */
   path: string;
-  /** API URL to access the file */
+  /** URL API per accedere al file */
   url: string;
-  /** File size in bytes */
+  /** Dimensione file in byte */
   size: number;
-  /** Detected MIME type */
+  /** Tipo MIME rilevato */
   mimeType: string;
 }
 
 /**
- * Mapping of file extensions to MIME types.
- * Used for content-type headers when serving files.
+ * Mappatura delle estensioni file ai tipi MIME.
+ * Usata per gli header content-type quando si servono i file.
  */
 const MIME_TYPES: Record<string, string> = {
-  // Images
+  // Immagini
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
   ".png": "image/png",
   ".gif": "image/gif",
   ".webp": "image/webp",
   ".svg": "image/svg+xml",
-  // Videos
+  // Video
   ".mp4": "video/mp4",
   ".mov": "video/quicktime",
   ".avi": "video/x-msvideo",
@@ -102,18 +102,18 @@ const MIME_TYPES: Record<string, string> = {
   ".mp3": "audio/mpeg",
   ".wav": "audio/wav",
   ".ogg": "audio/ogg",
-  // Documents
+  // Documenti
   ".pdf": "application/pdf",
 };
 
 // ============================================================================
-// UTILITY FUNCTIONS
+// FUNZIONI DI UTILITÀ
 // ============================================================================
 
 /**
- * Ensures a directory exists, creating it if necessary.
+ * Assicura che una directory esista, creandola se necessario.
  *
- * @param dirPath - Absolute path to the directory
+ * @param dirPath - Percorso assoluto alla directory
  */
 function ensureDir(dirPath: string): void {
   if (!existsSync(dirPath)) {
@@ -122,10 +122,10 @@ function ensureDir(dirPath: string): void {
 }
 
 /**
- * Generates a unique filename using UUID.
+ * Genera un nome file univoco usando UUID.
  *
- * @param originalName - Original filename with extension
- * @returns A new unique filename preserving the original extension
+ * @param originalName - Nome file originale con estensione
+ * @returns Un nuovo nome file univoco che preserva l'estensione originale
  *
  * @example
  * generateFilename('photo.jpg'); // 'a1b2c3d4-e5f6-7890-abcd-ef1234567890.jpg'
@@ -137,10 +137,10 @@ function generateFilename(originalName: string): string {
 }
 
 /**
- * Determines the MIME type based on file extension.
+ * Determina il tipo MIME basandosi sull'estensione del file.
  *
- * @param filename - Filename with extension
- * @returns The corresponding MIME type, or 'application/octet-stream' if unknown
+ * @param filename - Nome file con estensione
+ * @returns Il tipo MIME corrispondente, o 'application/octet-stream' se sconosciuto
  *
  * @example
  * getMimeType('photo.jpg');  // 'image/jpeg'
@@ -153,12 +153,12 @@ export function getMimeType(filename: string): string {
 }
 
 /**
- * Builds the absolute filesystem path for a file.
+ * Costruisce il percorso filesystem assoluto per un file.
  *
- * @param category - The media category
- * @param entityId - The ID of the entity (user, post, story, message)
- * @param filename - The file's unique name
- * @returns Absolute path to the file
+ * @param category - La categoria media
+ * @param entityId - L'ID dell'entità (utente, post, storia, messaggio)
+ * @param filename - Il nome univoco del file
+ * @returns Percorso assoluto al file
  */
 function buildAbsolutePath(
   category: MediaCategory,
@@ -169,11 +169,11 @@ function buildAbsolutePath(
 }
 
 /**
- * Builds the directory path for an entity.
+ * Costruisce il percorso della directory per un'entità.
  *
- * @param category - The media category
- * @param entityId - The ID of the entity
- * @returns Absolute path to the entity's directory
+ * @param category - La categoria media
+ * @param entityId - L'ID dell'entità
+ * @returns Percorso assoluto alla directory dell'entità
  */
 function buildEntityDir(
   category: MediaCategory,
@@ -183,28 +183,28 @@ function buildEntityDir(
 }
 
 // ============================================================================
-// FILE OPERATIONS
+// OPERAZIONI SUI FILE
 // ============================================================================
 
 /**
- * Saves a file to the storage system.
+ * Salva un file nel sistema di archiviazione.
  *
- * Generates a unique filename to prevent collisions and organizes
- * the file by category and entity ID.
+ * Genera un nome file univoco per prevenire collisioni e organizza
+ * il file per categoria e ID entità.
  *
- * @param buffer - The file content as a Buffer
- * @param originalName - Original filename (used for extension detection)
- * @param category - Where to store the file (profiles, posts, stories, messages)
- * @param entityId - The ID of the related entity (userId, postId, storyId, messageId)
- * @returns Upload result with filename, path, URL, size, and MIME type
+ * @param buffer - Il contenuto del file come Buffer
+ * @param originalName - Nome file originale (usato per rilevare l'estensione)
+ * @param category - Dove salvare il file (profiles, posts, stories, messages)
+ * @param entityId - L'ID dell'entità correlata (userId, postId, storyId, messageId)
+ * @returns Risultato upload con filename, path, URL, size e MIME type
  *
  * @example
- * // Save a post image
+ * // Salva un'immagine di un post
  * const result = saveFile(imageBuffer, 'vacation.jpg', 'posts', postId);
  * // result.url = '/api/media/posts/123/abc-uuid.jpg'
  *
  * @example
- * // Save a profile picture
+ * // Salva un'immagine profilo
  * const result = saveFile(avatarBuffer, 'avatar.png', 'profiles', userId);
  * // result.url = '/api/media/profiles/456/xyz-uuid.png'
  */
@@ -221,7 +221,7 @@ export function saveFile(
   const relativePath = join(category, String(entityId), filename);
   const absolutePath = join(entityDir, filename);
 
-  // Write file to disk
+  // Scrivi il file su disco
   writeFileSync(absolutePath, buffer);
 
   return {
@@ -234,17 +234,17 @@ export function saveFile(
 }
 
 /**
- * Reads a file from storage.
+ * Legge un file dall'archiviazione.
  *
- * @param category - The media category
- * @param entityId - The ID of the related entity
- * @param filename - The unique filename
- * @returns File contents as Buffer, or null if file doesn't exist
+ * @param category - La categoria media
+ * @param entityId - L'ID dell'entità correlata
+ * @param filename - Il nome file univoco
+ * @returns Contenuto del file come Buffer, o null se il file non esiste
  *
  * @example
  * const buffer = readFile('posts', 123, 'abc-uuid.jpg');
  * if (buffer) {
- *   // Process the file
+ *   // Elabora il file
  * }
  */
 export function readFile(
@@ -262,17 +262,17 @@ export function readFile(
 }
 
 /**
- * Deletes a single file from storage.
+ * Elimina un singolo file dall'archiviazione.
  *
- * @param category - The media category
- * @param entityId - The ID of the related entity
- * @param filename - The unique filename
- * @returns true if file was deleted, false if it didn't exist
+ * @param category - La categoria media
+ * @param entityId - L'ID dell'entità correlata
+ * @param filename - Il nome file univoco
+ * @returns true se il file è stato eliminato, false se non esisteva
  *
  * @example
  * const deleted = deleteFile('posts', 123, 'abc-uuid.jpg');
  * if (deleted) {
- *   console.log('File removed successfully');
+ *   console.log('File rimosso con successo');
  * }
  */
 export function deleteFile(
@@ -291,17 +291,17 @@ export function deleteFile(
 }
 
 /**
- * Deletes all files for an entity.
+ * Elimina tutti i file per un'entità.
  *
- * Useful when deleting a post, story, or user account.
- * Removes the entire entity directory and all its contents.
+ * Utile quando si elimina un post, storia o account utente.
+ * Rimuove l'intera directory dell'entità e tutti i suoi contenuti.
  *
- * @param category - The media category
- * @param entityId - The ID of the entity to delete files for
- * @returns true if directory was deleted, false if it didn't exist
+ * @param category - La categoria media
+ * @param entityId - L'ID dell'entità per cui eliminare i file
+ * @returns true se la directory è stata eliminata, false se non esisteva
  *
  * @example
- * // When deleting a post, remove all its media
+ * // Quando si elimina un post, rimuovi tutti i suoi media
  * deleteEntityFiles('posts', postId);
  */
 export function deleteEntityFiles(
@@ -319,11 +319,11 @@ export function deleteEntityFiles(
 }
 
 /**
- * Lists all files for an entity.
+ * Elenca tutti i file per un'entità.
  *
- * @param category - The media category
- * @param entityId - The ID of the entity
- * @returns Array of filenames, or empty array if directory doesn't exist
+ * @param category - La categoria media
+ * @param entityId - L'ID dell'entità
+ * @returns Array di nomi file, o array vuoto se la directory non esiste
  *
  * @example
  * const files = listEntityFiles('posts', 123);
@@ -343,16 +343,16 @@ export function listEntityFiles(
 }
 
 /**
- * Gets the absolute filesystem path for a file.
+ * Ottiene il percorso filesystem assoluto per un file.
  *
- * @param category - The media category
- * @param entityId - The ID of the related entity
- * @param filename - The unique filename
- * @returns Absolute path if file exists, null otherwise
+ * @param category - La categoria media
+ * @param entityId - L'ID dell'entità correlata
+ * @param filename - Il nome file univoco
+ * @returns Percorso assoluto se il file esiste, null altrimenti
  *
  * @example
  * const path = getFilePath('posts', 123, 'abc-uuid.jpg');
- * // Returns: 'C:/project/data/uploads/posts/123/abc-uuid.jpg'
+ * // Restituisce: 'C:/project/data/uploads/posts/123/abc-uuid.jpg'
  */
 export function getFilePath(
   category: MediaCategory,
@@ -364,16 +364,16 @@ export function getFilePath(
 }
 
 /**
- * Checks if a file exists in storage.
+ * Verifica se un file esiste nell'archiviazione.
  *
- * @param category - The media category
- * @param entityId - The ID of the related entity
- * @param filename - The unique filename
- * @returns true if file exists, false otherwise
+ * @param category - La categoria media
+ * @param entityId - L'ID dell'entità correlata
+ * @param filename - Il nome file univoco
+ * @returns true se il file esiste, false altrimenti
  *
  * @example
  * if (fileExists('profiles', userId, 'avatar.jpg')) {
- *   // File is available
+ *   // Il file è disponibile
  * }
  */
 export function fileExists(

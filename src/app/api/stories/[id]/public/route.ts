@@ -51,7 +51,10 @@ export async function GET(
 
   try {
     // Recupera storie pubbliche usando il repository
-    const stories = await storyRepository.getPublicStoriesByProfile(profileId);
+    const stories = await storyRepository.getPublicStoriesByProfile(
+      profileId,
+      currentProfile.id
+    );
     return NextResponse.json({ stories });
   } catch (error) {
     console.error('[api/stories/[id]/public] GET error:', error);

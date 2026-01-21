@@ -43,6 +43,8 @@ export interface StoryWithProfile extends Story {
   username: string;
   profile_image_url: string | null;
   is_verified: boolean;
+  is_liked_by_me?: boolean;
+  is_viewed?: boolean;
 }
 
 /**
@@ -287,6 +289,23 @@ class StoryRepository {
   }
 
   /**
+   * Ottiene una storia per ID (include profile_id).
+   * 
+   * @param storyId - ID della storia
+   * @returns Dati della storia o null se non trovata
+   */
+  async findById(storyId: number): Promise<{ id: number; profile_id: number } | null> {
+    const story = await queryOne<{ id: number; profile_id: number }>(
+      `SELECT id, profile_id FROM stories 
+       WHERE id = ? 
+         AND deleted_at IS NULL`,
+      [storyId]
+    );
+    return story || null;
+  }
+
+
+  /**
    * Verifica se l'utente è il proprietario della storia.
    * 
    * @param storyId - ID della storia
@@ -427,7 +446,21 @@ class StoryRepository {
    * @param profileId - ID del profilo
    * @returns Array di storie pubbliche
    */
-  async getPublicStoriesByProfile(profileId: number): Promise<StoryWithProfile[]> {
+  async getPublicStoriesByProfile(
+    profileId: number,
+    viewerProfileId: number | null
+  ): Promise<StoryWithProfile[]> {
+    const likeSelect = viewerProfileId !== null
+      ? `(SELECT 1 FROM likes l
+           WHERE l.profile_id = ?
+             AND l.likeable_type = 'story'
+             AND l.likeable_id = s.id
+             AND l.deleted_at IS NULL)
+         AS is_liked_by_me`
+      : '0 AS is_liked_by_me';
+
+    const params = viewerProfileId !== null ? [viewerProfileId, profileId] : [profileId];
+
     return queryAll<{
       id: number;
       profile_id: number;
@@ -440,6 +473,7 @@ class StoryRepository {
       views_count: number;
       created_at: string;
       expires_at: string;
+      is_liked_by_me: number;
     }>(
       `SELECT
         s.id,
@@ -452,7 +486,8 @@ class StoryRepository {
         s.duration_seconds,
         s.views_count,
         s.created_at,
-        s.expires_at
+        s.expires_at,
+        ${likeSelect}
       FROM stories s
       JOIN profiles p ON p.id = s.profile_id
       WHERE s.profile_id = ?
@@ -460,11 +495,12 @@ class StoryRepository {
         AND s.expires_at > datetime('now')
         AND p.is_private = 0
       ORDER BY s.created_at ASC`,
-      [profileId]
+      params
     ).then(rows => rows.map(r => ({
       ...r,
       deleted_at: null,
       is_verified: Boolean(r.is_verified),
+      is_liked_by_me: Boolean(r.is_liked_by_me),
     })));
   }
 

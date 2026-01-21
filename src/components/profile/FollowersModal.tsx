@@ -26,8 +26,8 @@ interface FollowerUser {
   full_name: string | null;
   profile_image_url: string | null;
   is_verified: boolean;
-  is_following: number; // SQLite returns 0 or 1
-  follows_you: number;
+  is_following: boolean; // Converted by repository from SQLite 0/1 to boolean
+  follows_you: boolean;
   isPending?: boolean; // For tracking pending follow requests
 }
 
@@ -40,7 +40,7 @@ interface SuggestedUser {
   followers_count?: number;
   mutual_followers?: Array<{ username: string }>;
   mutual_count?: number;
-  is_following?: number;
+  is_following?: boolean;
   isPending?: boolean;
 }
 
@@ -101,7 +101,7 @@ export default function FollowersModal({
       // Ensure is_following and isPending are initialized
       const suggestions = (data.suggestions || []).map((user: SuggestedUser) => ({
         ...user,
-        is_following: user.is_following ?? 0,
+        is_following: user.is_following ?? false,
         isPending: user.isPending ?? false,
       }));
       setSuggestedUsers(suggestions);
@@ -124,13 +124,13 @@ export default function FollowersModal({
         // Update state with new follow status
         setUsers(prev => prev.map(u =>
           u.id === targetProfileId
-            ? { ...u, is_following: data.status === 'accepted' ? 1 : 0, isPending: data.status === 'pending' }
+            ? { ...u, is_following: data.status === 'accepted', isPending: data.status === 'pending' }
             : u
         ));
         // Update suggested users status
         setSuggestedUsers(prev => prev.map(u =>
           u.id === targetProfileId
-            ? { ...u, is_following: data.status === 'accepted' ? 1 : 0, isPending: data.status === 'pending' }
+            ? { ...u, is_following: data.status === 'accepted', isPending: data.status === 'pending' }
             : u
         ));
       }
@@ -166,14 +166,14 @@ export default function FollowersModal({
         // Update follow status (don't remove from list immediately)
         setUsers(prev => prev.map(u =>
           u.id === targetProfileId
-            ? { ...u, is_following: 0, isPending: false }
+            ? { ...u, is_following: false, isPending: false }
             : u
         ));
         
         // Update suggested users status
         setSuggestedUsers(prev => prev.map(u =>
           u.id === targetProfileId
-            ? { ...u, is_following: 0, isPending: false }
+            ? { ...u, is_following: false, isPending: false }
             : u
         ));
       } else {
@@ -360,7 +360,7 @@ export default function FollowersModal({
                           Richiesta effettuata
                         </button>
                       )}
-                      {!user.isPending && user.is_following === 1 && (
+                      {!user.isPending && user.is_following && (
                         <button
                           className="btn-instagram-secondary"
                           onClick={() => handleUnfollow(user.id)}
@@ -368,7 +368,7 @@ export default function FollowersModal({
                           Segui già
                         </button>
                       )}
-                      {!user.isPending && user.is_following !== 1 && (
+                      {!user.isPending && !user.is_following && (
                         <button
                           className="btn-instagram-primary"
                           onClick={() => handleFollow(user.id)}
@@ -405,7 +405,7 @@ export default function FollowersModal({
                           Richiesta effettuata
                         </button>
                       )}
-                      {user.is_following === 1 && !user.isPending && (
+                      {user.is_following && !user.isPending && (
                         <button
                           className="btn-instagram-secondary"
                           onClick={() => handleUnfollow(user.id)}
@@ -461,7 +461,7 @@ export default function FollowersModal({
                               <path d="M19.998 3.094 14.638 0l-2.972 5.15H5.432v6.354L0 14.64 3.094 20 0 25.359l5.432 3.137v5.905h5.975L14.638 40l5.36-3.094L25.358 40l3.232-5.6h6.162v-6.01L40 25.359 36.905 20 40 14.641l-5.248-3.03v-6.46h-6.419L25.358 0l-5.36 3.094Zm7.415 11.225 2.254 2.287-11.43 11.5-6.835-6.93 2.244-2.258 4.587 4.581 9.18-9.18Z" fillRule="evenodd"></path>
                             </svg>
                           )}
-                          {type === 'followers' && isOwnProfile && user.is_following === 0 && !user.isPending && (
+                          {type === 'followers' && isOwnProfile && !user.is_following && !user.isPending && (
                             <span
                               onClick={(e) => {
                                 e.preventDefault();
@@ -591,7 +591,7 @@ export default function FollowersModal({
                             Richiesta effettuata
                           </button>
                         )}
-                        {!user.isPending && user.is_following === 1 && (
+                        {!user.isPending && user.is_following && (
                           <button
                             className="btn-instagram-secondary"
                             onClick={() => handleUnfollow(user.id, true)}
@@ -599,7 +599,7 @@ export default function FollowersModal({
                             Segui già
                           </button>
                         )}
-                        {!user.isPending && user.is_following !== 1 && (
+                        {!user.isPending && !user.is_following && (
                           <button
                             className="btn-instagram-primary"
                             onClick={() => handleFollow(user.id)}

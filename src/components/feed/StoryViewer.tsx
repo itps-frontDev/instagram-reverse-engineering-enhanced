@@ -421,6 +421,18 @@ export default function StoryViewer({
       const newLikedState = !isLiked;
       setIsLiked(newLikedState);
 
+      // Aggiorna lo stato nella lista delle storie
+      setStories(prevStories => {
+        const updated = [...prevStories];
+        if (updated[currentIndex]) {
+          updated[currentIndex] = {
+            ...updated[currentIndex],
+            is_liked_by_me: newLikedState,
+          };
+        }
+        return updated;
+      });
+
       // Call API to persist like
       const res = await fetch(`/api/stories/${currentStory.id}/like`, {
         method: 'POST',
@@ -433,12 +445,34 @@ export default function StoryViewer({
       const data = await res.json();
       // Update state with server response
       setIsLiked(data.liked);
+      
+      // Sincronizza la risposta del server con l'array delle storie
+      setStories(prevStories => {
+        const updated = [...prevStories];
+        if (updated[currentIndex]) {
+          updated[currentIndex] = {
+            ...updated[currentIndex],
+            is_liked_by_me: data.liked,
+          };
+        }
+        return updated;
+      });
     } catch (error) {
       console.error('Error toggling like:', error);
       // Revert on error
       setIsLiked(!isLiked);
+      setStories(prevStories => {
+        const updated = [...prevStories];
+        if (updated[currentIndex]) {
+          updated[currentIndex] = {
+            ...updated[currentIndex],
+            is_liked_by_me: !isLiked,
+          };
+        }
+        return updated;
+      });
     }
-  }, [currentStory, isLiked]);
+  }, [currentStory, isLiked, currentIndex]);
 
   // Keyboard navigation
   useEffect(() => {

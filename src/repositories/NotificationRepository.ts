@@ -371,9 +371,17 @@ export const notificationRepository = {
   async deleteLikeNotification(
     actorProfileId: number,
     referenceId: number,
-    referenceType: 'post' | 'comment' = 'post'
+    referenceType: 'post' | 'comment' | 'story' = 'post'
   ): Promise<boolean> {
-    const likeType = referenceType === 'post' ? 'like_post' : 'like_comment';
+    let likeType: string;
+    if (referenceType === 'post') {
+      likeType = 'like_post';
+    } else if (referenceType === 'comment') {
+      likeType = 'like_comment';
+    } else {
+      likeType = 'like_story';
+    }
+    
     const result = await execute(
       `DELETE FROM notifications
        WHERE sender_profile_id = ?
@@ -404,6 +412,24 @@ export const notificationRepository = {
       type: 'like_post',
       reference_type: 'post',
       reference_id: postId,
+    });
+  },
+
+  /**
+   * Crea notifica di like a una storia.
+   * Chiamare quando qualcuno mette like a una storia.
+   */
+  async createLikeStoryNotification(
+    storyOwnerId: number,
+    likerId: number,
+    storyId: number
+  ): Promise<number | null> {
+    return this.create({
+      recipient_profile_id: storyOwnerId,
+      sender_profile_id: likerId,
+      type: 'like_story',
+      reference_type: 'story',
+      reference_id: storyId,
     });
   },
 
@@ -627,8 +653,8 @@ export const notificationRepository = {
         p.full_name as sender_full_name,
         p.profile_image_url as sender_profile_image_url,
         COALESCE(p.is_verified, 0) as sender_is_verified,
-        COALESCE(pm_post.media_url, pm_comment.media_url) as reference_image_url,
-        COALESCE(pm_post.media_type, pm_comment.media_type) as reference_media_type
+        COALESCE(pm_post.media_url, pm_comment.media_url, s.media_url) as reference_image_url,
+        COALESCE(pm_post.media_type, pm_comment.media_type, s.media_type) as reference_media_type
       FROM notifications n
       LEFT JOIN profiles p ON n.sender_profile_id = p.id AND p.deleted_at IS NULL
       LEFT JOIN posts ON n.reference_type = 'post' AND n.reference_id = posts.id AND posts.deleted_at IS NULL
@@ -636,6 +662,7 @@ export const notificationRepository = {
       LEFT JOIN comments c ON n.reference_type = 'comment' AND n.reference_id = c.id AND c.deleted_at IS NULL
       LEFT JOIN posts posts_from_comment ON c.post_id = posts_from_comment.id AND posts_from_comment.deleted_at IS NULL
       LEFT JOIN post_media pm_comment ON posts_from_comment.id = pm_comment.post_id AND pm_comment.position = 0 AND pm_comment.deleted_at IS NULL
+      LEFT JOIN stories s ON n.reference_type = 'story' AND n.reference_id = s.id AND s.deleted_at IS NULL
       WHERE n.recipient_profile_id = ?
       ORDER BY n.created_at DESC
       LIMIT ?`,

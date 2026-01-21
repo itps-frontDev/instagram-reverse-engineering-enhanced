@@ -1,29 +1,29 @@
 /**
- * @fileoverview Instagram Design Tokens
+ * @fileoverview Token di design di Instagram
  *
- * Exact colors, spacing, and design values from Instagram web.
- * These tokens ensure pixel-perfect consistency with the original.
+ * Colori, spaziature e valori di design esatti da Instagram web.
+ * Questi token garantiscono coerenza pixel-perfect con l'originale.
  */
 
 // ============================================================================
-// COLORS
+// COLORI
 // ============================================================================
 
 export const colors = {
-  // Primary
-  primary: '#0095F6', // Instagram blue
+  // Primari
+  primary: '#0095F6', // Blu Instagram
   primaryHover: '#1877F2',
   primaryPressed: '#004C8B',
 
-  // Text
-  textPrimary: '#262626', // Main text (light mode)
-  textSecondary: '#8E8E8E', // Secondary text (light mode)
-  textTertiary: '#A8A8A8', // Tertiary text (light mode)
+  // Testo
+  textPrimary: '#262626', // Testo principale (modalità chiara)
+  textSecondary: '#8E8E8E', // Testo secondario (modalità chiara)
+  textTertiary: '#A8A8A8', // Testo terziario (modalità chiara)
 
-  textPrimaryDark: '#FAFAFA', // Main text (dark mode)
-  textSecondaryDark: '#A8A8A8', // Secondary text (dark mode)
+  textPrimaryDark: '#FAFAFA', // Testo principale (modalità scura)
+  textSecondaryDark: '#A8A8A8', // Testo secondario (modalità scura)
 
-  // Background
+  // Sfondo
   bgPrimary: '#FFFFFF',
   bgSecondary: '#FAFAFA',
   bgTertiary: '#F2F2F2',
@@ -32,12 +32,12 @@ export const colors = {
   bgSecondaryDark: '#0C1014',
   bgTertiaryDark: '#121212',
 
-  // Borders
+  // Bordi
   border: '#DBDBDB',
   borderDark: '#262626',
 
-  // Interactive
-  like: '#ED4956', // Heart red
+  // Interattivi
+  like: '#ED4956', // Rosso cuore
   error: '#ED4956',
   success: '#00C26F',
 
@@ -47,7 +47,7 @@ export const colors = {
 } as const;
 
 // ============================================================================
-// SPACING
+// SPAZIATURE
 // ============================================================================
 
 export const spacing = {
@@ -62,13 +62,13 @@ export const spacing = {
 } as const;
 
 // ============================================================================
-// FONT SIZES
+// DIMENSIONI FONT
 // ============================================================================
 
 export const fontSize = {
   xs: '12px',
   sm: '14px',
-  base: '14px', // Instagram base
+  base: '14px', // Base Instagram
   md: '16px',
   lg: '18px',
   xl: '24px',
@@ -76,7 +76,7 @@ export const fontSize = {
 } as const;
 
 // ============================================================================
-// FONT WEIGHTS
+// PESI FONT
 // ============================================================================
 
 export const fontWeight = {
@@ -87,7 +87,7 @@ export const fontWeight = {
 } as const;
 
 // ============================================================================
-// BORDER RADIUS
+// RAGGIO BORDI
 // ============================================================================
 
 export const borderRadius = {
@@ -100,7 +100,7 @@ export const borderRadius = {
 } as const;
 
 // ============================================================================
-// TRANSITIONS
+// TRANSIZIONI
 // ============================================================================
 
 export const transition = {
@@ -121,7 +121,7 @@ export const zIndex = {
 } as const;
 
 // ============================================================================
-// BREAKPOINTS
+// BREAKPOINT
 // ============================================================================
 
 export const breakpoints = {
@@ -133,7 +133,7 @@ export const breakpoints = {
 } as const;
 
 // ============================================================================
-// COMPONENT SPECIFIC
+// COMPONENTI SPECIFICI
 // ============================================================================
 
 export const components = {

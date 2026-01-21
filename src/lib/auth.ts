@@ -1,7 +1,7 @@
 /**
- * @fileoverview Authentication utilities
+ * @fileoverview Utilità di autenticazione
  *
- * This file provides authentication functions using JWT tokens stored in HTTP-only cookies.
+ * Questo file fornisce funzioni di autenticazione usando token JWT memorizzati in cookie HTTP-only.
  *
  * @module lib/auth
  */
@@ -12,17 +12,17 @@ import { Profile } from '@/types/profile';
 import { verifyToken, type TokenPayload } from '@/lib/jwt';
 
 // ============================================================================
-// CONSTANTS
+// COSTANTI
 // ============================================================================
 
 export const AUTH_COOKIE_NAME = 'authToken';
 
 // ============================================================================
-// TYPES
+// TIPI
 // ============================================================================
 
 /**
- * Basic user information from the users table
+ * Informazioni di base dell'utente dalla tabella users
  */
 export interface User {
   id: number;
@@ -31,21 +31,21 @@ export interface User {
 }
 
 // ============================================================================
-// AUTH FUNCTIONS
+// FUNZIONI DI AUTENTICAZIONE
 // ============================================================================
 
 /**
- * Get the current authenticated user from the JWT token.
+ * Ottiene l'utente autenticato corrente dal token JWT.
  *
- * Reads the authToken from HTTP-only cookies, verifies it, and fetches user data.
+ * Legge l'authToken dai cookie HTTP-only, lo verifica e recupera i dati utente.
  *
- * @returns The current user or null if not authenticated
+ * @returns L'utente corrente o null se non autenticato
  *
  * @example
- * // In an API route
+ * // In una route API
  * const user = await getCurrentUser();
  * if (!user) {
- *   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+ *   return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 });
  * }
  */
 export async function getCurrentUser(): Promise<User | null> {
@@ -57,13 +57,13 @@ export async function getCurrentUser(): Promise<User | null> {
       return null;
     }
 
-    // Verify and decode JWT token
+    // Verifica e decodifica il token JWT
     const payload = await verifyToken(token);
     if (!payload) {
       return null;
     }
 
-    // Fetch user from database
+    // Recupera l'utente dal database
     const user = await queryOne<User>(
       `SELECT id, email, phone_number
        FROM users
@@ -73,25 +73,25 @@ export async function getCurrentUser(): Promise<User | null> {
 
     return user || null;
   } catch (error) {
-    console.error('[Auth] Error getting current user:', error);
+    console.error('[Auth] Errore nel recupero dell\'utente corrente:', error);
     return null;
   }
 }
 
 /**
- * Get the profile for the currently authenticated user.
+ * Ottiene il profilo dell'utente autenticato corrente.
  *
- * Fetches the profile associated with the authenticated user from the JWT token.
+ * Recupera il profilo associato all'utente autenticato dal token JWT.
  *
- * @returns The current user's profile or null if not authenticated
+ * @returns Il profilo dell'utente corrente o null se non autenticato
  *
  * @example
- * // In an API route
+ * // In una route API
  * const currentProfile = await getCurrentProfile();
  * if (!currentProfile) {
- *   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+ *   return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 });
  * }
- * console.log(`Current user: ${currentProfile.username}`);
+ * console.log(`Utente corrente: ${currentProfile.username}`);
  */
 export async function getCurrentProfile(): Promise<Profile | null> {
   try {
@@ -114,18 +114,18 @@ export async function getCurrentProfile(): Promise<Profile | null> {
 
     return profile || null;
   } catch (error) {
-    console.error('[Auth] Error getting current profile:', error);
+    console.error('[Auth] Errore nel recupero del profilo corrente:', error);
     return null;
   }
 }
 
 /**
- * Check if a user is authenticated.
+ * Verifica se un utente è autenticato.
  *
- * @returns true if user is authenticated, false otherwise
+ * @returns true se l'utente è autenticato, false altrimenti
  *
  * @example
- * // In a server component
+ * // In un componente server
  * const isAuth = await isAuthenticated();
  * if (!isAuth) {
  *   redirect('/login');
@@ -137,15 +137,15 @@ export async function isAuthenticated(): Promise<boolean> {
 }
 
 /**
- * Get the current user's ID.
+ * Ottiene l'ID dell'utente corrente.
  *
- * @returns The user ID or null if not authenticated
+ * @returns L'ID utente o null se non autenticato
  *
  * @example
- * // Quick check for user ID
+ * // Controllo rapido dell'ID utente
  * const userId = await getCurrentUserId();
  * if (!userId) {
- *   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+ *   return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 });
  * }
  */
 export async function getCurrentUserId(): Promise<number | null> {
@@ -154,15 +154,15 @@ export async function getCurrentUserId(): Promise<number | null> {
 }
 
 /**
- * Get the current user's profile ID.
+ * Ottiene l'ID del profilo dell'utente corrente.
  *
- * @returns The profile ID or null if not authenticated
+ * @returns L'ID del profilo o null se non autenticato
  *
  * @example
- * // Check if user owns a resource
+ * // Verifica se l'utente possiede una risorsa
  * const currentProfileId = await getCurrentProfileId();
  * if (currentProfileId === resourceOwnerId) {
- *   // Allow edit
+ *   // Consenti modifica
  * }
  */
 export async function getCurrentProfileId(): Promise<number | null> {
@@ -171,16 +171,16 @@ export async function getCurrentProfileId(): Promise<number | null> {
 }
 
 /**
- * Get the JWT token payload without fetching user data.
- * Faster than getCurrentUser() when you only need basic info from the token.
+ * Ottiene il payload del token JWT senza recuperare i dati utente.
+ * Più veloce di getCurrentUser() quando serve solo l'informazione di base dal token.
  *
- * @returns The token payload or null if not authenticated
+ * @returns Il payload del token o null se non autenticato
  *
  * @example
- * // Quick check for user ID without DB query
+ * // Controllo rapido dell'ID utente senza query DB
  * const payload = await getTokenPayload();
  * if (payload) {
- *   console.log('User ID:', payload.id);
+ *   console.log('ID Utente:', payload.id);
  * }
  */
 export async function getTokenPayload(): Promise<TokenPayload | null> {
@@ -194,7 +194,7 @@ export async function getTokenPayload(): Promise<TokenPayload | null> {
 
     return await verifyToken(token);
   } catch (error) {
-    console.error('[Auth] Error getting token payload:', error);
+    console.error('[Auth] Errore nel recupero del payload del token:', error);
     return null;
   }
 }

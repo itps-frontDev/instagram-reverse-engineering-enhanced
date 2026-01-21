@@ -17,31 +17,31 @@ function getDb(): sqlite3.Database {
     db = new sqlite3.Database(DB_PATH, (err) => {
       if (err) throw err;
       if (!IS_PRODUCTION) {
-        console.log(`[DB] Connected to SQLite database: ${DB_PATH}`);
+        console.log(`[DB] Connesso al database SQLite: ${DB_PATH}`);
       }
     });
     db.run("PRAGMA foreign_keys = ON");
-    // Using DELETE mode instead of WAL for better data persistence in development
-    // WAL mode can lose data if the server is killed abruptly
+    // Uso della modalità DELETE invece di WAL per maggiore persistenza dei dati in sviluppo
+    // La modalità WAL può perdere dati se il server viene terminato bruscamente
     db.run("PRAGMA journal_mode = DELETE");
   }
   return db;
 }
 
 /**
- * @template T - The expected type of each row in the result set
- * @param sql - The SQL query string with optional placeholders (?)
- * @param params - Optional array of values to bind to placeholders
- * @returns A Promise resolving to an array of rows matching the query, typed as T[]
+ * @template T - Il tipo atteso per ogni riga nel set di risultati
+ * @param sql - La query SQL con eventuali placeholder (?)
+ * @param params - Array opzionale di valori da associare ai placeholder
+ * @returns Una Promise che restituisce un array di righe corrispondenti alla query, tipizzate come T[]
  *
  * @example
- * // Get all active users
+ * // Ottieni tutti gli utenti attivi
  * const users = await queryAll<User>(
  *   'SELECT * FROM users WHERE deleted_at IS NULL'
  * );
  *
  * @example
- * // Get users with specific role
+ * // Ottieni utenti con un ruolo specifico
  * const admins = await queryAll<User>(
  *   'SELECT * FROM users WHERE role = ?',
  *   ['admin']
@@ -63,7 +63,7 @@ export async function queryAll<T = Record<string, unknown>>(
 
       const duration = Date.now() - start;
       if (!IS_PRODUCTION) {
-        console.log("[DB] Query executed", {
+        console.log("[DB] Query eseguita", {
           sql: sql.length > 80 ? sql.substring(0, 80) + "..." : sql,
           duration: `${duration}ms`,
           rows: Array.isArray(rows) ? rows.length : 0,
@@ -76,22 +76,22 @@ export async function queryAll<T = Record<string, unknown>>(
 }
 
 /**
- * Executes a SELECT query and returns the first matching row.
+ * Esegue una query SELECT e restituisce la prima riga corrispondente.
  *
- * @template T - The expected type of the result row
- * @param sql - The SQL query string with optional placeholders (?)
- * @param params - Optional array of values to bind to placeholders
- * @returns A Promise resolving to the first matching row typed as T, or undefined if no match
+ * @template T - Il tipo atteso della riga risultato
+ * @param sql - La query SQL con eventuali placeholder (?)
+ * @param params - Array opzionale di valori da associare ai placeholder
+ * @returns Una Promise che restituisce la prima riga corrispondente tipizzata come T, o undefined se non trovata
  *
  * @example
- * // Get user by ID
+ * // Ottieni utente per ID
  * const user = await queryOne<User>(
  *   'SELECT * FROM users WHERE id = ?',
  *   [userId]
  * );
  *
  * @example
- * // Get user by email (unique constraint)
+ * // Ottieni utente per email (vincolo di unicità)
  * const user = await queryOne<User>(
  *   'SELECT * FROM users WHERE email = ? AND deleted_at IS NULL',
  *   [email]
@@ -116,32 +116,32 @@ export async function queryOne<T = Record<string, unknown>>(
 }
 
 /**
- * Executes an INSERT, UPDATE, or DELETE query.
+ * Esegue una query INSERT, UPDATE o DELETE.
  *
- * @param sql - The SQL statement with optional placeholders (?)
- * @param params - Optional array of values to bind to placeholders
- * @returns A Promise resolving to an object containing:
- *   - `lastID`: The rowid of the last inserted row (for INSERT)
- *   - `changes`: Number of rows affected
+ * @param sql - L'istruzione SQL con eventuali placeholder (?)
+ * @param params - Array opzionale di valori da associare ai placeholder
+ * @returns Una Promise che restituisce un oggetto contenente:
+ *   - `lastID`: Il rowid dell'ultima riga inserita (per INSERT)
+ *   - `changes`: Numero di righe interessate
  *
  * @example
- * // Insert a new user
+ * // Inserisci un nuovo utente
  * const result = await execute(
  *   'INSERT INTO users (email, password_hash) VALUES (?, ?)',
  *   [email, passwordHash]
  * );
- * console.log('New user ID:', result.lastID);
+ * console.log('Nuovo ID utente:', result.lastID);
  *
  * @example
- * // Update a user
+ * // Aggiorna un utente
  * const result = await execute(
  *   'UPDATE users SET email = ? WHERE id = ?',
  *   [newEmail, userId]
  * );
- * console.log('Rows updated:', result.changes);
+ * console.log('Righe aggiornate:', result.changes);
  *
  * @example
- * // Soft delete a user
+ * // Eliminazione soft di un utente
  * await execute(
  *   "UPDATE users SET deleted_at = datetime('now') WHERE id = ?",
  *   [userId]
@@ -160,7 +160,7 @@ export async function execute(
         return;
       }
 
-      // 'this' context contains lastID and changes
+      // Il contesto 'this' contiene lastID e changes
       resolve({
         lastID: this.lastID,
         changes: this.changes,
@@ -170,17 +170,17 @@ export async function execute(
 }
 
 /**
- * Executes multiple SQL statements at once.
+ * Esegue più istruzioni SQL contemporaneamente.
  *
- * Useful for running migrations or initialization scripts.
- * Note: This does not support parameter binding.
+ * Utile per eseguire migrazioni o script di inizializzazione.
+ * Nota: Non supporta l'associazione di parametri.
  *
- * @param sql - A string containing one or more SQL statements
- * @returns A Promise that resolves when all statements are executed
- * @throws Error if any statement fails to execute
+ * @param sql - Una stringa contenente una o più istruzioni SQL
+ * @returns Una Promise che si risolve quando tutte le istruzioni sono eseguite
+ * @throws Error se una qualsiasi istruzione fallisce l'esecuzione
  *
  * @example
- * // Run a migration script
+ * // Esegui uno script di migrazione
  * const migrationSQL = await fs.readFile('migration.sql', 'utf-8');
  * await executeScript(migrationSQL);
  */
@@ -200,15 +200,15 @@ export async function executeScript(sql: string): Promise<void> {
 }
 
 /**
- * Closes the database connection.
+ * Chiude la connessione al database.
  *
- * Should be called when the application is shutting down to ensure
- * all pending operations are completed and resources are released.
+ * Dovrebbe essere chiamata quando l'applicazione si sta arrestando per garantire
+ * che tutte le operazioni in sospeso siano completate e le risorse rilasciate.
  *
- * @returns A Promise that resolves when the connection is closed
+ * @returns Una Promise che si risolve quando la connessione è chiusa
  *
  * @example
- * // In your app shutdown handler
+ * // Nel gestore di arresto dell'app
  * process.on('SIGINT', async () => {
  *   await closeDb();
  *   process.exit(0);
@@ -225,7 +225,7 @@ export async function closeDb(): Promise<void> {
 
         db = null;
         if (!IS_PRODUCTION) {
-          console.log("[DB] Connection closed");
+          console.log("[DB] Connessione chiusa");
         }
 
         resolve();
@@ -236,12 +236,6 @@ export async function closeDb(): Promise<void> {
   });
 }
 
-// ============================================================================
-// EXPORTS
-// ============================================================================
-
-// All exports are now async/Promise-based.
-export { getDb };
 
 /**
  * Esegue una funzione all'interno di una transazione database.
@@ -277,3 +271,10 @@ export async function withTransaction<T>(fn: () => Promise<T>): Promise<T> {
     throw error;
   }
 }
+
+// ============================================================================
+// ESPORTAZIONI
+// ============================================================================
+
+// Tutte le esportazioni sono ora basate su async/Promise.
+export { getDb };

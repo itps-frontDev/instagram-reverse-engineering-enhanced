@@ -1,7 +1,7 @@
 /**
- * @fileoverview JWT token utilities
+ * @fileoverview Utilità per token JWT
  *
- * Handles JWT token generation, verification, and decoding for authentication.
+ * Gestisce la generazione, verifica e decodifica di token JWT per l'autenticazione.
  *
  * @module lib/jwt
  */
@@ -9,7 +9,7 @@
 import { SignJWT, jwtVerify, decodeJwt } from 'jose';
 
 // ============================================================================
-// CONSTANTS
+// COSTANTI
 // ============================================================================
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-2025';
@@ -19,11 +19,11 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 const getSecretKey = () => new TextEncoder().encode(JWT_SECRET);
 
 // ============================================================================
-// TYPES
+// TIPI
 // ============================================================================
 
 /**
- * JWT token payload
+ * Payload del token JWT
  */
 export interface TokenPayload {
   id: number;
@@ -34,14 +34,14 @@ export interface TokenPayload {
 }
 
 // ============================================================================
-// FUNCTIONS
+// FUNZIONI
 // ============================================================================
 
 /**
- * Generate a JWT token for a user.
+ * Genera un token JWT per un utente.
  *
- * @param payload - User data to encode in the token
- * @returns The signed JWT token string
+ * @param payload - Dati utente da codificare nel token
+ * @returns La stringa del token JWT firmato
  *
  * @example
  * const token = generateToken({
@@ -69,17 +69,17 @@ export async function generateToken(payload: Omit<TokenPayload, 'iat' | 'exp'>):
 }
 
 /**
- * Verify and decode a JWT token.
+ * Verifica e decodifica un token JWT.
  *
- * @param token - The JWT token string to verify
- * @returns The decoded token payload or null if invalid
+ * @param token - La stringa del token JWT da verificare
+ * @returns Il payload del token decodificato o null se non valido
  *
  * @example
  * const payload = verifyToken(token);
  * if (payload) {
- *   console.log('User ID:', payload.id);
+ *   console.log('ID Utente:', payload.id);
  * } else {
- *   console.log('Invalid token');
+ *   console.log('Token non valido');
  * }
  */
 export async function verifyToken(token: string): Promise<TokenPayload | null> {
@@ -87,22 +87,22 @@ export async function verifyToken(token: string): Promise<TokenPayload | null> {
     const { payload } = await jwtVerify(token, getSecretKey());
     return payload as unknown as TokenPayload;
   } catch (error) {
-    console.error('[JWT] Token verification failed:', error);
+    console.error('[JWT] Verifica token fallita:', error);
     return null;
   }
 }
 
 /**
- * Decode a JWT token without verifying the signature.
- * Useful for inspecting expired tokens or debugging.
+ * Decodifica un token JWT senza verificare la firma.
+ * Utile per ispezionare token scaduti o per debug.
  *
- * @param token - The JWT token string to decode
- * @returns The decoded token payload or null if malformed
+ * @param token - La stringa del token JWT da decodificare
+ * @returns Il payload del token decodificato o null se malformato
  *
  * @example
  * const payload = decodeToken(token);
  * if (payload) {
- *   console.log('Token expires at:', new Date(payload.exp! * 1000));
+ *   console.log('Token scade il:', new Date(payload.exp! * 1000));
  * }
  */
 export function decodeToken(token: string): TokenPayload | null {
@@ -110,20 +110,20 @@ export function decodeToken(token: string): TokenPayload | null {
     const decoded = decodeJwt(token) as TokenPayload;
     return decoded;
   } catch (error) {
-    console.error('[JWT] Token decoding failed:', error);
+    console.error('[JWT] Decodifica token fallita:', error);
     return null;
   }
 }
 
 /**
- * Check if a JWT token is expired.
+ * Verifica se un token JWT è scaduto.
  *
- * @param token - The JWT token string to check
- * @returns true if the token is expired, false otherwise
+ * @param token - La stringa del token JWT da controllare
+ * @returns true se il token è scaduto, false altrimenti
  *
  * @example
  * if (isTokenExpired(token)) {
- *   console.log('Please login again');
+ *   console.log('Per favore effettua nuovamente il login');
  * }
  */
 export function isTokenExpired(token: string): boolean {

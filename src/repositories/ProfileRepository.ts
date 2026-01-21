@@ -442,6 +442,9 @@ export const profileRepository = {
          AND deleted_at IS NULL) as is_following`
       : 'NULL as is_following';
 
+    // Costruisce la condizione per escludere l'utente corrente dai risultati
+    const excludeCurrentUser = currentProfileId ? 'AND id != ?' : '';
+
     const sql = `
       SELECT
         id, username, full_name, profile_image_url,
@@ -450,6 +453,7 @@ export const profileRepository = {
       FROM profiles
       WHERE deleted_at IS NULL
         AND (LOWER(username) LIKE ? OR LOWER(full_name) LIKE ?)
+        ${excludeCurrentUser}
       ORDER BY 
         CASE 
           WHEN LOWER(username) = LOWER(?) THEN 0
@@ -461,7 +465,7 @@ export const profileRepository = {
 
     // Parametri variano in base a se l'utente è autenticato
     const params = currentProfileId
-      ? [currentProfileId, searchTerm, searchTerm, queryTrimmed, startsWithPattern, limit]
+      ? [currentProfileId, searchTerm, searchTerm, currentProfileId, queryTrimmed, startsWithPattern, limit]
       : [searchTerm, searchTerm, queryTrimmed, startsWithPattern, limit];
 
     // Usa il tipo Row interno per i risultati raw del database

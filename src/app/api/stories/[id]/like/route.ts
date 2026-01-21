@@ -3,6 +3,12 @@
  *
  * POST /api/stories/[id]/like - Toggle like su una storia
  *
+ * PROCESSO:
+ * 1. Verifica autenticazione utente
+ * 2. Verifica che la storia esista e sia attiva
+ * 3. Toggle del like (aggiungi o rimuovi)
+ * 4. Crea/elimina notifica per il proprietario della storia (se diverso)
+ *
  * PATTERN REPOSITORY:
  * Usa StoryRepository per accesso centralizzato ai dati.
  * 
@@ -11,7 +17,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentProfile } from '@/lib/auth';
-import { storyRepository } from '@/repositories';
+import { storyRepository, notificationRepository } from '@/repositories';
 
 /**
  * POST /api/stories/[id]/like
@@ -34,15 +40,40 @@ export async function POST(
     return NextResponse.json({ error: 'ID storia non valido' }, { status: 400 });
   }
 
-  // Verifica che la storia esista e non sia scaduta
-  const storyExists = await storyRepository.existsAndActive(storyId);
+  // Recupera la storia per verificare esistenza e proprietario
+  const story = await storyRepository.findById(storyId);
 
-  if (!storyExists) {
-    return NextResponse.json({ error: 'Storia non trovata o scaduta' }, { status: 404 });
+  if (!story) {
+    return NextResponse.json({ error: 'Storia non trovata' }, { status: 404 });
+  }
+
+  // Verifica che la storia sia ancora attiva
+  const isActive = await storyRepository.existsAndActive(storyId);
+  if (!isActive) {
+    return NextResponse.json({ error: 'Storia scaduta' }, { status: 404 });
   }
 
   // Toggle like usando il repository (ritorna true se ha messo like, false se lo ha tolto)
   const liked = await storyRepository.likeStory(storyId, profile.id);
+
+  // Gestione notifiche (solo se non è like alla propria storia)
+  if (story.profile_id !== profile.id) {
+    if (liked) {
+      // Crea notifica di like
+      await notificationRepository.createLikeStoryNotification(
+        story.profile_id,
+        profile.id,
+        storyId
+      );
+    } else {
+      // Elimina notifica di like
+      await notificationRepository.deleteLikeNotification(
+        profile.id,
+        storyId,
+        'story'
+      );
+    }
+  }
 
   return NextResponse.json({ liked });
 }
