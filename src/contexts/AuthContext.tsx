@@ -7,7 +7,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import type { Profile } from '@/lib/types/profile';
+import type { Profile } from '@/types/profile';
 
 interface AuthContextType {
   profile: Profile | null;

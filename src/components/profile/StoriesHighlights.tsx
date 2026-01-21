@@ -7,7 +7,7 @@
 'use client';
 
 import Image from 'next/image';
-import { StoriesHighlightsProps } from '@/lib/types/profile';
+import { StoriesHighlightsProps } from '@/types/profile';
 
 export default function StoriesHighlights({
   highlights,

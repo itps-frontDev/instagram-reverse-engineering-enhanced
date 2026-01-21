@@ -42,9 +42,18 @@ export interface Post {
   likes_count: number;
   comments_count: number;
   created_at: string;
-  media_url: string;
-  media_type: 'image' | 'video';
+  media_url: string | null;
+  media_type: 'image' | 'video' | null;
   media_count: number; // Total media items in carousel
+}
+
+/**
+ * Simplified post for preview display (hover card)
+ */
+export interface PreviewPost {
+  id: number;
+  media_url: string | null;
+  media_type: string | null;
 }
 
 /**
@@ -89,6 +98,24 @@ export interface StoryHighlight {
  */
 export interface GetProfileResponse {
   profile: Profile;
+}
+
+/**
+ * Response from GET /api/profiles/[username]/preview
+ */
+export interface ProfilePreviewResponse {
+  id: number;
+  username: string;
+  full_name: string | null;
+  bio: string | null;
+  profile_image_url: string | null;
+  is_verified: boolean;
+  is_private: boolean;
+  posts_count: number;
+  followers_count: number;
+  following_count: number;
+  is_following: boolean;
+  recent_posts: PreviewPost[];
 }
 
 /**

@@ -8,7 +8,7 @@
 import { use, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Post from '@/components/feed/Post';
-import type { FeedPost } from '@/lib/types/feed';
+import type { FeedPost } from '@/types/feed';
 
 interface PostPageProps {
   params: Promise<{

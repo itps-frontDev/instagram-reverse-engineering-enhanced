@@ -1,15 +1,23 @@
 /**
- * @fileoverview API route for following a user
+ * @fileoverview API per Seguire un Utente
  *
- * This endpoint creates a follow relationship between the current user
- * and a target profile. If the target is private, creates a pending request.
- *
+ * POST /api/profiles/actions/follow
+ * Crea una relazione di follow tra l'utente corrente e un profilo target.
+ * Se il target è privato, crea una richiesta pending.
+ * 
+ * LOGICA FOLLOW:
+ * - Profilo pubblico: status = 'accepted' immediato
+ * - Profilo privato: status = 'pending' (richiede approvazione)
+ * 
+ * PATTERN REPOSITORY:
+ * Usa profileRepository per accesso centralizzato al database.
+ * 
  * @module api/profiles/actions/follow
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { queryOne, execute } from '@/lib/db';
-import { Profile, FollowRequest, FollowResponse } from '@/lib/types/profile';
+import { profileRepository, notificationRepository } from '@/repositories';
+import { FollowRequest, FollowResponse } from '@/types/profile';
 import { getCurrentProfile } from '@/lib/auth';
 
 // ============================================================================
@@ -17,83 +25,66 @@ import { getCurrentProfile } from '@/lib/auth';
 // ============================================================================
 
 /**
- * Follow a user.
+ * Segue un utente.
  *
- * Requires authentication (mock cookie).
+ * Richiede autenticazione.
  *
- * @param request - Next.js request object with body { targetProfileId: number }
- * @returns Follow response with status (pending or accepted)
- *
- * @example
- * // Follow a user
- * const response = await fetch('/api/profiles/actions/follow', {
- *   method: 'POST',
- *   headers: { 'Content-Type': 'application/json' },
- *   body: JSON.stringify({ targetProfileId: 123 })
- * });
- * const { success, status } = await response.json();
+ * @param request - Richiesta con body { targetProfileId: number }
+ * @returns Risposta con stato (pending o accepted)
  */
 export async function POST(request: NextRequest) {
   try {
-    // Get current user's profile
+    // Ottiene il profilo corrente autenticato
     const currentProfile = await getCurrentProfile();
 
     if (!currentProfile) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Non autorizzato' },
         { status: 401 }
       );
     }
 
-    // Parse request body
+    // Parsing del body della richiesta
     const body: FollowRequest = await request.json();
     const { targetProfileId } = body;
 
-    // Validate request
+    // Validazione
     if (!targetProfileId || typeof targetProfileId !== 'number') {
       return NextResponse.json(
-        { error: 'Target profile ID is required' },
+        { error: 'ID profilo target obbligatorio' },
         { status: 400 }
       );
     }
 
-    // Cannot follow yourself
+    // Non puoi seguire te stesso
     if (currentProfile.id === targetProfileId) {
       return NextResponse.json(
-        { error: 'Cannot follow yourself' },
+        { error: 'Non puoi seguire te stesso' },
         { status: 400 }
       );
     }
 
-    // Check if target profile exists
-    const targetProfile = await queryOne<Profile>(
-      'SELECT id, username, is_private FROM profiles WHERE id = ? AND deleted_at IS NULL',
-      [targetProfileId]
-    );
+    // Verifica esistenza profilo target usando repository
+    const targetProfile = await profileRepository.findById(targetProfileId);
 
     if (!targetProfile) {
       return NextResponse.json(
-        { error: 'Target profile not found' },
+        { error: 'Profilo target non trovato' },
         { status: 404 }
       );
     }
 
-    // Check if already following
-    const existingFollow = await queryOne<{ id: number; status: string }>(
-      `SELECT id, status
-       FROM follows
-       WHERE follower_profile_id = ?
-         AND following_profile_id = ?
-         AND deleted_at IS NULL`,
-      [currentProfile.id, targetProfileId]
+    // Verifica se già segue usando repository
+    const existingRelation = await profileRepository.getFollowRelationship(
+      currentProfile.id,
+      targetProfileId
     );
 
-    if (existingFollow) {
-      const status = existingFollow.status;
+    if (existingRelation) {
       const message =
-        status === 'accepted'
-          ? 'Already following this user'
-          : 'Follow request already sent';
+        existingRelation.status === 'accepted'
+          ? 'Stai già seguendo questo utente'
+          : 'Richiesta di follow già inviata';
 
       return NextResponse.json(
         { error: message },
@@ -101,64 +92,47 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Determine follow status based on target privacy
+    // Determina lo status in base alla privacy del target
     const followStatus = targetProfile.is_private ? 'pending' : 'accepted';
 
-    // Insert follow relationship
-    await execute(
-      `INSERT INTO follows (follower_profile_id, following_profile_id, status)
-       VALUES (?, ?, ?)`,
-      [currentProfile.id, targetProfileId, followStatus]
+    // Crea la relazione di follow usando il repository
+    await profileRepository.createFollow(
+      currentProfile.id,
+      targetProfileId,
+      followStatus
     );
 
-    // Update following_count for current user
-    await execute(
-      `UPDATE profiles
-       SET following_count = following_count + 1,
-           updated_at = datetime('now')
-       WHERE id = ?`,
-      [currentProfile.id]
-    );
-
-    // Update followers_count for target user (only if accepted)
+    // Aggiorna i contatori solo se il follow è accettato immediatamente
+    // Se è pending, i contatori verranno aggiornati quando la richiesta sarà accettata
     if (followStatus === 'accepted') {
-      await execute(
-        `UPDATE profiles
-         SET followers_count = followers_count + 1,
-             updated_at = datetime('now')
-         WHERE id = ?`,
-        [targetProfileId]
-      );
+      await profileRepository.incrementFollowingCount(currentProfile.id);
+      await profileRepository.incrementFollowersCount(targetProfileId);
     }
 
-    // Create notification for the target user (remove duplicates first)
+    // Crea notifica per il target usando il repository
     const notificationType = followStatus === 'pending' ? 'follow_request' : 'follow';
     
-    // Delete any existing notification of the same type from this sender to this recipient
-    await execute(
-      `DELETE FROM notifications 
-       WHERE recipient_profile_id = ? 
-       AND sender_profile_id = ? 
-       AND type IN ('follow', 'follow_request')
-       AND reference_type = 'profile'`,
-      [targetProfileId, currentProfile.id]
+    // Prima elimina notifiche di follow duplicate esistenti
+    await notificationRepository.deleteFollowNotification(
+      currentProfile.id,  // attore
+      targetProfileId     // destinatario
     );
     
-    // Create new notification
-    await execute(
-      `INSERT INTO notifications (recipient_profile_id, sender_profile_id, type, reference_type, reference_id)
-       VALUES (?, ?, ?, ?, ?)`,
-      [targetProfileId, currentProfile.id, notificationType, 'profile', currentProfile.id]
-    );
+    // Poi crea la nuova notifica
+    await notificationRepository.create({
+      recipient_profile_id: targetProfileId,
+      actor_profile_id: currentProfile.id,
+      type: notificationType,
+    });
 
-    // Return success response
+    // Risposta di successo
     const response: FollowResponse = {
       success: true,
       status: followStatus,
       message:
         followStatus === 'accepted'
-          ? `Now following ${targetProfile.username}`
-          : `Follow request sent to ${targetProfile.username}`,
+          ? `Ora segui ${targetProfile.username}`
+          : `Richiesta di follow inviata a ${targetProfile.username}`,
     };
 
     return NextResponse.json(response, {
@@ -168,12 +142,12 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('[API] Error following user:', error);
+    console.error('[API] Errore nel follow:', error);
 
     return NextResponse.json(
       {
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Errore interno del server',
+        message: error instanceof Error ? error.message : 'Errore sconosciuto',
       },
       { status: 500 }
     );

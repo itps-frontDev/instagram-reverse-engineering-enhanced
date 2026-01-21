@@ -1,23 +1,27 @@
 /**
- * @fileoverview API route for fetching post tags
+ * @fileoverview API per ottenere i tag di un post
  *
- * Returns all tagged users for a specific post with their positions
+ * GET /api/posts/[postId]/tags
+ * Restituisce tutti gli utenti taggati in un post con le loro posizioni.
+ * 
+ * UTILIZZO:
+ * I tag vengono mostrati quando l'utente clicca sull'icona tag
+ * su un'immagine nel post viewer.
+ * 
+ * @module api/posts/[postId]/tags
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { queryAll } from '@/lib/db';
+import { postRepository } from '@/repositories';
 
-interface PostTag {
-  id: number;
-  post_id: number;
-  post_media_id: number | null;
-  tagged_profile_id: number;
-  tagged_username: string;
-  x_position: number;
-  y_position: number;
-  created_at: string;
-}
-
+/**
+ * GET /api/posts/[postId]/tags
+ * 
+ * Ottiene tutti i tag di un post.
+ * 
+ * @param params.postId - ID del post
+ * @returns { tags: PostTag[] }
+ */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ postId: string }> }
@@ -28,34 +32,19 @@ export async function GET(
 
     if (isNaN(postId)) {
       return NextResponse.json(
-        { error: 'Invalid post ID' },
+        { error: 'ID post non valido' },
         { status: 400 }
       );
     }
 
-    // Get all tags for this post with tagged user info
-    const tags = await queryAll<PostTag>(
-      `SELECT 
-        pt.id,
-        pt.post_id,
-        pt.post_media_id,
-        pt.tagged_profile_id,
-        p.username as tagged_username,
-        pt.x_position,
-        pt.y_position,
-        pt.created_at
-      FROM post_tags pt
-      JOIN profiles p ON pt.tagged_profile_id = p.id
-      WHERE pt.post_id = ?
-      ORDER BY pt.created_at ASC`,
-      [postId]
-    );
+    // Ottieni tutti i tag tramite repository
+    const tags = await postRepository.getPostTags(postId);
 
     return NextResponse.json({ tags });
   } catch (error) {
-    console.error('Error fetching post tags:', error);
+    console.error('[Post Tags] Errore:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch tags' },
+      { error: 'Errore nel recupero dei tag' },
       { status: 500 }
     );
   }

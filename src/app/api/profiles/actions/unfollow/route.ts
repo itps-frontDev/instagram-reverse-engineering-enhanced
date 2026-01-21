@@ -1,15 +1,23 @@
 /**
- * @fileoverview API route for unfollowing a user
+ * @fileoverview API per Smettere di Seguire un Utente
  *
- * This endpoint removes a follow relationship between the current user
- * and a target profile (soft delete).
- *
+ * POST /api/profiles/actions/unfollow
+ * Rimuove una relazione di follow (soft delete).
+ * 
+ * LOGICA UNFOLLOW:
+ * - Soft delete della relazione (imposta deleted_at)
+ * - Decrementa i contatori appropriati
+ * - Rimuove la notifica di follow associata
+ * 
+ * PATTERN REPOSITORY:
+ * Usa profileRepository per accesso centralizzato al database.
+ * 
  * @module api/profiles/actions/unfollow
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { queryOne, execute } from '@/lib/db';
-import { Profile, UnfollowRequest, UnfollowResponse } from '@/lib/types/profile';
+import { profileRepository, notificationRepository } from '@/repositories';
+import { UnfollowRequest, UnfollowResponse } from '@/types/profile';
 import { getCurrentProfile } from '@/lib/auth';
 
 // ============================================================================
@@ -17,137 +25,94 @@ import { getCurrentProfile } from '@/lib/auth';
 // ============================================================================
 
 /**
- * Unfollow a user.
+ * Smette di seguire un utente.
  *
- * Requires authentication (mock cookie).
+ * Richiede autenticazione.
  *
- * @param request - Next.js request object with body { targetProfileId: number }
- * @returns Unfollow response
- *
- * @example
- * // Unfollow a user
- * const response = await fetch('/api/profiles/actions/unfollow', {
- *   method: 'POST',
- *   headers: { 'Content-Type': 'application/json' },
- *   body: JSON.stringify({ targetProfileId: 123 })
- * });
- * const { success, message } = await response.json();
+ * @param request - Richiesta con body { targetProfileId: number }
+ * @returns Risposta di conferma unfollow
  */
 export async function POST(request: NextRequest) {
   try {
-    // Get current user's profile
+    // Ottiene il profilo corrente autenticato
     const currentProfile = await getCurrentProfile();
 
     if (!currentProfile) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Non autorizzato' },
         { status: 401 }
       );
     }
 
-    // Parse request body
+    // Parsing del body della richiesta
     const body: UnfollowRequest = await request.json();
     const { targetProfileId } = body;
 
-    // Validate request
+    // Validazione
     if (!targetProfileId || typeof targetProfileId !== 'number') {
       return NextResponse.json(
-        { error: 'Target profile ID is required' },
+        { error: 'ID profilo target obbligatorio' },
         { status: 400 }
       );
     }
 
-    // Cannot unfollow yourself
+    // Non puoi smettere di seguire te stesso
     if (currentProfile.id === targetProfileId) {
       return NextResponse.json(
-        { error: 'Cannot unfollow yourself' },
+        { error: 'Non puoi smettere di seguire te stesso' },
         { status: 400 }
       );
     }
 
-    // Check if target profile exists
-    const targetProfile = await queryOne<Profile>(
-      'SELECT id, username FROM profiles WHERE id = ? AND deleted_at IS NULL',
-      [targetProfileId]
-    );
+    // Verifica esistenza profilo target usando repository
+    const targetProfile = await profileRepository.findById(targetProfileId);
 
     if (!targetProfile) {
       return NextResponse.json(
-        { error: 'Target profile not found' },
+        { error: 'Profilo target non trovato' },
         { status: 404 }
       );
     }
 
-    // Check if currently following
-    const existingFollow = await queryOne<{ id: number; status: string }>(
-      `SELECT id, status
-       FROM follows
-       WHERE follower_profile_id = ?
-         AND following_profile_id = ?
-         AND deleted_at IS NULL`,
-      [currentProfile.id, targetProfileId]
+    // Verifica se sta effettivamente seguendo usando repository
+    const existingRelation = await profileRepository.getFollowRelationship(
+      currentProfile.id,
+      targetProfileId
     );
 
-    if (!existingFollow) {
+    if (!existingRelation) {
       return NextResponse.json(
-        { error: 'Not following this user' },
+        { error: 'Non stai seguendo questo utente' },
         { status: 409 }
       );
     }
 
-    const wasAccepted = existingFollow.status === 'accepted';
+    const wasAccepted = existingRelation.status === 'accepted';
 
-    // Soft delete follow relationship
-    await execute(
-      `UPDATE follows
-       SET deleted_at = datetime('now')
-       WHERE follower_profile_id = ?
-         AND following_profile_id = ?
-         AND deleted_at IS NULL`,
-      [currentProfile.id, targetProfileId]
-    );
+    // Soft delete della relazione di follow usando il repository
+    await profileRepository.deleteFollow(currentProfile.id, targetProfileId);
 
-    // Update following_count for current user
-    await execute(
-      `UPDATE profiles
-       SET following_count = CASE
-             WHEN following_count > 0 THEN following_count - 1
-             ELSE 0
-           END,
-           updated_at = datetime('now')
-       WHERE id = ?`,
-      [currentProfile.id]
-    );
-
-    // Update followers_count for target user (only if was accepted)
+    /**
+     * Aggiorna i contatori solo se la relazione era 'accepted'
+     * (se era pending, i contatori non erano mai stati incrementati)
+     */
     if (wasAccepted) {
-      await execute(
-        `UPDATE profiles
-         SET followers_count = CASE
-               WHEN followers_count > 0 THEN followers_count - 1
-               ELSE 0
-             END,
-             updated_at = datetime('now')
-         WHERE id = ?`,
-        [targetProfileId]
-      );
+      await profileRepository.decrementFollowingCount(currentProfile.id);
+      await profileRepository.decrementFollowersCount(targetProfileId);
     }
 
-    // Remove follow notification
-    await execute(
-      `DELETE FROM notifications
-       WHERE recipient_profile_id = ?
-         AND sender_profile_id = ?
-         AND type = 'follow'`,
-      [targetProfileId, currentProfile.id]
+    // Rimuove la notifica di follow usando il repository
+    await notificationRepository.deleteFollowNotification(
+      currentProfile.id,  // attore
+      targetProfileId     // destinatario
     );
 
-    // Return success response
+    // Risposta di successo
     const response: UnfollowResponse = {
       success: true,
       message: wasAccepted
-        ? `Unfollowed ${targetProfile.username}`
-        : `Follow request cancelled for ${targetProfile.username}`,
+        ? `Hai smesso di seguire ${targetProfile.username}`
+        : `Richiesta di follow annullata per ${targetProfile.username}`,
     };
 
     return NextResponse.json(response, {
@@ -157,12 +122,12 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('[API] Error unfollowing user:', error);
+    console.error(`[API] Errore nell\'unfollow:`, error);
 
     return NextResponse.json(
       {
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Errore interno del server',
+        message: error instanceof Error ? error.message : 'Errore sconosciuto',
       },
       { status: 500 }
     );

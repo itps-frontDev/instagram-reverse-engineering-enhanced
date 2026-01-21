@@ -1,158 +1,112 @@
 /**
- * @fileoverview API route for editing user profile
+ * @fileoverview API per la Modifica del Profilo
  *
- * PUT /api/profiles/edit - Update user profile information
+ * PUT /api/profiles/edit - Aggiorna bio, website, genere del profilo.
+ * 
+ * PATTERN REPOSITORY:
+ * Usa profileRepository per accesso centralizzato al database.
+ * Il metodo update() gestisce dinamicamente i campi da aggiornare.
+ * 
+ * @module api/profiles/edit
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { execute, queryOne } from '@/lib/db';
-import { verifyToken } from '@/lib/jwt';
+import { getCurrentProfile } from '@/lib/auth';
+import { profileRepository } from '@/repositories';
 
-interface Profile {
-  id: number;
-  username: string;
-  full_name: string | null;
-  bio: string | null;
-  website_url: string | null;
-  profile_image_url: string | null;
-  gender: string | null;
-  custom_gender: string | null;
-}
+// ============================================================================
+// PUT /api/profiles/edit
+// ============================================================================
 
 /**
- * PUT /api/profiles/edit
- * Update user profile (bio, website)
+ * Aggiorna le informazioni del profilo (bio, website, genere).
+ * 
+ * @param request - Richiesta Next.js con body JSON
+ * @returns Profilo aggiornato o errore
  */
 export async function PUT(request: NextRequest) {
   try {
-    // Verify authentication
-    const cookieStore = await cookies();
-    const token = cookieStore.get('authToken')?.value;
+    // Verifica autenticazione usando helper centralizzato
+    const currentProfile = await getCurrentProfile();
 
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!currentProfile) {
+      return NextResponse.json(
+        { error: 'Non autorizzato' }, 
+        { status: 401 }
+      );
     }
 
-    const payload = await verifyToken(token);
-    
-    if (!payload) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
-    
-    const userId = payload.id;
-
-    // Parse request body
+    // Parsing del body della richiesta
     const body = await request.json();
     const { website_url, bio, gender, custom_gender } = body;
 
-    // Validation
+
+    // -------------------
+    // Validazione campi
+    // -------------------
+
+    // Validazione bio
     if (bio && bio.length > 150) {
       return NextResponse.json(
-        { error: 'Bio must be 150 characters or less' },
+        { error: 'La bio deve contenere al massimo 150 caratteri' },
         { status: 400 }
       );
     }
 
     if (website_url && website_url.length > 0) {
-      // Basic URL validation
+      // L'URL del sito web deve essere valida
       try {
         new URL(website_url);
       } catch {
         return NextResponse.json(
-          { error: 'Invalid website URL' },
+          { error: 'URL del sito web non valida' },
           { status: 400 }
         );
       }
     }
 
-    // Validate gender
+    // Validazione genere
     if (gender !== undefined) {
       const validGenders = ['male', 'female', 'prefer_not_to_say', 'custom'];
       if (!validGenders.includes(gender)) {
         return NextResponse.json(
-          { error: 'Invalid gender value' },
+          { error: 'Valore di genere non valido' },
           { status: 400 }
         );
       }
 
-      // If gender is custom, custom_gender must be provided
+      // Se il genere è personalizzato, custom_gender deve essere fornito
       if (gender === 'custom' && (!custom_gender || custom_gender.trim() === '')) {
         return NextResponse.json(
-          { error: 'Custom gender is required when gender is set to custom' },
+          { error: 'Il genere personalizzato è obbligatorio quando il genere è impostato su personalizzato' },
           { status: 400 }
         );
       }
     }
 
-    // Get user's profile_id first
-    const profileData = await queryOne<{ id: number }>(
-      `SELECT id FROM profiles WHERE user_id = ? AND deleted_at IS NULL`,
-      [userId]
-    );
+    // Usa il repository per aggiornare il profilo
+    // Il metodo update gestisce dinamicamente i campi forniti
 
-    if (!profileData) {
-      return NextResponse.json(
-        { error: 'Profile not found' },
-        { status: 404 }
-      );
-    }
+    // Costruisce l'oggetto di aggiornamento con i campi forniti
+    // Il repository gestisce dinamicamente solo i campi definiti
+    await profileRepository.update(currentProfile.id, {
+      bio: bio !== undefined ? (bio || null) : undefined,
+      website_url: website_url !== undefined ? (website_url || null) : undefined,
+      gender: gender,
+      custom_gender: gender === 'custom' ? custom_gender : (gender !== undefined ? null : undefined),
+    });
 
-    // Build update query dynamically
-    const updates: string[] = [];
-    const values: any[] = [];
-
-    if (bio !== undefined) {
-      updates.push('bio = ?');
-      values.push(bio || null);
-    }
-
-    if (website_url !== undefined) {
-      updates.push('website_url = ?');
-      values.push(website_url || null);
-    }
-
-    if (gender !== undefined) {
-      updates.push('gender = ?');
-      values.push(gender);
-      
-      // Handle custom_gender based on gender selection
-      if (gender === 'custom' && custom_gender) {
-        updates.push('custom_gender = ?');
-        values.push(custom_gender);
-      } else {
-        updates.push('custom_gender = ?');
-        values.push(null);
-      }
-    }
-
-    updates.push('updated_at = CURRENT_TIMESTAMP');
-
-    // Update profile in database
-    values.push(profileData.id);
-    await execute(
-      `UPDATE profiles
-       SET ${updates.join(', ')}
-       WHERE id = ?`,
-      values
-    );
-
-    // Fetch updated profile
-    const updatedProfile = await queryOne<Profile>(
-      `SELECT id, username, full_name, bio, website_url, profile_image_url, gender, custom_gender
-       FROM profiles
-       WHERE id = ?`,
-      [profileData.id]
-    );
+    // Recupera il profilo aggiornato usando il repository
+    const updatedProfile = await profileRepository.findById(currentProfile.id);
 
     return NextResponse.json({
       success: true,
       profile: updatedProfile,
     });
   } catch (err) {
-    console.error('Error updating profile:', err);
+    console.error('[PUT /api/profiles/edit] Errore:', err);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Errore interno del server' },
       { status: 500 }
     );
   }

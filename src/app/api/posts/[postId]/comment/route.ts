@@ -1,63 +1,96 @@
 /**
- * @fileoverview Comment on a post
+ * @fileoverview API per commentare un post
+ * 
  * POST /api/posts/[postId]/comment
+ * Aggiunge un commento al post specificato.
+ * 
+ * PROCESSO:
+ * 1. Verifica autenticazione utente
+ * 2. Valida testo commento (non vuoto)
+ * 3. Inserisce commento tramite repository
+ * 4. Incrementa contatore comments_count del post
+ * 5. Crea notifica per il proprietario del post (se diverso)
+ * 
+ * @module api/posts/[postId]/comment
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentProfileId } from '@/lib/auth';
-import { execute, queryOne } from '@/lib/db';
+import { commentRepository, postRepository, notificationRepository } from '@/repositories';
 
+// Forza runtime Node.js
+export const runtime = 'nodejs';
+
+/**
+ * Gestisce richiesta POST per aggiungere commento.
+ * 
+ * @param request - Request con body JSON { text: string }
+ * @param params - Contiene postId
+ * @returns Messaggio di successo o errore
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
-    // Verify authentication
+    // Verifica autenticazione
     const profileId = await getCurrentProfileId();
     if (!profileId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { postId } = await params;
-    const postIdNum = parseInt(postId);
-    const body = await request.json();
-    const { text } = body;
-
-    if (!text || text.trim().length === 0) {
-      return NextResponse.json({ error: 'Comment text is required' }, { status: 400 });
-    }
-
-    // Insert comment
-    await execute(
-      `INSERT INTO comments (post_id, profile_id, text) 
-       VALUES (?, ?, ?)`,
-      [postIdNum, profileId, text.trim()]
-    );
-
-    // Update post comments_count
-    await execute(
-      `UPDATE posts SET comments_count = comments_count + 1 WHERE id = ?`,
-      [postIdNum]
-    );
-
-    // Get post owner to send notification
-    const post = await queryOne<{ profile_id: number }>(
-      `SELECT profile_id FROM posts WHERE id = ?`,
-      [postIdNum]
-    );
-
-    // Create notification (only if not commenting on own post)
-    if (post && post.profile_id !== profileId) {
-      await execute(
-        `INSERT INTO notifications (recipient_profile_id, sender_profile_id, type, reference_type, reference_id)
-         VALUES (?, ?, 'comment', 'post', ?)`,
-        [post.profile_id, profileId, postIdNum]
+      return NextResponse.json(
+        { error: 'Non autorizzato' }, 
+        { status: 401 }
       );
     }
 
-    return NextResponse.json({ message: 'Comment added successfully' });
+    // Estrai parametri
+    const { postId } = await params;
+    const postIdNum = parseInt(postId);
+    
+    // Parse body JSON
+    const body = await request.json();
+    const { text } = body;
+
+    // Validazione: testo richiesto e non vuoto
+    if (!text || text.trim().length === 0) {
+      return NextResponse.json(
+        { error: 'Testo commento richiesto' }, 
+        { status: 400 }
+      );
+    }
+
+    // Recupera il post per verificare esistenza e proprietario
+    const post = await postRepository.findById(postIdNum);
+    if (!post) {
+      return NextResponse.json(
+        { error: 'Post non trovato' },
+        { status: 404 }
+      );
+    }
+
+    // Aggiungi commento tramite repository
+    // (gestisce anche incremento contatore comments_count)
+    const comment = await commentRepository.create(
+      postIdNum,
+      profileId,
+      text.trim()
+    );
+
+    // Crea notifica (solo se non è commento al proprio post)
+    if (post.profile_id !== profileId) {
+      await notificationRepository.createCommentNotification(
+        post.profile_id,
+        profileId,
+        postIdNum,
+        comment.id
+      );
+    }
+
+    return NextResponse.json({ message: 'Commento aggiunto con successo' });
   } catch (error) {
-    console.error('Error adding comment:', error);
-    return NextResponse.json({ error: 'Failed to add comment' }, { status: 500 });
+    console.error('[Comments] Errore aggiunta commento:', error);
+    return NextResponse.json(
+      { error: 'Impossibile aggiungere commento' }, 
+      { status: 500 }
+    );
   }
 }

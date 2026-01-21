@@ -1,13 +1,15 @@
 /**
- * @fileoverview API route for marking notifications as read
+ * @fileoverview API per segnare le notifiche come lette
  *
- * This endpoint marks all notifications as read for the authenticated user.
+ * Questo endpoint segna tutte le notifiche come lette per l'utente autenticato.
  *
+ * REFACTORING: Usa NotificationRepository invece di query dirette.
+ * 
  * @module api/notifications/mark-read
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { execute } from '@/lib/db';
+import { notificationRepository } from '@/repositories';
 import { getCurrentProfile } from '@/lib/auth';
 
 // ============================================================================
@@ -15,41 +17,40 @@ import { getCurrentProfile } from '@/lib/auth';
 // ============================================================================
 
 /**
- * Mark all notifications as read for the authenticated user
+ * Segna tutte le notifiche come lette per l'utente autenticato.
  *
- * @param request - Next.js request object
- * @returns Success response or error
+ * Richiede autenticazione via cookie HTTP-only.
+ *
+ * @param request - Oggetto request Next.js
+ * @returns Risposta di successo o errore
  */
 export async function PATCH(request: NextRequest) {
   try {
-    // Get current user's profile
+    // -------------------------------------------------------------------------
+    // Autenticazione: ottiene il profilo corrente dal token JWT
+    // -------------------------------------------------------------------------
     const currentProfile = await getCurrentProfile();
 
     if (!currentProfile) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Non autorizzato' },
         { status: 401 }
       );
     }
 
-    const profileId = currentProfile.id;
-
-    // Mark all notifications as read
-    await execute(
-      `UPDATE notifications 
-       SET is_read = 1 
-       WHERE recipient_profile_id = ? AND is_read = 0`,
-      [profileId]
-    );
+    // -------------------------------------------------------------------------
+    // Segna tutte le notifiche come lette usando il repository
+    // -------------------------------------------------------------------------
+    await notificationRepository.markAllAsRead(currentProfile.id);
 
     return NextResponse.json(
       { success: true },
       { status: 200 }
     );
   } catch (error) {
-    console.error('Error marking notifications as read:', error);
+    console.error('Errore nel segnare le notifiche come lette:', error);
     return NextResponse.json(
-      { error: 'Failed to mark notifications as read' },
+      { error: 'Errore nel segnare le notifiche come lette' },
       { status: 500 }
     );
   }

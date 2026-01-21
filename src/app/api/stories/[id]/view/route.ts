@@ -1,93 +1,86 @@
+/**
+ * @fileoverview API per registrare la visualizzazione di una storia
+ *
+ * POST /api/stories/[id]/view - Registra una view e incrementa il contatore
+ *
+ * LOGICA:
+ * - Verifica che la storia esista e non sia scaduta
+ * - Permette visualizzazione solo per storie di profili seguiti o proprie
+ * - Registra la view solo la prima volta (no duplicati)
+ * - Incrementa views_count sulla storia
+ *
+ * PATTERN REPOSITORY:
+ * Usa StoryRepository per accesso centralizzato ai dati.
+ * 
+ * @module api/stories/[id]/view
+ */
+
 import { NextResponse, NextRequest } from 'next/server';
 import { getCurrentProfile } from '@/lib/auth';
-import { queryOne, execute } from '@/lib/db';
+import { storyRepository } from '@/repositories';
 
-// POST /api/stories/:id/view
-// Record a story view and increment view count
-// Only allows views for stories from followed profiles or own stories
+/**
+ * POST /api/stories/[id]/view
+ * Registra una visualizzazione della storia.
+ * 
+ * Richiede autenticazione via cookie HTTP-only.
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
+    
+    // -------------------------------------------------------------------------
+    // Autenticazione: ottiene il profilo corrente dal token JWT
+    // -------------------------------------------------------------------------
     const currentProfile = await getCurrentProfile();
     
     if (!currentProfile) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Non autorizzato' },
         { status: 401 }
       );
     }
 
+    // -------------------------------------------------------------------------
+    // Validazione parametro ID
+    // -------------------------------------------------------------------------
     const storyId = Number(id);
     if (Number.isNaN(storyId)) {
       return NextResponse.json(
-        { error: 'Invalid story id' },
+        { error: 'ID storia non valido' },
         { status: 400 }
       );
     }
 
-    // Verify story exists, is active, and is accessible 
-    // (from followed profiles or own story)
-    const story = await queryOne<{
-      id: number;
-      profile_id: number;
-      views_count: number;
-    }>(
-      `SELECT s.id, s.profile_id, s.views_count FROM stories s
-       WHERE s.id = ? 
-         AND s.deleted_at IS NULL
-         AND s.expires_at > datetime('now')
-         AND (
-           s.profile_id IN (
-             SELECT following_profile_id FROM follows 
-             WHERE follower_profile_id = ? 
-               AND deleted_at IS NULL 
-               AND status = 'accepted'
-           )
-           OR s.profile_id = ?
-         )`,
-      [storyId, currentProfile.id, currentProfile.id]
-    );
+    // -------------------------------------------------------------------------
+    // Verifica che la storia esista, sia attiva e sia accessibile
+    // (da profili seguiti o propria storia)
+    // -------------------------------------------------------------------------
+    const story = await storyRepository.findAccessibleById(storyId, currentProfile.id);
 
     if (!story) {
       return NextResponse.json(
-        { error: 'Story not found or not accessible' },
+        { error: 'Storia non trovata o non accessibile' },
         { status: 404 }
       );
     }
 
-    // Check if already viewed by this user
-    const alreadyViewed = await queryOne(
-      `SELECT id FROM story_views 
-       WHERE story_id = ? AND viewer_profile_id = ?`,
-      [storyId, currentProfile.id]
-    );
-
-    // Only increment views if this is the first view
-    if (!alreadyViewed) {
-      await execute(
-        `INSERT INTO story_views (story_id, viewer_profile_id, viewed_at)
-         VALUES (?, ?, datetime('now'))`,
-        [storyId, currentProfile.id]
-      );
-
-      // Increment views_count on stories
-      await execute(
-        `UPDATE stories SET views_count = views_count + 1 WHERE id = ?`,
-        [storyId]
-      );
-    }
+    // -------------------------------------------------------------------------
+    // Registra la view (idempotente - non crea duplicati)
+    // -------------------------------------------------------------------------
+    const wasNewView = await storyRepository.recordView(storyId, currentProfile.id);
 
     return NextResponse.json({
       ok: true,
-      message: 'Story view recorded',
+      message: wasNewView ? 'Visualizzazione registrata' : 'Già visualizzata',
     });
   } catch (error) {
-    console.error('[api/stories/[id]/view] POST error', error);
+    console.error('[api/stories/[id]/view] Errore POST:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: 'Errore interno del server' },
       { status: 500 }
     );
   }

@@ -1,78 +1,60 @@
 /**
- * @fileoverview API route for removing profile image
+ * @fileoverview API per rimuovere l'immagine del profilo
  *
- * DELETE /api/profiles/remove-image - Remove profile picture
+ * DELETE /api/profiles/remove-image - Rimuove l'immagine del profilo
+ *
+ * Usa ProfileRepository invece di query dirette.
+ * 
+ * @module api/profiles/remove-image
  */
 
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { jwtVerify } from 'jose';
-import { execute, queryOne } from '@/lib/db';
+import { getCurrentProfile } from '@/lib/auth';
+import { profileRepository } from '@/repositories';
 import { deleteFile } from '@/lib/storage';
-
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-secret-key-change-in-production'
-);
-
-interface Profile {
-  id: number;
-  profile_image_url: string | null;
-}
 
 /**
  * DELETE /api/profiles/remove-image
- * Remove profile picture
+ * Rimuove l'immagine del profilo.
+ * 
+ * Richiede autenticazione via cookie HTTP-only.
  */
 export async function DELETE() {
   try {
-    // Verify authentication
-    const cookieStore = await cookies();
-    const token = cookieStore.get('authToken')?.value;
+    // Verifica autenticazione
+    const currentProfile = await getCurrentProfile();
 
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!currentProfile) {
+      return NextResponse.json(
+        { error: 'Non autorizzato' }, 
+        { status: 401 }
+      );
     }
 
-    const { payload } = await jwtVerify(token, JWT_SECRET);
-    const userId = payload.id as number;
-
-    // Get profile
-    const profile = await queryOne<Profile>(
-      `SELECT id, profile_image_url FROM profiles WHERE user_id = ? AND deleted_at IS NULL`,
-      [userId]
-    );
-
-    if (!profile) {
-      return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
-    }
-
-    // Delete profile image if exists
-    if (profile.profile_image_url) {
+    // Elimina il file fisico se esiste
+    if (currentProfile.profile_image_url) {
       try {
-        // Extract filename from URL: /api/media/profiles/{id}/{filename}
-        const urlParts = profile.profile_image_url.split('/');
+        // Estrae filename dall'URL: /api/media/profiles/{id}/{filename}
+        const urlParts = currentProfile.profile_image_url.split('/');
         const filename = urlParts[urlParts.length - 1];
-        deleteFile('profiles', profile.id, filename);
+        deleteFile('profiles', currentProfile.id, filename);
       } catch (err) {
-        console.error('Error deleting profile image:', err);
-        // Continue anyway - update DB even if file deletion fails
+        console.error('Errore eliminazione immagine profilo:', err);
+        // Continua comunque - aggiorna DB anche se eliminazione file fallisce
       }
     }
 
-    // Update profile in database
-    await execute(
-      `UPDATE profiles
-       SET profile_image_url = NULL, updated_at = CURRENT_TIMESTAMP
-       WHERE id = ?`,
-      [profile.id]
-    );
+    // Aggiorna il profilo usando il repository
+    await profileRepository.update(currentProfile.id, {
+      profile_image_url: '' // stringa vuota = rimuovi immagine
+    });
 
     return NextResponse.json({
       success: true,
-      message: 'Profile image removed successfully',
+      message: 'Immagine profilo rimossa con successo',
     });
   } catch (err) {
-    console.error('Error removing profile image:', err);
+    console.error('Errore nella rimozione immagine profilo:', err);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

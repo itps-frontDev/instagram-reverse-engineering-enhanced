@@ -9,7 +9,7 @@
 
 'use client';
 
-import { ProfileStatsProps } from '@/lib/types/profile';
+import { ProfileStatsProps } from '@/types/profile';
 
 // ============================================================================
 // HELPER FUNCTIONS

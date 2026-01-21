@@ -1,16 +1,34 @@
 /**
- * @fileoverview API endpoint for fetching profile followers
+ * @fileoverview API per i Follower di un Profilo
  *
  * GET /api/profiles/[username]/followers
- * - Returns list of users who follow the profile
- * - Respects privacy settings (private profiles)
- * - Includes follow status for each follower
+ * Restituisce la lista di utenti che seguono il profilo.
+ * 
+ * LOGICA PRIVACY:
+ * - Profilo pubblico: tutti possono vedere i follower
+ * - Profilo privato: solo il proprietario o chi segue può vedere
+ * 
+ * PATTERN REPOSITORY:
+ * Usa profileRepository per accesso centralizzato al database.
+ * 
+ * @module api/profiles/[username]/followers
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentProfile } from '@/lib/auth';
-import { queryAll, queryOne } from '@/lib/db';
+import { getCurrentProfile, getCurrentUser } from '@/lib/auth';
+import { profileRepository } from '@/repositories';
 
+// ============================================================================
+// GET /api/profiles/[username]/followers
+// ============================================================================
+
+/**
+ * Ottiene la lista dei follower di un profilo.
+ * 
+ * @param request - Richiesta Next.js
+ * @param params - Parametri dinamici (username)
+ * @returns Lista follower con stato relazione
+ */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ username: string }> }
@@ -18,74 +36,60 @@ export async function GET(
   const { username } = await params;
 
   try {
-    // 1. Ottenere profilo target
-    const targetProfile = await queryOne(
-      'SELECT * FROM profiles WHERE username = ? AND deleted_at IS NULL',
-      [username]
-    );
 
-    if (!targetProfile) {
-      return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+    // Autenticazione
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Non autorizzato' },
+        { status: 401 }
+      );
     }
 
-    // 2. Ottenere profilo corrente (opzionale per guest)
+    // Trova il profilo target usando il repository
+    const targetProfile = await profileRepository.findByUsername(username);
+
+    if (!targetProfile) {
+      return NextResponse.json(
+        { error: 'Profilo non trovato' }, 
+        { status: 404 }
+      );
+    }
+
+    // Ottiene il profilo corrente (può essere null per guest)
     const currentProfile = await getCurrentProfile();
 
-    // 3. Se il profilo è privato, verificare che l'utente corrente possa vedere
-    if (targetProfile.is_private && (!currentProfile || currentProfile.id !== targetProfile.id)) {
-      // Verificare se segue
-      const isFollowing = await queryOne(
-        'SELECT 1 FROM follows WHERE follower_profile_id = ? AND following_profile_id = ? AND status = "accepted" AND deleted_at IS NULL',
-        [currentProfile?.id, targetProfile.id]
-      );
+    // 3. Verifica permessi per profili privati
+    if (targetProfile.is_private) {
+      // Proprietario può sempre vedere
+      if (currentProfile?.id !== targetProfile.id) {
+        // Verifica se l'utente corrente segue il profilo privato
+        const isFollowing = currentProfile 
+          ? await profileRepository.isFollowing(currentProfile.id, targetProfile.id)
+          : false;
 
-      if (!isFollowing) {
-        return NextResponse.json({ error: 'Cannot view followers of private profile' }, { status: 403 });
+        if (!isFollowing) {
+          return NextResponse.json(
+            { error: 'Non puoi vedere i follower di un profilo privato' }, 
+            { status: 403 }
+          );
+        }
       }
     }
 
-    // 4. Query followers
-    const followers = await queryAll(`
-      SELECT
-        p.id,
-        p.username,
-        p.full_name,
-        p.profile_image_url,
-        p.is_verified,
-        EXISTS(
-          SELECT 1 FROM follows f2
-          WHERE f2.follower_profile_id = ?
-          AND f2.following_profile_id = p.id
-          AND f2.status = 'accepted'
-          AND f2.deleted_at IS NULL
-        ) as is_following,
-        EXISTS(
-          SELECT 1 FROM follows f3
-          WHERE f3.follower_profile_id = p.id
-          AND f3.following_profile_id = ?
-          AND f3.status = 'accepted'
-          AND f3.deleted_at IS NULL
-        ) as follows_you
-      FROM follows f
-      INNER JOIN profiles p ON p.id = f.follower_profile_id
-      WHERE f.following_profile_id = ?
-      AND f.status = 'accepted'
-      AND f.deleted_at IS NULL
-      AND p.deleted_at IS NULL
-      ORDER BY f.created_at DESC
-    `, [currentProfile?.id || 0, currentProfile?.id || 0, targetProfile.id]);
+    // 4. Ottiene i follower con stato relazione usando il repository
+    const followers = await profileRepository.getFollowersWithStatus(
+      targetProfile.id,
+      currentProfile?.id ?? null,
+      50, // limite
+      0   // offset (TODO: aggiungere paginazione)
+    );
 
-    // Convert SQLite numeric fields to proper types
-    const formattedFollowers = followers.map((follower: any) => ({
-      ...follower,
-      is_verified: Boolean(follower.is_verified),
-    }));
-
-    return NextResponse.json({ followers: formattedFollowers });
+    return NextResponse.json({ followers });
   } catch (error) {
-    console.error('Error fetching followers:', error);
+    console.error('Errore nel recupero dei follower:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Errore interno del server' },
       { status: 500 }
     );
   }

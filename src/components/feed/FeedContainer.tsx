@@ -10,7 +10,7 @@ import { useState, useEffect, useRef } from 'react';
 import Post from './Post';
 import FeedPostSkeleton from '@/components/common/skeletons/FeedPostSkeleton';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
-import type { FeedPost } from '@/lib/types/feed';
+import type { FeedPost } from '@/types/feed';
 
 export default function FeedContainer() {
   const [posts, setPosts] = useState<FeedPost[]>([]);

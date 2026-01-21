@@ -1,18 +1,28 @@
 /**
- * @fileoverview API endpoint for uploading profile image
+ * @fileoverview API per caricare l'immagine del profilo
  *
  * POST /api/profiles/[username]/upload-image
- * - Uploads a new profile picture
- * - Only the profile owner can upload
- * - Validates file type (images only)
- * - Saves file to storage and updates database
+ * - Carica una nuova immagine del profilo
+ * - Solo il proprietario può caricare
+ * - Valida il tipo di file (solo immagini)
+ * - Salva il file nello storage e aggiorna il database
+ *
+ * REFACTORING: Usa ProfileRepository invece di query dirette.
+ * 
+ * @module api/profiles/[username]/upload-image
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentProfile } from '@/lib/auth';
-import { execute } from '@/lib/db';
+import { profileRepository } from '@/repositories';
 import { saveFile } from '@/lib/storage';
 
+/**
+ * POST /api/profiles/[username]/upload-image
+ * Carica una nuova immagine del profilo.
+ * 
+ * Richiede autenticazione via cookie HTTP-only.
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ username: string }> }
@@ -20,58 +30,62 @@ export async function POST(
   const { username } = await params;
 
   try {
-    // 1. Verificare autenticazione
+
+    // Verifica autenticazione
     const currentProfile = await getCurrentProfile();
+
     if (!currentProfile) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Non autorizzato' },
+        { status: 401 }
+      );
     }
 
-    // 2. Verificare che l'utente stia caricando la propria immagine
+    // Solo il proprietario del profilo può caricare l'immagine
     if (currentProfile.username !== username) {
-      return NextResponse.json({ error: 'Cannot upload image for other users' }, { status: 403 });
+      return NextResponse.json(
+        { error: `Solo il proprietario può caricare l\'immagine` },
+        { status: 403 }
+      );
     }
 
-    // 3. Ottenere file da FormData
+    // Parsing FormData e validazione file
     const formData = await request.formData();
     const file = formData.get('image') as File;
 
     if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+      return NextResponse.json({ error: 'Nessun file fornito' }, { status: 400 });
     }
 
-    // 4. Validare tipo file (solo immagini)
+    // Validazione tipo: solo immagini
     if (!file.type.startsWith('image/')) {
-      return NextResponse.json({ error: 'File must be an image' }, { status: 400 });
+      return NextResponse.json({ error: `Il file deve essere un\'immagine` }, { status: 400 });
     }
 
-    // 5. Validare dimensione file (max 5MB)
+    // Validazione dimensione: max 5MB
     const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
     if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: 'File too large (max 5MB)' }, { status: 400 });
+      return NextResponse.json({ error: 'File troppo grande (max 5MB)' }, { status: 400 });
     }
 
-    // 6. Convertire in Buffer
+    // Salva il file nello storage
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-
-    // 7. Salvare con storage.ts
     const result = saveFile(buffer, file.name, 'profiles', currentProfile.id);
 
-    // 8. Aggiornare database
-    await execute(
-      'UPDATE profiles SET profile_image_url = ?, updated_at = datetime("now") WHERE id = ?',
-      [result.url, currentProfile.id]
-    );
+    // Aggiorna il profilo usando il repository
+    await profileRepository.update(currentProfile.id, {
+      profile_image_url: result.url
+    });
 
-    // 9. Restituire nuovo URL
     return NextResponse.json({
       success: true,
       imageUrl: result.url
     });
   } catch (error) {
-    console.error('Error uploading profile image:', error);
+    console.error('Errore nel caricamento immagine profilo:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Errore interno del server' },
       { status: 500 }
     );
   }

@@ -1,110 +1,84 @@
 /**
- * @fileoverview API route for updating account privacy settings
+ * @fileoverview API per le Impostazioni Privacy
  *
- * PUT /api/profiles/privacy - Update account privacy (public/private)
+ * PUT /api/profiles/privacy - Cambia profilo pubblico/privato.
+ * 
+ * LOGICA BUSINESS:
+ * - Quando si passa da privato a pubblico, tutte le richieste
+ *   di follow pending vengono automaticamente accettate.
+ * - I contatori follower vengono aggiornati di conseguenza.
+ * 
+ * PATTERN REPOSITORY:
+ * Usa profileRepository per accesso centralizzato al database.
+ * 
+ * @module api/profiles/privacy
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { execute, queryOne } from '@/lib/db';
-import { verifyToken } from '@/lib/jwt';
+import { getCurrentProfile } from '@/lib/auth';
+import { profileRepository } from '@/repositories';
 
-interface Profile {
-  id: number;
-  is_private: number;
-}
+// ============================================================================
+// PUT /api/profiles/privacy
+// ============================================================================
 
 /**
- * PUT /api/profiles/privacy
- * Update account privacy settings
+ * Aggiorna le impostazioni privacy del profilo.
+ * 
+ * COMPORTAMENTO:
+ * - Da privato a pubblico: accetta tutte le richieste pending
+ * - Da pubblico a privato: nessuna azione aggiuntiva
+ * 
+ * @param request - Richiesta Next.js con { is_private: boolean }
+ * @returns Stato aggiornato della privacy
  */
 export async function PUT(request: NextRequest) {
   try {
-    // Verify authentication
-    const cookieStore = await cookies();
-    const token = cookieStore.get('authToken')?.value;
+    // Verifica autenticazione
+    const currentProfile = await getCurrentProfile();
 
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!currentProfile) {
+      return NextResponse.json(
+        { error: 'Non autorizzato' }, 
+        { status: 401 }
+      );
     }
 
-    const payload = await verifyToken(token);
-    
-    if (!payload) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
-    
-    const userId = payload.id;
-
-    // Parse request body
+    // Parsing del body
     const body = await request.json();
     const { is_private } = body;
 
-    // Validation
+    // Validazione: deve essere un booleano
     if (typeof is_private !== 'boolean') {
       return NextResponse.json(
-        { error: 'is_private must be a boolean value' },
+        { error: 'is_private deve essere un valore booleano' },
         { status: 400 }
       );
     }
 
-    // Get user's profile_id and current privacy setting
-    const profileData = await queryOne<Profile>(
-      `SELECT id, is_private FROM profiles WHERE user_id = ? AND deleted_at IS NULL`,
-      [userId]
-    );
-
-    if (!profileData) {
-      return NextResponse.json(
-        { error: 'Profile not found' },
-        { status: 404 }
-      );
-    }
-
-    const profileId = profileData.id;
-    const wasPrivate = profileData.is_private === 1;
+    // Stato attuale del profilo
+    const wasPrivate = currentProfile.is_private;
     const willBePublic = !is_private;
 
-    // Update privacy setting
-    await execute(
-      `UPDATE profiles 
-       SET is_private = ?, updated_at = datetime('now')
-       WHERE id = ? AND deleted_at IS NULL`,
-      [is_private ? 1 : 0, profileId]
-    );
+    // Aggiorna l'impostazione privacy usando il repository
+    await profileRepository.update(currentProfile.id, { is_private });
 
-    // If switching from private to public, automatically accept all pending follow requests
+    // Se passa da privato a pubblico, accetta tutte le richieste pending
     if (wasPrivate && willBePublic) {
-      // Count pending requests before accepting them
-      const pendingCount = await queryOne<{ count: number }>(
-        `SELECT COUNT(*) as count
-         FROM follows 
-         WHERE following_profile_id = ? 
-           AND status = 'pending' 
-           AND deleted_at IS NULL`,
-        [profileId]
+      // Ottiene le richieste pending usando il repository
+      const pendingRequests = await profileRepository.getPendingFollowRequests(
+        currentProfile.id
       );
+      const pendingFollowers = pendingRequests.length;
 
-      const pendingFollowers = pendingCount?.count || 0;
-
-      // Accept all pending follow requests
-      await execute(
-        `UPDATE follows 
-         SET status = 'accepted', updated_at = datetime('now')
-         WHERE following_profile_id = ? 
-           AND status = 'pending' 
-           AND deleted_at IS NULL`,
-        [profileId]
-      );
-
-      // Update follower count if there were pending requests
+      // Accetta tutte le richieste pending in batch usando il repository
       if (pendingFollowers > 0) {
-        await execute(
-          `UPDATE profiles 
-           SET followers_count = followers_count + ?,
-               updated_at = datetime('now')
-           WHERE id = ?`,
-          [pendingFollowers, profileId]
+        await profileRepository.acceptAllPendingFollowRequests(currentProfile.id);
+
+        // Aggiorna il contatore follower
+        await profileRepository.incrementFollowersCount(
+          currentProfile.id, 
+          pendingFollowers
         );
       }
     }
@@ -113,13 +87,13 @@ export async function PUT(request: NextRequest) {
       success: true,
       is_private: is_private,
       message: is_private 
-        ? 'Account set to private' 
-        : 'Account set to public and all pending requests accepted'
+        ? 'Account impostato come privato' 
+        : 'Account impostato come pubblico, tutte le richieste accettate'
     });
   } catch (error) {
-    console.error('[PUT /api/profiles/privacy] Error:', error);
+    console.error('[PUT /api/profiles/privacy] Errore:', error);
     return NextResponse.json(
-      { error: 'Failed to update privacy settings' },
+      { error: 'Impossibile aggiornare le impostazioni privacy' },
       { status: 500 }
     );
   }

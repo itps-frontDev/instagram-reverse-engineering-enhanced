@@ -1,34 +1,49 @@
 /**
- * @fileoverview API route for getting follow relationship status
+ * @fileoverview API per ottenere lo stato della relazione di follow
  *
- * This endpoint returns the follow relationship between the current user
- * and the target profile.
+ * Questo endpoint restituisce la relazione di follow tra l'utente corrente
+ * e il profilo target. Usato per mostrare lo stato corretto dei pulsanti
+ * "Segui" / "Richiesta inviata" / "Segui già" nell'UI.
  *
+ * STATI POSSIBILI:
+ * - isOwnProfile=true: è il proprio profilo (nessun pulsante follow)
+ * - isFollowing=true: sta seguendo (mostra "Segui già")
+ * - isPending=true: richiesta in attesa (mostra "Richiesta inviata")
+ * - isFollowedBy=true: l'altro ti segue (mostra "Ti segue")
+ *
+ * REFACTORING: Usa ProfileRepository invece di query dirette.
+ * 
  * @module api/profiles/[username]/follow-status
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { queryOne } from '@/lib/db';
-import { Profile, GetFollowStatusResponse, FollowRelationship } from '@/lib/types/profile';
-import { getCurrentProfile } from '@/lib/auth';
+import { profileRepository } from '@/repositories';
+import { GetFollowStatusResponse } from '@/types/profile';
+import { getCurrentProfile, getCurrentUser } from '@/lib/auth';
 
 // ============================================================================
 // GET /api/profiles/[username]/follow-status
 // ============================================================================
 
 /**
- * Get follow status between current user and target profile.
+ * Ottiene lo stato di follow tra l'utente corrente e il profilo target.
  *
- * Requires authentication (mock cookie).
+ * Richiede autenticazione tramite cookie HTTP-only.
  *
- * @param request - Next.js request object
- * @param params - Route parameters containing username
- * @returns Follow status information
+ * LOGICA:
+ * 1. Ottiene il profilo corrente dall'auth
+ * 2. Cerca il profilo target per username
+ * 3. Se è il proprio profilo, restituisce isOwnProfile=true
+ * 4. Altrimenti, controlla le relazioni di follow in entrambe le direzioni
+ *
+ * @param request - Oggetto request Next.js
+ * @param params - Parametri route contenenti username
+ * @returns Informazioni sullo stato di follow
  *
  * @example
  * // Fetch follow status
  * const response = await fetch('/api/profiles/johndoe/follow-status');
- * const { isFollowing, isPending, isOwnProfile } = await response.json();
+ * const { isFollowing, isPending, isOwnProfile, isFollowedBy } = await response.json();
  */
 export async function GET(
   request: NextRequest,
@@ -37,7 +52,16 @@ export async function GET(
   try {
     const { username } = await params;
 
-    // Validate username parameter
+    // Autenticazione
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Non autorizzato' },
+        { status: 401 }
+      );
+    }
+
+    // Validazione parametro username
     if (!username || typeof username !== 'string') {
       return NextResponse.json(
         { error: 'Username is required' },
@@ -45,33 +69,29 @@ export async function GET(
       );
     }
 
-    // Get current user's profile
+    // Ottiene il profilo corrente
     const currentProfile = await getCurrentProfile();
 
     if (!currentProfile) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Non autorizzato' },
         { status: 401 }
       );
     }
 
-    // Fetch target profile
-    const targetProfile = await queryOne<Profile>(
-      'SELECT id, username FROM profiles WHERE username = ? AND deleted_at IS NULL',
-      [username]
-    );
+    // Cerca il profilo target usando il repository
+    const targetProfile = await profileRepository.findByUsername(username);
 
     if (!targetProfile) {
       return NextResponse.json(
-        { error: 'Profile not found' },
+        { error: 'Profilo non trovato' },
         { status: 404 }
       );
     }
 
-    // Check if it's own profile
+    // Controlla se è il proprio profilo
     const isOwnProfile = currentProfile.id === targetProfile.id;
 
-    // If own profile, return early with defaults
     if (isOwnProfile) {
       const response: GetFollowStatusResponse = {
         isFollowing: false,
@@ -83,35 +103,37 @@ export async function GET(
       return NextResponse.json(response, {
         status: 200,
         headers: {
+          // No cache: lo stato può cambiare rapidamente
           'Cache-Control': 'private, no-cache',
         },
       });
     }
 
-    // Check if current user follows target
-    const followRelation = await queryOne<FollowRelationship>(
-      `SELECT id, status, created_at
-       FROM follows
-       WHERE follower_profile_id = ?
-         AND following_profile_id = ?
-         AND deleted_at IS NULL`,
-      [currentProfile.id, targetProfile.id]
+    // -------------------------------------------------------------------------
+    // Ottiene le relazioni di follow in entrambe le direzioni
+    // -------------------------------------------------------------------------
+    
+    // Relazione: current -> target (l'utente corrente segue il target?)
+    const followRelation = await profileRepository.getFollowRelationship(
+      currentProfile.id,
+      targetProfile.id
     );
 
-    // Check if target follows current user (for "followed by" indicator)
-    const followedByRelation = await queryOne<FollowRelationship>(
-      `SELECT id, status
-       FROM follows
-       WHERE follower_profile_id = ?
-         AND following_profile_id = ?
-         AND deleted_at IS NULL`,
-      [targetProfile.id, currentProfile.id]
+    // Relazione: target -> current (il target segue l'utente corrente?)
+    const followedByRelation = await profileRepository.getFollowRelationship(
+      targetProfile.id,
+      currentProfile.id
     );
 
-    // Build response
+    // -------------------------------------------------------------------------
+    // Costruisce la risposta basata sullo stato delle relazioni
+    // -------------------------------------------------------------------------
     const response: GetFollowStatusResponse = {
+      // isFollowing: true solo se la relazione esiste ed è 'accepted'
       isFollowing: followRelation?.status === 'accepted',
+      // isFollowedBy: true solo se la relazione inversa è 'accepted'
       isFollowedBy: followedByRelation?.status === 'accepted',
+      // isPending: true se la richiesta è in attesa di approvazione
       isPending: followRelation?.status === 'pending',
       isOwnProfile: false,
     };
@@ -123,7 +145,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('[API] Error fetching follow status:', error);
+    console.error('[API] Errore nel recupero dello stato di follow:', error);
 
     return NextResponse.json(
       {

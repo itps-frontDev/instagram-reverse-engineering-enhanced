@@ -1,33 +1,44 @@
 /**
- * API Route: /api/direct/send
- * Invia un nuovo messaggio in una chat
- * Body: { chatId, text }
+ * @fileoverview API per l'invio di messaggi
+ *
+ * POST /api/direct/send - Invia un nuovo messaggio in una chat
+ *
+ * PATTERN REPOSITORY:
+ * Usa DirectMessageRepository per accesso centralizzato ai dati.
+ *
+ * @module api/direct/send
  */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentProfile } from '@/lib/auth';
-import { execute } from '@/lib/db';
+import { directMessageRepository } from '@/repositories';
 
+/**
+ * POST /api/direct/send
+ * Invia un nuovo messaggio in una chat.
+ * 
+ * Body: { chatId: number, text: string }
+ */
 export async function POST(req: NextRequest) {
   const profile = await getCurrentProfile();
-  if (!profile) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!profile) {
+    return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 });
+  }
 
   const { chatId, text } = await req.json();
-  if (!chatId || !text) return NextResponse.json({ error: 'Missing chatId or text' }, { status: 400 });
+  
+  if (!chatId || !text) {
+    return NextResponse.json({ error: 'ID chat o testo mancante' }, { status: 400 });
+  }
 
   // Verifica che l'utente sia partecipante attivo
-  // (opzionale: verifica che la chat esista)
-  // Inserisci il messaggio
-  const result = await execute(
-    `INSERT INTO messages (chat_id, sender_profile_id, text) VALUES (?, ?, ?)`,
-    [chatId, profile.id, text]
-  );
+  const isParticipant = await directMessageRepository.isParticipant(chatId, profile.id);
+  if (!isParticipant) {
+    return NextResponse.json({ error: 'Accesso negato' }, { status: 403 });
+  }
 
-  // Aggiorna last_message_at sulla chat (usa timestamp in millisecondi)
-  const now = Date.now();
-  await execute(
-    `UPDATE chats SET last_message_at = ? WHERE id = ?`,
-    [now, chatId]
-  );
+  // Invia il messaggio usando il repository
+  const messageId = await directMessageRepository.sendMessage(chatId, profile.id, text);
 
-  return NextResponse.json({ success: true, messageId: result.lastID });
+  return NextResponse.json({ success: true, messageId });
 }

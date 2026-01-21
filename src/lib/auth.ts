@@ -8,7 +8,7 @@
 
 import { cookies } from 'next/headers';
 import { queryOne } from '@/lib/db';
-import { Profile } from '@/lib/types/profile';
+import { Profile } from '@/types/profile';
 import { verifyToken, type TokenPayload } from '@/lib/jwt';
 
 // ============================================================================

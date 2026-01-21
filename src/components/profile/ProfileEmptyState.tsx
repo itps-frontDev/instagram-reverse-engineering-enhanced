@@ -6,7 +6,7 @@
 
 'use client';
 
-import { ProfileTab } from '@/lib/types/profile';
+import { ProfileTab } from '@/types/profile';
 import PostsEmptyIcon from './icons/PostsEmptyIcon';
 import TaggedEmptyIcon from './icons/TaggedEmptyIcon';
 import SavedEmptyIcon from './icons/SavedEmptyIcon';

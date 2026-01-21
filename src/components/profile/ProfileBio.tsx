@@ -10,7 +10,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ProfileBioProps } from '@/lib/types/profile';
+import { ProfileBioProps } from '@/types/profile';
 
 /**
  * Parse bio text for @mentions and #hashtags.

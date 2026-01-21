@@ -45,6 +45,29 @@ export interface PostMedia {
   position: number;
 }
 
+/**
+ * Reel (video post) con tutti i dettagli per il feed.
+ * Simile a FeedPost ma specifico per contenuti video.
+ */
+export interface Reel {
+  id: number;
+  profile_id: number;
+  caption: string | null;
+  location: string | null;
+  is_comments_disabled: boolean;
+  is_likes_hidden: boolean;
+  likes_count: number;
+  comments_count: number;
+  created_at: string;
+  profile_username: string;
+  profile_full_name: string | null;
+  profile_image_url: string | null;
+  profile_is_verified: boolean;
+  is_liked_by_current_user: boolean;
+  is_saved_by_current_user: boolean;
+  media: PostMedia[];
+}
+
 export interface Comment {
   id: number;
   post_id: number;
@@ -74,6 +97,15 @@ export interface GetFeedResponse {
   posts: FeedPost[];
   nextCursor: string | null;
   hasMore: boolean;
+}
+
+/**
+ * Risposta API per GET /api/reels.
+ */
+export interface GetReelsResponse {
+  reels: Reel[];
+  hasMore: boolean;
+  total: number;
 }
 
 export interface LikePostRequest {

@@ -1,4 +1,16 @@
+/**
+ * @fileoverview Global CSS Styles
+ * 
+ * Main stylesheet for the Instagram clone application.
+ * Uses Tailwind CSS with custom CSS variables for theming.
+ * 
+ * @note CSS component classes are kept for backward compatibility.
+ *       New code should use the React components from @/components/ui instead.
+ */
+
 @import "tailwindcss";
+
+/* Import CSS Legacy (verrà rimosso in futuri refactoring) */
 @import "./overlay.css";
 @import "./modals.css";
 @import "./sidebar.css";

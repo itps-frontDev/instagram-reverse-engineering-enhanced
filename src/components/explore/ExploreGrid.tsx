@@ -9,7 +9,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { Heart, MessageCircle, Play } from 'lucide-react';
-import type { FeedPost } from '@/lib/types/feed';
+import type { FeedPost } from '@/types/feed';
 import PostModal from '@/components/feed/PostModal';
 import CarouselIcon from '@/components/common/CarouselIcon';
 

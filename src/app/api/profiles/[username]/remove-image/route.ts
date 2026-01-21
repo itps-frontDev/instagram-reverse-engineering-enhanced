@@ -1,16 +1,26 @@
 /**
- * @fileoverview API endpoint for removing profile image
+ * @fileoverview API per rimuovere l'immagine del profilo
  *
  * POST /api/profiles/[username]/remove-image
- * - Removes the profile picture
- * - Only the profile owner can remove
- * - Sets profile_image_url to null in database
+ * - Rimuove l'immagine del profilo
+ * - Solo il proprietario può rimuovere
+ * - Imposta profile_image_url a null nel database
+ *
+ * REFACTORING: Usa ProfileRepository invece di query dirette.
+ * 
+ * @module api/profiles/[username]/remove-image
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentProfile } from '@/lib/auth';
-import { execute } from '@/lib/db';
+import { profileRepository } from '@/repositories';
 
+/**
+ * POST /api/profiles/[username]/remove-image
+ * Rimuove l'immagine del profilo.
+ * 
+ * Richiede autenticazione via cookie HTTP-only.
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ username: string }> }
@@ -18,32 +28,36 @@ export async function POST(
   const { username } = await params;
 
   try {
-    // 1. Verificare autenticazione
+    // Verifica autenticazione
     const currentProfile = await getCurrentProfile();
     if (!currentProfile) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Non autorizzato' },
+         { status: 401 }
+      );
     }
 
-    // 2. Verificare che l'utente stia rimuovendo la propria immagine
+    // Solo il proprietario del profilo può rimuovere l'immagine
     if (currentProfile.username !== username) {
-      return NextResponse.json({ error: 'Cannot remove image for other users' }, { status: 403 });
+      return NextResponse.json({ error: `Non puoi rimuovere l\'immagine di altri utenti` }, { status: 403 });
     }
 
-    // 3. Aggiornare database (rimuovere URL)
-    await execute(
-      'UPDATE profiles SET profile_image_url = NULL, updated_at = datetime("now") WHERE id = ?',
-      [currentProfile.id]
-    );
+    /**
+     * Rimuove l'immagine del profilo usando il repository
+     * Passiamo una stringa vuota che verrà gestita come null
+     */
+    await profileRepository.update(currentProfile.id, {
+      profile_image_url: '' // stringa vuota = rimuovi immagine
+    });
 
-    // 4. Restituire successo
     return NextResponse.json({
       success: true,
       message: 'Profile image removed successfully'
     });
   } catch (error) {
-    console.error('Error removing profile image:', error);
+    console.error('Errore nella rimozione immagine profilo:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Errore interno del server' },
       { status: 500 }
     );
   }

@@ -1,32 +1,39 @@
 /**
- * @fileoverview API route for checking if user can view profile content
+ * @fileoverview API per verificare se l'utente può visualizzare i contenuti del profilo
  *
- * This endpoint checks if the current user has permission to view
- * a profile's posts and content.
+ * Questo endpoint controlla se l'utente corrente ha il permesso di vedere
+ * i post e i contenuti di un profilo.
  *
+ * LOGICA DI VISIBILITÀ:
+ * - Profilo pubblico: visibile a tutti (anche utenti non autenticati)
+ * - Profilo privato + proprietario: visibile
+ * - Profilo privato + follower accepted: visibile
+ * - Profilo privato + non follower: NON visibile
+ *
+ * REFACTORING: Usa ProfileRepository invece di query dirette.
+ * 
  * @module api/profiles/[username]/can-view
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { queryOne } from '@/lib/db';
-import { Profile, CanViewResponse } from '@/lib/types/profile';
-import { getCurrentProfile } from '@/lib/auth';
+import { profileRepository } from '@/repositories';
+import { CanViewResponse } from '@/types/profile';
+import { getCurrentProfile, getCurrentUser } from '@/lib/auth';
 
 // ============================================================================
 // GET /api/profiles/[username]/can-view
 // ============================================================================
 
 /**
- * Check if current user can view profile content.
+ * Verifica se l'utente corrente può visualizzare i contenuti del profilo.
  *
- * Authentication is optional - logged out users can view public profiles.
  *
- * @param request - Next.js request object
- * @param params - Route parameters containing username
- * @returns Can view status with optional reason
+ * @param request - Oggetto request Next.js
+ * @param params - Parametri route contenenti username
+ * @returns Stato di visibilità con motivo opzionale
  *
  * @example
- * // Check if can view profile
+ * // Verifica se può visualizzare il profilo
  * const response = await fetch('/api/profiles/johndoe/can-view');
  * const { canView, reason } = await response.json();
  */
@@ -37,19 +44,25 @@ export async function GET(
   try {
     const { username } = await params;
 
-    // Validate username parameter
+    // Autenticazione
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Non autorizzato' },
+        { status: 401 }
+      );
+    }
+
+    // Validazione parametro username
     if (!username || typeof username !== 'string') {
       return NextResponse.json(
-        { error: 'Username is required' },
+        { error: 'Username non valido' },
         { status: 400 }
       );
     }
 
-    // Fetch target profile
-    const targetProfile = await queryOne<Profile>(
-      'SELECT id, is_private FROM profiles WHERE username = ? AND deleted_at IS NULL',
-      [username]
-    );
+    // Cerca il profilo target usando il repository
+    const targetProfile = await profileRepository.findByUsername(username);
 
     if (!targetProfile) {
       const response: CanViewResponse = {
@@ -60,7 +73,7 @@ export async function GET(
       return NextResponse.json(response, { status: 404 });
     }
 
-    // If profile is public, anyone can view
+    // Profilo pubblico: tutti possono vedere
     if (!targetProfile.is_private) {
       const response: CanViewResponse = {
         canView: true,
@@ -69,15 +82,16 @@ export async function GET(
       return NextResponse.json(response, {
         status: 200,
         headers: {
+          // Cache pubblica: può essere cachata dai CDN
           'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
         },
       });
     }
 
-    // Profile is private - check authentication and follow status
+    // Profilo privato: verifica autenticazione e relazione di follow
     const currentProfile = await getCurrentProfile();
 
-    // Not logged in - cannot view private profile
+    // Non autenticato: non può vedere profili privati (NON dovrebbe mai accadere qui)
     if (!currentProfile) {
       const response: CanViewResponse = {
         canView: false,
@@ -92,7 +106,7 @@ export async function GET(
       });
     }
 
-    // Viewing own profile - can view
+    // Proprietario del profilo: può sempre vedere
     if (currentProfile.id === targetProfile.id) {
       const response: CanViewResponse = {
         canView: true,
@@ -106,17 +120,15 @@ export async function GET(
       });
     }
 
-    // Check if following with accepted status
-    const follow = await queryOne<{ status: string }>(
-      `SELECT status
-       FROM follows
-       WHERE follower_profile_id = ?
-         AND following_profile_id = ?
-         AND deleted_at IS NULL`,
-      [currentProfile.id, targetProfile.id]
+    // -------------------------------------------------------------------------
+    // Verifica relazione di follow: solo follower accepted possono vedere
+    // -------------------------------------------------------------------------
+    const follow = await profileRepository.getFollowRelationship(
+      currentProfile.id,
+      targetProfile.id
     );
 
-    // Can view if following with accepted status
+    // Può vedere solo se è follower con stato 'accepted'
     const canView = follow?.status === 'accepted';
 
     const response: CanViewResponse = {
@@ -131,12 +143,12 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('[API] Error checking can view:', error);
+    console.error('[API] Errore nel controllo permessi di visualizzazione:', error);
 
     return NextResponse.json(
       {
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Errore interno del server',
+        message: error instanceof Error ? error.message : 'Errore sconosciuto',
       },
       { status: 500 }
     );

@@ -9,7 +9,7 @@
 import { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Heart, MessageCircle, Play } from 'lucide-react';
-import { ProfileGridProps } from '@/lib/types/profile';
+import { ProfileGridProps } from '@/types/profile';
 import ProfileEmptyState from './ProfileEmptyState';
 import CarouselIcon from '@/components/common/CarouselIcon';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
@@ -74,7 +74,7 @@ export default function ProfileGrid({
             {post.media_type === 'video' ? (
               <>
                 <video
-                  src={post.media_url}
+                  src={post.media_url || undefined}
                   className="w-full h-full object-cover"
                   preload="metadata"
                   muted
@@ -95,7 +95,7 @@ export default function ProfileGrid({
               </>
             ) : (
               <Image
-                src={post.media_url}
+                src={post.media_url || '/images/placeholder.png'}
                 alt={post.caption || 'Post'}
                 fill
                 className="object-cover"

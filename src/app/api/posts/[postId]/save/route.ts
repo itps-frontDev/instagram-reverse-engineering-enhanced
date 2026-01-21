@@ -1,49 +1,66 @@
 /**
- * @fileoverview Save a post
+ * @fileoverview API per salvare un post
+ * 
  * POST /api/posts/[postId]/save
+ * Salva un post nella collezione personale dell'utente.
+ * 
+ * FUNZIONALITÀ "SALVA POST":
+ * Simile ai segnalibri, permette agli utenti di salvare post
+ * per visualizzarli successivamente nella sezione "Salvati"
+ * del proprio profilo.
+ * 
+ * COMPORTAMENTO IDEMPOTENTE:
+ * Se il post è già salvato, ritorna successo senza errore.
+ * 
+ * @module api/posts/[postId]/save
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentProfileId } from '@/lib/auth';
-import { execute, queryAll } from '@/lib/db';
+import { postRepository } from '@/repositories';
 
+// Forza runtime Node.js
+export const runtime = 'nodejs';
+
+/**
+ * Gestisce richiesta POST per salvare un post.
+ * 
+ * @param request - Request Next.js
+ * @param params - Contiene postId
+ * @returns Messaggio di successo o errore
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
-    // Verify authentication
+    // Verifica autenticazione
     const profileId = await getCurrentProfileId();
     if (!profileId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Non autorizzato' }, 
+        { status: 401 }
+      );
     }
 
     const { postId } = await params;
     const postIdNum = parseInt(postId);
 
-    // Check if already saved
-    const existing = await queryAll<{ id: number }>(
-      `SELECT id FROM saved_posts 
-       WHERE profile_id = ? 
-       AND post_id = ? 
-       AND deleted_at IS NULL`,
-      [profileId, postIdNum]
-    );
-
-    if (existing.length > 0) {
-      return NextResponse.json({ message: 'Already saved' });
+    // Verifica se già salvato tramite repository (comportamento idempotente)
+    const alreadySaved = await postRepository.isSaved(postIdNum, profileId);
+    if (alreadySaved) {
+      return NextResponse.json({ message: 'Post già salvato' });
     }
 
-    // Insert saved post
-    await execute(
-      `INSERT INTO saved_posts (profile_id, post_id) 
-       VALUES (?, ?)`,
-      [profileId, postIdNum]
-    );
+    // Salva il post tramite repository
+    await postRepository.save(postIdNum, profileId);
 
-    return NextResponse.json({ message: 'Post saved successfully' });
+    return NextResponse.json({ message: 'Post salvato con successo' });
   } catch (error) {
-    console.error('Error saving post:', error);
-    return NextResponse.json({ error: 'Failed to save post' }, { status: 500 });
+    console.error('[Save] Errore salvataggio post:', error);
+    return NextResponse.json(
+      { error: 'Impossibile salvare il post' }, 
+      { status: 500 }
+    );
   }
 }

@@ -17,7 +17,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Settings, ChevronDown } from 'lucide-react';
-import { ProfileActionsProps } from '@/lib/types/profile';
+import { ProfileActionsProps } from '@/types/profile';
 import UnfollowModal from './UnfollowModal';
 
 /**

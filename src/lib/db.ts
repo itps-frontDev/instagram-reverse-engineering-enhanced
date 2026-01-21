@@ -242,3 +242,38 @@ export async function closeDb(): Promise<void> {
 
 // All exports are now async/Promise-based.
 export { getDb };
+
+/**
+ * Esegue una funzione all'interno di una transazione database.
+ * 
+ * Se la funzione completa con successo, la transazione viene committata.
+ * Se la funzione lancia un'eccezione, la transazione viene annullata (rollback).
+ * 
+ * @template T - Tipo del valore di ritorno della funzione
+ * @param fn - Funzione async da eseguire nella transazione
+ * @returns Il valore restituito dalla funzione
+ * @throws L'errore originale se la funzione fallisce (dopo il rollback)
+ * 
+ * @example
+ * const result = await withTransaction(async () => {
+ *   const userId = await userRepository.create({ email, password_hash });
+ *   await profileRepository.create({ user_id: userId, username });
+ *   return userId;
+ * });
+ */
+export async function withTransaction<T>(fn: () => Promise<T>): Promise<T> {
+  await execute('BEGIN TRANSACTION');
+  
+  try {
+    const result = await fn();
+    await execute('COMMIT');
+    return result;
+  } catch (error) {
+    try {
+      await execute('ROLLBACK');
+    } catch (rollbackError) {
+      console.error('[DB] Errore rollback:', rollbackError);
+    }
+    throw error;
+  }
+}

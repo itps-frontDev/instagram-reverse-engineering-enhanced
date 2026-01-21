@@ -29,8 +29,8 @@ import {
   FollowStatus,
   ProfileTab,
   StoryHighlight,
-} from '@/lib/types/profile';
-import type { FeedPost } from '@/lib/types/feed';
+} from '@/types/profile';
+import type { FeedPost } from '@/types/feed';
 
 // ============================================================================
 // MAIN PAGE COMPONENT

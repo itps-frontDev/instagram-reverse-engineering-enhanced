@@ -1,91 +1,60 @@
 /**
- * @fileoverview Save/Unsave post API endpoint
+ * @fileoverview API per salvare/rimuovere post dai preferiti
  *
  * POST /api/feed/save
- * Toggles save on a post (save if not saved, unsave if already saved)
+ * Toggle del salvataggio di un post (salva se non salvato, rimuove se già salvato)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentProfile } from '@/lib/auth';
-import { execute, queryOne } from '@/lib/db';
-import type { SavePostRequest, SavePostResponse } from '@/lib/types/feed';
+import { postRepository } from '@/repositories';
+import type { SavePostRequest, SavePostResponse } from '@/types/feed';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {
+    // Verifica autenticazione
     const currentProfile = await getCurrentProfile();
-
     if (!currentProfile) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Non autorizzato' },
         { status: 401 }
       );
     }
 
+    // Parsing body
     const body: SavePostRequest = await request.json();
     const { postId } = body;
 
     if (!postId) {
       return NextResponse.json(
-        { error: 'postId is required' },
+        { error: 'Il post non esiste' },
         { status: 400 }
       );
     }
 
-    // Check if post exists
-    const post = await queryOne<{ id: number }>(
-      'SELECT id FROM posts WHERE id = ? AND deleted_at IS NULL',
-      [postId]
-    );
-
+    // Verifica esistenza del post tramite repository
+    const post = await postRepository.findById(postId);
     if (!post) {
       return NextResponse.json(
-        { error: 'Post not found' },
+        { error: 'Post non trovato' },
         { status: 404 }
       );
     }
 
-    // Check if already saved
-    const existingSave = await queryOne<{ id: number; deleted_at: string | null }>(
-      `SELECT id, deleted_at FROM saved_posts
-       WHERE profile_id = ?
-         AND post_id = ?
-       ORDER BY created_at DESC
-       LIMIT 1`,
-      [currentProfile.id, postId]
-    );
+    // Verifica se è già salvato
+    const alreadySaved = await postRepository.isSaved(postId, currentProfile.id);
 
     let saved: boolean;
 
-    if (existingSave && !existingSave.deleted_at) {
-      // Unsave: soft delete
-      await execute(
-        `UPDATE saved_posts
-         SET deleted_at = datetime('now')
-         WHERE id = ?`,
-        [existingSave.id]
-      );
-
+    if (alreadySaved) {
+      // Rimuove il salvataggio (soft delete)
+      await postRepository.unsave(postId, currentProfile.id);
       saved = false;
-    } else if (existingSave && existingSave.deleted_at) {
-      // Re-save: restore
-      await execute(
-        `UPDATE saved_posts
-         SET deleted_at = NULL
-         WHERE id = ?`,
-        [existingSave.id]
-      );
-
-      saved = true;
     } else {
-      // Create new save
-      await execute(
-        `INSERT INTO saved_posts (profile_id, post_id)
-         VALUES (?, ?)`,
-        [currentProfile.id, postId]
-      );
-
+      // Salva il post (o ri-attiva se era stato rimosso)
+      await postRepository.save(postId, currentProfile.id);
       saved = true;
     }
 

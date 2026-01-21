@@ -7,7 +7,7 @@
 'use client';
 
 import { Lock } from 'lucide-react';
-import { ProfilePrivateLockProps } from '@/lib/types/profile';
+import { ProfilePrivateLockProps } from '@/types/profile';
 
 export default function ProfilePrivateLock({
   username,

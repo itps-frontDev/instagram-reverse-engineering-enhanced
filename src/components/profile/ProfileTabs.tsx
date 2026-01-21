@@ -4,7 +4,7 @@
 
 'use client';
 import React from 'react';
-import { ProfileTabsProps, ProfileTab } from '@/lib/types/profile';
+import { ProfileTabsProps, ProfileTab } from '@/types/profile';
 import PostsTabIcon from './icons/PostsTabIcon';
 import SavedTabIcon from './icons/SavedTabIcon';
 import TaggedTabIcon from './icons/TaggedTabIcon';

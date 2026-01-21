@@ -22,7 +22,7 @@ import ProfileBio from './ProfileBio';
 import NewHighlight from './NewHighlight';
 import VerifiedBadge from '@/components/common/VerifiedBadge';
 import FollowersModal from './FollowersModal';
-import { ProfileHeaderProps } from '@/lib/types/profile';
+import { ProfileHeaderProps } from '@/types/profile';
 
 /**
  * ProfileHeader Component

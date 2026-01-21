@@ -1,82 +1,98 @@
 /**
- * @fileoverview Like a post
+ * @fileoverview API per mettere like a un post
+ * 
  * POST /api/posts/[postId]/like
+ * Aggiunge un like al post specificato.
+ * 
+ * PROCESSO:
+ * 1. Verifica autenticazione utente
+ * 2. Verifica che l'utente non abbia già messo like
+ * 3. Inserisce record nella tabella `likes`
+ * 4. Incrementa contatore `likes_count` del post
+ * 5. Crea notifica per il proprietario del post (se diverso)
+ * 
+ * PATTERN LIKE POLIMORFICO:
+ * La tabella `likes` usa un pattern polimorfico:
+ * - likeable_type: 'post' | 'comment' | 'story'
+ * - likeable_id: ID dell'entità
+ * Questo permette di usare una sola tabella per tutti i tipi di like.
+ * 
+ * GESTIONE DUPLICATI:
+ * - Prima di creare la notifica, eliminiamo eventuali notifiche
+ *   duplicate esistenti per evitare spam.
+ * 
+ * @module api/posts/[postId]/like
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentProfileId } from '@/lib/auth';
-import { execute, queryAll, queryOne } from '@/lib/db';
+import { postRepository, notificationRepository } from '@/repositories';
 
+// Forza runtime Node.js
+export const runtime = 'nodejs';
+
+/**
+ * Gestisce richiesta POST per aggiungere like a un post.
+ * 
+ * @param request - Request Next.js
+ * @param params - Contiene postId
+ * @returns Messaggio di successo o errore
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
-    // Verify authentication
+    // Verifica autenticazione
     const profileId = await getCurrentProfileId();
     if (!profileId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Non autorizzato' }, 
+        { status: 401 }
+      );
     }
 
+    // Estrai e converti postId
     const { postId } = await params;
     const postIdNum = parseInt(postId);
 
-    // Check if already liked
-    const existing = await queryAll<{ id: number }>(
-      `SELECT id FROM likes 
-       WHERE profile_id = ? 
-       AND likeable_type = 'post' 
-       AND likeable_id = ? 
-       AND deleted_at IS NULL`,
-      [profileId, postIdNum]
-    );
-
-    if (existing.length > 0) {
-      return NextResponse.json({ message: 'Already liked' });
+    // Verifica se l'utente ha già messo like (tramite repository)
+    const alreadyLiked = await postRepository.hasLiked(postIdNum, profileId);
+    if (alreadyLiked) {
+      // Ritorna successo senza errore (comportamento idempotente)
+      return NextResponse.json({ message: 'Like già presente' });
     }
 
-    // Insert like
-    await execute(
-      `INSERT INTO likes (profile_id, likeable_type, likeable_id) 
-       VALUES (?, 'post', ?)`,
-      [profileId, postIdNum]
-    );
-
-    // Update post likes_count
-    await execute(
-      `UPDATE posts SET likes_count = likes_count + 1 WHERE id = ?`,
-      [postIdNum]
-    );
-
-    // Get post owner to send notification
-    const post = await queryOne<{ profile_id: number }>(
-      `SELECT profile_id FROM posts WHERE id = ?`,
-      [postIdNum]
-    );
-
-    // Create notification (only if not liking own post)
-    if (post && post.profile_id !== profileId) {
-      // Rimuovi eventuali notifiche like duplicate esistenti per questo post
-      await execute(
-        `DELETE FROM notifications 
-         WHERE recipient_profile_id = ? 
-         AND sender_profile_id = ? 
-         AND type = 'like_post'
-         AND reference_type = 'post'
-         AND reference_id = ?`,
-        [post.profile_id, profileId, postIdNum]
-      );
-      
-      await execute(
-        `INSERT INTO notifications (recipient_profile_id, sender_profile_id, type, reference_type, reference_id)
-         VALUES (?, ?, 'like_post', 'post', ?)`,
-        [post.profile_id, profileId, postIdNum]
+    // Recupera il post per verificare il proprietario
+    const post = await postRepository.findById(postIdNum);
+    if (!post) {
+      return NextResponse.json(
+        { error: 'Post non trovato' },
+        { status: 404 }
       );
     }
 
-    return NextResponse.json({ message: 'Post liked successfully' });
+    // Aggiungi like tramite repository
+    // (gestisce anche incremento contatore likes_count)
+    await postRepository.like(postIdNum, profileId);
+
+    // Crea notifica (solo se non è like al proprio post)
+    if (post.profile_id !== profileId) {
+      // Usa l'helper specifico per notifiche like
+      // Questo gestisce anche la rimozione di notifiche duplicate
+      await notificationRepository.createLikeNotification(
+        post.profile_id,
+        profileId,
+        postIdNum
+      );
+    }
+
+    return NextResponse.json({ message: 'Like aggiunto con successo' });
   } catch (error) {
-    console.error('Error liking post:', error);
-    return NextResponse.json({ error: 'Failed to like post' }, { status: 500 });
+    console.error('[Likes] Errore aggiunta like:', error);
+    return NextResponse.json(
+      { error: 'Impossibile aggiungere like' }, 
+      { status: 500 }
+    );
   }
 }

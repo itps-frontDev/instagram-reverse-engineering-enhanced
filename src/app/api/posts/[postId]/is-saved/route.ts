@@ -1,37 +1,34 @@
 /**
- * @fileoverview Check if post is saved by current user
+ * @fileoverview Verifica se l'utente ha salvato il post
  * GET /api/posts/[postId]/is-saved
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentProfileId } from '@/lib/auth';
-import { queryAll } from '@/lib/db';
+import { postRepository } from '@/repositories';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
-    // Verify authentication
+    // Verifica autenticazione
     const profileId = await getCurrentProfileId();
     if (!profileId) {
-      return NextResponse.json({ isSaved: false });
+      return NextResponse.json(
+        { error: 'Non autorizzato' },
+        { status: 401 }
+      );
     }
 
     const { postId } = await params;
 
-    // Check if user has saved this post
-    const result = await queryAll<{ id: number }>(
-      `SELECT id FROM saved_posts 
-       WHERE profile_id = ? 
-       AND post_id = ? 
-       AND deleted_at IS NULL`,
-      [profileId, parseInt(postId)]
-    );
+    // Verifica tramite repository se l'utente ha salvato il post
+    const isSaved = await postRepository.isSaved(parseInt(postId), profileId);
 
-    return NextResponse.json({ isSaved: result.length > 0 });
+    return NextResponse.json({ isSaved });
   } catch (error) {
-    console.error('Error checking save status:', error);
+    console.error('Errore verifica stato salvataggio:', error);
     return NextResponse.json({ isSaved: false });
   }
 }

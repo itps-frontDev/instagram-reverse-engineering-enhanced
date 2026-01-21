@@ -32,7 +32,7 @@ import {
   VolumeX,
   Play,
 } from 'lucide-react';
-import type { FeedPost, Comment, GetCommentsResponse } from '@/lib/types/feed';
+import type { FeedPost, Comment, GetCommentsResponse } from '@/types/feed';
 
 interface PostModalProps {
   post: FeedPost;

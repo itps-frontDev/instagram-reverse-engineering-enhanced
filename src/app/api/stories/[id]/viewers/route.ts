@@ -1,10 +1,26 @@
+/**
+ * @fileoverview API per ottenere i visualizzatori di una storia
+ *
+ * GET /api/stories/[id]/viewers - Lista di chi ha visto la storia
+ *
+ * Solo il proprietario della storia può vedere questa lista.
+ *
+ * PATTERN REPOSITORY:
+ * Usa StoryRepository per accesso centralizzato ai dati.
+ * 
+ * @module api/stories/[id]/viewers
+ */
+
 import { NextResponse, NextRequest } from 'next/server';
 import { getCurrentProfile } from '@/lib/auth';
-import { queryAll, queryOne } from '@/lib/db';
+import { storyRepository } from '@/repositories';
 
-// GET /api/stories/[id]/viewers
-// Get list of users who viewed this story
-// Only accessible by the story owner
+/**
+ * GET /api/stories/[id]/viewers
+ * Recupera la lista degli utenti che hanno visualizzato la storia.
+ * 
+ * Accessibile solo dal proprietario della storia.
+ */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -15,7 +31,7 @@ export async function GET(
 
     if (!currentProfile) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Non autorizzato' },
         { status: 401 }
       );
     }
@@ -24,42 +40,23 @@ export async function GET(
 
     if (!storyId) {
       return NextResponse.json(
-        { error: 'Invalid story ID' },
+        { error: 'ID storia non valido' },
         { status: 400 }
       );
     }
 
-    // Verify story exists and belongs to current user
-    const story = await queryOne<{ id: number; profile_id: number }>(
-      `SELECT id, profile_id FROM stories WHERE id = ? AND profile_id = ?`,
-      [storyId, currentProfile.id]
-    );
+    // Verifica che la storia appartenga all'utente corrente
+    const isOwner = await storyRepository.isOwner(storyId, currentProfile.id);
 
-    if (!story) {
+    if (!isOwner) {
       return NextResponse.json(
-        { error: 'Story not found or not owned by you' },
+        { error: 'Storia non trovata o non di tua proprietà' },
         { status: 404 }
       );
     }
 
-    // Get all viewers
-    const viewers = await queryAll<{
-      id: number;
-      username: string;
-      profile_image_url: string | null;
-      viewed_at: string;
-    }>(
-      `SELECT 
-        p.id,
-        p.username,
-        p.profile_image_url,
-        sv.viewed_at
-       FROM story_views sv
-       JOIN profiles p ON p.id = sv.viewer_profile_id
-       WHERE sv.story_id = ?
-       ORDER BY sv.viewed_at DESC`,
-      [storyId]
-    );
+    // Recupera i visualizzatori usando il repository
+    const viewers = await storyRepository.getViewers(storyId);
 
     return NextResponse.json({
       viewers,
@@ -68,7 +65,7 @@ export async function GET(
   } catch (error) {
     console.error('[api/stories/[id]/viewers] GET error', error);
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: 'Errore interno del server' },
       { status: 500 }
     );
   }

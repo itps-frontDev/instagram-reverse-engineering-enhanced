@@ -26,7 +26,7 @@ import {
   VolumeX,
   Play,
 } from 'lucide-react';
-import type { FeedPost } from '@/lib/types/feed';
+import type { FeedPost } from '@/types/feed';
 import PostModal from './PostModal';
 import StoryViewer from './StoryViewer';
 

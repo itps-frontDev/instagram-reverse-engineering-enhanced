@@ -1,38 +1,34 @@
 /**
- * @fileoverview Check if post is liked by current user
+ * @fileoverview Verifica se l'utente ha messo like al post
  * GET /api/posts/[postId]/is-liked
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentProfileId } from '@/lib/auth';
-import { queryAll } from '@/lib/db';
+import { postRepository } from '@/repositories';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
-    // Verify authentication
+    // Verifica autenticazione
     const profileId = await getCurrentProfileId();
     if (!profileId) {
-      return NextResponse.json({ isLiked: false });
+      return NextResponse.json(
+        { error: 'Non autorizzato' }, 
+        { status: 401 }
+      );
     }
 
     const { postId } = await params;
 
-    // Check if user has liked this post
-    const result = await queryAll<{ id: number }>(
-      `SELECT id FROM likes 
-       WHERE profile_id = ? 
-       AND likeable_type = 'post' 
-       AND likeable_id = ? 
-       AND deleted_at IS NULL`,
-      [profileId, parseInt(postId)]
-    );
+    // Verifica tramite repository se l'utente ha messo like
+    const isLiked = await postRepository.hasLiked(parseInt(postId), profileId);
 
-    return NextResponse.json({ isLiked: result.length > 0 });
+    return NextResponse.json({ isLiked });
   } catch (error) {
-    console.error('Error checking like status:', error);
+    console.error('Errore verifica stato like:', error);
     return NextResponse.json({ isLiked: false });
   }
 }

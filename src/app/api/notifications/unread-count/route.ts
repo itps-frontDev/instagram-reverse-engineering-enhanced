@@ -1,13 +1,18 @@
 /**
- * @fileoverview API route for getting unread notifications count
+ * @fileoverview API per Conteggio Notifiche Non Lette
  *
- * This endpoint returns the count of unread notifications for the authenticated user.
+ * Restituisce il numero di notifiche non lette per l'utente autenticato.
+ * Usato per mostrare il badge nel menu di navigazione.
+ * 
+ * OTTIMIZZAZIONE:
+ * Questa API viene chiamata frequentemente (polling o su navigazione).
+ * Usa una query COUNT(*) veloce invece di caricare tutte le notifiche.
  *
  * @module api/notifications/unread-count
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { queryOne } from '@/lib/db';
+import { notificationRepository } from '@/repositories';
 import { getCurrentProfile } from '@/lib/auth';
 
 // ============================================================================
@@ -15,41 +20,34 @@ import { getCurrentProfile } from '@/lib/auth';
 // ============================================================================
 
 /**
- * Get unread notifications count for the authenticated user
+ * Ottiene il conteggio delle notifiche non lette.
  *
- * @param request - Next.js request object
- * @returns Unread count or error response
+ * @param request - Oggetto richiesta Next.js
+ * @returns { count: number } o errore
  */
 export async function GET(request: NextRequest) {
   try {
-    // Get current user's profile
+    // Ottieni profilo utente corrente dal token JWT
     const currentProfile = await getCurrentProfile();
 
     if (!currentProfile) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Non autorizzato' },
         { status: 401 }
       );
     }
 
-    const profileId = currentProfile.id;
-
-    // Count unread notifications
-    const result = await queryOne<{ count: number }>(
-      `SELECT COUNT(*) as count 
-       FROM notifications 
-       WHERE recipient_profile_id = ? AND is_read = 0`,
-      [profileId]
-    );
+    // Usa il repository per ottenere il conteggio
+    const count = await notificationRepository.getUnreadCount(currentProfile.id);
 
     return NextResponse.json(
-      { count: result?.count || 0 },
+      { count },
       { status: 200 }
     );
   } catch (error) {
-    console.error('Error fetching unread count:', error);
+    console.error('Errore nel recupero conteggio notifiche:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch unread count' },
+      { error: 'Errore nel recupero delle notifiche' },
       { status: 500 }
     );
   }

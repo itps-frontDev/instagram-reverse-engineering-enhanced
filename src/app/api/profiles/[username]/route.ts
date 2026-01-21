@@ -1,30 +1,54 @@
 /**
- * @fileoverview API route for getting profile data by username
+ * @fileoverview API per recupero profilo tramite username
  *
- * This endpoint returns complete profile information for a given username.
- * It's the primary endpoint for loading profile pages.
- *
+ * GET /api/profiles/[username]
+ * Restituisce informazioni complete di un profilo dato il suo username.
+ * Questo è l'endpoint principale per il caricamento delle pagine profilo.
+ * 
+ * FUNZIONALITÀ PRINCIPALI:
+ * 1. Recupera dati base del profilo (username, bio, contatori)
+ * 2. Calcola flag dinamici (has_reels, has_active_story, etc.)
+ * 3. Tiene conto dell'utente corrente per storie non viste
+ * 4. Implementa soft delete (deleted_at IS NULL)
+ * 
+ * REFACTORING: Usa ProfileRepository invece di query dirette.
+ * Il metodo findByUsernameWithDetails incapsula tutta la logica complessa.
+ * 
+ * NOTA SUL CACHING:
+ * La risposta include header Cache-Control per caching lato client:
+ * - s-maxage=60: CDN può tenere in cache per 60 secondi
+ * - stale-while-revalidate=120: può servire stale mentre ricarica
+ * 
  * @module api/profiles/[username]
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { queryOne } from '@/lib/db';
-import { Profile, GetProfileResponse } from '@/lib/types/profile';
-import { getCurrentProfileId } from '@/lib/auth';
+import { Profile, GetProfileResponse } from '@/types/profile';
+import { getCurrentProfile, getCurrentProfileId } from '@/lib/auth';
+import { profileRepository } from '@/repositories';
+
+// Forza runtime Node.js (necessario per accesso DB)
+export const runtime = 'nodejs';
 
 // ============================================================================
 // GET /api/profiles/[username]
 // ============================================================================
 
 /**
- * Get profile data by username.
+ * Recupera i dati di un profilo dato l'username.
+ * 
+ * Vantaggi del Repository Pattern:
+ * 1. Codice API più pulito e leggibile
+ * 2. Logica SQL riutilizzabile
+ * 3. Più facile da testare (si può mockare il repository)
+ * 4. Separazione delle responsabilità
  *
- * @param request - Next.js request object
- * @param params - Route parameters containing username
- * @returns Profile data or error response
+ * @param request - Oggetto request Next.js
+ * @param params - Parametri route contenenti username
+ * @returns Dati profilo o risposta errore
  *
  * @example
- * // Fetch profile
+ * // Recupera profilo
  * const response = await fetch('/api/profiles/johndoe');
  * const { profile } = await response.json();
  */
@@ -33,149 +57,80 @@ export async function GET(
   { params }: { params: Promise<{ username: string }> }
 ) {
   try {
+
+    // Ottiene il profilo corrente autenticato
+    const currentProfile = await getCurrentProfile();
+
+    if (!currentProfile) {
+      return NextResponse.json(
+        { error: 'Non autorizzato' },
+        { status: 401 }
+      );
+    }
+
+    // In Next.js 15+ i params sono Promise (segment dinamici)
     const { username } = await params;
 
-    // Validate username parameter
+    // Validazione parametro username
     if (!username || typeof username !== 'string') {
       return NextResponse.json(
-        { error: 'Username is required' },
+        { error: 'Username richiesto' },
         { status: 400 }
       );
     }
 
-    // Fetch profile from database
-    type ProfileQueryResult = Omit<Profile, 'has_reels' | 'has_any_active_story' | 'has_active_story' | 'has_viewed_story' | 'is_private' | 'is_verified'> & {
-      has_reels: number;
-      has_any_active_story: number;
-      has_active_story: number;
-      has_viewed_story: number;
-      is_private: number;
-      is_verified: number;
-    };
-    
-    // Get current user's profile ID (if authenticated)
+    /**
+     * Ottiene l'ID del profilo corrente dall'autenticazione.
+     * Se non autenticato, ritorna null.
+     * 
+     * Usato per personalizzare i dati del profilo richiesto,
+     * ad esempio per calcolare se ci sono storie attive non viste.
+     */
     const currentProfileId = await getCurrentProfileId();
     
-    const profile = await queryOne<ProfileQueryResult>(
-      `SELECT
-        id,
-        user_id,
-        username,
-        full_name,
-        profile_image_url,
-        bio,
-        website_url,
-        is_private,
-        is_verified,
-        followers_count,
-        following_count,
-        posts_count,
-        created_at,
-        updated_at,
-        (
-          SELECT COUNT(*) > 0
-          FROM posts p
-          INNER JOIN post_media pm ON pm.post_id = p.id
-          WHERE p.profile_id = profiles.id
-            AND pm.media_type = 'video'
-            AND p.deleted_at IS NULL
-        ) as has_reels,
-        (
-          SELECT COUNT(*) > 0
-          FROM stories s
-          WHERE s.profile_id = profiles.id
-            AND s.deleted_at IS NULL
-            AND datetime(s.expires_at) > datetime('now')
-        ) as has_any_active_story,
-        (
-          SELECT CASE
-            WHEN COUNT(*) > 0 AND EXISTS (
-              SELECT 1 FROM stories s2
-              WHERE s2.profile_id = profiles.id
-              AND s2.deleted_at IS NULL
-              AND datetime(s2.expires_at) > datetime('now')
-              AND (
-                s2.profile_id = ? OR
-                s2.profile_id IN (
-                  SELECT following_profile_id FROM follows
-                  WHERE follower_profile_id = ?
-                  AND status = 'accepted'
-                ) OR
-                profiles.is_private = 0
-              )
-              AND NOT EXISTS (
-                SELECT 1 FROM story_views sv2
-                WHERE sv2.story_id = s2.id
-                AND sv2.viewer_profile_id = ?
-              )
-            ) THEN 1 ELSE 0 END
-          FROM stories s
-          WHERE s.profile_id = profiles.id
-            AND s.deleted_at IS NULL
-            AND datetime(s.expires_at) > datetime('now')
-        ) as has_active_story,
-        (
-          SELECT COUNT(*) > 0
-          FROM story_views sv
-          INNER JOIN stories s ON s.id = sv.story_id
-          WHERE s.profile_id = profiles.id
-            AND sv.viewer_profile_id = ?
-            AND s.deleted_at IS NULL
-            AND datetime(s.expires_at) > datetime('now')
-        ) as has_viewed_story
-      FROM profiles
-      WHERE username = ? AND deleted_at IS NULL`,
-      [currentProfileId || 0, currentProfileId || 0, currentProfileId || 0, currentProfileId || 0, username]
+    
+    /**
+     * Il metodo findByUsernameWithDetails incapsula:
+     * - Query base profilo
+     * - Subquery per has_reels
+     * - Subquery per has_any_active_story
+     * - Subquery per has_active_story (considera viewer)
+     * - Subquery per has_viewed_story
+     * - Conversione booleani SQLite -> JavaScript
+     */
+    const profile = await profileRepository.findByUsernameWithDetails(
+      username, 
+      currentProfileId
     );
 
-    // Profile not found
+    // Profilo non trovato
     if (!profile) {
       return NextResponse.json(
-        { error: 'Profile not found' },
+        { error: 'Profilo non trovato' },
         { status: 404 }
       );
     }
 
-    // Convert integer booleans to actual booleans
-    const profileData: Profile = {
-      id: profile.id,
-      user_id: profile.user_id,
-      username: profile.username,
-      has_viewed_story: Boolean(profile.has_viewed_story),
-      full_name: profile.full_name,
-      bio: profile.bio,
-      profile_image_url: profile.profile_image_url,
-      website_url: profile.website_url,
-      followers_count: profile.followers_count,
-      following_count: profile.following_count,
-      posts_count: profile.posts_count,
-      is_private: Boolean(profile.is_private),
-      is_verified: Boolean(profile.is_verified),
-      created_at: profile.created_at,
-      updated_at: profile.updated_at,
-      has_reels: Boolean(profile.has_reels),
-      has_any_active_story: Boolean(profile.has_any_active_story),
-      has_active_story: Boolean(profile.has_active_story),
-    };
-
-    // Return profile data
+    // Prepara risposta con tipo definito
     const response: GetProfileResponse = {
-      profile: profileData,
+      profile: profile as Profile,
     };
 
+    // Restituisce con header di cache per ottimizzare performance
     return NextResponse.json(response, {
       status: 200,
       headers: {
+        // Cache-Control per CDN e browser
         'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
       },
     });
   } catch (error) {
-    console.error('[API] Error fetching profile:', error);
+    console.error('[Profiles] Errore recupero profilo:', error);
 
     return NextResponse.json(
       {
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Errore interno del server',
+        message: error instanceof Error ? error.message : 'Errore sconosciuto',
       },
       { status: 500 }
     );

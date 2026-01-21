@@ -1,126 +1,123 @@
 /**
- * @fileoverview API route for accepting a follow request
+ * @fileoverview API per accettare una richiesta di follow
+ *
+ * POST /api/profiles/follow/accept - Accetta una richiesta di follow pending
+ *
+ * FLUSSO:
+ * 1. Verifica autenticazione
+ * 2. Trova la richiesta di follow pending
+ * 3. Aggiorna lo stato a 'accepted'
+ * 4. Incrementa followers_count del profilo corrente
+ * 5. Aggiorna la notifica da follow_request a follow
+ * 6. Crea notifica follow_accepted per il richiedente
+ *
+ * REFACTORING: Usa ProfileRepository e NotificationRepository.
+ * 
+ * @module api/profiles/follow/accept
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { execute, queryOne } from '@/lib/db';
+import { profileRepository, notificationRepository } from '@/repositories';
 import { getCurrentProfile } from '@/lib/auth';
 
+/**
+ * POST /api/profiles/follow/accept
+ * Accetta una richiesta di follow.
+ * 
+ * Richiede autenticazione via cookie HTTP-only.
+ */
 export async function POST(request: NextRequest) {
   try {
-    console.log('[Accept] Starting accept follow request');
+    console.log('[Accept] Inizio accettazione richiesta di follow');
+
+    // Verifica autenticazione
     const currentProfile = await getCurrentProfile();
 
     if (!currentProfile) {
-      console.log('[Accept] No current profile found');
+      console.log('[Accept] Nessun profilo corrente trovato');
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Non autorizzato' },
         { status: 401 }
       );
     }
 
-    console.log('[Accept] Current profile:', currentProfile.id);
+    console.log('[Accept] Profilo corrente:', currentProfile.id);
 
+    // Parsing e validazione del body
     const body = await request.json();
     const { followerId } = body;
 
     console.log('[Accept] Follower ID:', followerId);
 
     if (!followerId || typeof followerId !== 'number') {
-      console.log('[Accept] Invalid follower ID');
+      console.log('[Accept] ID follower non valido');
       return NextResponse.json(
-        { error: 'Follower ID is required' },
+        { error: 'ID follower è obbligatorio' },
         { status: 400 }
       );
     }
 
-    // Verifica che esista una richiesta pending
-    console.log('[Accept] Checking for existing follow request');
-    const existingFollow = await queryOne<{ id: number; status: string }>(
-      `SELECT id, status
-       FROM follows
-       WHERE follower_profile_id = ?
-         AND following_profile_id = ?
-         AND deleted_at IS NULL`,
-      [followerId, currentProfile.id]
+    // Verifica esistenza richiesta di follow usando il repository
+    console.log('[Accept] Verifica esistenza richiesta di follow');
+    const existingFollow = await profileRepository.getFollowRelationship(
+      followerId,
+      currentProfile.id
     );
 
-    console.log('[Accept] Existing follow:', existingFollow);
+    console.log('[Accept] Relazione esistente:', existingFollow);
 
     if (!existingFollow) {
-      console.log('[Accept] Follow request not found');
+      console.log('[Accept] Richiesta di follow non trovata');
       return NextResponse.json(
-        { error: 'Follow request not found' },
+        { error: 'Richiesta di follow non trovata' },
         { status: 404 }
       );
     }
 
     if (existingFollow.status === 'accepted') {
-      console.log('[Accept] Follow request already accepted');
+      console.log('[Accept] Richiesta già accettata');
       return NextResponse.json(
-        { error: 'Follow request already accepted' },
+        { error: 'Richiesta di follow già accettata' },
         { status: 409 }
       );
     }
 
-    // Accetta la richiesta
-    console.log('[Accept] Updating follow status to accepted');
-    await execute(
-      `UPDATE follows
-       SET status = 'accepted',
-           updated_at = datetime('now')
-       WHERE id = ?`,
-      [existingFollow.id]
-    );
+    // Accetta la richiesta: aggiorna lo stato a 'accepted'
+    console.log('[Accept] Aggiornamento stato follow a accepted');
+    await profileRepository.acceptFollowById(existingFollow.id);
+  
+    console.log('[Accept] Incremento followers_count del profilo corrente');
+    await profileRepository.incrementFollowersCount(currentProfile.id);
+    
+    console.log('[Accept] Incremento following_count del richiedente');
+    await profileRepository.incrementFollowingCount(followerId);
 
-    // Incrementa followers_count per l'utente corrente
-    console.log('[Accept] Incrementing followers_count');
-    await execute(
-      `UPDATE profiles
-       SET followers_count = followers_count + 1,
-           updated_at = datetime('now')
-       WHERE id = ?`,
-      [currentProfile.id]
-    );
-
+    // -------------------------------------------------------------------------
+    // Gestione notifiche
+    // -------------------------------------------------------------------------
+    
     // Aggiorna la notifica da follow_request a follow
-    console.log('[Accept] Updating notification type');
-    const updateResult = await execute(
-      `UPDATE notifications
-       SET type = 'follow'
-       WHERE sender_profile_id = ?
-         AND recipient_profile_id = ?
-         AND type = 'follow_request'`,
-      [followerId, currentProfile.id]
-    );
-    console.log('[Accept] Notification update result:', updateResult);
-
-    // Rimuovi eventuali notifiche follow_accepted duplicate esistenti
-    console.log('[Accept] Removing duplicate follow_accepted notifications');
-    await execute(
-      `DELETE FROM notifications
-       WHERE recipient_profile_id = ?
-       AND sender_profile_id = ?
-       AND type = 'follow_accepted'`,
-      [followerId, currentProfile.id]
+    console.log('[Accept] Aggiornamento tipo notifica');
+    await notificationRepository.convertFollowRequestToFollow(
+      followerId,
+      currentProfile.id
     );
 
-    // Crea notifica per l'utente che ha fatto la richiesta
-    console.log('[Accept] Creating follow_accepted notification');
-    await execute(
-      `INSERT INTO notifications (recipient_profile_id, sender_profile_id, type, reference_type, reference_id)
-       VALUES (?, ?, 'follow_accepted', 'profile', ?)`,
-      [followerId, currentProfile.id, currentProfile.id]
+    // Crea notifica follow_accepted per il richiedente
+    console.log('[Accept] Creazione notifica follow_accepted');
+    await notificationRepository.createFollowAcceptedNotification(
+      followerId,
+      currentProfile.id
     );
 
-    console.log('[Accept] Success!');
+    console.log('[Accept] Successo!');
     return NextResponse.json({
       success: true,
       message: 'Follow request accepted'
     });
   } catch (error) {
-    console.error('[Accept] Error accepting follow request:', error);
-    console.error('[Accept] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    console.error('[Accept] Errore accettazione richiesta di follow:', error);
+    console.error('[Accept] Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
     return NextResponse.json(
       { error: 'Internal server error', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }

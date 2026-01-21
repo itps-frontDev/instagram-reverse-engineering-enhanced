@@ -1,161 +1,147 @@
+/**
+ * @fileoverview API per gestione storie
+ * 
+ * Endpoint disponibili:
+ * - GET  /api/stories - Recupera storie attive (proprie + seguite)
+ * - POST /api/stories - Registra visualizzazione storia
+ * 
+ * CONCETTO STORIE:
+ * Le storie sono contenuti effimeri che scadono dopo 24 ore.
+ * Simile alle Instagram Stories, vengono mostrate:
+ * - Le proprie storie (sempre visibili)
+ * - Storie di profili seguiti (status = 'accepted')
+ * - Storie di profili pubblici (is_private = 0)
+ * 
+ * SCADENZA:
+ * expires_at > datetime('now') garantisce che solo storie
+ * non scadute vengano restituite.
+ * 
+ * VISUALIZZAZIONI:
+ * Quando un utente visualizza una storia:
+ * 1. Viene creato un record in story_views
+ * 2. Il contatore views_count viene incrementato
+ * 
+ * PATTERN REPOSITORY:
+ * Usa StoryRepository per accesso centralizzato ai dati delle storie.
+ * 
+ * @module api/stories
+ */
+
 import { NextResponse, NextRequest } from 'next/server';
 import { getCurrentProfile } from '@/lib/auth';
-import { queryAll, queryOne, execute } from '@/lib/db';
+import { storyRepository } from '@/repositories';
 
+// Forza runtime Node.js per accesso al database
 export const runtime = 'nodejs';
 
+// ============================================================================
 // GET /api/stories
-// Returns active stories for the current user: own stories + stories from followed profiles
+// ============================================================================
+
+/**
+ * Recupera le storie attive per l'utente corrente.
+ * 
+ * Restituisce:
+ * - Proprie storie
+ * - Storie di profili seguiti (follow accettato)
+ * - Storie di profili pubblici
+ * 
+ * Per ogni storia calcola:
+ * - is_liked_by_me: se l'utente ha messo like
+ * - is_viewed: se l'utente l'ha già visualizzata
+ * 
+ * @returns { stories: StoryWithStatus[] }
+ */
 export async function GET() {
   try {
     const currentProfile = await getCurrentProfile();
 
-    // If not authenticated, return empty list
+    // Se non autenticato, ritorna lista vuota
+    // Le storie richiedono autenticazione per vedere quelle dei seguiti
     if (!currentProfile) {
       return NextResponse.json({ stories: [] });
     }
 
-    // Show stories from followed profiles (accepted), own stories, OR public profiles
-    const sql = `
-      SELECT
-        s.id,
-        s.profile_id,
-        p.username,
-        p.profile_image_url,
-        p.is_verified,
-        s.media_url,
-        s.media_type,
-        s.duration_seconds,
-        s.views_count,
-        s.created_at,
-        s.expires_at,
-        CASE WHEN EXISTS (
-          SELECT 1 FROM likes 
-          WHERE profile_id = ? 
-            AND likeable_type = 'story' 
-            AND likeable_id = s.id 
-            AND deleted_at IS NULL
-        ) THEN 1 ELSE 0 END as is_liked_by_me,
-        CASE WHEN EXISTS (
-          SELECT 1 FROM story_views
-          WHERE story_id = s.id
-            AND viewer_profile_id = ?
-        ) THEN 1 ELSE 0 END as is_viewed
-      FROM stories s
-      JOIN profiles p ON p.id = s.profile_id
-      WHERE (
-        s.profile_id = ?
-        OR s.profile_id IN (
-          SELECT following_profile_id FROM follows 
-          WHERE follower_profile_id = ? 
-            AND status = 'accepted'
-            AND deleted_at IS NULL
-        )
-      )
-        AND s.expires_at > datetime('now', 'localtime')
-        AND s.deleted_at IS NULL
-      ORDER BY s.created_at DESC
-    `;
+    // Recupera le storie raggruppate per profilo usando il repository
+    const storyGroups = await storyRepository.getActiveStoriesGrouped(currentProfile.id);
 
-    const rows = await queryAll(sql, [
-      currentProfile.id, 
-      currentProfile.id, 
-      currentProfile.id, 
-      currentProfile.id
-    ]);
-
-    // Convert is_verified to boolean
-    const stories = rows.map((story: any) => ({
-      ...story,
-      is_verified: Boolean(story.is_verified)
-    }));
+    // Appiattisci i gruppi in un array singolo di storie
+    // (il frontend si aspetta un array di storie, non raggruppate)
+    const stories = storyGroups.flatMap(group => group.stories);
 
     return NextResponse.json({ stories });
   } catch (error) {
-    console.error('[api/stories] GET error', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error('[Stories] Errore GET:', error);
+    return NextResponse.json(
+      { error: 'Errore interno del server' }, 
+      { status: 500 }
+    );
   }
 }
 
+// ============================================================================
 // POST /api/stories
-// Record a story view
+// ============================================================================
+
+/**
+ * Registra la visualizzazione di una storia.
+ * 
+ * Processo:
+ * 1. Verifica autenticazione
+ * 2. Valida story_id
+ * 3. Verifica che la storia esista e sia accessibile
+ * 4. Se non già visualizzata, crea record e incrementa contatore
+ * 
+ * IDEMPOTENZA:
+ * Se la storia è già stata visualizzata, non crea duplicati.
+ * 
+ * @param request - Body JSON { story_id: number }
+ * @returns { success: true, message: string }
+ */
 export async function POST(request: NextRequest) {
   try {
     const currentProfile = await getCurrentProfile();
 
+    // Autenticazione richiesta
     if (!currentProfile) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Non autorizzato' },
         { status: 401 }
       );
     }
 
+    // Parse body e valida
     const { story_id } = await request.json();
 
     if (!story_id) {
       return NextResponse.json(
-        { error: 'Missing story_id' },
+        { error: 'story_id mancante' },
         { status: 400 }
       );
     }
 
-    // Verify story exists and is accessible
-    const story = await queryOne<{ id: number; profile_id: number }>(
-      `SELECT s.id, s.profile_id FROM stories s
-       JOIN profiles p ON p.id = s.profile_id
-       WHERE s.id = ? 
-         AND s.deleted_at IS NULL
-         AND s.expires_at > datetime('now')
-         AND (
-           s.profile_id IN (
-             SELECT following_profile_id FROM follows 
-             WHERE follower_profile_id = ? 
-               AND deleted_at IS NULL 
-               AND status = 'accepted'
-           )
-           OR s.profile_id = ?
-           OR (p.is_private = 0 AND s.profile_id != ?)
-         )`,
-      [story_id, currentProfile.id, currentProfile.id, currentProfile.id]
-    );
+    // Verifica che la storia esista e sia accessibile usando il repository
+    const story = await storyRepository.findAccessibleById(story_id, currentProfile.id);
 
+    // Storia non trovata o non accessibile
     if (!story) {
       return NextResponse.json(
-        { error: 'Story not found or not accessible' },
+        { error: 'Storia non trovata o non accessibile' },
         { status: 404 }
       );
     }
 
-    // Check if already viewed
-    const existingView = await queryOne(
-      `SELECT id FROM story_views 
-       WHERE story_id = ? AND viewer_profile_id = ?`,
-      [story_id, currentProfile.id]
-    );
-
-    if (!existingView) {
-      // Record the view
-      await execute(
-        `INSERT INTO story_views (story_id, viewer_profile_id, viewed_at)
-         VALUES (?, ?, datetime('now'))`,
-        [story_id, currentProfile.id]
-      );
-
-      // Increment views count
-      await execute(
-        `UPDATE stories SET views_count = views_count + 1 WHERE id = ?`,
-        [story_id]
-      );
-    }
+    // Registra la visualizzazione (idempotente)
+    const wasNewView = await storyRepository.recordView(story_id, currentProfile.id);
 
     return NextResponse.json({
       success: true,
-      message: 'Story view recorded',
+      message: wasNewView ? 'Visualizzazione registrata' : 'Già visualizzata',
     });
   } catch (error) {
-    console.error('[api/stories] POST error', error);
+    console.error('[Stories] Errore POST:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: 'Errore interno del server' },
       { status: 500 }
     );
   }

@@ -1,61 +1,62 @@
 /**
- * @fileoverview Unlike a post
+ * @fileoverview API per rimuovere like da un post
+ * 
  * POST /api/posts/[postId]/unlike
+ * Rimuove il like dell'utente corrente dal post.
+ * 
+ * PROCESSO:
+ * 1. Verifica autenticazione
+ * 2. Soft delete del like (imposta deleted_at)
+ * 3. Decrementa contatore likes_count del post
+ * 4. Elimina notifica like precedente
+ * 
+ * @module api/posts/[postId]/unlike
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentProfileId } from '@/lib/auth';
-import { execute } from '@/lib/db';
+import { postRepository, notificationRepository } from '@/repositories';
 
+// Forza runtime Node.js
+export const runtime = 'nodejs';
+
+/**
+ * Gestisce richiesta POST per rimuovere like.
+ * 
+ * @param request - Request Next.js
+ * @param params - Contiene postId
+ * @returns Messaggio di successo o errore
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
-    // Verify authentication
+    // Verifica autenticazione
     const profileId = await getCurrentProfileId();
     if (!profileId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Non autorizzato' }, 
+        { status: 401 }
+      );
     }
 
     const { postId } = await params;
     const postIdNum = parseInt(postId);
 
-    // Soft delete like
-    await execute(
-      `UPDATE likes 
-       SET deleted_at = datetime('now') 
-       WHERE profile_id = ? 
-       AND likeable_type = 'post' 
-       AND likeable_id = ? 
-       AND deleted_at IS NULL`,
-      [profileId, postIdNum]
-    );
+    // Rimuove il like tramite repository
+    // (gestisce soft delete e decremento contatore automaticamente)
+    await postRepository.unlike(postIdNum, profileId);
 
-    // Update post likes_count
-    await execute(
-      `UPDATE posts 
-       SET likes_count = CASE 
-         WHEN likes_count > 0 THEN likes_count - 1 
-         ELSE 0 
-       END 
-       WHERE id = ?`,
-      [postIdNum]
-    );
+    // Elimina notifica like associata tramite repository
+    await notificationRepository.deleteLikeNotification(profileId, postIdNum);
 
-    // Delete like notification
-    await execute(
-      `DELETE FROM notifications
-       WHERE sender_profile_id = ?
-         AND type = 'like_post'
-         AND reference_type = 'post'
-         AND reference_id = ?`,
-      [profileId, postIdNum]
-    );
-
-    return NextResponse.json({ message: 'Post unliked successfully' });
+    return NextResponse.json({ message: 'Like rimosso con successo' });
   } catch (error) {
-    console.error('Error unliking post:', error);
-    return NextResponse.json({ error: 'Failed to unlike post' }, { status: 500 });
+    console.error('[Likes] Errore rimozione like:', error);
+    return NextResponse.json(
+      { error: 'Impossibile rimuovere like' }, 
+      { status: 500 }
+    );
   }
 }

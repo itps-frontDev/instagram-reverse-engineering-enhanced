@@ -10,7 +10,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import ExploreGrid from '@/components/explore/ExploreGrid';
 import MobileSearchBar from '@/components/feed/MobileSearchBar';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
-import type { FeedPost, GetFeedResponse } from '@/lib/types/feed';
+import type { FeedPost, GetFeedResponse } from '@/types/feed';
 
 export default function ExplorePage() {
   const [posts, setPosts] = useState<FeedPost[]>([]);
