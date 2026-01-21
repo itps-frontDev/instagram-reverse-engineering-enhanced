@@ -19,7 +19,7 @@ pnpm -v
 pnpm install
 pnpm db:reset
 pnpm db:seed
-pnpm dev
+pnpm run dev
 
 ```
 
