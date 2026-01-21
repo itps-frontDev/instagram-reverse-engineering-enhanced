@@ -31,7 +31,7 @@ Apri **http://localhost:3000**
 
 | Comando | Descrizione |
 |---------|-------------|
-| `pnpm dev` | Server sviluppo |
+| `pnpm run dev` | Server sviluppo |
 | `pnpm db:reset` | Ricrea database |
 | `pnpm db:seed` | Popola il database con dati di test |
 | `pnpm build` | Build produzione |
