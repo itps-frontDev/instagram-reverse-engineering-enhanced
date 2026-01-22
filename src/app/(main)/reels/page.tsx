@@ -547,7 +547,12 @@ export default function ReelsPage() {
         : `/api/posts/${reelId}/save`;
       
       const response = await fetch(endpoint, { method: 'POST' });
-      if (!response.ok) throw new Error('Errore nel salvataggio');
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Errore salvataggio:', response.status, errorData);
+        throw new Error(errorData.error || 'Errore nel salvataggio');
+      }
 
       // Toggle dello stato locale
       setReels(prev => prev.map(r => 
