@@ -1,31 +1,66 @@
+/**
+ * @fileoverview Lista messaggi della chat.
+ * 
+ * Componente che visualizza la cronologia dei messaggi di una conversazione
+ * con supporto per scroll automatico, separatori temporali e raggruppamento.
+ * 
+ * FUNZIONALITÀ:
+ * - Visualizzazione messaggi con bolle stile Instagram
+ * - Scroll automatico ai nuovi messaggi
+ * - Separatori temporali tra gruppi di messaggi
+ * - Header con info contatto e link al profilo
+ * - Raggruppamento messaggi consecutivi stesso mittente
+ * 
+ * @module components/direct/MessageList
+ */
 
 import React, { useRef, useEffect } from 'react';
 import Link from 'next/link';
-import ProfilePicture from '@/components/ProfilePicture';
+import {ProfilePicture} from '@/components';
 
+// ============================================================================
+// INTERFACCE
+// ============================================================================
+
+/**
+ * Struttura di un singolo messaggio.
+ * 
+ * @interface MessageItem
+ */
 export interface MessageItem {
-  id: number;
-  sender_profile_id: number;
-  username: string;
-  text: string;
-  created_at: string;
+  
+  id: number; // ID univoco del messaggio
+  sender_profile_id: number; // ID profilo del mittente
+  username: string; // Username del mittente
+  text: string; // Testo del messaggio
+  created_at: string; // Data/ora di creazione
 }
 
+/**
+ * Props per il componente MessageList.
+ * 
+ * @interface MessageListProps
+ */
 interface MessageListProps {
-  messages: MessageItem[];
-  currentProfileId: number;
-  contactProfileImage?: string;
-  contactName?: string;
-  contactUsername?: string;
+  messages: MessageItem[]; // Array dei messaggi da visualizzare
+  currentProfileId: number; // ID profilo utente corrente
+  contactProfileImage?: string; // URL immagine profilo del contatto
+  contactName?: string; // Nome del contatto
+  contactUsername?: string; // Username del contatto
 }
 
-// Funzione per formattare il timestamp
-function formatMessageTime(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
+// ============================================================================
+// FUNZIONI UTILITY
+// ============================================================================
 
-// Funzione per verificare se mostrare il separatore temporale
+
+/**
+ * Determina se mostrare il separatore temporale tra due messaggi.
+ * 
+ * @param currentMsg - Messaggio corrente
+ * @param prevMsg - Messaggio precedente (o null se primo)
+ * @returns true se devono essere separati
+ */
 function shouldShowTimeSeparator(currentMsg: MessageItem, prevMsg: MessageItem | null): boolean {
   if (!prevMsg) return true;
   
@@ -37,7 +72,12 @@ function shouldShowTimeSeparator(currentMsg: MessageItem, prevMsg: MessageItem |
   return diffMinutes > 30;
 }
 
-// Funzione per formattare il separatore temporale
+/**
+ * Formatta la data per il separatore temporale.
+ * 
+ * @param dateString - Data in formato ISO
+ * @returns Stringa formattata (es. "Ieri 14:30", "Lunedì 09:15")
+ */
 function formatTimeSeparator(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
@@ -56,6 +96,22 @@ function formatTimeSeparator(dateString: string): string {
   }
 }
 
+// ============================================================================
+// COMPONENTE
+// ============================================================================
+
+/**
+ * Lista messaggi di una conversazione.
+ * 
+ * Visualizza tutti i messaggi ordinati cronologicamente con:
+ * - Header del contatto con link al profilo
+ * - Bolle messaggi differenziate per mittente
+ * - Separatori temporali automatici
+ * - Scroll automatico ai nuovi messaggi
+ * 
+ * @param props - Props del componente
+ * @returns Lista messaggi formattata
+ */
 export default function MessageList({ messages, currentProfileId, contactProfileImage, contactName, contactUsername }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef<number>(0);

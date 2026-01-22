@@ -1,15 +1,42 @@
 /**
- * @fileoverview Suggestions Skeleton Loader
+ * @fileoverview Skeleton loader per suggerimenti.
  *
- * Skeleton placeholder for Suggestions sidebar component during loading state.
- * Follows Next.js streaming best practices.
+ * Placeholder animato mostrato durante il caricamento dei suggerimenti sidebar.
+ * Simula la struttura con utente corrente e lista suggeriti.
+ * 
+ * STRUTTURA SIMULATA:
+ * - Info utente corrente (avatar grande + username)
+ * - Header sezione suggerimenti
+ * - 5 utenti suggeriti (avatar + nome + pulsante)
+ * 
+ * POSIZIONAMENTO:
+ * - Nascosto sotto 2xl (< 1536px)
+ * - Fisso a destra del feed principale
+ * 
+ * @module components/common/skeletons/SuggestionsSkeleton
  */
 
+// ============================================================================
+// COSTANTI
+// ============================================================================
+
+/** Numero di suggerimenti skeleton da mostrare */
+const SKELETON_SUGGESTIONS = 5;
+
+// ============================================================================
+// COMPONENTE
+// ============================================================================
+
+/**
+ * Skeleton per sidebar suggerimenti.
+ * 
+ * @returns Placeholder animato per suggerimenti
+ */
 export default function SuggestionsSkeleton() {
   return (
     <aside className="hidden 2xl:block fixed left-1/2 ml-[calc(710px/2+20px)] top-24 w-80">
       <div className="space-y-4 animate-pulse">
-        {/* Current User Info Skeleton */}
+        {/* Info utente corrente Skeleton */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700" />
@@ -21,15 +48,15 @@ export default function SuggestionsSkeleton() {
           <div className="h-3 w-12 bg-gray-200 dark:bg-gray-700 rounded" />
         </div>
 
-        {/* Suggestions Header */}
+        {/* Intestazione suggerimenti */}
         <div className="mt-6 flex items-center justify-between">
           <div className="h-3 w-32 bg-gray-200 dark:bg-gray-700 rounded" />
           <div className="h-3 w-20 bg-gray-200 dark:bg-gray-700 rounded" />
         </div>
 
-        {/* Suggested Users */}
+        {/* Utenti suggeriti */}
         <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
+          {Array.from({ length: SKELETON_SUGGESTIONS }).map((_, i) => (
             <div key={i} className="flex items-center justify-between">
               <div className="flex items-center gap-3 flex-1">
                 <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700" />

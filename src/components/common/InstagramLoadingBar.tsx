@@ -1,8 +1,16 @@
 /**
- * @fileoverview Instagram-style loading bar component.
+ * @fileoverview Barra di caricamento stile Instagram.
  * 
- * Displays a gradient loading bar at the top of the page during navigation and data loading.
- * Uses Instagram's signature gradient colors (yellow -> red -> purple).
+ * Barra di progresso animata mostrata in alto durante la navigazione.
+ * Utilizza i colori gradient caratteristici di Instagram
+ * (giallo -> rosso -> viola).
+ * 
+ * COMPORTAMENTO:
+ * - Si attiva automaticamente al cambio di route
+ * - Progresso simulato con animazione fluida
+ * - Si nasconde dopo il completamento
+ * 
+ * @module components/common/InstagramLoadingBar
  */
 
 'use client';
@@ -10,19 +18,37 @@
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 
+// ============================================================================
+// COMPONENTE
+// ============================================================================
+
+/**
+ * Barra di caricamento con gradient Instagram.
+ * 
+ * Si attiva automaticamente durante la navigazione tra pagine.
+ * Mostra un progresso simulato per feedback visivo all'utente.
+ * 
+ * @returns Barra di caricamento o null se non attiva
+ * 
+ * @example
+ * ```tsx
+ * // Nel layout principale
+ * <InstagramLoadingBar />
+ * ```
+ */
 export default function InstagramLoadingBar() {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const pathname = usePathname();
 
   useEffect(() => {
-    // Start loading when pathname changes
+    //Start caricamento con progresso simulato
     setLoading(true);
     setProgress(0);
 
-    // Simulate progress (total duration: 0.04s)
+    // Simula progresso (durata totale: 0.04s)
     const timer1 = setTimeout(() => setProgress(60), 10);
-    // Complete loading
+    // Completa caricamento
     const completeTimer = setTimeout(() => {
       setProgress(100);
       // Mantieni la barra visibile per 300ms dopo il 100%

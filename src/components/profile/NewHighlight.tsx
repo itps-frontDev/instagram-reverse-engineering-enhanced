@@ -1,8 +1,16 @@
 /**
- * @fileoverview New Highlight button component
+ * @fileoverview Pulsante nuova storia in evidenza.
  *
- * Displays the "Nuova" (New) button for creating story highlights.
- * Only visible on own profile.
+ * Mostra il pulsante "Nuova" per creare storie in evidenza.
+ * Visibile solo sul proprio profilo.
+ * 
+ * FUNZIONALITÀ:
+ * - Cerchio con icona plus
+ * - Stile Instagram con doppio bordo
+ * - Label "Nuova" sotto l'icona
+ * - Accessibilità con aria-label
+ * 
+ * @module components/profile/NewHighlight
  */
 
 'use client';

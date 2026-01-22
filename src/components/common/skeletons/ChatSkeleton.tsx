@@ -1,11 +1,28 @@
 /**
- * @fileoverview Skeleton loader for chat messages
+ * @fileoverview Skeleton loader per la chat.
+ * 
+ * Placeholder animato mostrato durante il caricamento dei messaggi.
+ * Simula la struttura dei messaggi con bolle alternate sinistra/destra.
+ * 
+ * @module components/common/skeletons/ChatSkeleton
  */
 
+// ============================================================================
+// COMPONENTE
+// ============================================================================
+
+/**
+ * Skeleton loader per messaggi chat.
+ * 
+ * Mostra placeholder animati che simulano la struttura dei messaggi
+ * mentre i dati reali vengono caricati.
+ * 
+ * @returns Skeleton animato per chat
+ */
 export default function ChatSkeleton() {
   return (
     <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
-      {/* Skeleton messages - alternating left and right */}
+      {/* Skeleton messaggi - alternati sinistra e destra */}
       {[...Array(6)].map((_, i) => (
         <div
           key={i}

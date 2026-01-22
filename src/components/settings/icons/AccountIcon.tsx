@@ -1,4 +1,25 @@
-export default function AccountIcon({ className = "w-6 h-6" }: { className?: string }) {
+/**
+ * @fileoverview Icona "Account" per le impostazioni.
+ * 
+ * Icona silhouette utente usata nel menu impostazioni
+ * per la sezione informazioni account personali.
+ * 
+ * @module components/settings/icons/AccountIcon
+ */
+
+/** Props per AccountIcon */
+interface AccountIconProps {
+  /** Classi CSS per dimensioni (default: "w-6 h-6") */
+  className?: string;
+}
+
+/**
+ * Icona SVG per la sezione Account nelle impostazioni.
+ * 
+ * @param props - Props del componente
+ * @param props.className - Classi CSS opzionali
+ */
+export default function AccountIcon({ className = "w-6 h-6" }: AccountIconProps) {
   return (
     <svg
       aria-label=""

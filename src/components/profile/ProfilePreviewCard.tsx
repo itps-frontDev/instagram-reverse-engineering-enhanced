@@ -1,7 +1,17 @@
 /**
- * @fileoverview Profile preview card component
+ * @fileoverview Card anteprima profilo.
  * 
- * Shows a hover preview card with profile info, posts preview, and follow button.
+ * Mostra una card hover con info profilo, anteprima post e pulsante follow.
+ * 
+ * FUNZIONALITÀ:
+ * - Avatar e info utente (nome, username, verificato)
+ * - Statistiche (post, follower, following)
+ * - Griglia 3 post recenti
+ * - Pulsanti Segui e Messaggio
+ * - Gestione stati follow/pending
+ * - Loading skeleton
+ * 
+ * @module components/profile/ProfilePreviewCard
  */
 
 'use client';
@@ -9,10 +19,13 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import ProfilePicture from '@/components/ProfilePicture';
-import VerifiedBadge from '@/components/common/VerifiedBadge';
-import ShareIcon from '@/components/common/ShareIcon';
+import { ProfilePicture } from '@/components';
+import { VerifiedBadge, ShareIcon } from '@/components/common';
 
+
+// ============================================================================
+// INTERFACCE
+// ============================================================================
 interface ProfilePreviewCardProps {
   username: string;
   onFollow?: () => void;
@@ -40,6 +53,9 @@ interface ProfileData {
   }>;
 }
 
+// ============================================================================
+// COMPONENTE
+// ============================================================================
 export default function ProfilePreviewCard({ 
   username, 
   onFollow, 
@@ -48,10 +64,12 @@ export default function ProfilePreviewCard({
   isPending = false,
   isLoading = false
 }: ProfilePreviewCardProps) {
-  const router = useRouter();
-  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const router = useRouter(); // Router per navigazione
+  const [profile, setProfile] = useState<ProfileData | null>(null); 
   const [loading, setLoading] = useState(true);
 
+
+  // Carica dati profilo al montaggio
   useEffect(() => {
     async function loadProfile() {
       try {
@@ -71,12 +89,14 @@ export default function ProfilePreviewCard({
     loadProfile();
   }, [username]);
 
+  // Gestione click Messaggio
   const handleMessage = () => {
     if (profile?.username) {
       router.push(`/direct?username=${profile.username}`);
     }
   };
 
+  // Skeleton loading
   if (loading || !profile) {
     return (
       <div className="w-80 bg-white dark:bg-[#262626] rounded-lg shadow-2xl p-5 animate-pulse">
@@ -134,7 +154,7 @@ export default function ProfilePreviewCard({
         </div>
       </div>
 
-      {/* Recent Posts Preview OR Private Account Message */}
+      {/* Preview Post */}
       {profile.is_private && profile.recent_posts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-6 px-4">
           {/* Instagram gradient lock icon with circle */}

@@ -1,7 +1,19 @@
 /**
- * @fileoverview Settings sidebar navigation
+ * @fileoverview Sidebar navigazione impostazioni.
  *
- * Displays the settings menu with sections and items.
+ * Mostra il menu impostazioni con sezioni e voci.
+ * 
+ * SEZIONI:
+ * - Come usi Instagram (Modifica profilo, Account personale)
+ * - Chi può vedere i contenuti (Privacy)
+ * - Altre opzioni (Sicurezza, Compleanno)
+ * 
+ * FUNZIONALITÀ:
+ * - Icone personalizzate per ogni voce
+ * - Evidenziazione voce attiva
+ * - Navigazione con Next.js Link
+ * 
+ * @module components/settings/SettingsSidebar
  */
 
 'use client';

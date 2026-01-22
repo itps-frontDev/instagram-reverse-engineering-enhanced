@@ -1,10 +1,28 @@
 /**
- * @fileoverview Feed Post Skeleton Loader
+ * @fileoverview Skeleton loader per post del feed.
  *
- * Skeleton placeholder for individual Post component during loading state.
- * Follows Next.js streaming best practices.
+ * Placeholder animato mostrato durante il caricamento dei post.
+ * Simula la struttura di un post con header, immagine e azioni.
+ * 
+ * STRUTTURA SIMULATA:
+ * - Header con avatar e username
+ * - Immagine quadrata (aspect-square)
+ * - Pulsanti azione (like, commento, condividi)
+ * - Conteggio like e didascalia
+ * - Timestamp
+ * 
+ * @module components/common/skeletons/FeedPostSkeleton
  */
 
+// ============================================================================
+// COMPONENTE
+// ============================================================================
+
+/**
+ * Skeleton per singolo post del feed.
+ * 
+ * @returns Placeholder animato per post
+ */
 export default function FeedPostSkeleton() {
   return (
     <article className="w-full bg-white dark:bg-black border border-[#dbdbdb] dark:border-[#262626] rounded-xl animate-pulse">

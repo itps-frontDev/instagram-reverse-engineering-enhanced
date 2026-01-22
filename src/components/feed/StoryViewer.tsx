@@ -20,9 +20,10 @@ import { X, ChevronLeft, ChevronRight, Volume2, VolumeX, Eye, Heart } from 'luci
 import { useEffect, useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import ProfilePicture from '@/components/ProfilePicture';
-import VerifiedBadge from '@/components/common/VerifiedBadge';
-import ShareIcon from '@/components/common/ShareIcon';
+import {ProfilePicture} from '@/components';
+import { LoadingSpinner } from '@/components/common';
+import {StoryViewerSkeleton} from '@/components/common/skeletons';
+import { VerifiedBadge, ShareIcon } from '@/components/common';
 
 interface Story {
   id: number;
@@ -79,7 +80,7 @@ export default function StoryViewer({
   const progressIntervalRef = useRef<number | null>(null);
   const autoPauseTimeoutRef = useRef<number | null>(null);
 
-  // Fetch stories for the profile
+  // Recupera storie per il profilo
   useEffect(() => {
     let mounted = true;
     async function load() {
@@ -104,15 +105,15 @@ export default function StoryViewer({
               );
           }
           setStories(profileStories);
-          // Find initial story index
+          // Trova indice storia iniziale
           if (initialStoryId && profileStories.length > 0) {
             const idx = profileStories.findIndex((s: Story) => s.id === initialStoryId);
             setCurrentIndex(idx >= 0 ? idx : 0);
-            // Set initial like state
+            // Imposta stato like iniziale
             const initialStory = profileStories[idx >= 0 ? idx : 0];
             setIsLiked(initialStory?.is_liked_by_me || false);
           } else if (profileStories.length > 0) {
-            // Set like state for first story if no initialStoryId
+            // Imposta stato like per la prima storia se non c'è initialStoryId
             setIsLiked(profileStories[0]?.is_liked_by_me || false);
           }
         }
@@ -128,7 +129,7 @@ export default function StoryViewer({
     return () => { mounted = false; };
   }, [profileUsername, profileId, initialStoryId]);
 
-  // Reset index when username changes
+  // Reset indice quando cambia username
   useEffect(() => {
     // Solo se stories cambia per un nuovo utente, non per update locale
     if (stories.length > 0 && currentIndex >= stories.length) {
@@ -137,7 +138,7 @@ export default function StoryViewer({
     }
   }, [profileUsername, stories]);
 
-  // Load preview stories from other users
+  // Carica anteprime storie da altri utenti
   useEffect(() => {
     if (allUsernames.length === 0) return;
 
@@ -188,6 +189,7 @@ export default function StoryViewer({
     let firstView = !currentStory.is_viewed;
     if (!firstView) return; // Evita chiamate ripetute
 
+    // Funzione asincrona per registrare la visualizzazione
     async function recordView() {
       try {
         await fetch(`/api/stories/${currentStory.id}/view`, {
@@ -220,10 +222,11 @@ export default function StoryViewer({
     recordView();
   }, [currentStory, currentIndex, onAllStoriesViewed]);
 
+  // Funzione ritorno alla storia precedente
   const goToPrevious = useCallback(() => {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
-      // Update like state for the new story
+      // Aggiorna stato like per la nuova storia
       const prevStory = stories[currentIndex - 1];
       setIsLiked(prevStory?.is_liked_by_me || false);
     } else {
@@ -253,10 +256,11 @@ export default function StoryViewer({
     }
   }, [currentIndex, allUsernames.length, currentUserIndex, onUserChange, onClose]);
 
+  // Funzione avanzamento alla storia successiva
   const goToNext = useCallback(() => {
     if (currentIndex < stories.length - 1) {
       setCurrentIndex(currentIndex + 1);
-      // Update like state for the new story
+      // Aggiorna stato like per la nuova storia
       const nextStory = stories[currentIndex + 1];
       setIsLiked(nextStory?.is_liked_by_me || false);
     } else {
@@ -286,7 +290,7 @@ export default function StoryViewer({
     }
   }, [currentIndex, stories.length, allUsernames.length, currentUserIndex, onUserChange, onClose]);
 
-  // Jump to a specific profile by clicking its preview
+  // Salta direttamente al profilo specificato (cliccando freccia, non scrollando le storie)
   const goToProfileByIndex = useCallback((targetUserIndex: number, direction: 'left' | 'right') => {
     if (onUserChange && targetUserIndex >= 0 && targetUserIndex < allUsernames.length) {
       // Attiva transizione verso la direzione specifica
@@ -309,7 +313,7 @@ export default function StoryViewer({
     }
   }, [allUsernames.length, onUserChange]);
 
-  // Jump directly to next profile (by clicking arrow, not scrolling stories)
+  // Salta direttamente al profilo successivo (cliccando freccia, non scrollando le storie)
   const goToNextProfile = useCallback(() => {
     if (allUsernames.length > 0 && onUserChange && currentUserIndex < allUsernames.length - 1) {
       // Attiva transizione verso sinistra
@@ -335,11 +339,11 @@ export default function StoryViewer({
     }
   }, [allUsernames.length, currentUserIndex, onUserChange, onClose]);
 
-  // Handle auto-advance to next story
+  // Gestisce l'avanzamento automatico alla storia successiva
   useEffect(() => {
     if (!currentStory || loading) return;
 
-    // Clear existing interval and timeout (use explicit null checks)
+    // Pulisce intervallo e timeout esistenti (usa controlli null espliciti)
     if (progressIntervalRef.current !== null) {
       window.clearInterval(progressIntervalRef.current);
       progressIntervalRef.current = null;
@@ -355,14 +359,14 @@ export default function StoryViewer({
     const startTime = Date.now();
     const durationMs = duration * 1000;
 
-    // Start progress animation - intervallo ridotto per maggiore fluidità
+    // Avvia animazione progresso - intervallo ridotto per maggiore fluidità
     progressIntervalRef.current = window.setInterval(() => {
       const elapsed = Date.now() - startTime;
       const newProgress = Math.min((elapsed / durationMs) * 100, 100);
       setProgress(newProgress);
     }, 10); // ~100fps per animazione più fluida
 
-    // Auto-advance when story ends
+    // Avanzamento automatico quando la storia termina
     autoPauseTimeoutRef.current = window.setTimeout(() => {
       goToNext();
     }, durationMs);
@@ -379,12 +383,12 @@ export default function StoryViewer({
     };
   }, [currentStory, currentIndex, stories.length, duration, loading, onClose, goToNext]);
 
-  // Send message function
+  // Funzione invio messaggio
   const handleSendMessage = useCallback(async () => {
     if (!messageText.trim() || !currentStory) return;
 
     try {
-      // Get or create chat with story owner
+      // Ottiene o crea chat con il proprietario della storia
       const chatRes = await fetch('/api/direct/get-or-create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -394,7 +398,7 @@ export default function StoryViewer({
       if (!chatRes.ok) throw new Error('Failed to get/create chat');
       const { chatId } = await chatRes.json();
 
-      // Send message
+      // Invia messaggio
       const sendRes = await fetch('/api/direct/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -403,7 +407,7 @@ export default function StoryViewer({
 
       if (!sendRes.ok) throw new Error('Failed to send message');
 
-      // Clear input and show feedback
+      // Pulisce input e mostra feedback
       setMessageText('');
       setShowMessageSent(true);
       setTimeout(() => setShowMessageSent(false), 2000);
@@ -412,12 +416,12 @@ export default function StoryViewer({
     }
   }, [messageText, currentStory]);
 
-  // Toggle like function
+  // Funzione toggle like
   const handleToggleLike = useCallback(async () => {
     if (!currentStory) return;
 
     try {
-      // Optimistic update
+      // Aggiornamento ottimistico
       const newLikedState = !isLiked;
       setIsLiked(newLikedState);
 
@@ -433,7 +437,7 @@ export default function StoryViewer({
         return updated;
       });
 
-      // Call API to persist like
+      // Chiama API per persistere il like
       const res = await fetch(`/api/stories/${currentStory.id}/like`, {
         method: 'POST',
       });
@@ -443,7 +447,7 @@ export default function StoryViewer({
       }
 
       const data = await res.json();
-      // Update state with server response
+      // Aggiorna stato con risposta del server
       setIsLiked(data.liked);
       
       // Sincronizza la risposta del server con l'array delle storie
@@ -459,7 +463,7 @@ export default function StoryViewer({
       });
     } catch (error) {
       console.error('Error toggling like:', error);
-      // Revert on error
+      // Ripristina in caso di errore
       setIsLiked(!isLiked);
       setStories(prevStories => {
         const updated = [...prevStories];
@@ -496,14 +500,7 @@ export default function StoryViewer({
   }, [loading, stories.length]);
 
   if (loading) {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center">
-        <div className="text-white text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p>Caricamento storia...</p>
-        </div>
-      </div>
-    );
+    return <StoryViewerSkeleton onClose={onClose} />;
   }
 
   if (loadFailed) {
@@ -511,6 +508,7 @@ export default function StoryViewer({
       <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center">
         <div className="text-white text-center max-w-xs mx-auto p-6 rounded-lg bg-black bg-opacity-80 border border-gray-700">
           <div className="mb-4">
+            {/* Icona di errore caricamento */}
             <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto mb-2" width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" /></svg>
             <p className="font-semibold text-lg">Impossibile caricare le storie</p>
             <p className="text-sm mt-2 opacity-80">Non ci sono storie disponibili per questo utente oppure si è verificato un errore durante il caricamento.</p>

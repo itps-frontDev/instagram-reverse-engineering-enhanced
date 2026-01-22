@@ -1,8 +1,8 @@
 /**
- * @fileoverview Profile bio component
+ * @fileoverview Componente bio profilo.
  *
- * Displays full name, bio text, and website link with Instagram styling.
- * Parses @mentions and #hashtags for clickability.
+ * Mostra nome completo, testo bio e link sito web con stile Instagram.
+ * Interpreta @menzioni e #hashtag per renderli cliccabili.
  *
  * @module components/profile/ProfileBio
  */
@@ -13,8 +13,8 @@ import Link from 'next/link';
 import { ProfileBioProps } from '@/types/profile';
 
 /**
- * Parse bio text for @mentions and #hashtags.
- * Converts them to clickable links.
+ * Interpreta il testo bio per @menzioni e #hashtag.
+ * Li converte in link cliccabili.
  */
 function parseBioText(text: string) {
   const parts = text.split(/(@\w+|#\w+)/g);

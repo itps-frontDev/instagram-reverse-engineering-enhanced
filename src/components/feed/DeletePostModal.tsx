@@ -1,7 +1,15 @@
 /**
- * @fileoverview Delete Post Confirmation Modal
+ * @fileoverview Modal di conferma eliminazione post.
  * 
- * Modal di conferma per l'eliminazione di un post
+ * Mostra un dialog di conferma prima di eliminare definitivamente un post.
+ * 
+ * FUNZIONALITÀ:
+ * - Conferma eliminazione con messaggio chiaro
+ * - Stato di loading durante eliminazione
+ * - Possibilità di annullare l'operazione
+ * - Stile consistente con modali Instagram
+ * 
+ * @module components/feed/DeletePostModal
  */
 
 'use client';

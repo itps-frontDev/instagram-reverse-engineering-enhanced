@@ -1,65 +1,45 @@
 /**
- * @fileoverview Account privacy settings page
- *
- * Two-column layout with settings sidebar and privacy settings form.
+ * @fileoverview Pagina Impostazioni Privacy Account
+ * 
+ * Permette all'utente di gestire le impostazioni di privacy:
+ * - Account pubblico/privato
+ * - Visibilità dei contenuti
+ * - Chi può vedere le storie
+ * 
+ * Route: /accounts/privacy
+ * 
+ * @module app/(main)/accounts/privacy/page
  */
 
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
-import { queryOne } from '@/lib/db';
-import SettingsSidebar from '@/components/settings/SettingsSidebar';
-import AccountPrivacyForm from '@/components/settings/AccountPrivacyForm';
-import Footer from '@/components/common/Footer';
+import { profileRepository } from '@/repositories';
+import { AccountPrivacyForm } from '@/components/settings';
 
-interface Profile {
-  id: number;
-  username: string;
-  is_private: number;
-}
+// ============================================================================
+// COMPONENTE PAGINA
+// ============================================================================
 
-async function getProfile() {
-  // Use the getCurrentUser utility which handles JWT verification correctly
+/**
+ * AccountPrivacyPage - Pagina impostazioni privacy
+ * 
+ * Server Component che recupera il profilo tramite repository
+ * e renderizza il form delle impostazioni privacy.
+ * 
+ * @returns Pagina impostazioni privacy
+ */
+export default async function AccountPrivacyPage() {
   const user = await getCurrentUser();
 
   if (!user) {
     redirect('/login');
   }
 
-  try {
-    // Fetch user profile from database
-    const profile = await queryOne<Profile>(
-      `SELECT id, username, is_private
-       FROM profiles
-       WHERE user_id = ? AND deleted_at IS NULL`,
-      [user.id]
-    );
+  const profile = await profileRepository.findByUserId(user.id);
 
-    if (!profile) {
-      redirect('/login');
-    }
-
-    return profile;
-  } catch (err) {
-    console.error('[AccountPrivacy] Error fetching profile:', err);
+  if (!profile) {
     redirect('/login');
   }
-}
 
-export default async function AccountPrivacyPage() {
-  const profile = await getProfile();
-
-  return (
-    <div className="flex min-h-screen">
-      {/* Sidebar */}
-      <SettingsSidebar />
-
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center py-9 px-8">
-        <div className="w-full max-w-xl">
-          <AccountPrivacyForm profile={profile} />
-        </div>
-        <Footer />
-      </main>
-    </div>
-  );
+  return <AccountPrivacyForm profile={profile} />;
 }

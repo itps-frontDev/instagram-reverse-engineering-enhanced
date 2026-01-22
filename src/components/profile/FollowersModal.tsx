@@ -1,8 +1,18 @@
 /**
- * @fileoverview Followers/Following Modal Component
+ * @fileoverview Modal follower/following.
  *
- * Modal that displays a list of followers or following users.
- * Includes search functionality and follow/unfollow actions.
+ * Modal che mostra la lista di follower o following.
+ * Include funzionalità di ricerca e azioni follow/unfollow.
+ * 
+ * FUNZIONALITÀ:
+ * - Lista follower o following paginata
+ * - Ricerca in lista
+ * - Pulsanti follow/unfollow con stati
+ * - Suggerimenti utenti (solo propri follower)
+ * - Rimozione follower (solo propri)
+ * - Modal unfollow per conferma
+ * 
+ * @module components/profile/FollowersModal
  */
 
 'use client';
@@ -28,7 +38,7 @@ interface FollowerUser {
   is_verified: boolean;
   is_following: boolean; // Converted by repository from SQLite 0/1 to boolean
   follows_you: boolean;
-  isPending?: boolean; // For tracking pending follow requests
+  isPending?: boolean; // Per tracciare richieste di follow in attesa
 }
 
 interface SuggestedUser {
@@ -59,16 +69,18 @@ export default function FollowersModal({
   const [isFocused, setIsFocused] = useState(false);
   const [removedUsers, setRemovedUsers] = useState<Set<number>>(new Set());
 
+  // Carica follower/following quando si apre il modal
   useEffect(() => {
     if (isOpen) {
       fetchUsers();
-      // Fetch suggested ONLY if own profile AND followers tab
+      // Recupera suggeriti SOLO se profilo proprio E tab followers
       if (type === 'followers' && isOwnProfile) {
         fetchSuggestedUsers();
       }
     }
   }, [isOpen, type, username, isOwnProfile]);
 
+  // Funzione per caricare follower o following
   async function fetchUsers() {
     setIsLoading(true);
     try {
@@ -89,6 +101,7 @@ export default function FollowersModal({
     }
   }
 
+  // Funzione per caricare utenti suggeriti
   async function fetchSuggestedUsers() {
     try {
       const res = await fetch('/api/profiles/suggestions');
@@ -111,6 +124,7 @@ export default function FollowersModal({
     }
   }
 
+  // Funzione per seguire un utente
   async function handleFollow(targetProfileId: number) {
     try {
       const res = await fetch('/api/profiles/actions/follow', {
@@ -121,13 +135,13 @@ export default function FollowersModal({
 
       if (res.ok) {
         const data = await res.json();
-        // Update state with new follow status
+        // Aggiorna stato con nuovo follow status
         setUsers(prev => prev.map(u =>
           u.id === targetProfileId
             ? { ...u, is_following: data.status === 'accepted', isPending: data.status === 'pending' }
             : u
         ));
-        // Update suggested users status
+        // Aggiorna stato utenti suggeriti
         setSuggestedUsers(prev => prev.map(u =>
           u.id === targetProfileId
             ? { ...u, is_following: data.status === 'accepted', isPending: data.status === 'pending' }
@@ -139,6 +153,7 @@ export default function FollowersModal({
     }
   }
 
+  // Funzione per smettere di seguire un utente
   async function handleUnfollow(targetProfileId: number, isSuggested: boolean = false) {
     try {
       // Se era un follower rimosso dal proprio profilo, aggiungi a removedUsers SUBITO (ottimistico)
@@ -163,14 +178,14 @@ export default function FollowersModal({
       });
 
       if (res.ok) {
-        // Update follow status (don't remove from list immediately)
+        // Aggiorna follow status (non rimuove dalla lista immediatamente)
         setUsers(prev => prev.map(u =>
           u.id === targetProfileId
             ? { ...u, is_following: false, isPending: false }
             : u
         ));
         
-        // Update suggested users status
+        // Aggiorna stato utenti suggeriti
         setSuggestedUsers(prev => prev.map(u =>
           u.id === targetProfileId
             ? { ...u, is_following: false, isPending: false }

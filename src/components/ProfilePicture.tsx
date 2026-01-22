@@ -1,16 +1,71 @@
+/**
+ * @fileoverview Componente immagine profilo.
+ * 
+ * Componente riutilizzabile per mostrare immagini profilo con supporto
+ * per storie e fallback a immagine default.
+ * 
+ * FUNZIONALITÀ:
+ * - Dimensione configurabile (size prop)
+ * - Fallback automatico a immagine default
+ * - Ring gradiente per storie non viste
+ * - Ring grigio per storie viste
+ * - Click handler per aprire storie
+ * - Supporto dark mode
+ * 
+ * @module components/ProfilePicture
+ */
+
 import Image from 'next/image';
 
+// ============================================================================
+// INTERFACCE
+// ============================================================================
+
+/**
+ * Props per il componente ProfilePicture.
+ * 
+ * @interface ProfilePictureProps
+ */
 interface ProfilePictureProps {
+  /** URL immagine profilo */
   src?: string | null;
+  /** Testo alternativo per accessibilità */
   alt?: string;
+  /** Dimensione in pixel (default: 32) */
   size?: number;
+  /** Classi CSS aggiuntive */
   className?: string;
+  /** Se il profilo ha storie attive */
   hasStory?: boolean;
-  storyViewed?: boolean; // true if story has been viewed
+  /** Se la storia è stata già vista */
+  storyViewed?: boolean;
+  /** Username del profilo */
   username?: string;
+  /** Handler click sulla storia */
   onStoryClick?: () => void;
 }
 
+// ============================================================================
+// COSTANTI
+// ============================================================================
+
+/** Immagine profilo default */
+const DEFAULT_PROFILE_IMAGE = '/images/default-pfp.jpg';
+
+// ============================================================================
+// COMPONENTE
+// ============================================================================
+
+/**
+ * Immagine profilo con supporto storie.
+ * 
+ * Mostra l'immagine profilo con opzionale ring per indicare storie attive.
+ * Il ring è colorato (gradiente Instagram) per storie non viste,
+ * grigio per storie già viste.
+ * 
+ * @param props - Props del componente
+ * @returns Immagine profilo renderizzata
+ */
 export default function ProfilePicture({ 
   src, 
   alt = 'Profile picture', 
@@ -21,8 +76,8 @@ export default function ProfilePicture({
   username,
   onStoryClick
 }: ProfilePictureProps) {
-  // Use default profile picture if src is missing or invalid
-  const imageSrc = src && src.trim() !== '' ? src : '/images/default-pfp.jpg';
+  // Usa immagine default se src mancante o invalido
+  const imageSrc = src && src.trim() !== '' ? src : DEFAULT_PROFILE_IMAGE;
 
   if (hasStory) {
     // Render with story ring like in Stories component

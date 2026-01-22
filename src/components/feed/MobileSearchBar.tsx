@@ -1,8 +1,17 @@
 /**
- * @fileoverview Mobile search bar component
+ * @fileoverview Barra di ricerca mobile.
  * 
- * Displays a search bar with notifications icon on mobile devices,
- * positioned above the stories section.
+ * Mostra una barra di ricerca con icona notifiche su dispositivi mobile,
+ * posizionata sopra la sezione storie.
+ * 
+ * FUNZIONALITÀ:
+ * - Input ricerca con pannello espandibile
+ * - Badge conteggio notifiche non lette
+ * - Pagina notifiche fullscreen
+ * - Aggiornamento automatico conteggio
+ * - Layout responsivo mobile-first
+ * 
+ * @module components/feed/MobileSearchBar
  */
 
 'use client';
@@ -11,31 +20,87 @@ import { useState, useEffect } from 'react';
 import { Search, Heart, X, ArrowLeft } from 'lucide-react';
 import SearchPanel from '@/components/layout/SearchPanel';
 import ProfilePicture from '@/components/ProfilePicture';
-import VerifiedBadge from '@/components/common/VerifiedBadge';
+import { LoadingSpinner, VerifiedBadge } from '@/components';
+import { formatTimeAgo } from '@/lib/date-utils';
 import Link from 'next/link';
 
+// ============================================================================
+// INTERFACCE
+// ============================================================================
+
+/**
+ * Struttura di una singola notifica
+ * Rappresenta un'interazione ricevuta dall'utente
+ */
 interface Notification {
+  /** Identificativo univoco della notifica */
   id: number;
+  /** Tipo di notifica (follow, like_post, comment, etc.) */
   type: string;
+  /** ID profilo del mittente */
   sender_profile_id: number | null;
+  /** Username del mittente */
   sender_username: string | null;
+  /** Nome completo del mittente */
   sender_full_name: string | null;
+  /** URL immagine profilo del mittente */
   sender_profile_image_url: string | null;
+  /** Se il mittente è verificato */
   sender_is_verified: boolean;
+  /** Tipo di riferimento (post, comment, story) */
   reference_type: string | null;
+  /** ID dell'elemento di riferimento */
   reference_id: number | null;
+  /** Se la notifica è stata letta */
   is_read: boolean;
+  /** Data di creazione */
   created_at: string;
 }
 
+// ============================================================================
+// COMPONENTE PRINCIPALE
+// ============================================================================
+
+/**
+ * Barra di ricerca mobile con notifiche.
+ * 
+ * Visibile solo su dispositivi mobile (< lg breakpoint).
+ * Posizionata in fixed top, sopra il contenuto della pagina.
+ * 
+ * STRUTTURA UI:
+ * - Barra fissa in alto con pulsante ricerca e icona notifiche
+ * - Pannello ricerca espandibile (SearchPanel)
+ * - Pagina notifiche fullscreen con lista interazioni
+ * 
+ * STATI GESTITI:
+ * - showSearchPanel: apertura/chiusura pannello ricerca
+ * - showNotificationsPage: apertura/chiusura pagina notifiche
+ * - unreadCount: conteggio badge notifiche non lette
+ * - notifications: array notifiche caricate
+ * - isLoading: stato caricamento notifiche
+ */
 export default function MobileSearchBar() {
+  // --------------------------------------------------------------------------
+  // STATE
+  // --------------------------------------------------------------------------
+  
   const [showSearchPanel, setShowSearchPanel] = useState(false);
   const [showNotificationsPage, setShowNotificationsPage] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch unread notifications count
+  // --------------------------------------------------------------------------
+  // EFFECTS
+  // --------------------------------------------------------------------------
+
+  /**
+   * Effect: Polling conteggio notifiche non lette
+   * 
+   * - Esegue fetch iniziale al mount
+   * - Aggiorna ogni 30 secondi per mantenere badge sincronizzato
+   * - Cleanup dell'intervallo allo smontaggio
+   */
   useEffect(() => {
     const fetchUnreadCount = async () => {
       try {
@@ -45,21 +110,29 @@ export default function MobileSearchBar() {
           setUnreadCount(data.count || 0);
         }
       } catch (error) {
-        console.error('Error fetching unread count:', error);
+        console.error('Errore recupero conteggio non lette:', error);
       }
     };
 
     fetchUnreadCount();
     
-    // Update every 30 seconds
+    // Polling ogni 30 secondi
     const interval = setInterval(fetchUnreadCount, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  // Load notifications when page opens
+  /**
+   * Effect: Caricamento notifiche all'apertura pagina
+   * 
+   * Quando showNotificationsPage diventa true:
+   * 1. Carica lista completa notifiche
+   * 2. Marca tutte come lette (PATCH)
+   * 3. Resetta conteggio badge a 0
+   */
   useEffect(() => {
     if (!showNotificationsPage) return;
 
+    // Fetch lista notifiche
     const loadNotifications = async () => {
       setIsLoading(true);
       try {
@@ -69,7 +142,7 @@ export default function MobileSearchBar() {
           setNotifications(data.notifications || []);
         }
       } catch (error) {
-        console.error('Error loading notifications:', error);
+        console.error('Errore caricamento notifiche:', error);
       } finally {
         setIsLoading(false);
       }
@@ -77,7 +150,7 @@ export default function MobileSearchBar() {
 
     loadNotifications();
 
-    // Mark as read
+    // Marca tutte come lette
     const markAsRead = async () => {
       try {
         await fetch('/api/notifications/mark-read', {
@@ -85,13 +158,24 @@ export default function MobileSearchBar() {
         });
         setUnreadCount(0);
       } catch (error) {
-        console.error('Error marking notifications as read:', error);
+        console.error('Errore marcatura notifiche come lette:', error);
       }
     };
 
     markAsRead();
   }, [showNotificationsPage]);
 
+  // --------------------------------------------------------------------------
+  // HELPER FUNCTIONS
+  // --------------------------------------------------------------------------
+
+  /**
+   * Restituisce il testo descrittivo per ogni tipo di notifica.
+   * Tradotto in italiano per l'interfaccia utente.
+   * 
+   * @param notification - Oggetto notifica
+   * @returns Stringa descrittiva dell'azione (es. "ha messo mi piace al tuo post")
+   */
   const getNotificationText = (notification: Notification): string => {
     switch (notification.type) {
       case 'follow':
@@ -123,36 +207,38 @@ export default function MobileSearchBar() {
     }
   };
 
+  /**
+   * Genera il link di navigazione per una notifica.
+   * 
+   * LOGICA ROUTING:
+   * - follow/follow_request → pagina profilo mittente
+   * - riferimento a post → pagina dettaglio post
+   * - altro → nessuna navigazione (#)
+   * 
+   * @param notification - Oggetto notifica
+   * @returns URL di destinazione
+   */
   const getNotificationLink = (notification: Notification): string => {
+    // Notifiche follow → profilo utente
     if (notification.type === 'follow' || notification.type === 'follow_request') {
       return `/profile/${notification.sender_username}`;
     }
+    // Notifiche relative a post → pagina post
     if (notification.reference_type === 'post' && notification.reference_id) {
       return `/p/${notification.reference_id}`;
     }
     return '#';
   };
 
-  const formatTimeAgo = (dateString: string): string => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-    const diffWeeks = Math.floor(diffDays / 7);
-
-    if (diffMins < 1) return 'Ora';
-    if (diffMins < 60) return `${diffMins}m`;
-    if (diffHours < 24) return `${diffHours}h`;
-    if (diffDays < 7) return `${diffDays}g`;
-    if (diffWeeks < 4) return `${diffWeeks}set`;
-    return date.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
-  };
+  // --------------------------------------------------------------------------
+  // RENDER
+  // --------------------------------------------------------------------------
 
   return (
     <>
-      {/* Overlay for closing search panel */}
+      {/* ================================================================== */}
+      {/* OVERLAY - Chiude pannello ricerca quando si clicca fuori          */}
+      {/* ================================================================== */}
       {showSearchPanel && (
         <div 
           className="fixed inset-0 bg-transparent z-30 lg:hidden"
@@ -160,13 +246,17 @@ export default function MobileSearchBar() {
         />
       )}
       
-      {/* Search Panel */}
+      {/* ================================================================== */}
+      {/* PANNELLO RICERCA - Componente separato con risultati              */}
+      {/* ================================================================== */}
       <SearchPanel isOpen={showSearchPanel} onClose={() => setShowSearchPanel(false)} />
       
-      {/* Full Page Notifications - Mobile Only */}
+      {/* ================================================================== */}
+      {/* PAGINA NOTIFICHE FULLSCREEN - Visibile solo su mobile             */}
+      {/* ================================================================== */}
       {showNotificationsPage && (
         <div className="lg:hidden fixed inset-0 z-50 bg-[var(--bg-secondary)]">
-          {/* Header */}
+          {/* Header con pulsante indietro */}
           <div className="sticky top-0 bg-[var(--bg-secondary)] border-b border-[#DBDBDB] dark:border-[#262626] px-6 py-6">
             <div className="flex items-center gap-4">
               <button onClick={() => setShowNotificationsPage(false)}>
@@ -176,13 +266,15 @@ export default function MobileSearchBar() {
             </div>
           </div>
 
-          {/* Content */}
+          {/* Lista notifiche con stati: loading, vuoto, popolato */}
           <div className="overflow-y-auto h-full pb-20">
+            {/* Stato: caricamento in corso */}
             {isLoading ? (
               <div className="px-4 py-8 text-center">
-                <div className="inline-block w-6 h-6 border-2 border-[#DBDBDB] border-t-[#262626] dark:border-[#262626] dark:border-t-white rounded-full animate-spin" />
+                <LoadingSpinner size={24} />
               </div>
             ) : notifications.length === 0 ? (
+              /* Stato: nessuna notifica */
               <div className="px-6 py-16 text-center">
                 <p className="text-sm text-[#8E8E8E]">
                   Nessuna notifica.
@@ -242,10 +334,10 @@ export default function MobileSearchBar() {
         </div>
       )}
 
-      {/* Mobile Search Bar - only visible on mobile */}
+      {/* Mobile Search Bar - solo visibile su mobile */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-20 bg-[var(--bg-secondary)] px-3 py-2">
         <div className="flex items-center gap-2 max-w-[470px] mx-auto">
-          {/* Search Button */}
+          {/* Pulsante Cerca */}
           <button
             onClick={() => {
               setShowSearchPanel(true);
@@ -257,7 +349,7 @@ export default function MobileSearchBar() {
             <span className="text-xl text-[#8E8E8E] dark:text-[#A8A8A8]">Cerca</span>
           </button>
 
-          {/* Notifications Button */}
+          {/* Pulsante Notifiche */}
           <button
             onClick={() => {
               setShowNotificationsPage(true);

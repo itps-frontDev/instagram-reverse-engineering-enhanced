@@ -2,14 +2,25 @@
  * @fileoverview Pannello laterale di ricerca.
  * 
  * Pannello che si apre dalla sidebar per cercare utenti, hashtag e luoghi.
+ * 
+ * FUNZIONALITÀ:
+ * - Input ricerca con debounce
+ * - Tab: Account, Hashtag, Luoghi
+ * - Risultati con avatar e info utente
+ * - Ricerche recenti con persistenza localStorage
+ * - Rimozione singola o totale recenti
+ * - Skeleton loading durante ricerca
+ * - Chiusura con ESC o click esterno
+ * 
+ * @module components/layout/SearchPanel
  */
 
 'use client';
 
 import { Search as SearchIcon, X } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import ProfilePicture from '@/components/ProfilePicture';
-import VerifiedBadge from '@/components/common/VerifiedBadge';
+import {ProfilePicture} from '@/components';
+import { LoadingSpinner, VerifiedBadge } from '@/components/common';
 import Link from 'next/link';
 
 interface SearchResult {
@@ -219,7 +230,7 @@ export default function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
                 {isLoading ? (
                   // Loading skeleton
                   <div className="px-4 py-8 text-center">
-                    <div className="inline-block w-6 h-6 border-2 border-[#DBDBDB] border-t-[#262626] dark:border-[#262626] dark:border-t-white rounded-full animate-spin" />
+                    <LoadingSpinner size={24} />
                   </div>
                 ) : results.length === 0 ? (
                   // No results

@@ -1,8 +1,8 @@
 /**
- * @fileoverview Profile statistics component
+ * @fileoverview Componente statistiche profilo.
  *
- * Displays posts, followers, and following counts in Instagram's exact style.
- * Formats large numbers with K/M suffixes (1.2K, 1.5M).
+ * Mostra conteggi post, follower e following nello stile esatto di Instagram.
+ * Formatta numeri grandi con suffissi K/M (1,2K, 1,5M).
  *
  * @module components/profile/ProfileStats
  */
@@ -12,14 +12,14 @@
 import { ProfileStatsProps } from '@/types/profile';
 
 // ============================================================================
-// HELPER FUNCTIONS
+// FUNZIONI HELPER
 // ============================================================================
 
 /**
- * Format large numbers with K/M suffixes like Instagram.
+ * Formatta numeri grandi con suffissi K/M come Instagram.
  *
- * @param num - The number to format
- * @returns Formatted string (e.g., "1.2K", "1.5M", "42")
+ * @param num - Il numero da formattare
+ * @returns Stringa formattata (es. "1,2K", "1,5M", "42")
  *
  * @example
  * formatCount(42) // "42"
@@ -41,19 +41,19 @@ function formatCount(num: number): string {
 // ============================================================================
 
 /**
- * ProfileStats Component
+ * Componente statistiche profilo
  *
- * Displays profile statistics in Instagram's exact format:
- * - Posts count (left)
- * - Followers count (center)
- * - Following count (right)
+ * Mostra le statistiche del profilo nello stile esatto di Instagram:
+ * - Conteggio post (sinistra)
+ * - Conteggio follower (centro)
+ * - Conteggio seguiti (destra)
  *
- * **Visual Specs:**
- * - Font: 14px for all text
- * - Numbers: font-weight 600 (semibold)
- * - Labels: font-weight 400 (regular)
- * - Gap: 40px between stats on desktop
- * - Mobile: Centered with equal spacing
+ * **Specifiche visive:**
+ * - Font: 14px per tutto il testo
+ * - Numeri: font-weight 600 (semibold)
+ * - Etichette: font-weight 400 (regular)
+ * - Spaziatura: 40px tra le statistiche su desktop
+ * - Mobile: Centrate con spaziatura uguale
  *
  * @example
  * <ProfileStats
@@ -70,12 +70,15 @@ export default function ProfileStats({
   onFollowingClick,
   canViewContent = true,
 }: ProfileStatsProps) {
+
+  // Gestori click follower/following
   const handleFollowersClick = () => {
     if (canViewContent && onFollowersClick) {
       onFollowersClick();
     }
   };
 
+  // Gestore click seguiti
   const handleFollowingClick = () => {
     if (canViewContent && onFollowingClick) {
       onFollowingClick();

@@ -1,7 +1,29 @@
+/**
+ * @fileoverview Icona stato vuoto per la sezione Salvati.
+ * 
+ * Mostrata quando l'utente non ha ancora salvato contenuti.
+ * Include un segnalibro stilizzato dentro un cerchio.
+ * 
+ * @module components/profile/icons/SavedEmptyIcon
+ */
+
+/** Props per SavedEmptyIcon */
 interface SavedEmptyIconProps {
+  /** Classi CSS aggiuntive */
   className?: string;
 }
 
+/**
+ * Icona SVG per lo stato vuoto della sezione Salvati.
+ * 
+ * DESIGN:
+ * - Cerchio esterno con bordo
+ * - Segnalibro al centro
+ * - Dimensione: 62x62 px
+ * 
+ * @param props - Props del componente
+ * @param props.className - Classi CSS opzionali
+ */
 export default function SavedEmptyIcon({ className }: SavedEmptyIconProps) {
   return (
     <svg

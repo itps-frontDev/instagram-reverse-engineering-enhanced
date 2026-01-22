@@ -1,4 +1,25 @@
-export default function EditProfileIcon({ className = "w-6 h-6" }: { className?: string }) {
+/**
+ * @fileoverview Icona "Modifica profilo" per le impostazioni.
+ * 
+ * Icona cerchio con silhouette utente usata nel menu impostazioni
+ * per la sezione modifica profilo pubblico.
+ * 
+ * @module components/settings/icons/EditProfileIcon
+ */
+
+/** Props per EditProfileIcon */
+interface EditProfileIconProps {
+  /** Classi CSS per dimensioni (default: "w-6 h-6") */
+  className?: string;
+}
+
+/**
+ * Icona SVG per la sezione Modifica profilo nelle impostazioni.
+ * 
+ * @param props - Props del componente
+ * @param props.className - Classi CSS opzionali
+ */
+export default function EditProfileIcon({ className = "w-6 h-6" }: EditProfileIconProps) {
   return (
     <svg
       aria-label=""

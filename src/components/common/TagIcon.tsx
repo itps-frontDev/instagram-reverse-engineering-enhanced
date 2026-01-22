@@ -1,8 +1,43 @@
+/**
+ * @fileoverview Icona "Tag" di Instagram.
+ * 
+ * Icona silhouette utente usata per indicare tag di persone
+ * nelle foto e nei contenuti.
+ * 
+ * @module components/common/TagIcon
+ */
+
+// ============================================================================
+// INTERFACCE
+// ============================================================================
+
+/**
+ * Props per il componente TagIcon.
+ * 
+ * @interface TagIconProps
+ */
 interface TagIconProps {
+  /** Dimensione dell'icona in pixel (default: 12) */
   size?: number;
+  /** Classi CSS aggiuntive */
   className?: string;
 }
 
+// ============================================================================
+// COMPONENTE
+// ============================================================================
+
+/**
+ * Icona "Tag" per tag di persone.
+ * 
+ * @param props - Props del componente
+ * @returns Icona SVG tag
+ * 
+ * @example
+ * ```tsx
+ * <TagIcon size={16} />
+ * ```
+ */
 export default function TagIcon({ size = 12, className = '' }: TagIconProps) {
   return (
     <svg

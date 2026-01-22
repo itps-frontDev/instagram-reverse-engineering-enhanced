@@ -1,10 +1,27 @@
 /**
- * @fileoverview Profile Header Skeleton Loader
+ * @fileoverview Skeleton loader per header profilo.
  *
- * Skeleton placeholder for ProfileHeader component during loading state.
- * Follows Next.js streaming best practices.
+ * Placeholder animato mostrato durante il caricamento dell'header profilo.
+ * Simula la struttura completa con avatar, stats e bio.
+ * 
+ * STRUTTURA SIMULATA:
+ * - Avatar grande (77px mobile, 150px desktop)
+ * - Username e pulsanti azione
+ * - Statistiche (post, follower, following)
+ * - Nome e bio
+ * 
+ * @module components/common/skeletons/ProfileHeaderSkeleton
  */
 
+// ============================================================================
+// COMPONENTE
+// ============================================================================
+
+/**
+ * Skeleton per header profilo.
+ * 
+ * @returns Placeholder animato per header
+ */
 export default function ProfileHeaderSkeleton() {
   return (
     <header className="px-4 py-4 md:py-6 animate-pulse">

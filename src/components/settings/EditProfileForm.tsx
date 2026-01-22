@@ -1,16 +1,28 @@
 /**
- * @fileoverview Edit profile form component
+ * @fileoverview Form modifica profilo.
  *
- * Form for editing user profile information.
+ * Form per modificare le informazioni del profilo utente.
+ * 
+ * FUNZIONALITÀ:
+ * - Upload/rimozione immagine profilo
+ * - Modifica website, bio, genere
+ * - Contatore caratteri bio (max 150)
+ * - Dropdown genere con opzione custom
+ * - Validazione form client-side
+ * - Modal conferma cambio immagine
+ * - Refresh automatico AuthContext
+ * 
+ * @module components/settings/EditProfileForm
  */
 
 'use client';
 
 import { useState, useRef } from 'react';
 import Image from 'next/image';
-import { Camera } from 'lucide-react';
 import ProfileImageModal from '@/components/profile/ProfileImageModal';
 import { useAuth } from '@/contexts/AuthContext';
+import { PageHeader, SuccessMessage, SubmitButton } from '@/components/ui';
+import { ButtonSpinner } from '@/components/common';
 
 interface EditProfileFormProps {
   profile: {
@@ -20,14 +32,13 @@ interface EditProfileFormProps {
     bio: string | null;
     website_url: string | null;
     profile_image_url: string | null;
-    gender: string | null;
-    custom_gender: string | null;
+    gender?: string | null;
+    custom_gender?: string | null;
   };
 }
 
 export default function EditProfileForm({ profile }: EditProfileFormProps) {
   const { refreshProfile } = useAuth();
-  // Header style: text-xl font-bold leading-[25px] break-words, padding top 0, bottom 6, left/right 0 (match sidebar)
   const [formData, setFormData] = useState({
     websiteUrl: profile.website_url || '',
     bio: profile.bio || '',
@@ -191,9 +202,7 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
 
   return (
     <div>
-      <div className="px-0 pt-0 pb-6">
-        <h1 className="text-xl font-bold leading-[25px] break-words mb-4">Modifica profilo</h1>
-      </div>
+      <PageHeader title="Modifica profilo" />
       <form onSubmit={handleSubmit} className="max-w-2xl">
       {/* Avatar Section - Instagram style */}
       <div className="flex items-center justify-between bg-[rgb(243,245,247)] dark:bg-[#232323] rounded-2xl px-4 py-3 mb-8">
@@ -214,7 +223,7 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
             />
             {isUploadingImage && (
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-full">
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <ButtonSpinner size={20} color="white" />
               </div>
             )}
           </div>
@@ -449,31 +458,15 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
         </p>
       </div>
 
-      {/* Success Message */}
-      {successMessage && (
-        <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
-          <p className="text-sm text-green-800 dark:text-green-200">{successMessage}</p>
-        </div>
-      )}
+      <SuccessMessage message={successMessage} />
 
       {/* Submit Button */}
       <div className="flex justify-end">
-        <button
-          type="submit"
-          disabled={isSubmitting || !isFormValid()}
-          className="relative flex items-center justify-center w-[253px] h-11 mt-4 px-5 bg-[rgb(74,93,249)] hover:bg-[rgb(64,83,239)] text-white font-semibold text-sm rounded-xl cursor-pointer select-none disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[rgb(74,93,249)] transition-all"
-        >
-          {isSubmitting ? (
-            <>
-              <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            </>
-          ) : (
-            'Invia'
-          )}
-        </button>
+        <SubmitButton
+          isSubmitting={isSubmitting}
+          disabled={!isFormValid()}
+          label="Invia"
+        />
       </div>
       </form>
     </div>

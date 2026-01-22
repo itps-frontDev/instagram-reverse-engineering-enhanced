@@ -1,27 +1,63 @@
-import React from "react";
-import ProfilePicture from "@/components/ProfilePicture";
+/**
+ * @fileoverview Lista contatti per messaggi diretti.
+ * 
+ * Componente che mostra la lista delle conversazioni attive
+ * nella sezione Direct Messages di Instagram.
+ * 
+ * FUNZIONALITÀ:
+ * - Lista contatti con foto profilo
+ * - Anteprima ultimo messaggio
+ * - Indicatore tempo relativo
+ * - Selezione conversazione attiva
+ * 
+ * @module components/direct/ChatContactList
+ */
 
+import {ProfilePicture} from "@/components";
+
+// ============================================================================
+// INTERFACCE
+// ============================================================================
+
+/**
+ * Struttura di un contatto chat.
+ * 
+ * @interface ChatContact
+ */
 export interface ChatContact {
-  id: number;
-  name: string;
-  username?: string;
-  profile_image_url?: string;
-  last_message_text?: string;
-  last_message_at?: string | number;
-  isFromMe?: boolean;
-  selected?: boolean;
-  onClick?: () => void;
+  id: number; // ID univoco del contatto
+  name: string;  // Nome visualizzato
+  username?: string; // Username (opzionale)
+  profile_image_url?: string; // URL immagine profilo
+  last_message_text?: string; // Testo ultimo messaggio
+  last_message_at?: string | number; // Timestamp ultimo messaggio
+  isFromMe?: boolean; // Se l'ultimo messaggio è stato inviato dall'utente corrente 
+  selected?: boolean; // Se il contatto è selezionato
+  onClick?: () => void; // Handler click sul contatto
 }
 
+/**
+ * Props per il componente ChatContactList.
+ * 
+ * @interface ChatContactListProps
+ */
 interface ChatContactListProps {
-  contacts: ChatContact[];
-  onSelect: (id: number) => void;
-  selectedId?: number;
+  contacts: ChatContact[]; // Lista dei contatti da visualizzare
+  onSelect: (id: number) => void; // Callback quando viene selezionato un contatto
+  selectedId?: number; // ID del contatto attualmente selezionato
 }
 
-// Funzione per formattare il tempo relativo
+// ============================================================================
+// FUNZIONI UTILITY
+// ============================================================================
+
+/**
+ * Formatta un timestamp in formato tempo relativo.
+ * 
+ * @param dateString - Data come stringa ISO o timestamp
+ * @returns Stringa formattata (es. "5 min", "2 h", "3 g")
+ */
 function formatRelativeTime(dateString: string | number): string {
-  // Se è un numero, è già un timestamp in millisecondi
   const date = typeof dateString === 'number' ? new Date(dateString) : new Date(dateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -37,6 +73,19 @@ function formatRelativeTime(dateString: string | number): string {
   return `${diffWeeks} sett`;
 }
 
+// ============================================================================
+// COMPONENTE
+// ============================================================================
+
+/**
+ * Lista contatti per messaggi diretti.
+ * 
+ * Mostra tutti i contatti con cui l'utente ha conversazioni attive,
+ * con anteprima dell'ultimo messaggio e timestamp.
+ * 
+ * @param props - Props del componente
+ * @returns Lista contatti chat
+ */
 export default function ChatContactList({ contacts, onSelect, selectedId }: ChatContactListProps) {
   return (
     <div className="flex flex-col">
@@ -50,11 +99,13 @@ export default function ChatContactList({ contacts, onSelect, selectedId }: Chat
           }`}
           onClick={() => onSelect(c.id)}
         >
+          {/* Immagine profilo */}
           <ProfilePicture
             src={c.profile_image_url}
             alt={c.name}
             size={56}
           />
+          {/* Ultimo messaggio */}
           <div className="flex-1 min-w-0">
             <div className="font-normal text-[var(--text-primary)] text-sm truncate">{c.name}</div>
             <div className="text-sm text-[var(--text-secondary)] truncate">

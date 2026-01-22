@@ -1,8 +1,16 @@
 /**
- * @fileoverview Profile Image Change Modal
+ * @fileoverview Modal cambio immagine profilo.
  *
- * Modal for changing or removing profile image.
- * Appears when clicking on profile picture.
+ * Modal per cambiare o rimuovere l'immagine profilo.
+ * Appare quando si clicca sulla foto profilo.
+ * 
+ * FUNZIONALITÀ:
+ * - Upload nuova foto con file picker
+ * - Rimozione foto esistente
+ * - Input file nascosto con ref
+ * - Stile Instagram con backdrop blur
+ * 
+ * @module components/profile/ProfileImageModal
  */
 
 'use client';
@@ -61,12 +69,12 @@ export default function ProfileImageModal({
         className="bg-white dark:bg-[#212328] rounded-xl w-[400px] max-w-[90vw] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header with title */}
+        {/* Header con titolo */}
         <h3 className="text-xl font-normal text-center py-8 px-8 text-[#0c1014] dark:text-[#f8f9f9]">
           Cambia immagine del profilo
         </h3>
 
-        {/* Buttons */}
+        {/* Pulsanti */}
         <div>
           {/* Carica foto */}
           <button 
@@ -94,7 +102,7 @@ export default function ProfileImageModal({
             Annulla
           </button>
 
-          {/* Hidden file input */}
+          {/* Input file nascosto */}
           <input
             ref={fileInputRef}
             type="file"

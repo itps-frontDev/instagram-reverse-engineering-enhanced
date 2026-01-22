@@ -1,7 +1,29 @@
+/**
+ * @fileoverview Icona tab "Taggati" per il profilo.
+ * 
+ * Visualizza una silhouette utente per i post in cui
+ * l'utente è stato taggato da altri.
+ * Cambia colore in base allo stato attivo/inattivo.
+ * 
+ * @module components/profile/icons/TaggedTabIcon
+ */
+
+/** Props per TaggedTabIcon */
 interface TaggedTabIconProps {
+  /** Se il tab è attualmente selezionato */
   active: boolean;
 }
 
+/**
+ * Icona SVG per il tab Taggati nel profilo.
+ * 
+ * STILI:
+ * - Attivo: colore primario (#262626 light / #F5F5F5 dark)
+ * - Inattivo: colore grigio (#8E8E8E)
+ * 
+ * @param props - Props del componente
+ * @param props.active - Stato di selezione del tab
+ */
 export default function TaggedTabIcon({ active }: TaggedTabIconProps) {
   return (
     <svg

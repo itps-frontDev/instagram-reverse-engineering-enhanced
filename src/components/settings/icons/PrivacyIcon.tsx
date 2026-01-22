@@ -1,4 +1,25 @@
-export default function PrivacyIcon({ className = "w-6 h-6" }: { className?: string }) {
+/**
+ * @fileoverview Icona "Privacy" per le impostazioni.
+ * 
+ * Icona lucchetto usata nel menu impostazioni
+ * per la sezione privacy account (pubblico/privato).
+ * 
+ * @module components/settings/icons/PrivacyIcon
+ */
+
+/** Props per PrivacyIcon */
+interface PrivacyIconProps {
+  /** Classi CSS per dimensioni (default: "w-6 h-6") */
+  className?: string;
+}
+
+/**
+ * Icona SVG per la sezione Privacy nelle impostazioni.
+ * 
+ * @param props - Props del componente
+ * @param props.className - Classi CSS opzionali
+ */
+export default function PrivacyIcon({ className = "w-6 h-6" }: PrivacyIconProps) {
   return (
     <svg
       aria-label=""

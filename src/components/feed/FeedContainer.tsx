@@ -1,24 +1,34 @@
 /**
- * @fileoverview Feed container component
- *
- * Client component that fetches and manages feed posts with infinite scroll.
+ * @fileoverview Container principale del feed.
+ * 
+ * Componente client che gestisce il caricamento e lo stato del feed
+ * con supporto infinite scroll.
+ * 
+ * FUNZIONALITÀ:
+ * - Fetch iniziale e paginato dei post
+ * - Infinite scroll con Intersection Observer
+ * - Gestione like, salvataggio e commenti
+ * - Skeleton loading durante caricamento
+ * - Gestione errori e stati vuoti
+ * 
+ * @module components/feed/FeedContainer
  */
 
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import Post from './Post';
-import FeedPostSkeleton from '@/components/common/skeletons/FeedPostSkeleton';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
+import {FeedPostSkeleton} from '@/components/common/skeletons';
+import { LoadingSpinner } from '@/components/common';
 import type { FeedPost } from '@/types/feed';
 
 export default function FeedContainer() {
-  const [posts, setPosts] = useState<FeedPost[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(true);
-  const [offset, setOffset] = useState(0);
-  const observerTarget = useRef<HTMLDivElement>(null);
+  const [posts, setPosts] = useState<FeedPost[]>([]); // Post nel feed
+  const [loading, setLoading] = useState(true); // Stato di caricamento
+  const [error, setError] = useState<string | null>(null); // Stato di errore
+  const [hasMore, setHasMore] = useState(true); // Indica se ci sono più post da caricare
+  const [offset, setOffset] = useState(0); // Offset per la paginazione
+  const observerTarget = useRef<HTMLDivElement>(null); // Riferimento per l'infinite scroll
 
   const fetchPosts = async (currentOffset: number = 0) => {
     try {
@@ -84,7 +94,7 @@ export default function FeedContainer() {
 
       const data = await response.json();
 
-      // Update post in state
+      // Aggiorna post nello stato
       setPosts((prev) =>
         prev.map((post) =>
           post.id === postId
@@ -115,7 +125,7 @@ export default function FeedContainer() {
 
       const data = await response.json();
 
-      // Update post in state
+      // Aggiorna post nello stato
       setPosts((prev) =>
         prev.map((post) =>
           post.id === postId
@@ -140,7 +150,7 @@ export default function FeedContainer() {
         throw new Error('Failed to post comment');
       }
 
-      // Update comments count
+      // Aggiorna conteggio commenti
       setPosts((prev) =>
         prev.map((post) =>
           post.id === postId

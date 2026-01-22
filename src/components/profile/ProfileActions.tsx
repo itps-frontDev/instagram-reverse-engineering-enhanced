@@ -1,13 +1,13 @@
 /**
- * @fileoverview Profile action buttons component
+ * @fileoverview Pulsanti azioni profilo.
  *
- * Handles all profile states and displays appropriate buttons:
- * - Own profile: Edit profile, Settings
- * - Public/Following: Following (dropdown), Message
- * - Public/Not following: Follow, Message
- * - Private/Following: Following (dropdown), Message
- * - Private/Not following: Follow, Message (locked grid)
- * - Private/Pending: Requested, Message (locked grid)
+ * Gestisce tutti gli stati del profilo e mostra i pulsanti appropriati:
+ * - Profilo proprio: Modifica profilo, Impostazioni
+ * - Pubblico/Seguendo: Segui già (dropdown), Messaggio
+ * - Pubblico/Non seguendo: Segui, Messaggio
+ * - Privato/Seguendo: Segui già (dropdown), Messaggio
+ * - Privato/Non seguendo: Segui, Messaggio (griglia bloccata)
+ * - Privato/In attesa: Richiesta effettuata, Messaggio (griglia bloccata)
  *
  * @module components/profile/ProfileActions
  */

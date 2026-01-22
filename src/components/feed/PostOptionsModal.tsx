@@ -1,7 +1,15 @@
 /**
- * @fileoverview Post Options Modal
+ * @fileoverview Modal opzioni post.
  * 
- * Modal per le azioni del post: Modifica, Elimina, Annulla
+ * Modal con azioni disponibili per un post: Modifica, Elimina, Annulla.
+ * 
+ * FUNZIONALITÀ:
+ * - Pulsante Elimina (sempre visibile)
+ * - Pulsante Modifica (solo per proprietario)
+ * - Pulsante Annulla
+ * - Stile consistente modali Instagram
+ * 
+ * @module components/feed/PostOptionsModal
  */
 
 'use client';

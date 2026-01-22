@@ -1,12 +1,53 @@
 /**
- * @fileoverview Badge di verifica per profili verificati
+ * @fileoverview Badge di verifica di Instagram.
+ * 
+ * Badge blu con spunta bianca che indica un profilo verificato.
+ * Utilizzato accanto allo username nei profili verificati.
+ * 
+ * @module components/common/VerifiedBadge
  */
 
+// ============================================================================
+// INTERFACCE
+// ============================================================================
+
+/**
+ * Props per il componente VerifiedBadge.
+ * 
+ * @interface VerifiedBadgeProps
+ */
 interface VerifiedBadgeProps {
+  /** Dimensione del badge in pixel (default: 12) */
   size?: number;
+  /** Colore del badge (default: blu Instagram "rgb(0, 149, 246)") */
   color?: string;
 }
 
+// ============================================================================
+// COMPONENTE
+// ============================================================================
+
+/**
+ * Badge di verifica account.
+ * 
+ * Mostra il badge blu con spunta bianca usato da Instagram
+ * per indicare account verificati (personaggi pubblici, brand, ecc.).
+ * 
+ * @param props - Props del componente
+ * @returns Badge SVG verificato
+ * 
+ * @example
+ * ```tsx
+ * // Utilizzo base
+ * <VerifiedBadge />
+ * 
+ * // Con dimensione personalizzata
+ * <VerifiedBadge size={18} />
+ * 
+ * // Con colore personalizzato (es. bianco per sfondo scuro)
+ * <VerifiedBadge color="white" />
+ * ```
+ */
 export default function VerifiedBadge({ size = 12, color = "rgb(0, 149, 246)" }: VerifiedBadgeProps) {
   return (
     <svg

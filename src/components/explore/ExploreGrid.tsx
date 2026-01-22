@@ -1,25 +1,67 @@
 /**
- * @fileoverview Explore Grid Component
- *
- * Displays posts in a grid layout with hover effects
+ * @fileoverview Griglia Esplora.
+ * 
+ * Componente che visualizza i post nella sezione Esplora di Instagram.
+ * I post sono mostrati in una griglia quadrata con effetti hover interattivi.
+ * 
+ * DIFFERENZE DA ProfileGrid:
+ * - Aspect ratio quadrato (1:1) invece di 3:4
+ * - Numeri formattati (1.5K invece di 1500)
+ * - Navigazione tra post con frecce nel modal
+ * 
+ * FUNZIONALITÀ:
+ * - Griglia responsive 3 colonne
+ * - Preview immagini/video con aspect ratio quadrato
+ * - Indicatori per video e caroselli
+ * - Overlay hover con conteggio like e commenti (PostHoverOverlay)
+ * - Modal per visualizzazione post completo
+ * - Navigazione tra post con frecce
+ * 
+ * @module components/explore/ExploreGrid
  */
 
 'use client';
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Heart, MessageCircle, Play } from 'lucide-react';
+import { Play } from 'lucide-react';
 import type { FeedPost } from '@/types/feed';
-import PostModal from '@/components/feed/PostModal';
-import CarouselIcon from '@/components/common/CarouselIcon';
+import { PostModal } from '@/components/feed';
+import { CarouselIcon, PostHoverOverlay } from '@/components/common';
 
+// ============================================================================
+// INTERFACCE
+// ============================================================================
+
+/**
+ * Props per il componente ExploreGrid.
+ * 
+ * @interface ExploreGridProps
+ */
 interface ExploreGridProps {
+  /** Array dei post da visualizzare */
   posts: FeedPost[];
+  /** Callback per like su un post */
   onLike: (postId: number) => void;
+  /** Callback per salvare un post */
   onSave: (postId: number) => void;
+  /** Callback per commentare un post */
   onComment: (postId: number, text: string) => void;
 }
 
+// ============================================================================
+// COMPONENTE
+// ============================================================================
+
+/**
+ * Griglia post per la sezione Esplora.
+ * 
+ * Visualizza una griglia di post con preview media, indicatori tipo
+ * e overlay interattivi al passaggio del mouse.
+ * 
+ * @param props - Props del componente
+ * @returns Griglia di post esplorabile
+ */
 export default function ExploreGrid({
   posts,
   onLike,
@@ -30,26 +72,22 @@ export default function ExploreGrid({
 
   const selectedPost = selectedPostIndex !== null ? posts[selectedPostIndex] : null;
 
+  /**
+   * Naviga al post successivo nella griglia.
+   */
   const handleNext = () => {
     if (selectedPostIndex !== null && selectedPostIndex < posts.length - 1) {
       setSelectedPostIndex(selectedPostIndex + 1);
     }
   };
 
+  /**
+   * Naviga al post precedente nella griglia.
+   */
   const handlePrev = () => {
     if (selectedPostIndex !== null && selectedPostIndex > 0) {
       setSelectedPostIndex(selectedPostIndex - 1);
     }
-  };
-
-  const formatCount = (count: number) => {
-    if (count >= 1000000) {
-      return `${(count / 1000000).toFixed(1)}M`;
-    }
-    if (count >= 1000) {
-      return `${(count / 1000).toFixed(1)}K`;
-    }
-    return count.toString();
   };
 
   return (
@@ -99,17 +137,12 @@ export default function ExploreGrid({
                 </div>
               )}
 
-              {/* Hover overlay */}
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6">
-                <div className="flex items-center gap-2 text-white font-semibold">
-                  <Heart className="w-6 h-6" fill="white" />
-                  <span>{formatCount(post.likes_count)}</span>
-                </div>
-                <div className="flex items-center gap-2 text-white font-semibold">
-                  <MessageCircle className="w-6 h-6 icon-mirrored" fill="white" />
-                  <span>{formatCount(post.comments_count)}</span>
-                </div>
-              </div>
+              {/* Hover overlay - usa componente riutilizzabile con numeri formattati */}
+              <PostHoverOverlay 
+                likesCount={post.likes_count} 
+                commentsCount={post.comments_count}
+                formatNumbers={true}
+              />
             </button>
           );
         })}

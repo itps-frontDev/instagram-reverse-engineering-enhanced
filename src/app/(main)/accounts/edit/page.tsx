@@ -1,72 +1,46 @@
 /**
- * @fileoverview Edit profile page
- *
- * Two-column layout with settings sidebar and edit profile form.
+ * @fileoverview Pagina Modifica Profilo
+ * 
+ * Permette all'utente di modificare le informazioni del proprio profilo:
+ * - Username e nome completo
+ * - Bio e sito web
+ * - Immagine profilo
+ * - Genere e informazioni personali
+ * 
+ * Route: /accounts/edit
+ * 
+ * @module app/(main)/accounts/edit/page
  */
 
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
-import { queryOne } from '@/lib/db';
-import SettingsSidebar from '@/components/settings/SettingsSidebar';
-import EditProfileForm from '@/components/settings/EditProfileForm';
-import Footer from '@/components/common/Footer';
+import { profileRepository } from '@/repositories';
+import { EditProfileForm } from '@/components/settings';
 
-interface Profile {
-  id: number;
-  username: string;
-  full_name: string | null;
-  bio: string | null;
-  website_url: string | null;
-  profile_image_url: string | null;
-  gender: string | null;
-  custom_gender: string | null;
-}
+// ============================================================================
+// COMPONENTE PAGINA
+// ============================================================================
 
-async function getProfile() {
-  // Use the getCurrentUser utility which handles JWT verification correctly
+/**
+ * EditProfilePage - Pagina modifica profilo
+ * 
+ * Server Component che recupera il profilo tramite repository
+ * e renderizza il form di modifica.
+ * 
+ * @returns Pagina modifica profilo
+ */
+export default async function EditProfilePage() {
   const user = await getCurrentUser();
 
   if (!user) {
     redirect('/login');
   }
 
-  try {
-    // Fetch user profile from database
-    const profile = await queryOne<Profile>(
-      `SELECT id, username, full_name, bio, website_url, profile_image_url, gender, custom_gender
-       FROM profiles
-       WHERE user_id = ? AND deleted_at IS NULL`,
-      [user.id]
-    );
+  const profile = await profileRepository.findByUserId(user.id);
 
-    if (!profile) {
-      redirect('/login');
-    }
-
-    return profile;
-  } catch (err) {
-    console.error('[EditProfile] Error fetching profile:', err);
+  if (!profile) {
     redirect('/login');
   }
-}
 
-export default async function EditProfilePage() {
-  const profile = await getProfile();
-
-  return (
-    <div className="flex min-h-screen">
-      {/* Sidebar - nascosta su mobile */}
-      <div className="hidden lg:block">
-        <SettingsSidebar />
-      </div>
-
-      {/* Main Content - full screen su mobile */}
-      <main className="flex-1 flex flex-col items-center py-9 px-8 max-[1023px]:py-4 max-[1023px]:px-4 max-[1023px]:w-full">
-        <div className="w-full max-w-xl max-[1023px]:max-w-full">
-          <EditProfileForm profile={profile} />
-        </div>
-        <Footer />
-      </main>
-    </div>
-  );
+  return <EditProfileForm profile={profile} />;
 }

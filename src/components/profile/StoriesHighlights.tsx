@@ -1,7 +1,15 @@
 /**
- * @fileoverview Stories highlights carousel component
+ * @fileoverview Carosello storie in evidenza.
  *
- * Displays saved story highlights in a horizontal scrollable list.
+ * Mostra le storie salvate in evidenza in una lista orizzontale scrollabile.
+ * 
+ * FUNZIONALITÀ:
+ * - Scroll orizzontale con hide scrollbar
+ * - Cerchi con cover delle storie
+ * - Nome highlight troncato
+ * - Click per visualizzare highlight
+ * 
+ * @module components/profile/StoriesHighlights
  */
 
 'use client';

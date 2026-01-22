@@ -1,14 +1,28 @@
 /**
- * @fileoverview Modale per la creazione di un nuovo post.
+ * @fileoverview Modal per la creazione di un nuovo post.
  * 
  * Permette di caricare foto e video per creare un nuovo post.
+ * 
+ * FUNZIONALITÀ:
+ * - Upload drag & drop di immagini/video
+ * - Editor con zoom e posizionamento
+ * - Supporto caroselli multi-immagine
+ * - Gestione ordine media tramite drag
+ * - Didascalia e pubblicazione
+ * - Modalità chiara/scura
+ * 
+ * FASI:
+ * - crop: Upload e ritaglio media
+ * - details: Aggiunta didascalia e pubblicazione
+ * 
+ * @module components/feed/CreatePostModal
  */
 
 'use client';
 
 import { useState, useRef, DragEvent, useEffect } from 'react';
 import { X } from 'lucide-react';
-import ProfilePicture from '@/components/ProfilePicture';
+import {ProfilePicture} from '@/components';
 
 interface CreatePostModalProps {
   isOpen: boolean;
@@ -17,29 +31,29 @@ interface CreatePostModalProps {
 }
 
 export default function CreatePostModal({ isOpen, onClose, width = 855 }: CreatePostModalProps) {
-  const [phase, setPhase] = useState<'crop' | 'details'>('crop');
-  const [isDragging, setIsDragging] = useState(false);
-  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [showDiscardModal, setShowDiscardModal] = useState(false);
-  const [showDeletePhotoModal, setShowDeletePhotoModal] = useState(false);
-  const [photoToDelete, setPhotoToDelete] = useState<number | null>(null);
-  const [showMediaManager, setShowMediaManager] = useState(false);
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [caption, setCaption] = useState('');
-  const [hasAudio, setHasAudio] = useState(true);
-  const [currentProfile, setCurrentProfile] = useState<{ username: string; full_name: string | null; profile_image_url: string | null } | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
+  const [phase, setPhase] = useState<'crop' | 'details'>('crop'); // Fase corrente della modale
+  const [isDragging, setIsDragging] = useState(false); // Stato drag & drop
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]); // Array di immagini caricate (data URLs)
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);  // Indice dell'immagine corrente
+  const [showDiscardModal, setShowDiscardModal] = useState(false); // Stato modale conferma scarto
+  const [showDeletePhotoModal, setShowDeletePhotoModal] = useState(false); // Stato modale conferma eliminazione foto
+  const [photoToDelete, setPhotoToDelete] = useState<number | null>(null); // Indice foto da eliminare
+  const [showMediaManager, setShowMediaManager] = useState(false); // Stato modale gestione media
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null); // Indice immagine trascinata
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null); // Indice immagine su cui si trascina
+  const [isUploading, setIsUploading] = useState(false); // Stato caricamento post
+  const [caption, setCaption] = useState(''); // Didascalia del post
+  const [hasAudio, setHasAudio] = useState(true);   // Se includere audio nei video
+  const [currentProfile, setCurrentProfile] = useState<{ username: string; full_name: string | null; profile_image_url: string | null } | null>(null); // Profilo utente corrente
+  const [isDarkMode, setIsDarkMode] = useState(() => {  // Stato modalità scura
     if (typeof window !== 'undefined') {
       return document.documentElement.classList.contains('dark');
     }
     return false;
   });
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const multipleFileInputRef = useRef<HTMLInputElement>(null);
-  const mediaRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null); // Ref input file singolo
+  const multipleFileInputRef = useRef<HTMLInputElement>(null); // Ref input file multiplo
+  const mediaRef = useRef<HTMLDivElement>(null); // Ref contenitore media per zoom/posizionamento
   
   // Stati per zoom e posizionamento
   const [zoom, setZoom] = useState(1);
@@ -50,7 +64,7 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
   useEffect(() => {
     if (isOpen) {
       fetchCurrentProfile();
-      // Set initial dark mode state
+      // Imposta stato dark mode iniziale
       setIsDarkMode(document.documentElement.classList.contains('dark'));
       
       // Add observer to watch for class changes
@@ -246,7 +260,7 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
       const data = await response.json();
 
       if (data.success) {
-        // Success! Close modal and reset state
+        // Successo! Chiudi modale e resetta stato
         setUploadedImages([]);
         setCurrentImageIndex(0);
         setShowMediaManager(false);
@@ -658,6 +672,7 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
                   zIndex: 1
                 }}
               >
+                {/* Icona immagine */}
                 <svg
                   className="w-20 h-20 text-[#262626] dark:text-white drop-shadow-lg max-[639px]:w-8 max-[639px]:h-8"
                   viewBox="0 0 24 24"
@@ -720,7 +735,7 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
       </div>
     </div>
 
-    {/* Discard Confirmation Modal */}
+    {/* Modal di conferma eliminazione post */}
     {showDiscardModal && (
       <div className="fixed inset-0 z-[60] flex items-center justify-center">
         <div 
@@ -754,7 +769,7 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
       </div>
     )}
 
-    {/* Delete Photo Confirmation Modal */}
+    {/* Modal di conferma eliminazione foto */}
     {showDeletePhotoModal && (
       <div className="fixed inset-0 z-[60] flex items-center justify-center">
         <div 

@@ -1,7 +1,19 @@
 /**
- * @fileoverview Post modal component
+ * @fileoverview Modal visualizzazione post.
  *
- * Displays a post in a modal with all comments and ability to comment.
+ * Mostra un post in modal con tutti i commenti e possibilità di interagire.
+ * 
+ * FUNZIONALITÀ:
+ * - Vista dettagliata post con media a sinistra
+ * - Thread commenti con risposte annidate
+ * - Like su commenti e risposte
+ * - Eliminazione commenti propri
+ * - Navigazione tra post (Esplora)
+ * - Gestione tag e menzioni
+ * - Modal opzioni e modifica post
+ * - Integrazione storie autore
+ * 
+ * @module components/feed/PostModal
  */
 
 'use client';
@@ -9,15 +21,11 @@
 import React, { useState, useEffect } from 'react';
 
 import Image from 'next/image';
-import ProfilePicture from '@/components/ProfilePicture';
-import VerifiedBadge from '@/components/common/VerifiedBadge';
-import ShareIcon from '@/components/common/ShareIcon';
-import TagIcon from '@/components/common/TagIcon';
-import StoryViewer from '@/components/feed/StoryViewer';
+import {ProfilePicture} from '@/components';
+import { VerifiedBadge, ShareIcon, TagIcon } from '@/components/common';
+import {StoryViewer, PostOptionsModal, DeletePostModal, EditPostModal} from '@/components/feed';
 import ProfilePreviewCard from '@/components/profile/ProfilePreviewCard';
-import PostOptionsModal from '@/components/feed/PostOptionsModal';
-import DeletePostModal from '@/components/feed/DeletePostModal';
-import EditPostModal from '@/components/feed/EditPostModal';
+import { formatTimeAgo } from '@/lib/date-utils';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -313,18 +321,6 @@ export default function PostModal({
     }
   };
 
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (seconds < 60) return `${seconds}s`;
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
-    if (seconds < 604800) return `${Math.floor(seconds / 86400)}g`;
-    return `${Math.floor(seconds / 604800)}sett`;
-  };
-
   // Gestione eliminazione post
   const handleDeletePost = async () => {
     setIsDeletingPost(true);
@@ -479,7 +475,7 @@ export default function PostModal({
                       }
                     }}
                   />
-                  {/* Play Icon when paused */}
+                  {/* Icona Play quando in pausa */}
                   {!isPlaying && (
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <Play className="w-16 h-16 text-white fill-white" />

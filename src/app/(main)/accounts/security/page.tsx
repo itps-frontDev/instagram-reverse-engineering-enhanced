@@ -1,58 +1,46 @@
 /**
- * @fileoverview Security settings page
+ * @fileoverview Pagina Impostazioni Sicurezza
+ * 
+ * Permette all'utente di gestire le impostazioni di sicurezza:
+ * - Cambio password
+ * - Email associata all'account
+ * - Numero di telefono
+ * - Autenticazione a due fattori
+ * 
+ * Route: /accounts/security
+ * 
+ * @module app/(main)/accounts/security/page
  */
 
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
-import { queryOne } from '@/lib/db';
-import SettingsSidebar from '@/components/settings/SettingsSidebar';
-import SecurityForm from '@/components/settings/SecurityForm';
-import Footer from '@/components/common/Footer';
+import { userRepository } from '@/repositories';
+import { SecurityForm } from '@/components/settings';
 
-interface User {
-  id: number;
-  email: string | null;
-  phone_number: string | null;
-}
+// ============================================================================
+// COMPONENTE PAGINA
+// ============================================================================
 
-async function getUserData() {
+/**
+ * SecurityPage - Pagina impostazioni sicurezza
+ * 
+ * Server Component che recupera i dati utente tramite repository
+ * e renderizza il form delle impostazioni sicurezza.
+ * 
+ * @returns Pagina impostazioni sicurezza
+ */
+export default async function SecurityPage() {
   const user = await getCurrentUser();
 
   if (!user) {
     redirect('/login');
   }
 
-  try {
-    const userData = await queryOne<User>(
-      `SELECT id, email, phone_number
-       FROM users
-       WHERE id = ? AND deleted_at IS NULL`,
-      [user.id]
-    );
+  const userData = await userRepository.getSecurityData(user.id);
 
-    if (!userData) {
-      redirect('/login');
-    }
-
-    return userData;
-  } catch (err) {
-    console.error('[Security] Error fetching user data:', err);
+  if (!userData) {
     redirect('/login');
   }
-}
 
-export default async function SecurityPage() {
-  const userData = await getUserData();
-
-  return (
-    <div className="flex min-h-screen">
-      <SettingsSidebar />
-      <main className="flex-1 flex flex-col items-center py-9 px-8">
-        <div className="w-full max-w-xl">
-          <SecurityForm user={userData} />
-        </div>
-        <Footer />
-      </main>
-    </div>
-  );
+  return <SecurityForm user={userData} />;
 }

@@ -1,57 +1,45 @@
 /**
- * @fileoverview Birthday settings page
+ * @fileoverview Pagina Impostazioni Data di Nascita
+ * 
+ * Permette all'utente di visualizzare e modificare la data di nascita:
+ * - Visualizzazione data attuale
+ * - Form per modifica (se consentito)
+ * - Informazioni su perché la data è richiesta
+ * 
+ * Route: /accounts/birthday
+ * 
+ * @module app/(main)/accounts/birthday/page
  */
 
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
-import { queryOne } from '@/lib/db';
-import SettingsSidebar from '@/components/settings/SettingsSidebar';
-import BirthdayForm from '@/components/settings/BirthdayForm';
-import Footer from '@/components/common/Footer';
+import { userRepository } from '@/repositories';
+import { BirthdayForm } from '@/components/settings';
 
-interface User {
-  id: number;
-  date_of_birth: string;
-}
+// ============================================================================
+// COMPONENTE PAGINA
+// ============================================================================
 
-async function getUserData() {
+/**
+ * BirthdayPage - Pagina impostazioni data di nascita
+ * 
+ * Server Component che recupera i dati utente tramite repository
+ * e renderizza il form per la data di nascita.
+ * 
+ * @returns Pagina impostazioni data di nascita
+ */
+export default async function BirthdayPage() {
   const user = await getCurrentUser();
 
   if (!user) {
     redirect('/login');
   }
 
-  try {
-    const userData = await queryOne<User>(
-      `SELECT id, date_of_birth
-       FROM users
-       WHERE id = ? AND deleted_at IS NULL`,
-      [user.id]
-    );
+  const userData = await userRepository.getBirthdayData(user.id);
 
-    if (!userData) {
-      redirect('/login');
-    }
-
-    return userData;
-  } catch (err) {
-    console.error('[Birthday] Error fetching user data:', err);
+  if (!userData) {
     redirect('/login');
   }
-}
 
-export default async function BirthdayPage() {
-  const userData = await getUserData();
-
-  return (
-    <div className="flex min-h-screen">
-      <SettingsSidebar />
-      <main className="flex-1 flex flex-col items-center py-9 px-8">
-        <div className="w-full max-w-xl">
-          <BirthdayForm user={userData} />
-        </div>
-        <Footer />
-      </main>
-    </div>
-  );
+  return <BirthdayForm user={userData} />;
 }

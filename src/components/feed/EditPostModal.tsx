@@ -1,12 +1,22 @@
 /**
- * @fileoverview Modal for editing an existing post's caption.
+ * @fileoverview Modal per modifica didascalia post.
+ * 
+ * Permette di modificare la didascalia di un post esistente.
+ * 
+ * FUNZIONALITÀ:
+ * - Visualizzazione anteprima media
+ * - Editor didascalia con limite caratteri
+ * - Salvataggio modifiche via API
+ * - Stato di loading durante salvataggio
+ * 
+ * @module components/feed/EditPostModal
  */
 
 'use client';
 
 import { useState, useEffect } from 'react';
 import { X, ChevronLeft } from 'lucide-react';
-import ProfilePicture from '@/components/ProfilePicture';
+import {ProfilePicture} from '@/components';
 import Image from 'next/image';
 
 interface EditPostModalProps {

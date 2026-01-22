@@ -1,11 +1,31 @@
 /**
- * @fileoverview Birthday form component
- * Form for changing date of birth
+ * @fileoverview Form data di nascita.
+ * 
+ * Form per modificare la data di nascita dell'utente.
+ * 
+ * FUNZIONALITÀ:
+ * - 3 dropdown per giorno, mese, anno (stile Instagram)
+ * - Conversione automatica da datetime
+ * - Salvataggio via API
+ * - Spinner durante invio
+ * - Messaggio successo temporaneo
+ * 
+ * @module components/settings/BirthdayForm
  */
 
 'use client';
 
 import { useState } from 'react';
+import { 
+  PageHeader, 
+  FormField, 
+  DatePicker, 
+  SuccessMessage, 
+  SubmitButton,
+  datePickerToISO,
+  isoToDatePicker,
+  type DatePickerValue 
+} from '@/components/ui';
 
 interface BirthdayFormProps {
   user: {
@@ -15,10 +35,11 @@ interface BirthdayFormProps {
 }
 
 export default function BirthdayForm({ user }: BirthdayFormProps) {
-  // Convert from datetime format to date input format (YYYY-MM-DD)
-  const initialDate = user.date_of_birth.split('T')[0] || user.date_of_birth.split(' ')[0];
+  // Parse della data esistente (formato YYYY-MM-DD o datetime)
+  const datePart = user.date_of_birth.split('T')[0] || user.date_of_birth.split(' ')[0];
+  const initialDate = isoToDatePicker(datePart);
   
-  const [dateOfBirth, setDateOfBirth] = useState(initialDate);
+  const [birthday, setBirthday] = useState<DatePickerValue>(initialDate);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -26,6 +47,14 @@ export default function BirthdayForm({ user }: BirthdayFormProps) {
     e.preventDefault();
     setIsSubmitting(true);
     setSuccessMessage('');
+
+    const dateOfBirth = datePickerToISO(birthday);
+    
+    if (!dateOfBirth) {
+      alert('Seleziona una data valida');
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const res = await fetch('/api/profiles/birthday', {
@@ -53,52 +82,27 @@ export default function BirthdayForm({ user }: BirthdayFormProps) {
 
   return (
     <div>
-      <div className="px-0 pt-0 pb-6">
-        <h1 className="text-xl font-bold leading-[25px] break-words mb-4">Compleanno</h1>
-      </div>
+      <PageHeader title="Compleanno" />
 
       <form onSubmit={handleSubmit} className="max-w-2xl">
-        {/* Date of Birth Field */}
-        <div className="mb-6">
-          <label htmlFor="dateOfBirth" className="block text-lg font-bold mb-3">
-            Data di nascita
-          </label>
-          <input
-            id="dateOfBirth"
-            type="date"
-            value={dateOfBirth}
-            onChange={(e) => setDateOfBirth(e.target.value)}
-            className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 text-sm"
-            required
+        <FormField
+          label="Data di nascita"
+          helperText="Questa informazione non farà parte del tuo profilo pubblico."
+        >
+          <DatePicker
+            value={birthday}
+            onChange={setBirthday}
           />
-          <p className="text-xs text-[rgb(115,115,115)] dark:text-[rgb(168,168,168)] mt-2 leading-4">
-            Questa informazione non farà parte del tuo profilo pubblico. Perché richiediamo la tua data di nascita?
-          </p>
-        </div>
+        </FormField>
 
-        {/* Success Message */}
-        {successMessage && (
-          <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
-            <p className="text-sm text-green-800 dark:text-green-200">{successMessage}</p>
-          </div>
-        )}
+        <SuccessMessage message={successMessage} variant="rounded-xl" />
 
         {/* Submit Button */}
         <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="relative flex items-center justify-center w-[253px] h-11 mt-4 px-5 bg-[rgb(74,93,249)] hover:bg-[rgb(64,83,239)] text-white font-semibold text-sm rounded-xl cursor-pointer select-none disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[rgb(74,93,249)] transition-all"
-          >
-            {isSubmitting ? (
-              <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            ) : (
-              'Invia'
-            )}
-          </button>
+          <SubmitButton
+            isSubmitting={isSubmitting}
+            label="Salva"
+          />
         </div>
       </form>
     </div>

@@ -1,107 +1,169 @@
 /**
- * @fileoverview Type definitions for Instagram profile features
+ * @fileoverview Definizioni di tipo per funzionalità profilo Instagram.
  *
- * This file contains all TypeScript interfaces and types used across
- * profile pages, API routes, and components.
+ * Contiene tutte le interfacce e i tipi TypeScript utilizzati nelle
+ * pagine profilo, route API e componenti.
+ * 
+ * @module types/profile
  */
 
 // ============================================================================
-// CORE PROFILE TYPES
+// TIPI PROFILO BASE
 // ============================================================================
 
 /**
- * Profile information from the profiles table
+ * Informazioni profilo dalla tabella profiles.
+ * 
+ * @interface Profile
  */
 export interface Profile {
+  /** ID univoco del profilo */
   id: number;
+  /** ID dell'utente associato */
   user_id: number;
+  /** Nome utente univoco */
   username: string;
+  /** Nome completo (opzionale) */
   full_name: string | null;
+  /** URL immagine profilo */
   profile_image_url: string | null;
+  /** Biografia del profilo */
   bio: string | null;
+  /** URL sito web */
   website_url: string | null;
+  /** Se il profilo è privato */
   is_private: boolean;
+  /** Se il profilo è verificato */
   is_verified: boolean;
+  /** Genere: male, female, prefer_not_to_say, custom */
+  gender?: string | null;
+  /** Genere personalizzato quando gender = 'custom' */
+  custom_gender?: string | null;
+  /** Numero di follower */
   followers_count: number;
+  /** Numero di profili seguiti */
   following_count: number;
+  /** Numero di post */
   posts_count: number;
-  has_reels?: boolean; // Whether profile has any video posts
-  has_any_active_story?: boolean; // Whether profile has any active stories (regardless of views)
-  has_active_story?: boolean; // Whether profile has active stories not yet viewed by current user
-  has_viewed_story?: boolean; // Whether current user has viewed this profile's stories
+  /** Se il profilo ha video post (reels) */
+  has_reels?: boolean;
+  /** Se il profilo ha storie attive (indipendentemente dalle visualizzazioni) */
+  has_any_active_story?: boolean;
+  /** Se il profilo ha storie attive non ancora viste dall'utente corrente */
+  has_active_story?: boolean;
+  /** Se l'utente corrente ha visto le storie di questo profilo */
+  has_viewed_story?: boolean;
+  /** Data creazione */
   created_at?: string;
+  /** Data ultimo aggiornamento */
   updated_at?: string;
 }
 
 /**
- * Post information for grid display
+ * Informazioni post per visualizzazione griglia.
+ * 
+ * @interface Post
  */
 export interface Post {
+  /** ID univoco del post */
   id: number;
+  /** Didascalia del post */
   caption: string | null;
+  /** Numero di like */
   likes_count: number;
+  /** Numero di commenti */
   comments_count: number;
+  /** Data creazione */
   created_at: string;
+  /** URL del primo media */
   media_url: string | null;
+  /** Tipo di media */
   media_type: 'image' | 'video' | null;
-  media_count: number; // Total media items in carousel
+  /** Numero totale di media nel carosello */
+  media_count: number;
 }
 
 /**
- * Simplified post for preview display (hover card)
+ * Post semplificato per anteprima (hover card).
+ * 
+ * @interface PreviewPost
  */
 export interface PreviewPost {
+  /** ID del post */
   id: number;
+  /** URL del media */
   media_url: string | null;
+  /** Tipo di media */
   media_type: string | null;
 }
 
 /**
- * Follow relationship between two profiles
+ * Relazione di follow tra due profili.
+ * 
+ * @interface FollowRelationship
  */
 export interface FollowRelationship {
+  /** ID della relazione */
   id: number;
+  /** ID del profilo che segue */
   follower_profile_id: number;
+  /** ID del profilo seguito */
   following_profile_id: number;
+  /** Stato della richiesta */
   status: 'pending' | 'accepted' | 'rejected';
+  /** Data creazione */
   created_at: string;
 }
 
 /**
- * Follow status information for UI rendering
+ * Stato del follow per rendering UI.
+ * 
+ * @interface FollowStatus
  */
 export interface FollowStatus {
-  isFollowing: boolean;      // Current user follows this profile
-  isFollowedBy: boolean;      // This profile follows current user
-  isPending: boolean;         // Follow request is pending (private accounts)
-  isOwnProfile: boolean;      // This is the current user's profile
+  /** L'utente corrente segue questo profilo */
+  isFollowing: boolean;
+  /** Questo profilo segue l'utente corrente */
+  isFollowedBy: boolean;
+  /** Richiesta di follow in attesa (account privati) */
+  isPending: boolean;
+  /** È il profilo dell'utente corrente */
+  isOwnProfile: boolean;
 }
 
 /**
- * Story highlight information
+ * Informazioni storie in evidenza.
+ * 
+ * @interface StoryHighlight
  */
 export interface StoryHighlight {
+  /** ID dell'highlight */
   id: number;
+  /** ID del profilo proprietario */
   profile_id: number;
+  /** Nome dell'highlight */
   name: string;
+  /** URL immagine copertina */
   cover_image_url: string;
+  /** Data creazione */
   created_at: string;
+  /** Numero di storie nell'highlight */
   story_count: number;
 }
 
 // ============================================================================
-// API REQUEST/RESPONSE TYPES
+// TIPI RICHIESTE/RISPOSTE API
 // ============================================================================
 
 /**
- * Response from GET /api/profiles/[username]
+ * Risposta da GET /api/profiles/[username]
  */
 export interface GetProfileResponse {
   profile: Profile;
 }
 
 /**
- * Response from GET /api/profiles/[username]/preview
+ * Risposta da GET /api/profiles/[username]/preview
  */
 export interface ProfilePreviewResponse {
   id: number;
@@ -119,7 +181,7 @@ export interface ProfilePreviewResponse {
 }
 
 /**
- * Response from GET /api/profiles/[username]/posts
+ * Risposta da GET /api/profiles/[username]/posts
  */
 export interface GetPostsResponse {
   posts: Post[];
@@ -128,7 +190,7 @@ export interface GetPostsResponse {
 }
 
 /**
- * Response from GET /api/profiles/[username]/follow-status
+ * Risposta da GET /api/profiles/[username]/follow-status
  */
 export interface GetFollowStatusResponse {
   isFollowing: boolean;
@@ -138,7 +200,7 @@ export interface GetFollowStatusResponse {
 }
 
 /**
- * Response from GET /api/profiles/[username]/can-view
+ * Risposta da GET /api/profiles/[username]/can-view
  */
 export interface CanViewResponse {
   canView: boolean;
@@ -146,14 +208,14 @@ export interface CanViewResponse {
 }
 
 /**
- * Request body for POST /api/profiles/actions/follow
+ * Body richiesta per POST /api/profiles/actions/follow
  */
 export interface FollowRequest {
   targetProfileId: number;
 }
 
 /**
- * Response from POST /api/profiles/actions/follow
+ * Risposta da POST /api/profiles/actions/follow
  */
 export interface FollowResponse {
   success: boolean;
@@ -162,14 +224,14 @@ export interface FollowResponse {
 }
 
 /**
- * Request body for POST /api/profiles/actions/unfollow
+ * Body richiesta per POST /api/profiles/actions/unfollow
  */
 export interface UnfollowRequest {
   targetProfileId: number;
 }
 
 /**
- * Response from POST /api/profiles/actions/unfollow
+ * Risposta da POST /api/profiles/actions/unfollow
  */
 export interface UnfollowResponse {
   success: boolean;
@@ -177,123 +239,172 @@ export interface UnfollowResponse {
 }
 
 // ============================================================================
-// COMPONENT PROP TYPES
+// TIPI PROPS COMPONENTI
 // ============================================================================
 
 /**
- * Props for ProfileHeader component
+ * Props per componente ProfileHeader.
  */
 export interface ProfileHeaderProps {
+  /** Dati del profilo */
   profile: Profile;
+  /** Stato del follow */
   followStatus: FollowStatus;
+  /** Callback per seguire */
   onFollow: () => Promise<void>;
+  /** Callback per smettere di seguire */
   onUnfollow: () => Promise<void>;
+  /** Stato di caricamento */
   isLoading?: boolean;
+  /** Callback click su immagine profilo */
   onProfileImageClick?: () => void;
+  /** Callback click su storia */
   onStoryClick?: () => void;
+  /** Stato upload immagine */
   isUploadingImage?: boolean;
 }
 
 /**
- * Props for ProfileStats component
+ * Props per componente ProfileStats.
  */
 export interface ProfileStatsProps {
+  /** Numero di post */
   postsCount: number;
+  /** Numero di follower */
   followersCount: number;
+  /** Numero di following */
   followingCount: number;
+  /** Callback click su follower */
   onFollowersClick?: () => void;
+  /** Callback click su following */
   onFollowingClick?: () => void;
-  canViewContent?: boolean; // Can view private profile content
+  /** Può vedere contenuti privati */
+  canViewContent?: boolean;
 }
 
 /**
- * Props for ProfileBio component
+ * Props per componente ProfileBio.
  */
 export interface ProfileBioProps {
+  /** Nome completo */
   fullName: string | null;
+  /** Biografia */
   bio: string | null;
+  /** URL sito web */
   websiteUrl: string | null;
 }
 
 /**
- * Props for ProfileActions component
+ * Props per componente ProfileActions.
  */
 export interface ProfileActionsProps {
+  /** È il proprio profilo */
   isOwnProfile: boolean;
+  /** Sta seguendo */
   isFollowing: boolean;
+  /** Richiesta in attesa */
   isPending: boolean;
+  /** Profilo privato */
   isPrivate: boolean;
+  /** È seguito da questo profilo */
   isFollowedBy: boolean;
+  /** Callback per seguire */
   onFollow: () => Promise<void>;
+  /** Callback per smettere di seguire */
   onUnfollow: () => Promise<void>;
+  /** Stato di caricamento */
   isLoading?: boolean;
 }
 
 /**
- * Props for ProfileTabs component
+ * Props per componente ProfileTabs.
  */
 export interface ProfileTabsProps {
+  /** Tab attivo */
   activeTab: ProfileTab;
+  /** Callback cambio tab */
   onTabChange: (tab: ProfileTab) => void;
+  /** Numero di post */
   postsCount: number;
-  showTagged: boolean; // Show saved tab (only on own profile)
-  hasReels?: boolean; // Show reels tab if profile has reels
-  canViewTagged?: boolean; // Show tagged tab if can view (public or following)
+  /** Mostra tab salvati (solo proprio profilo) */
+  showTagged: boolean;
+  /** Mostra tab reels se il profilo ha reels */
+  hasReels?: boolean;
+  /** Mostra tab taggati se può vedere (pubblico o following) */
+  canViewTagged?: boolean;
 }
 
 /**
- * Profile tab options
+ * Opzioni tab profilo.
  */
 export type ProfileTab = 'posts' | 'reels' | 'saved' | 'tagged';
 
 /**
- * Props for ProfileGrid component
+ * Props per componente ProfileGrid.
  */
 export interface ProfileGridProps {
+  /** Lista dei post */
   posts: Post[];
+  /** Stato di caricamento */
   isLoading: boolean;
+  /** Callback per caricare altri post */
   onLoadMore?: () => void;
+  /** Se ci sono altri post */
   hasMore?: boolean;
+  /** Tab corrente */
   tab?: ProfileTab;
+  /** È il proprio profilo */
   isOwnProfile?: boolean;
+  /** Callback per creare post */
   onCreatePost?: () => void;
+  /** Callback click su post */
   onPostClick?: (post: Post) => void;
 }
 
 /**
- * Props for ProfilePrivateLock component
+ * Props per componente ProfilePrivateLock.
  */
 export interface ProfilePrivateLockProps {
+  /** Username del profilo */
   username: string;
+  /** Richiesta di follow in attesa */
   isPending: boolean;
 }
 
 /**
- * Props for StoriesHighlights component
+ * Props per componente StoriesHighlights.
  */
 export interface StoriesHighlightsProps {
+  /** Lista degli highlight */
   highlights: StoryHighlight[];
+  /** ID del profilo */
   profileId: number;
 }
 
 // ============================================================================
-// UTILITY TYPES
+// TIPI UTILITY
 // ============================================================================
 
 /**
- * Profile page state enum
+ * Enum stato pagina profilo.
  */
 export enum ProfileState {
+  /** Proprio profilo */
   OWN_PROFILE = 'own_profile',
+  /** Profilo pubblico che si segue */
   PUBLIC_FOLLOWING = 'public_following',
+  /** Profilo pubblico che non si segue */
   PUBLIC_NOT_FOLLOWING = 'public_not_following',
+  /** Profilo privato che si segue */
   PRIVATE_FOLLOWING = 'private_following',
+  /** Profilo privato che non si segue */
   PRIVATE_NOT_FOLLOWING = 'private_not_following',
+  /** Profilo privato con richiesta in attesa */
   PRIVATE_PENDING = 'private_pending',
 }
 
 /**
- * Error types for profile pages
+ * Tipi di errore per pagine profilo.
  */
 export type ProfileError =
   | { type: 'not_found'; message: string }

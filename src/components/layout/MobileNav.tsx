@@ -1,7 +1,16 @@
 /**
- * @fileoverview Navigation bar mobile (bottom).
+ * @fileoverview Barra di navigazione mobile (bottom).
  *
  * Barra di navigazione fissa in basso per dispositivi mobili.
+ * 
+ * FUNZIONALITÀ:
+ * - Icone navigazione: Home, Esplora, Reels, Crea, Messaggi
+ * - Stato attivo evidenziato con icone filled
+ * - Modal creazione post
+ * - Layout adattivo responsive
+ * - Nascosta su desktop (lg: hidden)
+ * 
+ * @module components/layout/MobileNav
  */
 
 'use client';
@@ -11,8 +20,8 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import CreatePostModal from '@/components/feed/CreatePostModal';
-import ShareIcon from '@/components/common/ShareIcon';
+import {CreatePostModal} from '@/components/feed';
+import { ShareIcon } from '@/components/common';
 
 export default function MobileNav() {
   const pathname = usePathname();
@@ -38,8 +47,11 @@ export default function MobileNav() {
     { icon: 'custom-message', href: '/direct' },
   ];
 
-  // Nascondi la navbar se siamo nella home con stories aperte (rilevabile da hash o stato)
-  // Per ora la lasciamo visibile, ma potremmo nasconderla con una prop
+  /**
+   *  Nascondi la navbar se siamo nella home con stories aperte
+   *  (rilevabile da hash o stato)
+   *  Per ora la lasciamo visibile, ma potremmo nasconderla con una prop
+   */
 
   return (
     <>

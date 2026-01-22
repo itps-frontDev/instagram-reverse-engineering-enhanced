@@ -1,30 +1,90 @@
 /**
- * @fileoverview Pagina Esplora.
+ * @fileoverview Pagina Esplora di Instagram.
  * 
- * Grid di post popolari e suggerimenti.
+ * Mostra una griglia di post popolari con infinite scroll.
+ * Permette di scoprire nuovi contenuti e profili da seguire.
+ * 
+ * FUNZIONALITÀ:
+ * - Griglia di post in stile Instagram (masonry-like)
+ * - Infinite scroll con Intersection Observer
+ * - Like, salvataggio e commenti sui post
+ * - Barra di ricerca mobile
+ * 
+ * LAYOUT:
+ * - Griglia responsive (3 colonne)
+ * - Gap ridotto per effetto mosaico
+ * - Titolo visibile solo su desktop
+ * 
+ * @module app/(main)/explore/page
  */
 
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import ExploreGrid from '@/components/explore/ExploreGrid';
-import MobileSearchBar from '@/components/feed/MobileSearchBar';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
+import {MobileSearchBar} from '@/components/feed';
+import { LoadingSpinner } from '@/components/common';
+import {ExploreSkeleton} from '@/components/common/skeletons';
 import type { FeedPost, GetFeedResponse } from '@/types/feed';
 
+// ============================================================================
+// COMPONENTE PAGINA
+// ============================================================================
+
+/**
+ * Pagina Esplora per la scoperta di nuovi contenuti.
+ * 
+ * Carica post popolari con infinite scroll e permette
+ * interazioni (like, save, comment) direttamente dalla griglia.
+ */
 export default function ExplorePage() {
+  // -------------------------------------------------------------------------
+  // Stato dei dati
+  // -------------------------------------------------------------------------
+  
+  /** Lista dei post caricati */
   const [posts, setPosts] = useState<FeedPost[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(true);
+  
+  /** Offset per paginazione */
   const [offset, setOffset] = useState(0);
+  
+  /** Indica se ci sono altri post da caricare */
+  const [hasMore, setHasMore] = useState(true);
+  
+  // -------------------------------------------------------------------------
+  // Stato UI
+  // -------------------------------------------------------------------------
+  
+  /** Caricamento iniziale in corso */
+  const [isLoading, setIsLoading] = useState(true);
+  
+  /** Caricamento pagina successiva in corso */
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  
+  /** Messaggio di errore */
+  const [error, setError] = useState<string | null>(null);
+  
+  // -------------------------------------------------------------------------
+  // Refs
+  // -------------------------------------------------------------------------
+  
+  /** Target per Intersection Observer (infinite scroll) */
   const observerTarget = useRef<HTMLDivElement>(null);
 
+  // -------------------------------------------------------------------------
+  // Effetti: Caricamento iniziale
+  // -------------------------------------------------------------------------
+
+  /** Carica i primi post al mount */
   useEffect(() => {
     fetchExplorePosts(0, true);
   }, []);
 
+  // -------------------------------------------------------------------------
+  // Effetti: Infinite scroll
+  // -------------------------------------------------------------------------
+
+  /** Imposta l'Intersection Observer per infinite scroll */
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -47,6 +107,16 @@ export default function ExplorePage() {
     };
   }, [offset, hasMore, isLoading, isLoadingMore]);
 
+  // -------------------------------------------------------------------------
+  // Funzioni: Fetch dati
+  // -------------------------------------------------------------------------
+
+  /**
+   * Carica i post per la pagina Esplora.
+   * 
+   * @param currentOffset - Offset per paginazione
+   * @param isInitial - Se true, è il caricamento iniziale
+   */
   const fetchExplorePosts = async (currentOffset: number, isInitial = false) => {
     try {
       if (isInitial) {
@@ -58,7 +128,7 @@ export default function ExplorePage() {
       const response = await fetch(`/api/explore?limit=30&offset=${currentOffset}`);
       
       if (!response.ok) {
-        throw new Error('Failed to fetch explore posts');
+        throw new Error('Errore nel caricamento dei post');
       }
 
       const data: GetFeedResponse = await response.json();
@@ -72,7 +142,7 @@ export default function ExplorePage() {
       setHasMore(data.hasMore);
       setOffset(currentOffset + data.posts.length);
     } catch (err) {
-      console.error('Error fetching explore posts:', err);
+      console.error('Errore fetch post esplora:', err);
       setError('Impossibile caricare i post');
     } finally {
       setIsLoading(false);
@@ -80,6 +150,14 @@ export default function ExplorePage() {
     }
   };
 
+  // -------------------------------------------------------------------------
+  // Handlers: Interazioni post
+  // -------------------------------------------------------------------------
+
+  /**
+   * Gestisce il like su un post.
+   * Aggiorna lo stato locale con la risposta del server.
+   */
   const handleLike = async (postId: number) => {
     try {
       const response = await fetch('/api/feed/like', {
@@ -88,11 +166,11 @@ export default function ExplorePage() {
         body: JSON.stringify({ postId }),
       });
 
-      if (!response.ok) throw new Error('Failed to like post');
+      if (!response.ok) throw new Error('Errore like post');
 
       const data = await response.json();
 
-      // Update local state
+      // Aggiorna lo stato locale
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
           post.id === postId
@@ -105,10 +183,14 @@ export default function ExplorePage() {
         )
       );
     } catch (err) {
-      console.error('Error liking post:', err);
+      console.error('Errore like post:', err);
     }
   };
 
+  /**
+   * Gestisce il salvataggio di un post.
+   * Aggiorna lo stato locale con la risposta del server.
+   */
   const handleSave = async (postId: number) => {
     try {
       const response = await fetch('/api/feed/save', {
@@ -117,11 +199,11 @@ export default function ExplorePage() {
         body: JSON.stringify({ postId }),
       });
 
-      if (!response.ok) throw new Error('Failed to save post');
+      if (!response.ok) throw new Error('Errore salvataggio post');
 
       const data = await response.json();
 
-      // Update local state
+      // Aggiorna lo stato locale
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
           post.id === postId
@@ -130,10 +212,14 @@ export default function ExplorePage() {
         )
       );
     } catch (err) {
-      console.error('Error saving post:', err);
+      console.error('Errore salvataggio post:', err);
     }
   };
 
+  /**
+   * Gestisce l'aggiunta di un commento.
+   * Aggiorna il contatore commenti locale.
+   */
   const handleComment = async (postId: number, text: string) => {
     try {
       const response = await fetch('/api/feed/comments', {
@@ -142,9 +228,9 @@ export default function ExplorePage() {
         body: JSON.stringify({ postId, text }),
       });
 
-      if (!response.ok) throw new Error('Failed to comment');
+      if (!response.ok) throw new Error('Errore commento');
 
-      // Update comments count
+      // Aggiorna il contatore commenti
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
           post.id === postId
@@ -153,21 +239,28 @@ export default function ExplorePage() {
         )
       );
     } catch (err) {
-      console.error('Error commenting:', err);
+      console.error('Errore commento:', err);
     }
   };
 
+  // -------------------------------------------------------------------------
+  // Render: Stati speciali
+  // -------------------------------------------------------------------------
+
+  /** Stato di caricamento iniziale */
   if (isLoading) {
     return (
-      <div className="max-w-5xl mx-auto px-4 pt-8">
-        <h1 className="text-2xl font-semibold mb-6">Esplora</h1>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <LoadingSpinner size={48} />
+      <div className="w-full min-h-screen">
+        <MobileSearchBar />
+        <div className="max-w-5xl mx-auto px-4 pt-8 pb-8">
+          <h1 className="text-2xl font-semibold mb-6 hidden lg:block">Esplora</h1>
+          <ExploreSkeleton />
         </div>
       </div>
     );
   }
 
+  /** Stato di errore */
   if (error) {
     return (
       <div className="max-w-5xl mx-auto px-4 pt-8">
@@ -185,6 +278,7 @@ export default function ExplorePage() {
     );
   }
 
+  /** Stato vuoto (nessun post) */
   if (posts.length === 0 && !isLoading) {
     return (
       <div className="max-w-5xl mx-auto px-4 pt-8">
@@ -196,14 +290,19 @@ export default function ExplorePage() {
     );
   }
 
+  // -------------------------------------------------------------------------
+  // Render: Contenuto principale
+  // -------------------------------------------------------------------------
   return (
     <div className="w-full min-h-screen">
-      {/* Mobile Search Bar - visible only on mobile */}
+      {/* Barra di ricerca mobile - visibile solo su schermi piccoli */}
       <MobileSearchBar />
       
       <div className="max-w-5xl mx-auto px-4 pt-8 pb-8">
+        {/* Titolo - nascosto su mobile */}
         <h1 className="text-2xl font-semibold mb-6 hidden lg:block">Esplora</h1>
         
+        {/* Griglia post */}
         <ExploreGrid
           posts={posts}
           onLike={handleLike}
@@ -211,7 +310,7 @@ export default function ExplorePage() {
           onComment={handleComment}
         />
 
-        {/* Loading indicator for infinite scroll */}
+        {/* Skeleton durante caricamento pagine successive */}
         {isLoadingMore && (
           <div className="grid grid-cols-3 gap-1 md:gap-2 mt-1 md:mt-2">
             {Array(9)
@@ -225,7 +324,7 @@ export default function ExplorePage() {
           </div>
         )}
 
-        {/* Intersection observer target */}
+        {/* Target per Intersection Observer */}
         <div ref={observerTarget} className="h-16 flex items-center justify-center">
           {(isLoadingMore || isLoading) && hasMore && <LoadingSpinner size={32} />}
         </div>

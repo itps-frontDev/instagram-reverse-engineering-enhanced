@@ -1,8 +1,8 @@
 /**
- * @fileoverview Profile header component
+ * @fileoverview Componente header profilo principale.
  *
- * Main header that orchestrates all profile sub-components:
- * - Profile picture
+ * Header principale che orchestra tutti i sotto-componenti del profilo:
+ * - Immagine profilo
  * - ProfileStats
  * - ProfileActions
  * - ProfileBio
@@ -16,18 +16,16 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import ProfilePicture from '@/components/ProfilePicture';
-import ProfileStats from './ProfileStats';
-import ProfileActions from './ProfileActions';
-import ProfileBio from './ProfileBio';
-import NewHighlight from './NewHighlight';
-import VerifiedBadge from '@/components/common/VerifiedBadge';
-import FollowersModal from './FollowersModal';
+import { ProfileStats, ProfileActions, ProfileBio, NewHighlight, FollowersModal } from './';
+import { VerifiedBadge, LoadingSpinner } from '@/components';
 import { ProfileHeaderProps } from '@/types/profile';
 
 /**
  * ProfileHeader Component
  *
- * Renders the complete profile header in Instagram's exact layout.
+ * Mostra l'header del profilo utente con:
+ * - Immagine profilo con gestione storie e upload
+ * - Username con badge verificato
  */
 export default function ProfileHeader({
   profile,
@@ -106,7 +104,7 @@ export default function ProfileHeader({
               {/* Loading Spinner - durante upload */}
               {isUploadingImage && (
                 <div className="absolute inset-0 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(12, 16, 20, 0.7)' }}>
-                  <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <LoadingSpinner size={40} />
                 </div>
               )}
             </div>

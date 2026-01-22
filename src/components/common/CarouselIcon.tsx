@@ -1,13 +1,49 @@
 /**
- * @fileoverview Carousel/Multiple Media Icon
+ * @fileoverview Icona indicatore carosello di Instagram.
  * 
- * Instagram's carousel indicator for posts with multiple images/videos
+ * Icona SVG che indica la presenza di più immagini/video in un post.
+ * Mostrata nell'angolo dei post nella griglia del profilo quando
+ * il post contiene più di un media.
+ * 
+ * @module components/common/CarouselIcon
  */
 
+// ============================================================================
+// INTERFACCE
+// ============================================================================
+
+/**
+ * Props per il componente CarouselIcon.
+ * 
+ * @interface CarouselIconProps
+ */
 interface CarouselIconProps {
+  /** Classi CSS per dimensioni e stile (default: "w-5 h-5") */
   className?: string;
 }
 
+// ============================================================================
+// COMPONENTE
+// ============================================================================
+
+/**
+ * Icona indicatore carosello/media multipli.
+ * 
+ * Renderizza l'icona ufficiale di Instagram per indicare post con
+ * più immagini o video (carosello).
+ * 
+ * @param props - Props del componente
+ * @returns Icona SVG carosello
+ * 
+ * @example
+ * ```tsx
+ * // Utilizzo base
+ * <CarouselIcon />
+ * 
+ * // Con dimensioni personalizzate
+ * <CarouselIcon className="w-6 h-6" />
+ * ```
+ */
 export default function CarouselIcon({ className = "w-5 h-5" }: CarouselIconProps) {
   return (
     <svg

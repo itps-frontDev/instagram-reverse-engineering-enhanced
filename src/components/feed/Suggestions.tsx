@@ -1,7 +1,16 @@
 /**
- * @fileoverview Sidebar with user suggestions and current user info
+ * @fileoverview Sidebar suggerimenti utenti.
  *
- * Shows the current user's profile and suggested users to follow.
+ * Mostra il profilo utente corrente e suggerimenti di utenti da seguire.
+ * 
+ * FUNZIONALITÀ:
+ * - Card profilo utente loggato
+ * - Lista utenti suggeriti
+ * - Pulsanti segui/segui già/in attesa
+ * - Preview card al passaggio mouse
+ * - Footer con link informativi
+ * 
+ * @module components/feed/Suggestions
  */
 
 'use client';
@@ -9,9 +18,9 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import VerifiedBadge from '@/components/common/VerifiedBadge';
-import ProfilePicture from '@/components/ProfilePicture';
-import ProfilePreviewCard from '@/components/profile/ProfilePreviewCard';
+import { VerifiedBadge } from '@/components/common';
+import {ProfilePicture} from '@/components';
+import {ProfilePreviewCard} from '@/components/profile';
 
 interface SuggestedUser {
   id: number;
@@ -33,6 +42,7 @@ export default function Suggestions() {
   const [hoveredUser, setHoveredUser] = useState<string | null>(null);
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
 
+  // Carica suggerimenti utenti
   useEffect(() => {
     async function fetchSuggestions() {
       try {
@@ -54,6 +64,7 @@ export default function Suggestions() {
     }
   }, [profile]);
 
+  // Funzione per seguire un utente
   const handleFollow = async (userId: number) => {
     if (loadingFollowIds.has(userId)) return;
 
@@ -89,6 +100,7 @@ export default function Suggestions() {
     }
   };
 
+  // Funzione per smettere di seguire un utente
   const handleUnfollow = async (userId: number) => {
     if (loadingFollowIds.has(userId)) return;
 

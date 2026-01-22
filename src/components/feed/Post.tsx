@@ -1,20 +1,30 @@
 "use client";
 /**
- * @fileoverview Post component for feed
+ * @fileoverview Componente Post del feed.
  *
- * Displays a single post with header, media, actions, and comments.
+ * Visualizza un singolo post con header, media, azioni e commenti.
+ * 
+ * FUNZIONALITÀ:
+ * - Header con avatar, username e badge verifica
+ * - Carosello media (immagini/video)
+ * - Pulsanti azione: like, commenti, condividi, salva
+ * - Animazione doppio tap per like
+ * - Visualizzazione tag nelle immagini
+ * - Conteggio like e commenti
+ * - Input commento rapido
+ * - Modal opzioni post
+ * - Integrazione storie profilo
+ * 
+ * @module components/feed/Post
  */
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import ProfilePicture from '@/components/ProfilePicture';
-import VerifiedBadge from '@/components/common/VerifiedBadge';
-import MoreOptionsIcon from '@/components/common/MoreOptionsIcon';
-import ShareIcon from '@/components/common/ShareIcon';
-import TagIcon from '@/components/common/TagIcon';
-import ProfilePreviewCard from '@/components/profile/ProfilePreviewCard';
-import PostOptionsModal from '@/components/feed/PostOptionsModal';
-import DeletePostModal from '@/components/feed/DeletePostModal';
+import { VerifiedBadge, MoreOptionsIcon, ShareIcon, TagIcon } from '@/components/common';
+import {ProfilePreviewCard} from '@/components/profile';
+import {PostOptionsModal, DeletePostModal}  from '@/components/feed';
+import { formatTimeAgo } from '@/lib/date-utils';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -81,11 +91,11 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
   };
 
   const handleLike = () => {
-    // Always show the exploding heart animation on double-click
+    // Mostra sempre animazione cuore esplosivo al doppio click
     setShowExplodingHeart(true);
     setTimeout(() => setShowExplodingHeart(false), 1000);
 
-    // Only add like if not already liked (don't remove on double-click)
+    // Aggiungi like solo se non è già stato messo
     if (!post.is_liked_by_current_user) {
       setIsLikeAnimating(true);
       setTimeout(() => setIsLikeAnimating(false), 400);
@@ -94,7 +104,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
   };
 
   const handleButtonLike = () => {
-    // Button click can toggle like on/off
+    // Il click sul pulsante può attivare/disattivare il like
     if (!post.is_liked_by_current_user) {
       setIsLikeAnimating(true);
       setTimeout(() => setIsLikeAnimating(false), 400);
@@ -165,18 +175,6 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
       return `${(count / 1000).toFixed(1)}K`;
     }
     return count.toString();
-  };
-
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (seconds < 60) return `${seconds}s`;
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
-    if (seconds < 604800) return `${Math.floor(seconds / 86400)}g`;
-    return `${Math.floor(seconds / 604800)}sett`;
   };
 
   // Gestione eliminazione post
@@ -317,13 +315,13 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
                   }
                 }}
               />
-              {/* Play Icon when paused */}
+              {/* Icona play quando in pausa */}
               {!isPlaying && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <Play className="w-16 h-16 text-white fill-white" />
                 </div>
               )}
-              {/* Mute/Unmute Button */}
+              {/* Pulsante Muto/Non Muto */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -358,7 +356,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
             </div>
           )}
           
-          {/* Tag Icon - Bottom Left - Only show if there are tags */}
+          {/* Icona Tag - In basso a sinistra - Solo se ci sono tag */}
           {tagsLoaded && tags.length > 0 && (
             <button
               onClick={(e) => {
@@ -372,7 +370,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
             </button>
           )}
 
-          {/* Tags Overlay */}
+          {/* Overlay Tag */}
           {showTags && tags.map((tag) => (
             <div
               key={tag.id}
@@ -389,7 +387,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
         </div>
       )}
 
-      {/* Post Actions */}
+      {/* Azioni Post */}
       <div className="px-4 pb-4 max-[639px]:px-2">
         <div className="flex items-center justify-between pt-1 pb-2">
           <div className="flex items-center gap-4">
@@ -463,7 +461,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
         onComment={onComment}
       />
 
-      {/* Unfollow Confirmation Modal */}
+      {/* Modale di conferma per smettere di seguire */}
       {showUnfollowModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop */}
@@ -508,7 +506,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
         </div>
       )}
 
-      {/* Post Options Modal */}
+      {/* Modale Opzioni Post */}
       {isOwnPost && (
         <PostOptionsModal
           isOpen={showPostOptionsModal}
@@ -525,7 +523,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
         />
       )}
 
-      {/* Delete Post Confirmation Modal */}
+      {/* Modale di conferma eliminazione post */}
       <DeletePostModal
         isOpen={showDeletePostModal}
         onClose={() => setShowDeletePostModal(false)}

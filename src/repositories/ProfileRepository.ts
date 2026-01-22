@@ -208,7 +208,7 @@ export const profileRepository = {
     const profile = await queryOne<Profile>(
       `SELECT
         id, user_id, username, full_name, profile_image_url,
-        bio, website_url, is_private, is_verified,
+        bio, website_url, is_private, is_verified, gender, custom_gender,
         followers_count, following_count, posts_count,
         created_at, updated_at
        FROM profiles

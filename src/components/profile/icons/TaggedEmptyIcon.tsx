@@ -1,7 +1,29 @@
+/**
+ * @fileoverview Icona stato vuoto per la sezione Taggati.
+ * 
+ * Mostrata quando l'utente non è stato taggato in nessun post.
+ * Include una silhouette utente dentro una fotocamera.
+ * 
+ * @module components/profile/icons/TaggedEmptyIcon
+ */
+
+/** Props per TaggedEmptyIcon */
 interface TaggedEmptyIconProps {
+  /** Classi CSS aggiuntive */
   className?: string;
 }
 
+/**
+ * Icona SVG per lo stato vuoto della sezione Taggati.
+ * 
+ * DESIGN:
+ * - Cerchio esterno con bordo
+ * - Fotocamera con silhouette utente al centro
+ * - Dimensione: 62x62 px
+ * 
+ * @param props - Props del componente
+ * @param props.className - Classi CSS opzionali
+ */
 export default function TaggedEmptyIcon({ className }: TaggedEmptyIconProps) {
   return (
     <svg

@@ -1,7 +1,29 @@
+/**
+ * @fileoverview Icona stato vuoto per la sezione Post.
+ * 
+ * Mostrata quando l'utente non ha ancora pubblicato post.
+ * Include un'icona fotocamera stilizzata dentro un cerchio.
+ * 
+ * @module components/profile/icons/PostsEmptyIcon
+ */
+
+/** Props per PostsEmptyIcon */
 interface PostsEmptyIconProps {
+  /** Classi CSS aggiuntive */
   className?: string;
 }
 
+/**
+ * Icona SVG per lo stato vuoto della sezione Post.
+ * 
+ * DESIGN:
+ * - Cerchio esterno con bordo
+ * - Icona fotocamera al centro
+ * - Dimensione: 62x62 px
+ * 
+ * @param props - Props del componente
+ * @param props.className - Classi CSS opzionali
+ */
 export default function PostsEmptyIcon({ className }: PostsEmptyIconProps) {
   return (
     <svg

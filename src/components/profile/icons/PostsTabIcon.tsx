@@ -1,7 +1,28 @@
+/**
+ * @fileoverview Icona tab "Post" per il profilo.
+ * 
+ * Visualizza una griglia 3x3 che rappresenta la galleria post.
+ * Cambia colore in base allo stato attivo/inattivo.
+ * 
+ * @module components/profile/icons/PostsTabIcon
+ */
+
+/** Props per PostsTabIcon */
 interface PostsTabIconProps {
+  /** Se il tab è attualmente selezionato */
   active: boolean;
 }
 
+/**
+ * Icona SVG per il tab Post nel profilo.
+ * 
+ * STILI:
+ * - Attivo: colore primario (#262626 light / #F5F5F5 dark)
+ * - Inattivo: colore grigio (#8E8E8E)
+ * 
+ * @param props - Props del componente
+ * @param props.active - Stato di selezione del tab
+ */
 export default function PostsTabIcon({ active }: PostsTabIconProps) {
   return (
     <svg

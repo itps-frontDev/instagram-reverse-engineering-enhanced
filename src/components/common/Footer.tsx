@@ -1,11 +1,24 @@
 /**
- * @fileoverview Instagram Footer Component
- *
- * Footer with links and copyright information
+ * @fileoverview Footer di Instagram.
+ * 
+ * Footer con link di navigazione, selettore lingua e copyright.
+ * Utilizzato nelle pagine di autenticazione e come footer generale.
+ * 
+ * SEZIONI:
+ * - Link di navigazione (Meta, Informazioni, Blog, ecc.)
+ * - Selettore lingua
+ * - Copyright
+ * 
+ * @module components/common/Footer
  */
 
 import Link from 'next/link';
 
+// ============================================================================
+// COSTANTI
+// ============================================================================
+
+/** Link del footer con etichetta e destinazione */
 const FOOTER_LINKS = [
   { label: 'Meta', href: 'https://about.meta.com/' },
   { label: 'Informazioni', href: '/about' },
@@ -44,7 +57,7 @@ export default function Footer() {
           ))}
         </nav>
 
-        {/* Language selector and copyright */}
+        {/* Selezione ingua e copyright */}
         <div className="flex justify-center gap-4 text-xs text-[#8E8E8E] dark:text-[#A8A8A8]">
           <select
             className="bg-transparent text-[#8E8E8E] dark:text-[#A8A8A8] text-xs border-none cursor-pointer focus:outline-none"

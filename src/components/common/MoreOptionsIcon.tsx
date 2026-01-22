@@ -1,11 +1,41 @@
 /**
- * @fileoverview Icona "Altre opzioni" (tre puntini) di Instagram
+ * @fileoverview Icona "Altre opzioni" di Instagram.
+ * 
+ * Icona con tre puntini orizzontali usata per aprire menu
+ * di opzioni aggiuntive su post, profili, commenti, ecc.
+ * 
+ * @module components/common/MoreOptionsIcon
  */
 
+// ============================================================================
+// INTERFACCE
+// ============================================================================
+
+/**
+ * Props per il componente MoreOptionsIcon.
+ * 
+ * @interface MoreOptionsIconProps
+ */
 interface MoreOptionsIconProps {
+  /** Dimensione dell'icona in pixel (default: 24) */
   size?: number;
 }
 
+// ============================================================================
+// COMPONENTE
+// ============================================================================
+
+/**
+ * Icona "Altre opzioni" (tre puntini).
+ * 
+ * @param props - Props del componente
+ * @returns Icona SVG tre puntini
+ * 
+ * @example
+ * ```tsx
+ * <MoreOptionsIcon size={20} />
+ * ```
+ */
 export default function MoreOptionsIcon({ size = 24 }: MoreOptionsIconProps) {
   return (
     <svg

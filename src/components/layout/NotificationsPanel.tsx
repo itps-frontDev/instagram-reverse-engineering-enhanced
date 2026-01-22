@@ -2,17 +2,28 @@
  * @fileoverview Pannello laterale notifiche.
  * 
  * Pannello che si apre dalla sidebar per visualizzare le notifiche ricevute.
+ * 
+ * FUNZIONALITÀ:
+ * - Lista notifiche con raggruppamento temporale
+ * - Tipi: like, commenti, follow, follow_request, menzioni
+ * - Azioni: accetta/rifiuta richieste follow
+ * - Pulsanti segui/smetti di seguire
+ * - Skeleton loading durante caricamento
+ * - Segna come lette automaticamente
+ * - Modal unfollow per conferma
+ * 
+ * @module components/layout/NotificationsPanel
  */
 
 'use client';
 
 import { X } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import ProfilePicture from '@/components/ProfilePicture';
-import VerifiedBadge from '@/components/common/VerifiedBadge';
+import {ProfilePicture} from '@/components';
+import { VerifiedBadge } from '@/components/common';
 import Link from 'next/link';
-import NotificationsSkeleton from '@/components/common/skeletons/NotificationsSkeleton';
-import UnfollowModal from '@/components/profile/UnfollowModal';
+import {NotificationsSkeleton} from '@/components/common/skeletons';
+import {UnfollowModal} from '@/components/profile';
 
 interface Notification {
   id: number;

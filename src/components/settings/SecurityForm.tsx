@@ -1,11 +1,33 @@
 /**
- * @fileoverview Security form component
- * Form for changing password, email, and phone number
+ * @fileoverview Form sicurezza account.
+ * 
+ * Form per modificare password, email e numero di telefono.
+ * 
+ * FUNZIONALITÀ:
+ * - Sezione cambio password
+ *   - Password attuale obbligatoria
+ *   - Nuova password con requisiti
+ *   - Conferma password
+ *   - Toggle visibilità password
+ * - Sezione contatti
+ *   - Modifica email con validazione
+ *   - Modifica telefono con validazione
+ * - Validazione real-time tutti i campi
+ * 
+ * @module components/settings/SecurityForm
  */
 
 'use client';
 
 import { useState } from 'react';
+import { 
+  PageHeader, 
+  FormField, 
+  PasswordInput, 
+  SuccessMessage, 
+  SubmitButton,
+  getInputClassName 
+} from '@/components/ui';
 
 interface SecurityFormProps {
   user: {
@@ -32,9 +54,6 @@ export default function SecurityForm({ user }: SecurityFormProps) {
     newPassword: '',
     confirmPassword: '',
   });
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const validateEmail = (email: string): string => {
     if (email && !/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(email)) {
@@ -60,22 +79,12 @@ export default function SecurityForm({ user }: SecurityFormProps) {
     setErrors({ ...errors, phoneNumber: validatePhoneNumber(value) });
   };
 
-  const handleCurrentPasswordChange = (value: string) => {
-    setFormData({ ...formData, currentPassword: value });
-    setErrors({ ...errors, currentPassword: '' });
+  const handlePasswordChange = (field: 'currentPassword' | 'newPassword' | 'confirmPassword', value: string) => {
+    setFormData({ ...formData, [field]: value });
+    setErrors({ ...errors, [field]: '' });
   };
 
-  const handleNewPasswordChange = (value: string) => {
-    setFormData({ ...formData, newPassword: value });
-    setErrors({ ...errors, newPassword: '' });
-  };
-
-  const handleConfirmPasswordChange = (value: string) => {
-    setFormData({ ...formData, confirmPassword: value });
-    setErrors({ ...errors, confirmPassword: '' });
-  };
-
-  // Check if form can be submitted - computed on every render
+  // Verifica se il form può essere inviato
   const hasErrors = Object.values(errors).some(error => error !== '');
   const emailChanged = formData.email !== (user.email || '');
   const phoneChanged = formData.phoneNumber !== (user.phone_number || '');
@@ -129,7 +138,7 @@ export default function SecurityForm({ user }: SecurityFormProps) {
 
       if (!res.ok) {
         const errorData = await res.json();
-        // Mappa gli errori ai campi appropriati
+        // Mappa errori ai campi appropriati
         if (errorData.error.includes('email') || errorData.error.includes('Email')) {
           setErrors(prev => ({ ...prev, email: errorData.error }));
         } else if (errorData.error.includes('password') || errorData.error.includes('Password')) {
@@ -144,7 +153,7 @@ export default function SecurityForm({ user }: SecurityFormProps) {
       }
 
       setSuccessMessage('Impostazioni di sicurezza aggiornate!');
-      // Clear password fields
+      // Pulisce i campi password
       setFormData({
         ...formData,
         currentPassword: '',
@@ -162,68 +171,44 @@ export default function SecurityForm({ user }: SecurityFormProps) {
 
   return (
     <div>
-      <div className="px-0 pt-0 pb-6">
-        <h1 className="text-xl font-bold leading-[25px] break-words mb-4">Sicurezza e accesso</h1>
-      </div>
+      <PageHeader title="Sicurezza e accesso" />
 
       <form onSubmit={handleSubmit} className="max-w-2xl">
         {/* Email Field */}
-        <div className="mb-6">
-          <label htmlFor="email" className="block text-lg font-bold mb-3">
-            Email
-          </label>
+        <FormField
+          label="Email"
+          htmlFor="email"
+          error={errors.email}
+          helperText="Useremo questa email per inviarti notifiche importanti."
+        >
           <input
             id="email"
             type="email"
             value={formData.email}
             onChange={(e) => handleEmailChange(e.target.value)}
-            className={`w-full px-3 py-2.5 border rounded-lg bg-transparent focus:outline-none focus:ring-1 text-sm ${
-              errors.email
-                ? 'border-red-500 focus:ring-red-500'
-                : 'border-gray-300 dark:border-gray-600 focus:ring-gray-400 dark:focus:ring-gray-500'
-            }`}
+            className={getInputClassName(!!errors.email)}
             placeholder="email@esempio.com"
           />
-          {errors.email ? (
-            <p className="text-xs text-red-500 mt-2 leading-4">
-              {errors.email}
-            </p>
-          ) : (
-            <p className="text-xs text-[rgb(115,115,115)] dark:text-[rgb(168,168,168)] mt-2 leading-4">
-              Useremo questa email per inviarti notifiche importanti.
-            </p>
-          )}
-        </div>
+        </FormField>
 
         {/* Phone Number Field */}
-        <div className="mb-6">
-          <label htmlFor="phoneNumber" className="block text-lg font-bold mb-3">
-            Numero di telefono
-          </label>
+        <FormField
+          label="Numero di telefono"
+          htmlFor="phoneNumber"
+          error={errors.phoneNumber}
+          helperText="Aggiungi un numero di telefono per recuperare il tuo account."
+        >
           <input
             id="phoneNumber"
             type="tel"
             value={formData.phoneNumber}
             onChange={(e) => handlePhoneChange(e.target.value)}
-            className={`w-full px-3 py-2.5 border rounded-lg bg-transparent focus:outline-none focus:ring-1 text-sm ${
-              errors.phoneNumber
-                ? 'border-red-500 focus:ring-red-500'
-                : 'border-gray-300 dark:border-gray-600 focus:ring-gray-400 dark:focus:ring-gray-500'
-            }`}
+            className={getInputClassName(!!errors.phoneNumber)}
             placeholder="+39 123 456 7890"
             pattern="[\d\s\-+()]+"
             maxLength={15}
           />
-          {errors.phoneNumber ? (
-            <p className="text-xs text-red-500 mt-2 leading-4">
-              {errors.phoneNumber}
-            </p>
-          ) : (
-            <p className="text-xs text-[rgb(115,115,115)] dark:text-[rgb(168,168,168)] mt-2 leading-4">
-              Aggiungi un numero di telefono per recuperare il tuo account.
-            </p>
-          )}
-        </div>
+        </FormField>
 
         {/* Divider */}
         <div className="my-8 border-t border-gray-200 dark:border-gray-700" />
@@ -233,140 +218,70 @@ export default function SecurityForm({ user }: SecurityFormProps) {
           <h2 className="text-lg font-bold mb-4">Cambia password</h2>
           
           {/* Current Password */}
-          <div className="mb-4">
-            <label htmlFor="currentPassword" className="block text-sm font-medium mb-2">
-              Password attuale
-            </label>
-            <div className="relative">
-              <input
-                id="currentPassword"
-                type={showCurrentPassword ? 'text' : 'password'}
-                value={formData.currentPassword}
-                onChange={(e) => handleCurrentPasswordChange(e.target.value)}
-                className={`w-full px-3 py-2.5 pr-20 border rounded-lg bg-transparent focus:outline-none focus:ring-1 text-sm ${
-                  errors.currentPassword
-                    ? 'border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 dark:border-gray-600 focus:ring-gray-400 dark:focus:ring-gray-500'
-                }`}
-                placeholder="Password attuale"
-              />
-              {formData.currentPassword.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#262626] dark:text-white"
-                >
-                  {showCurrentPassword ? 'Nascondi' : 'Mostra'}
-                </button>
-              )}
-            </div>
-            {errors.currentPassword && (
-              <p className="text-xs text-red-500 mt-2 leading-4">
-                {errors.currentPassword}
-              </p>
-            )}
-          </div>
+          <FormField
+            label="Password attuale"
+            htmlFor="currentPassword"
+            error={errors.currentPassword}
+            labelSize="sm"
+          >
+            <PasswordInput
+              id="currentPassword"
+              value={formData.currentPassword}
+              onChange={(value) => handlePasswordChange('currentPassword', value)}
+              placeholder="Password attuale"
+              hasError={!!errors.currentPassword}
+              autoComplete="current-password"
+            />
+          </FormField>
 
           {/* New Password */}
-          <div className="mb-4">
-            <label htmlFor="newPassword" className="block text-sm font-medium mb-2">
-              Nuova password
-            </label>
-            <div className="relative">
-              <input
-                id="newPassword"
-                type={showNewPassword ? 'text' : 'password'}
-                value={formData.newPassword}
-                onChange={(e) => handleNewPasswordChange(e.target.value)}
-                className={`w-full px-3 py-2.5 pr-20 border rounded-lg bg-transparent focus:outline-none focus:ring-1 text-sm ${
-                  errors.newPassword
-                    ? 'border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 dark:border-gray-600 focus:ring-gray-400 dark:focus:ring-gray-500'
-                }`}
-                placeholder="Nuova password"
-                minLength={6}
-              />
-              {formData.newPassword.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#262626] dark:text-white"
-                >
-                  {showNewPassword ? 'Nascondi' : 'Mostra'}
-                </button>
-              )}
-            </div>
-            {errors.newPassword && (
-              <p className="text-xs text-red-500 mt-2 leading-4">
-                {errors.newPassword}
-              </p>
-            )}
-          </div>
+          <FormField
+            label="Nuova password"
+            htmlFor="newPassword"
+            error={errors.newPassword}
+            labelSize="sm"
+          >
+            <PasswordInput
+              id="newPassword"
+              value={formData.newPassword}
+              onChange={(value) => handlePasswordChange('newPassword', value)}
+              placeholder="Nuova password"
+              hasError={!!errors.newPassword}
+              autoComplete="new-password"
+            />
+          </FormField>
 
           {/* Confirm Password */}
-          <div className="mb-4">
-            <label htmlFor="confirmPassword" className="block text-sm font-medium mb-2">
-              Conferma nuova password
-            </label>
-            <div className="relative">
-              <input
-                id="confirmPassword"
-                type={showConfirmPassword ? 'text' : 'password'}
-                value={formData.confirmPassword}
-                onChange={(e) => handleConfirmPasswordChange(e.target.value)}
-                className={`w-full px-3 py-2.5 pr-20 border rounded-lg bg-transparent focus:outline-none focus:ring-1 text-sm ${
-                  errors.confirmPassword
-                    ? 'border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 dark:border-gray-600 focus:ring-gray-400 dark:focus:ring-gray-500'
-                }`}
-                placeholder="Conferma nuova password"
-                minLength={6}
-              />
-              {formData.confirmPassword.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#262626] dark:text-white"
-                >
-                  {showConfirmPassword ? 'Nascondi' : 'Mostra'}
-                </button>
-              )}
-            </div>
-            {errors.confirmPassword && (
-              <p className="text-xs text-red-500 mt-2 leading-4">
-                {errors.confirmPassword}
-              </p>
-            )}
-          </div>
+          <FormField
+            label="Conferma nuova password"
+            htmlFor="confirmPassword"
+            error={errors.confirmPassword}
+            labelSize="sm"
+          >
+            <PasswordInput
+              id="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={(value) => handlePasswordChange('confirmPassword', value)}
+              placeholder="Conferma nuova password"
+              hasError={!!errors.confirmPassword}
+              autoComplete="new-password"
+            />
+          </FormField>
 
           <p className="text-xs text-[rgb(115,115,115)] dark:text-[rgb(168,168,168)] leading-4">
             La password deve contenere almeno 6 caratteri.
           </p>
         </div>
 
-        {/* Success Message */}
-        {successMessage && (
-          <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
-            <p className="text-sm text-green-800 dark:text-green-200">{successMessage}</p>
-          </div>
-        )}
+        <SuccessMessage message={successMessage} />
 
         {/* Submit Button */}
         <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={isSubmitting || !isFormValid}
-            className="relative flex items-center justify-center w-[253px] h-11 mt-4 px-5 bg-[rgb(74,93,249)] hover:bg-[rgb(64,83,239)] text-white font-semibold text-sm rounded-xl cursor-pointer select-none disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[rgb(74,93,249)] transition-all"
-          >
-            {isSubmitting ? (
-              <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            ) : (
-              'Invia'
-            )}
-          </button>
+          <SubmitButton
+            isSubmitting={isSubmitting}
+            disabled={!isFormValid}
+            label="Invia"
+          />
         </div>
       </form>
     </div>

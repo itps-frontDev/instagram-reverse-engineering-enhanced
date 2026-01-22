@@ -1,7 +1,28 @@
+/**
+ * @fileoverview Icona tab "Reels" per il profilo.
+ * 
+ * Visualizza un'icona video con pulsante play centrale.
+ * Cambia colore in base allo stato attivo/inattivo.
+ * 
+ * @module components/profile/icons/ReelsTabIcon
+ */
+
+/** Props per ReelsTabIcon */
 interface ReelsTabIconProps {
+  /** Se il tab è attualmente selezionato */
   active: boolean;
 }
 
+/**
+ * Icona SVG per il tab Reels nel profilo.
+ * 
+ * STILI:
+ * - Attivo: colore primario (#262626 light / #F5F5F5 dark)
+ * - Inattivo: colore grigio (#8E8E8E)
+ * 
+ * @param props - Props del componente
+ * @param props.active - Stato di selezione del tab
+ */
 export default function ReelsTabIcon({ active }: ReelsTabIconProps) {
   return (
     <svg

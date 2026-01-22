@@ -1,9 +1,49 @@
+/**
+ * @fileoverview Icona "Condividi" di Instagram.
+ * 
+ * Icona aeroplano di carta usata per condividere post, storie
+ * e altri contenuti. Supporta versione outline e filled.
+ * 
+ * @module components/common/ShareIcon
+ */
+
+// ============================================================================
+// INTERFACCE
+// ============================================================================
+
+/**
+ * Props per il componente ShareIcon.
+ * 
+ * @interface ShareIconProps
+ */
 interface ShareIconProps {
+  /** Dimensione dell'icona in pixel (default: 24) */
   size?: number;
+  /** Classi CSS aggiuntive */
   className?: string;
+  /** Se true, mostra la versione filled dell'icona (default: false) */
   filled?: boolean;
 }
 
+// ============================================================================
+// COMPONENTE
+// ============================================================================
+
+/**
+ * Icona "Condividi" (aeroplano di carta).
+ * 
+ * @param props - Props del componente
+ * @returns Icona SVG condivisione
+ * 
+ * @example
+ * ```tsx
+ * // Versione outline
+ * <ShareIcon size={24} />
+ * 
+ * // Versione filled
+ * <ShareIcon size={24} filled />
+ * ```
+ */
 export default function ShareIcon({ size = 24, className = '', filled = false }: ShareIconProps) {
   if (filled) {
     return (

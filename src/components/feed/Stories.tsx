@@ -17,8 +17,8 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRef, useState, useEffect } from 'react';
 import StoryViewer from './StoryViewer';
-import StoriesSkeleton from '@/components/common/skeletons/StoriesSkeleton';
-import ProfilePicture from '@/components/ProfilePicture';
+import {StoriesSkeleton} from '@/components/common/skeletons';
+import {ProfilePicture} from '@/components';
 
 interface StoryItem {
   id: number;
@@ -61,7 +61,7 @@ export default function Stories() {
 
   const storiesPerPage = isMobile ? 4 : 6;
 
-  // Fetch stories from API
+  // Recupera storie dall'API
   useEffect(() => {
     let mounted = true;
     async function load() {

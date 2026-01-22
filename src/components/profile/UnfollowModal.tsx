@@ -1,7 +1,17 @@
 /**
- * @fileoverview Unfollow Confirmation Modal
+ * @fileoverview Modal conferma smetti di seguire.
  * 
- * Modal di conferma per smettere di seguire un utente
+ * Modal di conferma per smettere di seguire un utente.
+ * 
+ * FUNZIONALITÀ:
+ * - Avatar e username dell'utente
+ * - Messaggio di conferma
+ * - Pulsanti Smetti di seguire / Annulla
+ * - Stato loading durante operazione
+ * - Portal per render fuori dall'albero
+ * - Blocco scroll body quando aperto
+ * 
+ * @module components/profile/UnfollowModal
  */
 
 'use client';

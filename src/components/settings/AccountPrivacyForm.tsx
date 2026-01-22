@@ -1,24 +1,37 @@
 /**
- * @fileoverview Account privacy settings form component
+ * @fileoverview Form privacy account.
  *
- * Form for managing account privacy settings (private/public).
+ * Form per gestire le impostazioni di privacy dell'account (privato/pubblico).
+ * 
+ * FUNZIONALITÀ:
+ * - Toggle account privato/pubblico
+ * - Descrizione conseguenze scelta
+ * - Messaggio di successo temporaneo
+ * - Link a Centro assistenza
+ * 
+ * @module components/settings/AccountPrivacyForm
  */
 
 'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { PageHeader, SuccessMessage } from '@/components/ui';
 
 interface AccountPrivacyFormProps {
   profile: {
     id: number;
     username: string;
-    is_private: number;
+    is_private: boolean | number;
   };
 }
 
 export default function AccountPrivacyForm({ profile }: AccountPrivacyFormProps) {
-  const [isPrivate, setIsPrivate] = useState(profile.is_private === 1);
+  // Supporta sia boolean che number (0/1) per retrocompatibilità
+  const initialPrivate = typeof profile.is_private === 'boolean' 
+    ? profile.is_private 
+    : profile.is_private === 1;
+  const [isPrivate, setIsPrivate] = useState(initialPrivate);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -59,9 +72,7 @@ export default function AccountPrivacyForm({ profile }: AccountPrivacyFormProps)
 
   return (
     <div>
-      <div className="px-0 pt-0 pb-6">
-        <h1 className="text-xl font-bold leading-[25px] break-words mb-4">Privacy dell'account</h1>
-      </div>
+      <PageHeader title="Privacy dell'account" />
 
       {/* Privacy Toggle Field */}
       <div className="mb-6">
@@ -99,23 +110,18 @@ export default function AccountPrivacyForm({ profile }: AccountPrivacyFormProps)
           Se imposti il tuo account come pubblico, chiunque su Instagram e fuori da Instagram può vedere il tuo profilo e i relativi post, anche se non ha un account Instagram.
           <br /><br />
           Se imposti il tuo account come privato, solo i follower che approvi possono vedere cosa condividi, inclusi i tuoi video o le tue foto nelle pagine degli hashtag e dei luoghi, e le liste dei follower e delle persone che segui. Alcune informazioni sul tuo profilo, come l'immagine del profilo e il nome utente, sono visibili a tutti su Instagram e fuori da Instagram.{' '}
-          <Link 
+          <a
             href="https://help.instagram.com/116024195217477" 
             target="_blank" 
             rel="nofollow noopener noreferrer"
             className="text-[rgb(65,80,247)] hover:underline cursor-pointer break-words inline"
           >
             Scopri di più
-          </Link>
+          </a>
         </p>
       </div>
 
-      {/* Success Message */}
-      {successMessage && (
-        <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
-          <p className="text-sm text-green-800 dark:text-green-200">{successMessage}</p>
-        </div>
-      )}
+      <SuccessMessage message={successMessage} />
     </div>
   );
 }

@@ -380,6 +380,40 @@ export const userRepository = {
     );
     return result.changes > 0;
   },
+
+  /**
+   * Recupera i dati di sicurezza di un utente (email e telefono).
+   * Usato nella pagina impostazioni sicurezza.
+   * 
+   * @param id - ID dell'utente
+   * @returns Dati sicurezza o null
+   */
+  async getSecurityData(id: number): Promise<{ id: number; email: string | null; phone_number: string | null } | null> {
+    const user = await queryOne<{ id: number; email: string | null; phone_number: string | null }>(
+      `SELECT id, email, phone_number
+       FROM users
+       WHERE id = ? AND deleted_at IS NULL`,
+      [id]
+    );
+    return user || null;
+  },
+
+  /**
+   * Recupera la data di nascita di un utente.
+   * Usato nella pagina impostazioni data di nascita.
+   * 
+   * @param id - ID dell'utente
+   * @returns Dati con data di nascita o null
+   */
+  async getBirthdayData(id: number): Promise<{ id: number; date_of_birth: string } | null> {
+    const user = await queryOne<{ id: number; date_of_birth: string }>(
+      `SELECT id, date_of_birth
+       FROM users
+       WHERE id = ? AND deleted_at IS NULL`,
+      [id]
+    );
+    return user || null;
+  },
 };
 
 export default userRepository;

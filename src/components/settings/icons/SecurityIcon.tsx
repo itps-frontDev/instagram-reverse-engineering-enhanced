@@ -1,4 +1,25 @@
-export default function SecurityIcon({ className = "w-6 h-6" }: { className?: string }) {
+/**
+ * @fileoverview Icona "Sicurezza" per le impostazioni.
+ * 
+ * Icona scudo con spunta usata nel menu impostazioni
+ * per la sezione sicurezza e cambio password.
+ * 
+ * @module components/settings/icons/SecurityIcon
+ */
+
+/** Props per SecurityIcon */
+interface SecurityIconProps {
+  /** Classi CSS per dimensioni (default: "w-6 h-6") */
+  className?: string;
+}
+
+/**
+ * Icona SVG per la sezione Sicurezza nelle impostazioni.
+ * 
+ * @param props - Props del componente
+ * @param props.className - Classi CSS opzionali
+ */
+export default function SecurityIcon({ className = "w-6 h-6" }: SecurityIconProps) {
   return (
     <svg
       aria-label="Sicurezza"
