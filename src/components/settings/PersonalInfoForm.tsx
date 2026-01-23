@@ -17,6 +17,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   PageHeader, 
   FormField, 
@@ -34,6 +35,8 @@ interface PersonalInfoFormProps {
 }
 
 export default function PersonalInfoForm({ profile }: PersonalInfoFormProps) {
+  const { refreshProfile } = useAuth();
+  
   const [formData, setFormData] = useState({
     username: profile.username,
     fullName: profile.full_name || '',
@@ -122,6 +125,9 @@ export default function PersonalInfoForm({ profile }: PersonalInfoFormProps) {
         return;
       }
 
+      // Aggiorna il profilo nell'AuthContext immediatamente
+      await refreshProfile();
+      
       setSuccessMessage('Informazioni aggiornate con successo!');
       setErrors({ username: '', fullName: '' });
       setTimeout(() => setSuccessMessage(''), 3000);

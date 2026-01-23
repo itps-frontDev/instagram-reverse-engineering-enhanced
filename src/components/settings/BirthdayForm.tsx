@@ -42,16 +42,18 @@ export default function BirthdayForm({ user }: BirthdayFormProps) {
   const [birthday, setBirthday] = useState<DatePickerValue>(initialDate);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setSuccessMessage('');
+    setErrorMessage('');
 
     const dateOfBirth = datePickerToISO(birthday);
     
     if (!dateOfBirth) {
-      alert('Seleziona una data valida');
+      setErrorMessage('Seleziona una data valida');
       setIsSubmitting(false);
       return;
     }
@@ -73,8 +75,9 @@ export default function BirthdayForm({ user }: BirthdayFormProps) {
       setSuccessMessage('Data di nascita aggiornata!');
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err) {
-      console.error('Error updating birthday:', err);
-      alert(err instanceof Error ? err.message : 'Errore durante l\'aggiornamento');
+      const message = err instanceof Error ? err.message : 'Errore durante l\'aggiornamento';
+      setErrorMessage(message);
+      setTimeout(() => setErrorMessage(''), 5000);
     } finally {
       setIsSubmitting(false);
     }
@@ -96,6 +99,16 @@ export default function BirthdayForm({ user }: BirthdayFormProps) {
         </FormField>
 
         <SuccessMessage message={successMessage} variant="rounded-xl" />
+
+        {/* Error Message */}
+        {errorMessage && (
+          <div 
+            className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl"
+            role="alert"
+          >
+            <p className="text-sm text-red-800 dark:text-red-200">{errorMessage}</p>
+          </div>
+        )}
 
         {/* Submit Button */}
         <div className="flex justify-end">
