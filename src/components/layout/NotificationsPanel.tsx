@@ -19,6 +19,7 @@
 
 import { X } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import {ProfilePicture} from '@/components';
 import { VerifiedBadge } from '@/components/common';
 import Link from 'next/link';
@@ -389,7 +390,7 @@ export default function NotificationsPanel({ isOpen, onClose, onMarkAllAsRead }:
                           </p>
                         </div>
                         {notification.reference_image_url && (
-                          <div className="w-11 h-11 flex-shrink-0">
+                          <div className="w-11 h-11 flex-shrink-0 relative">
                             {notification.reference_media_type === 'video' ? (
                               <video
                                 src={notification.reference_image_url}
@@ -397,10 +398,12 @@ export default function NotificationsPanel({ isOpen, onClose, onMarkAllAsRead }:
                                 muted
                               />
                             ) : (
-                              <img
+                              <Image
                                 src={notification.reference_image_url}
                                 alt="Post preview"
-                                className="w-full h-full object-cover rounded"
+                                fill
+                                className="object-cover rounded"
+                                unoptimized
                               />
                             )}
                           </div>

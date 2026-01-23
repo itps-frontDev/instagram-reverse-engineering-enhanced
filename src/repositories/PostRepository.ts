@@ -485,9 +485,9 @@ export const postRepository = {
           `INSERT INTO likes (profile_id, likeable_type, likeable_id) VALUES (?, 'post', ?)`,
           [profileId, postId]
         );
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Race condition: il like è stato creato da un'altra richiesta
-        if (error.code === 'SQLITE_CONSTRAINT') {
+        if (error && typeof error === 'object' && 'code' in error && error.code === 'SQLITE_CONSTRAINT') {
           console.log('[Likes] Like già esistente (race condition), skip increment');
           return false;
         }

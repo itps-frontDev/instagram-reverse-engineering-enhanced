@@ -30,7 +30,7 @@ tags.forEach((tag) => {
       }
       completed++;
       if (completed === tags.length) {
-        db.get('SELECT COUNT(*) as count FROM post_tags', [], (err, row: any) => {
+        db.get('SELECT COUNT(*) as count FROM post_tags', [], (err, row: { count: number }) => {
           if (err) {
             console.error('Error counting tags:', err);
           } else {

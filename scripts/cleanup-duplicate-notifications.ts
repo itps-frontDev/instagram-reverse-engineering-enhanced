@@ -34,7 +34,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
     HAVING COUNT(*) > 1
   `;
 
-  db.all(findDuplicatesQuery, [], (err, duplicateGroups: any[]) => {
+  db.all(findDuplicatesQuery, [], (err, duplicateGroups: Array<{ type: string; sender_profile_id: number; recipient_profile_id: number; count: number; ids: string; latest_created_at: string }>) => {
     if (err) {
       console.error('❌ Errore query:', err);
       db.close();

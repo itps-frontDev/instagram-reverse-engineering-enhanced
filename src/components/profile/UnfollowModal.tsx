@@ -18,6 +18,7 @@
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { ProfilePicture } from '@/components';
 
 interface UnfollowModalProps {
   isOpen: boolean;
@@ -67,11 +68,11 @@ export default function UnfollowModal({
       >
         {/* Header con immagine profilo */}
         <div className="flex flex-col items-center p-8 pb-4">
-          <div className="w-[90px] h-[90px] rounded-full overflow-hidden mb-5">
-            <img 
-              src={profileImage || '/images/default-pfp.jpg'} 
+          <div className="mb-5">
+            <ProfilePicture
+              src={profileImage}
               alt={username}
-              className="w-full h-full object-cover"
+              size={90}
             />
           </div>
           <h2 className="text-sm text-[#262626] dark:text-[#FAFAFA] text-center">

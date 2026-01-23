@@ -199,14 +199,23 @@ export default function DirectPage() {
       }
       
       const data = await res.json();
-      const chats = (data.chats || []) as any[];
+      const chats = (data.chats || []) as Array<{
+        other_profile_id: number;
+        other_full_name?: string;
+        other_username?: string;
+        name?: string;
+        other_profile_image_url?: string;
+        last_message_text?: string;
+        last_message_at?: string;
+        isFromMe?: boolean;
+      }>;
       
       // Mappa le chat come contatti, mostra solo quelle con messaggi
       const mapped: ChatContact[] = chats
         .filter((chat) => chat.last_message_text)
         .map((chat) => ({
           id: chat.other_profile_id,
-          name: chat.other_full_name || chat.other_username || chat.name,
+          name: chat.other_full_name || chat.other_username || chat.name || 'Unknown',
           username: chat.other_username,
           profile_image_url: chat.other_profile_image_url,
           last_message_text: chat.last_message_text,
@@ -334,12 +343,21 @@ export default function DirectPage() {
         const chatsRes = await fetch(`/api/direct/chats?_t=${Date.now()}`);
         if (chatsRes.ok) {
           const chatsData = await chatsRes.json();
-          const chats = (chatsData.chats || []) as any[];
+          const chats = (chatsData.chats || []) as Array<{
+            other_profile_id: number;
+            other_full_name?: string;
+            other_username?: string;
+            name?: string;
+            other_profile_image_url?: string;
+            last_message_text?: string;
+            last_message_at?: string;
+            isFromMe?: boolean;
+          }>;
           const mapped: ChatContact[] = chats
             .filter((chat) => chat.last_message_text)
             .map((chat) => ({
               id: chat.other_profile_id,
-              name: chat.other_full_name || chat.other_username || chat.name,
+              name: chat.other_full_name || chat.other_username || chat.name || 'Unknown',
               username: chat.other_username,
               profile_image_url: chat.other_profile_image_url,
               last_message_text: chat.last_message_text,
@@ -456,19 +474,11 @@ export default function DirectPage() {
                   selectedId === c.id ? 'bg-[#F3F5F7] dark:bg-[#262626]' : ''
                 }`}
               >
-                <div className="w-12 h-12 rounded-full flex-shrink-0 overflow-hidden">
-                  {c.profile_image_url ? (
-                    <img
-                      src={c.profile_image_url}
-                      alt={c.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-[#3C3C3C] flex items-center justify-center text-white text-sm font-semibold">
-                      {c.name?.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                </div>
+                <ProfilePicture
+                  src={c.profile_image_url}
+                  alt={c.name}
+                  size={48}
+                />
               </button>
             ))}
           </div>

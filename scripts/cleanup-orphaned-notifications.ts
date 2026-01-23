@@ -36,7 +36,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
       AND f.id IS NULL
   `;
 
-  db.all(selectQuery, [], (err, orphanedNotifications: any[]) => {
+  db.all(selectQuery, [], (err, orphanedNotifications: Array<{ id: number; sender_profile_id: number; recipient_profile_id: number; sender_username: string; recipient_username: string; created_at: string }>) => {
     if (err) {
       console.error('❌ Errore query:', err);
       db.close();

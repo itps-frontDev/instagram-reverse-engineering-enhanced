@@ -22,6 +22,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {CreatePostModal} from '@/components/feed';
 import { ShareIcon } from '@/components/common';
+import ProfilePicture from '@/components/ProfilePicture';
 
 export default function MobileNav() {
   const pathname = usePathname();
@@ -160,14 +161,11 @@ export default function MobileNav() {
             href={`/profile/${profile.username}`}
             className="flex items-center justify-center w-full h-full"
           >
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-              <img
-                src={profile.profile_image_url && profile.profile_image_url.trim() !== '' ? profile.profile_image_url : '/images/default-pfp.jpg'}
-                alt={profile.username}
-                className="w-full h-full rounded-full object-cover"
-                onError={e => { (e.currentTarget as HTMLImageElement).src = '/images/default-pfp.jpg'; }}
-              />
-            </div>
+            <ProfilePicture
+              src={profile.profile_image_url}
+              alt={profile.username}
+              size={28}
+            />
           </Link>
         )}
       </div>

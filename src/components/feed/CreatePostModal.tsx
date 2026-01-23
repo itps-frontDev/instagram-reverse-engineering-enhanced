@@ -21,6 +21,7 @@
 'use client';
 
 import { useState, useRef, DragEvent, useEffect } from 'react';
+import Image from 'next/image';
 import { X } from 'lucide-react';
 import {ProfilePicture} from '@/components';
 
@@ -98,8 +99,6 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
       console.error('Error fetching current profile:', error);
     }
   };
-
-  if (!isOpen) return null;
 
   const uploadedImage = uploadedImages[currentImageIndex] || null;
   const modalWidth = phase === 'details' ? 1100 : width;
@@ -377,6 +376,8 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
     resetMediaTransform();
   }, [currentImageIndex]);
 
+  if (!isOpen) return null;
+
   return (
     <>
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -472,14 +473,16 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
                     muted
                     playsInline
                   />
-                ) : (
-                  <img 
-                    src={uploadedImage || ''} 
+                ) : uploadedImage ? (
+                  <Image 
+                    src={uploadedImage} 
                     alt="Uploaded" 
+                    width={850}
+                    height={850}
                     className="max-h-[850px] w-auto object-contain pointer-events-none"
                     draggable={false}
                   />
-                )}
+                ) : null}
               </div>
               
               {/* Icona post multipli in basso a destra */}
@@ -513,10 +516,11 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
                         {image.startsWith('data:video') ? (
                           <video src={image} className="w-full h-full object-cover" preload="metadata" />
                         ) : (
-                          <img 
+                          <Image 
                             src={image} 
                             alt={`Media ${index + 1}`}
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
                           />
                         )}
                         
@@ -582,14 +586,16 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
                       muted
                       playsInline
                     />
-                  ) : (
-                    <img 
-                      src={uploadedImage || ''} 
+                  ) : uploadedImage ? (
+                    <Image 
+                      src={uploadedImage} 
                       alt="Uploaded" 
+                      width={850}
+                      height={850}
                       className="max-h-[850px] w-auto object-contain pointer-events-none"
                       draggable={false}
                     />
-                  )}
+                  ) : null}
                 </div>
               </div>
               

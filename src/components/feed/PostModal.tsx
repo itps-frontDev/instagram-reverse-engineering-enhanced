@@ -209,7 +209,7 @@ export default function PostModal({
 
     setIsSubmitting(true);
     try {
-      const body: any = { 
+      const body: { postId: number; text: string; parentId?: number } = { 
         postId: post.id, 
         text: commentText 
       };

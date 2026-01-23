@@ -32,10 +32,11 @@ import {
   Heart,
   Menu,
   Instagram,
+  LucideIcon,
 } from 'lucide-react';
 
 type NavItem = {
-  icon: string | any;
+  icon: string | LucideIcon;
   label: string;
   href?: string;
   action?: string;
@@ -118,7 +119,7 @@ export default function Sidebar() {
           // Ottieni le chat lette da localStorage
           const readChats = JSON.parse(localStorage.getItem('readChats') || '{}');
           
-          const unread = chats.filter((chat: any) => {
+          const unread = chats.filter((chat: { id: number; last_message_text?: string; last_message_at?: string | number; isFromMe?: boolean }) => {
             // Ignora chat senza messaggi
             if (!chat.last_message_text || !chat.last_message_at) return false;
             

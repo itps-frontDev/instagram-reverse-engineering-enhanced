@@ -186,7 +186,7 @@ export default function StoryViewer({
   useEffect(() => {
     if (!currentStory) return;
 
-    let firstView = !currentStory.is_viewed;
+    const firstView = !currentStory.is_viewed;
     if (!firstView) return; // Evita chiamate ripetute
 
     // Funzione asincrona per registrare la visualizzazione

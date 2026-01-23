@@ -18,6 +18,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ProfilePicture } from '@/components';
 import { VerifiedBadge, ShareIcon } from '@/components/common';
@@ -194,10 +195,12 @@ export default function ProfilePreviewCard({
                   playsInline
                 />
               ) : (
-                <img
+                <Image
                   src={post.media_url}
                   alt="Post"
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  unoptimized
                 />
               )}
             </Link>

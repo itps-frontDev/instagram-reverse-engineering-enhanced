@@ -731,7 +731,7 @@ export default function ReelsPage() {
             // Determina transform e opacità per l'animazione
             let translateY = '0%';
             let opacity = 1;
-            let scale = 1;
+            const scale = 1;
 
             if (isPrev) {
               translateY = '-100%';

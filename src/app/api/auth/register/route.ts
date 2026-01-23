@@ -63,7 +63,8 @@ export async function POST(request: NextRequest) {
   try {
     // Parse body JSON
     const body = await request.json();
-    let { email, password, birthDate, fullName, username } = body;
+    let { email, username } = body;
+    const { password, birthDate, fullName } = body;
 
     // Normalizza email e username in minuscolo per evitare duplicati case-sensitive
     email = email?.trim().toLowerCase();
@@ -147,7 +148,7 @@ export async function POST(request: NextRequest) {
         },
         { status: 201 } // Created
       );
-    } catch (dbError: any) {
+    } catch (dbError: unknown) {
       // Gestione ConflictError (unicità)
       if (dbError instanceof ConflictError) {
         return NextResponse.json(
@@ -163,14 +164,15 @@ export async function POST(request: NextRequest) {
        * Anche se abbiamo già verificato, potrebbero verificarsi
        * race condition con richieste concorrenti.
        */
-      if (dbError.message?.includes('UNIQUE constraint failed')) {
-        if (dbError.message.includes('email')) {
+      const errorMessage = dbError instanceof Error ? dbError.message : String(dbError);
+      if (errorMessage.includes('UNIQUE constraint failed')) {
+        if (errorMessage.includes('email')) {
           return NextResponse.json(
             { error: 'Email già registrata' },
             { status: 409 }
           );
         }
-        if (dbError.message.includes('username')) {
+        if (errorMessage.includes('username')) {
           return NextResponse.json(
             { error: 'Nome utente già esistente' },
             { status: 409 }

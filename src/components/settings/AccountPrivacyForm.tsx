@@ -109,7 +109,7 @@ export default function AccountPrivacyForm({ profile }: AccountPrivacyFormProps)
         <p className="text-xs text-[rgb(115,115,115)] dark:text-[rgb(168,168,168)] mt-3 leading-4">
           Se imposti il tuo account come pubblico, chiunque su Instagram e fuori da Instagram può vedere il tuo profilo e i relativi post, anche se non ha un account Instagram.
           <br /><br />
-          Se imposti il tuo account come privato, solo i follower che approvi possono vedere cosa condividi, inclusi i tuoi video o le tue foto nelle pagine degli hashtag e dei luoghi, e le liste dei follower e delle persone che segui. Alcune informazioni sul tuo profilo, come l'immagine del profilo e il nome utente, sono visibili a tutti su Instagram e fuori da Instagram.{' '}
+          Se imposti il tuo account come privato, solo i follower che approvi possono vedere cosa condividi, inclusi i tuoi video o le tue foto nelle pagine degli hashtag e dei luoghi, e le liste dei follower e delle persone che segui. Alcune informazioni sul tuo profilo, come l&apos;immagine del profilo e il nome utente, sono visibili a tutti su Instagram e fuori da Instagram.{' '}
           <a
             href="https://help.instagram.com/116024195217477" 
             target="_blank" 

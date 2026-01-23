@@ -13,6 +13,13 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  // Allow 'any' type in scripts and repositories where SQL row types are dynamic
+  {
+    files: ["scripts/**/*.ts", "src/repositories/**/*.ts", "src/db/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

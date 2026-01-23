@@ -11,6 +11,9 @@
 // COMPONENTE
 // ============================================================================
 
+// Predefined widths for skeleton messages to avoid using Math.random() during render
+const SKELETON_WIDTHS = [180, 220, 150, 200, 170, 190];
+
 /**
  * Skeleton loader per messaggi chat.
  * 
@@ -38,7 +41,7 @@ export default function ChatSkeleton() {
                 : 'bg-gray-200 dark:bg-gray-700'
             } animate-pulse`}
             style={{
-              width: `${Math.random() * 150 + 100}px`,
+              width: `${SKELETON_WIDTHS[i]}px`,
               height: '40px',
             }}
           />
