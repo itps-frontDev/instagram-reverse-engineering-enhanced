@@ -360,6 +360,29 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
     setIsDraggingMedia(false);
   };
 
+  // Touch handlers per mobile
+  const handleMediaTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      setIsDraggingMedia(true);
+      setDragStart({ x: touch.clientX - position.x, y: touch.clientY - position.y });
+    }
+  };
+
+  const handleMediaTouchMove = (e: React.TouchEvent) => {
+    if (!isDraggingMedia || e.touches.length !== 1) return;
+    e.preventDefault(); // Previene lo scroll della pagina
+    const touch = e.touches[0];
+    setPosition({
+      x: touch.clientX - dragStart.x,
+      y: touch.clientY - dragStart.y
+    });
+  };
+
+  const handleMediaTouchEnd = () => {
+    setIsDraggingMedia(false);
+  };
+
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     const delta = e.deltaY * -0.001;
@@ -449,7 +472,7 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
           phase === 'crop' ? (
             // Crop Phase - solo immagine
             <div 
-              className="relative min-h-[850px] flex items-center justify-center dark:bg-[#25292e] overflow-hidden"
+              className="relative min-h-[850px] flex items-center justify-center dark:bg-[#25292e] overflow-hidden max-[639px]:min-h-[300px]"
               onWheel={handleWheel}
             >
               <div
@@ -459,9 +482,13 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
                 onMouseMove={handleMediaMouseMove}
                 onMouseUp={handleMediaMouseUp}
                 onMouseLeave={handleMediaMouseUp}
+                onTouchStart={handleMediaTouchStart}
+                onTouchMove={handleMediaTouchMove}
+                onTouchEnd={handleMediaTouchEnd}
                 style={{
                   transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
-                  transition: isDraggingMedia ? 'none' : 'transform 0.1s ease-out'
+                  transition: isDraggingMedia ? 'none' : 'transform 0.1s ease-out',
+                  touchAction: 'none', // Previene scroll/zoom del browser su mobile
                 }}
               >
                 {uploadedImage && uploadedImage.startsWith('data:video') ? (

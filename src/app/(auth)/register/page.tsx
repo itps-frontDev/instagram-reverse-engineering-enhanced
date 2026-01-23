@@ -333,6 +333,7 @@ export default function RegisterPage() {
                         data-visualcompletion="css-img"
                         aria-label="Cupcake di compleanno"
                         role="img"
+                        className="dark:filter-none"
                         style={{
                           backgroundImage: 'url("https://static.cdninstagram.com/rsrc.php/v4/yz/r/H_-3Vh0lHeK.png")',
                           backgroundPosition: '-176px -2907px',
@@ -341,6 +342,7 @@ export default function RegisterPage() {
                           height: '96px',
                           backgroundRepeat: 'no-repeat',
                           display: 'inline-block',
+                          filter: 'var(--birthday-icon-filter, invert(1) hue-rotate(180deg))',
                         }}
                       />
                     </div>

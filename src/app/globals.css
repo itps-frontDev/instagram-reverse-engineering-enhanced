@@ -55,6 +55,9 @@
   --color-modal-dark: rgb(33, 35, 40);        /* Dark mode modal background */
   --color-link-muted: rgb(129, 121, 149);     /* Muted blue for links */
   --color-search-clear: rgb(248, 249, 249);   /* Clear button in dark mode */
+  
+  /* Birthday icon filter - invert in light mode for visibility */
+  --birthday-icon-filter: invert(1) hue-rotate(180deg);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -80,6 +83,9 @@
     --border-secondary: var(--color-border);
 
     color-scheme: dark;
+    
+    /* No filter needed in dark mode - icon is designed for dark backgrounds */
+    --birthday-icon-filter: none;
   }
 }
 
