@@ -63,6 +63,7 @@ export default function FeedContainer() {
     fetchPosts(0);
   }, []);
 
+  // Infinite scroll con Intersection Observer (quando l’utente arriva in fondo al feed, carica automaticamente altri post)
   useEffect(() => {
     if (!hasMore || loading) return;
     const observer = new window.IntersectionObserver(
@@ -208,7 +209,7 @@ export default function FeedContainer() {
           onSave={handleSave}
           onComment={handleComment}
         />
-      ))}
+      ))} {/* div target osservato per l'infinite scroll */}
       {hasMore && (
         <div ref={observerTarget} className="h-16 flex items-center justify-center">
           {loading ? <LoadingSpinner size={32} /> : null}

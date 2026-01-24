@@ -57,6 +57,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Estrae i parametri della query string (limit, offset, ecc.) dall’URL della richiesta
     const { searchParams } = new URL(request.url);
     // Usa config per i valori di default della paginazione
     const limit = Math.min(

@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Per ora supportiamo solo la ricerca di account
-    // TODO: Implementare ricerca hashtag e luoghi
+    // TODO: Implementare ricerca hashtag e luoghi (feat. futura)
     if (type !== 'account') {
       return NextResponse.json(
         { results: [] },

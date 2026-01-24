@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
       profile_is_verified: post.profile_is_verified,
       profile_is_private: post.profile_is_private,
       profile_has_active_story: post.profile_has_active_story,
-      profile_has_viewed_story: false, // Explore posts don't track viewed stories
+      profile_has_viewed_story: false, // I post di Explore non tengono traccia delle storie visualizzate
       is_following_author: post.is_following_author,
       media: mediaByPost.get(post.id) || [],
       is_liked_by_current_user: post.is_liked,

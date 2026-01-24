@@ -186,7 +186,7 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Overlay per chiudere i pannelli */}
+      {/* Overlay <div> trasparente per chiudere i pannelli al click al di fuori da essi */}
       {(showSearchPanel || showNotificationsPanel) && (
         <div 
           className="fixed inset-0 bg-transparent z-30"
@@ -246,7 +246,8 @@ export default function Sidebar() {
             // Solo quando nessun pannello è aperto, usa il pathname
             isActive = true;
           }
-          
+
+          // Costruzione del contenuto icona + label
           const content = (
             <>
               {item.icon === 'custom-home' ? (
@@ -352,8 +353,12 @@ export default function Sidebar() {
             </>
           );
 
+
+          // Bottone per la creazione post
           if (item.action === 'create') {
+            // Pulsante "Crea Post"
             return (
+              // Button: Crea Post
               <button
                 key={item.action}
                 onClick={() => setShowCreateModal(true)}
@@ -368,8 +373,11 @@ export default function Sidebar() {
             );
           }
 
+          // Bottone per la ricerca
           if (item.action === 'search') {
+            // Pulsante "Cerca"
             return (
+              // Button: Cerca
               <button
                 key={item.action}
                 onClick={() => {
@@ -387,8 +395,11 @@ export default function Sidebar() {
             );
           }
 
+          // Bottone per le notifiche
           if (item.action === 'notifications') {
+            // Pulsante "Notifiche"
             return (
+              // Button: Notifiche
               <button
                 key={item.action}
                 onClick={() => {
@@ -406,7 +417,9 @@ export default function Sidebar() {
             );
           }
 
+          // Link di navigazione generico per voci con href
           return (
+            // Link di navigazione
             <Link
               key={item.href}
               href={item.href!}
