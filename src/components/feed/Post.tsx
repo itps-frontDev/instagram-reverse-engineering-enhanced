@@ -106,6 +106,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
   const handleButtonLike = () => {
     // Il click sul pulsante può attivare/disattivare il like
     if (!post.is_liked_by_current_user) {
+      setShowExplodingHeart(true);
       setIsLikeAnimating(true);
       setTimeout(() => setIsLikeAnimating(false), 400);
     }
