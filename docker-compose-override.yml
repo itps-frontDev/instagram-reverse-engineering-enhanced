@@ -35,6 +35,14 @@ services:
                                    # riscaricherebbe centinaia di MB di dipendenze.
     environment:
       SPRING_PROFILES_ACTIVE: dev
+      AZURE_STORAGE_CONNECTION_STRING: >-
+        DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OdFHQjFQYQRAFxRBUMJELnMmLmApXQKGzWhEZqkT0aT3GQqfJHKzA==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
+      # Sovrascrive la variabile del base compose.
+      # Usa "azurite" come hostname: Docker risolve il nome
+      # del servizio nella rete interna dei container.
+      # AccountName e AccountKey sono i valori fissi e
+      # pubblici di Azurite (non sono credenziali reali).
+      AZURE_STORAGE_CONTAINER_NAME: dev-container
       # Abilita il debugger remoto Java sulla porta 5005.
       # Ti permette di mettere breakpoint in IntelliJ e
       # fermare l'esecuzione mentre gira nel container.
@@ -42,6 +50,11 @@ services:
         -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
     ports:
       - "5005:5005"                # porta debugger remoto Java (IntelliJ/VSCode)
+    depends_on:
+      - azurite
+      # In sviluppo il backend deve aspettare anche Azurite.
+      # Nel base compose non c'è questa dipendenza perché
+      # in produzione si usa Azure reale (nessun container).
 
   db:
     ports:
@@ -57,6 +70,27 @@ services:
       # Stesso motivo: espone Redis per Redis Insight
       # o altri tool di ispezione in sviluppo.
 
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    # Definito SOLO nell'override: Azurite è un emulatore locale,
+    # in produzione non esiste — si usa Azure Blob Storage reale.
+    volumes:
+      - azuritedata:/data
+      # Named volume: i blob caricati sopravvivono ai restart del container
+    command: >
+      azurite
+      --blobHost 0.0.0.0
+      --queueHost 0.0.0.0
+      --tableHost 0.0.0.0
+      --location /data
+    # --blobHost 0.0.0.0 → raggiungibile da tutti i container nella rete Docker
+    # --location /data   → salva i dati nel volume montato
+    ports:
+      - "10000:10000"   # Blob service  → Azure Storage Explorer / tool locali
+      - "10001:10001"   # Queue service
+      - "10002:10002"   # Table service
+
 volumes:
   gradle_cache:    # cache Gradle persistente tra rebuild
   pnpm_store:      # store globale pnpm persistente tra rebuild
+  azuritedata:     # blob e dati Azurite persistenti tra rebuild

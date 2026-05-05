@@ -40,6 +40,8 @@ services:
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
       AZURE_STORAGE_CONNECTION_STRING: ${AZURE_STORAGE_CONNECTION_STRING}
+      # In produzione: connection string reale dal portale Azure
+      # In sviluppo: sovrascritta dall'override con quella di Azurite
       AZURE_STORAGE_CONTAINER_NAME: ${AZURE_STORAGE_CONTAINER_NAME}
     depends_on:
       db:
