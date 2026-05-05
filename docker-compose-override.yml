@@ -1,0 +1,62 @@
+version: '3.9'
+
+services:
+
+  frontend:
+    build:
+      dockerfile: Dockerfile.dev   # sovrascrive il Dockerfile base
+    volumes:
+      - ./frontend:/app            # bind mount: codice dal tuo PC
+      - /app/node_modules          # volume anonimo: protegge i node_modules Linux
+                                   # installati durante il build per Alpine/Linux,
+                                   # impedendo che vengano sovrascritti da quelli
+                                   # del tuo PC (Windows/Mac)
+      - pnpm_store:/root/.local/share/pnpm/store
+                                   # named volume: store globale di pnpm.
+                                   # pnpm scarica ogni pacchetto UNA VOLTA in questa
+                                   # cartella e usa symlink in node_modules.
+                                   # Con questo volume, i pacchetti sopravvivono
+                                   # ai rebuild del container → molto più veloce
+    environment:
+      NODE_ENV: development
+      WATCHPACK_POLLING: "true"
+      # Su Windows, Docker non propaga gli eventi di modifica
+      # file al container WSL2. WATCHPACK_POLLING forza Next.js
+      # a controllare i file ogni tot millisecondi invece di
+      # aspettare gli eventi → hot reload funziona su Windows.
+
+  backend:
+    build:
+      dockerfile: Dockerfile.dev   # sovrascrive il Dockerfile base
+    volumes:
+      - ./backend:/app             # bind mount: codice dal tuo PC
+      - gradle_cache:/root/.gradle # named volume: cache Gradle.
+                                   # Senza questo volume, ogni rebuild del container
+                                   # riscaricherebbe centinaia di MB di dipendenze.
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      # Abilita il debugger remoto Java sulla porta 5005.
+      # Ti permette di mettere breakpoint in IntelliJ e
+      # fermare l'esecuzione mentre gira nel container.
+      JAVA_TOOL_OPTIONS: >-
+        -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+    ports:
+      - "5005:5005"                # porta debugger remoto Java (IntelliJ/VSCode)
+
+  db:
+    ports:
+      - "5432:5432"
+      # Espone PostgreSQL verso il tuo PC.
+      # Permette di connettersi con DBeaver, TablePlus
+      # o IntelliJ Database Tool durante lo sviluppo.
+      # In produzione questa porta NON è esposta.
+
+  redis:
+    ports:
+      - "6379:6379"
+      # Stesso motivo: espone Redis per Redis Insight
+      # o altri tool di ispezione in sviluppo.
+
+volumes:
+  gradle_cache:    # cache Gradle persistente tra rebuild
+  pnpm_store:      # store globale pnpm persistente tra rebuild

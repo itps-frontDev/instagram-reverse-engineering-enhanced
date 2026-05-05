@@ -1,0 +1,9 @@
+# Variabili d'ambiente locali — mai in Git
+.env
+
+# Build artifacts
+frontend/.next/
+backend/build/
+
+# Volumi Docker esportati
+*.tar

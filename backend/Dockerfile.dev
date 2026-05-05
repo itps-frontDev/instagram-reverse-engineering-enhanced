@@ -1,0 +1,26 @@
+# syntax=docker/dockerfile:1
+
+# Usa l'immagine Gradle completa — in sviluppo
+# abbiamo bisogno del JDK intero per compilare
+# al volo con bootRun + devtools
+FROM gradle:8-jdk21-alpine
+WORKDIR /app
+
+# NON copiamo il codice sorgente qui.
+# Arriverà tramite bind mount da docker-compose.override.yml:
+#   volumes:
+#     - ./backend:/app
+# Questo significa che /app dentro il container
+# sarà esattamente ./backend sul tuo PC.
+
+# Esponi sia la porta dell'app che quella del debugger
+EXPOSE 8080
+EXPOSE 5005
+
+# bootRun avvia Spring Boot in modalità sviluppo.
+# spring-boot-devtools (già nella dipendenza) monitora
+# i file compilati e riavvia l'app automaticamente.
+# Il profilo "dev" carica application-dev.properties
+# oltre al base application.properties.
+CMD ["./gradlew", "bootRun", \
+     "--args=--spring.profiles.active=dev"]

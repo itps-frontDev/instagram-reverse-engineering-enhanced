@@ -1,0 +1,83 @@
+version: '3.9'
+
+services:
+
+  # ── FRONTEND ──────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile     # usa il Dockerfile di produzione
+    image: iree/frontend         # nome dell'immagine buildada
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: ${API_URL}
+      # NEXT_PUBLIC_* sono variabili accessibili
+      # anche nel browser (lato client Next.js)
+    depends_on:
+      - backend
+      # Docker avvia frontend DOPO backend,
+      # ma non aspetta che backend sia "pronto" —
+      # solo che il container sia partito
+
+  # ── BACKEND ───────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile     # usa il Dockerfile di produzione
+    image: iree/backend
+    ports:
+      - "8080:8080"
+    environment:
+      # Queste variabili vengono passate DENTRO il container
+      # I valori ${...} vengono sostituiti dal file .env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME}
+      # "db" è il nome del servizio PostgreSQL definito sotto —
+      # Docker risolve automaticamente "db" come hostname
+      # nella rete interna dei container
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      AZURE_STORAGE_CONNECTION_STRING: ${AZURE_STORAGE_CONNECTION_STRING}
+      AZURE_STORAGE_CONTAINER_NAME: ${AZURE_STORAGE_CONTAINER_NAME}
+    depends_on:
+      db:
+        condition: service_healthy
+        # Aspetta che PostgreSQL sia davvero pronto
+        # (non solo avviato, ma in grado di accettare connessioni)
+        # grazie all'healthcheck definito sotto
+      redis:
+        condition: service_started
+
+  # ── DATABASE ──────────────────────────────────────────
+  db:
+    image: postgres:16-alpine    # immagine ufficiale PostgreSQL
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Named volume: i dati del DB sopravvivono
+      # ai restart del container
+    healthcheck:
+      # Verifica che PostgreSQL sia pronto ad accettare connessioni
+      # prima che il backend provi a connettersi
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s      # controlla ogni 5 secondi
+      timeout: 5s       # se non risponde in 5s → fallito
+      retries: 5        # dopo 5 tentativi falliti → unhealthy
+
+  # ── REDIS ─────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redisdata:/data
+      # Named volume: sessioni e cache sopravvivono ai restart
+
+# Dichiarazione dei named volume —
+# Docker li crea automaticamente al primo avvio
+volumes:
+  pgdata:
+  redisdata:
