@@ -43,11 +43,6 @@ services:
       # AccountName e AccountKey sono i valori fissi e
       # pubblici di Azurite (non sono credenziali reali).
       AZURE_STORAGE_CONTAINER_NAME: dev-container
-      # Abilita il debugger remoto Java sulla porta 5005.
-      # Ti permette di mettere breakpoint in IntelliJ e
-      # fermare l'esecuzione mentre gira nel container.
-      JAVA_TOOL_OPTIONS: >-
-        -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
     ports:
       - "5005:5005"                # porta debugger remoto Java (IntelliJ/VSCode)
     depends_on:

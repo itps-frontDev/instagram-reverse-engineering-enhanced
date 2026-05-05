@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(netstat -ano)",
+      "Bash(findstr \":5432\")",
+      "Bash(docker-compose -f docker-compose.yml -f docker-compose-override.yml down)",
+      "Bash(docker-compose up *)",
+      "Bash(docker-compose down *)"
+    ]
+  }
+}
