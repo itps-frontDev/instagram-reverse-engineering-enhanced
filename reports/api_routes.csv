@@ -1,0 +1,60 @@
+path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
+/api/test-db,GET,"Health-check DB: versione sqlite + lista tabelle",Yes,No,No,No
+/api/stories,GET|POST,"GET: recupera storie attive; POST: registra visualizzazione",Yes,No,POST:Yes|GET:No,Yes
+/api/stories/[id]/viewers,GET,"Lista visualizzatori di una storia (solo proprietario)",Yes,No,Yes,No
+/api/stories/[id]/view,POST,"Registra la view di una storia (idempotente)",Yes,No,Yes,No
+/api/stories/[id]/public,GET,"Recupera storie pubbliche di un profilo (senza auth ma codice usa currentProfile)",Yes,No,Hybrid,No
+/api/stories/[id]/like,POST,"Toggle like su una storia; crea/elimina notifica",Yes,No,Yes,No
+/api/search,GET,"Ricerca profili per username o nome",Yes,No,No,No
+/api/reels,GET,"Reels feed (video posts) con paginazione",Yes,No,Yes,Yes
+/api/profiles/upload-image,POST,"Carica immagine profilo (form-data) con validazioni",Yes,Yes,Yes,No
+/api/profiles/suggestions,GET,"Suggerimenti profili da seguire",Yes,No,Yes,No
+/api/profiles/security,PUT,"Aggiorna email/telefono/password (bcrypt)",Yes,No,Yes,No
+/api/profiles/remove-image,DELETE,"Rimuove immagine profilo (DB + deleteFile)",Yes,Yes,Yes,No
+/api/profiles/privacy,PUT,"Cambia privacy e gestisce richieste pending",Yes,No,Yes,No
+/api/profiles/personal,PUT,"Aggiorna username e nome completo (unicità)",Yes,No,Yes,No
+/api/profiles/me/followers,GET,"Lista follower dell'utente corrente",Yes,No,Yes,No
+/api/profiles/follow/reject,POST,"Rifiuta/elimina richiesta di follow (soft delete)",Yes,No,Yes,No
+/api/profiles/follow/accept,POST,"Accetta richiesta di follow; aggiorna contatori e notifiche",Yes,No,Yes,No
+/api/profiles/edit,PUT,"Aggiorna bio, website, genere del profilo",Yes,No,Yes,No
+/api/profiles/birthday,PUT,"Aggiorna data di nascita (min 13 anni)",Yes,No,Yes,No
+/api/profiles/actions/unfollow,POST,"Smettere di seguire (soft delete) e aggiornare contatori",Yes,No,Yes,No
+/api/profiles/actions/remove-follower,POST,"Rimuove un follower (soft delete) e aggiornamento contatori",Yes,No,Yes,No
+/api/profiles/actions/follow,POST,"Segui un utente (accepted o pending) e crea notifica",Yes,No,Yes,No
+/api/profiles/[username]/upload-image,POST,"Carica immagine profilo per username (owner only)",Yes,Yes,Yes,No
+/api/profiles/[username],GET,"Ottiene profilo by username con dettagli e flag",Yes,No,Yes,Yes
+/api/profiles/[username]/preview,GET,"Anteprima profilo con post recenti per card hover",Yes,No,Yes,No
+/api/profiles/[username]/remove-image,POST,"Rimuove immagine profilo (owner only)",Yes,No,Yes,No
+/api/profiles/[username]/posts,GET,"Lista post di un profilo (tabs: posts,reels,saved,tagged)",Yes,No,Yes,No
+/api/profiles/[username]/following,GET,"Lista dei profili seguiti (rispetta privacy)",Yes,No,Yes,No
+/api/profiles/[username]/followers,GET,"Lista dei follower (rispetta privacy)",Yes,No,Yes,No
+/api/profiles/[username]/follow-status,GET,"Stato relazione follow tra current e target",Yes,No,Yes,No
+/api/profiles/[username]/can-view,GET,"Verifica se user può vedere contenuti del profilo (privacy)",Yes,No,Yes,No
+/api/posts/create,POST,"Crea post: salva immagini, crea post_media in transazione",Yes,Yes,Yes,Yes
+/api/posts/[postId]/unsave,POST,"Rimuove post dai salvati (soft delete)",Yes,No,Yes,Yes
+/api/posts/[postId]/unlike,POST,"Rimuove like da un post e elimina notifica",Yes,No,Yes,Yes
+/api/posts/[postId]/tags,GET,"Restituisce tag di un post",Yes,No,No,No
+/api/posts/[postId]/save,POST,"Salva post per l'utente (idempotente)",Yes,No,Yes,Yes
+/api/posts/[postId],GET|DELETE|PATCH,"GET: recupera post+media; DELETE: soft-delete; PATCH: modifica caption",Yes,Yes,Yes,Yes
+/api/posts/[postId]/like,POST,"Toggle like su post; crea/elimina notifica",Yes,No,Yes,Yes
+/api/posts/[postId]/is-saved,GET,"Verifica se post è salvato dall'utente",Yes,No,Yes,No
+/api/posts/[postId]/is-liked,GET,"Verifica se utente ha messo like al post",Yes,No,Yes,No
+/api/posts/[postId]/comment,POST,"Aggiunge commento; incrementa counter; crea notifica",Yes,No,Yes,Yes
+/api/notifications/unread-count,GET,"Conteggio notifiche non lette per badge",Yes,No,Yes,No
+/api/notifications,GET,"Recupera notifiche utente (formato legacy)",Yes,No,Yes,No
+/api/notifications/mark-read,PATCH,"Segna tutte le notifiche come lette",Yes,No,Yes,No
+/api/media/[...path],GET,"Serve file multimediali con controllo accessi (posts/stories/profiles/messages)",Yes,Yes,Yes,No
+/api/feed/save,POST,"Toggle salvataggio da feed (save/unsave)",Yes,No,Yes,Yes
+/api/feed,GET,"Feed principale: post seguiti + explore, paginazione",Yes,No,Yes,Yes
+/api/feed/like,POST,"Toggle like su post dal feed",Yes,No,Yes,Yes
+/api/feed/comments/like,POST,"Toggle like su commento; crea/elimina notifica",Yes,No,Yes,Yes
+/api/feed/comments/[id],DELETE,"Elimina singolo commento (owner commento o owner post)",Yes,No,Yes,Yes
+/api/explore,GET,"Explore: post popolari da profili pubblici",Yes,No,Yes,Yes
+/api/direct/send,POST,"Invia messaggio in chat (verifica partecipazione)",Yes,No,Yes,No
+/api/direct/messages,GET,"Recupera messaggi di una chat (chatId query param)",Yes,No,Yes,No
+/api/direct/get-or-create,POST,"Ottieni o crea chat 1-to-1",Yes,No,Yes,No
+/api/direct/chats,GET,"Lista chat dell'utente con dettagli + contatti potenziali",Yes,No,Yes,No
+/api/auth/register,POST,"Registrazione utente (user + profile in transaction)",Yes,No,No,Yes
+/api/auth/me,GET,"Restituisce il profilo autenticato (getCurrentProfile)",Yes,No,Yes,Yes
+/api/auth/logout,POST,"Logout: invalida cookie auth_token (set maxAge=0)",No,No,Yes,Yes
+/api/auth/login,POST,"Login: verifica credenziali, imposta JWT in cookie",Yes,No,No,Yes
