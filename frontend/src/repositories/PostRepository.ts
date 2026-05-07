@@ -675,8 +675,10 @@ export const postRepository = {
         pr.profile_image_url,
         pr.is_verified as profile_is_verified,
         pr.is_private as profile_is_private,
-        (SELECT 1 FROM stories
-         WHERE profile_id = pr.id AND deleted_at IS NULL AND expires_at > NOW()) as profile_has_active_story,
+        EXISTS(
+          SELECT 1 FROM stories
+          WHERE profile_id = pr.id AND deleted_at IS NULL AND expires_at > NOW()
+        ) as profile_has_active_story,
         (SELECT 1 FROM follows
          WHERE follower_profile_id = ? AND following_profile_id = pr.id
            AND status = 'accepted' AND deleted_at IS NULL) as is_following_author,

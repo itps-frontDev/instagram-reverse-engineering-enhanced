@@ -616,7 +616,7 @@ export const profileRepository = {
     const profiles = await queryAll<FollowerWithStatusRow>(
       `SELECT
         p.id, p.username, p.full_name, p.profile_image_url, p.is_verified,
-        -- L'utente corrente segue questo follower?
+        -- L'utente corrente segue questo follower
         EXISTS(
           SELECT 1 FROM follows f2
           WHERE f2.follower_profile_id = ?
@@ -624,7 +624,7 @@ export const profileRepository = {
           AND f2.status = 'accepted'
           AND f2.deleted_at IS NULL
         ) as is_following,
-        -- Questo follower segue l'utente corrente?
+        -- Questo follower segue l'utente corrente
         EXISTS(
           SELECT 1 FROM follows f3
           WHERE f3.follower_profile_id = p.id
@@ -674,7 +674,7 @@ export const profileRepository = {
     const profiles = await queryAll<FollowerWithStatusRow>(
       `SELECT
         p.id, p.username, p.full_name, p.profile_image_url, p.is_verified,
-        -- L'utente corrente segue questo profilo?
+        -- L'utente corrente segue questo profilo
         EXISTS(
           SELECT 1 FROM follows f2
           WHERE f2.follower_profile_id = ?
@@ -682,7 +682,7 @@ export const profileRepository = {
           AND f2.status = 'accepted'
           AND f2.deleted_at IS NULL
         ) as is_following,
-        -- Questo profilo segue l'utente corrente?
+        -- Questo profilo segue l'utente corrente
         EXISTS(
           SELECT 1 FROM follows f3
           WHERE f3.follower_profile_id = p.id
@@ -927,7 +927,7 @@ export const profileRepository = {
     has_active_story: boolean;
     has_viewed_story: boolean;
   }) | null> {
-    const viewerId = viewerProfileId || 0;
+    const viewerId = Number.isFinite(viewerProfileId) ? Number(viewerProfileId) : 0;
     
     const result = await queryOne<any>(
       `SELECT
@@ -945,7 +945,7 @@ export const profileRepository = {
         posts_count,
         created_at,
         updated_at,
-        -- Subquery: ha reels (post con video)?
+        -- Subquery: ha reels (post con video)
         (
           SELECT COUNT(*) > 0
           FROM posts p
@@ -954,7 +954,7 @@ export const profileRepository = {
             AND pm.media_type = 'video'
             AND p.deleted_at IS NULL
         ) as has_reels,
-        -- Subquery: ha storie attive?
+        -- Subquery: ha storie attive
         (
           SELECT COUNT(*) > 0
           FROM stories s
@@ -962,7 +962,7 @@ export const profileRepository = {
             AND s.deleted_at IS NULL
             AND s.expires_at > NOW()
         ) as has_any_active_story,
-        -- Subquery: ha storie NON viste dal viewer?
+        -- Subquery: ha storie NON viste dal viewer
         (
           SELECT CASE
             WHEN COUNT(*) > 0 AND EXISTS (
@@ -971,18 +971,18 @@ export const profileRepository = {
               AND s2.deleted_at IS NULL
               AND s2.expires_at > NOW()
               AND (
-                s2.profile_id = ? OR
+                s2.profile_id = ${viewerId} OR
                 s2.profile_id IN (
                   SELECT following_profile_id FROM follows
-                  WHERE follower_profile_id = ?
-                  AND status = 'accepted'
+                   WHERE follower_profile_id = ${viewerId}
+                   AND status = 'accepted'
                 ) OR
                 NOT profiles.is_private
               )
               AND NOT EXISTS (
                 SELECT 1 FROM story_views sv2
                 WHERE sv2.story_id = s2.id
-                AND sv2.viewer_profile_id = ?
+                AND sv2.viewer_profile_id = ${viewerId}
               )
             ) THEN 1 ELSE 0 END
           FROM stories s
@@ -990,19 +990,19 @@ export const profileRepository = {
             AND s.deleted_at IS NULL
             AND s.expires_at > NOW()
         ) as has_active_story,
-        -- Subquery: il viewer ha visto almeno una storia?
+        -- Subquery: il viewer ha visto almeno una storia
         (
           SELECT COUNT(*) > 0
           FROM story_views sv
           INNER JOIN stories s ON s.id = sv.story_id
           WHERE s.profile_id = profiles.id
-            AND sv.viewer_profile_id = ?
+            AND sv.viewer_profile_id = ${viewerId}
             AND s.deleted_at IS NULL
             AND s.expires_at > NOW()
         ) as has_viewed_story
       FROM profiles
       WHERE username = ? AND deleted_at IS NULL`,
-      [viewerId, viewerId, viewerId, viewerId, username]
+      [username]
     );
 
     if (!result) return null;

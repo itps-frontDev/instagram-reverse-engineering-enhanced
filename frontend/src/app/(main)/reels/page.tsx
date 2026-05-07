@@ -727,6 +727,8 @@ export default function ReelsPage() {
             const isCurrent = index === currentIndex;
             const isPrev = index === currentIndex - 1;
             const isNext = index === currentIndex + 1;
+            const reelVideo = reel.media.find((m) => m.media_type === 'video');
+            const reelPrimaryMedia = reelVideo ?? reel.media[0];
 
             // Determina transform e opacità per l'animazione
             let translateY = '0%';
@@ -769,19 +771,27 @@ export default function ReelsPage() {
                     onClick={() => setIsPlaying(prev => !prev)}
                   >
                     {/* Video Element */}
-                    {reel.media[0] && (
+                    {reelPrimaryMedia && (
                       <>
-                        <video
-                          ref={(el) => {
-                            if (el) videoRefs.current.set(index, el);
-                          }}
-                          src={reel.media[0].media_url}
-                          className="absolute inset-0 w-full h-full object-cover"
-                          loop
-                          muted={isMuted}
-                          playsInline
-                          autoPlay={isCurrent}
-                        />
+                        {reelPrimaryMedia.media_type === 'video' ? (
+                          <video
+                            ref={(el) => {
+                              if (el) videoRefs.current.set(index, el);
+                            }}
+                            src={reelPrimaryMedia.media_url}
+                            className="absolute inset-0 w-full h-full object-cover"
+                            loop
+                            muted={isMuted}
+                            playsInline
+                            autoPlay={isCurrent}
+                          />
+                        ) : (
+                          <img
+                            src={reelPrimaryMedia.media_url}
+                            alt="Reel media"
+                            className="absolute inset-0 w-full h-full object-cover"
+                          />
+                        )}
 
                         {/* Gradient overlay per leggibilità testo */}
                         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60 pointer-events-none" />

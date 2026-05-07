@@ -69,7 +69,7 @@ export default function ProfilePage({
   const searchParams = useSearchParams();
   
   /** Funzione per aggiornare il profilo nel contesto auth */
-  const { refreshProfile } = useAuth();
+  const { refreshProfile, profile: authProfile } = useAuth();
 
   // ==========================================================================
   // STATE - Dati Profilo
@@ -204,6 +204,11 @@ export default function ProfilePage({
       const profileData = await profileRes.json();
       setProfile(profileData.profile);
 
+      // fallback locale: evita UI di follow sul proprio profilo anche se follow-status fallisce
+      if (authProfile?.id && authProfile.id === profileData.profile?.id) {
+        setFollowStatus((prev) => ({ ...prev, isOwnProfile: true }));
+      }
+
       // -----------------------------------------------------------------------
       // Fetch stato follow (richiede autenticazione)
       // -----------------------------------------------------------------------
@@ -291,6 +296,7 @@ export default function ProfilePage({
    */
   async function handleFollow() {
     if (!profile) return;
+    if (followStatus.isOwnProfile || (authProfile?.id && authProfile.id === profile.id)) return;
 
     // Aggiornamento ottimistico
     setFollowStatus((prev) => ({
@@ -307,7 +313,8 @@ export default function ProfilePage({
       });
 
       if (!res.ok) {
-        throw new Error('Errore nel follow');
+        const errorData = await res.json().catch(() => ({ error: 'Errore nel follow' }));
+        throw new Error(errorData.error || 'Errore nel follow');
       }
 
       const data = await res.json();
@@ -339,7 +346,7 @@ export default function ProfilePage({
         isPending: false,
       }));
       console.error('Errore follow:', err);
-      alert('Impossibile seguire l\'utente');
+      alert(err instanceof Error ? err.message : 'Impossibile seguire l\'utente');
     }
   }
 

@@ -46,10 +46,10 @@ export async function POST(request: NextRequest) {
 
     // Parsing del body della richiesta
     const body: FollowRequest = await request.json();
-    const { targetProfileId } = body;
+    const targetProfileId = Number((body as { targetProfileId?: number | string }).targetProfileId);
 
     // Validazione
-    if (!targetProfileId || typeof targetProfileId !== 'number') {
+    if (!Number.isInteger(targetProfileId) || targetProfileId <= 0) {
       return NextResponse.json(
         { error: 'ID profilo target obbligatorio' },
         { status: 400 }
