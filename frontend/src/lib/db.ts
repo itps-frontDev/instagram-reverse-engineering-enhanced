@@ -1,280 +1,209 @@
-import sqlite3 from "sqlite3";
-import { join } from "path";
-import { existsSync, mkdirSync } from "fs";
+/**
+ * @fileoverview Database Connection Layer (PostgreSQL)
+ *
+ * Gestisce la connessione al database PostgreSQL tramite `pg` (node-postgres).
+ * Fornisce un'API semplificata per eseguire query, con supporto per transazioni.
+ *
+ * PATTERN UTILIZZATI:
+ * 1. Connection Pool: riutilizza connessioni invece di aprirne una nuova per ogni query
+ * 2. AsyncLocalStorage: propaga il client di transazione nei metodi annidati
+ *    senza dover cambiare le firme di queryAll/queryOne/execute
+ * 3. Positional Parameters: converte `?` in `$1, $2, ...` per compatibilità PostgreSQL
+ *    (evita di riscrivere tutte le query nei repository)
+ *
+ * UTILIZZO:
+ * - queryAll<T>(sql, params): restituisce array di righe
+ * - queryOne<T>(sql, params): restituisce prima riga o undefined
+ * - execute(sql, params): per INSERT/UPDATE/DELETE, restituisce { lastID, changes }
+ * - withTransaction(fn): esegue fn() in una transazione ACID
+ *
+ * @module lib/db
+ */
 
-const IS_PRODUCTION = process.env.NODE_ENV === "production";
-const DATA_DIR = join(process.cwd(), "data");
-const DB_PATH = join(DATA_DIR, "instagram.db");
+import { Pool, PoolClient, QueryResultRow } from 'pg';
+import { AsyncLocalStorage } from 'async_hooks';
 
-if (!existsSync(DATA_DIR)) {
-  mkdirSync(DATA_DIR, { recursive: true });
-}
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
 
-let db: sqlite3.Database | null = null;
+/**
+ * Propaga il client di transazione nei metodi annidati senza cambiare le firme.
+ * Se `getRunner()` trova un client in storage, lo usa al posto del pool globale,
+ * garantendo che tutte le query dello stesso contesto usino la stessa connessione.
+ */
+const txStorage = new AsyncLocalStorage<PoolClient>();
 
-function getDb(): sqlite3.Database {
-  if (!db) {
-    db = new sqlite3.Database(DB_PATH, (err) => {
-      if (err) throw err;
-      if (!IS_PRODUCTION) {
-        console.log(`[DB] Connesso al database SQLite: ${DB_PATH}`);
-      }
-    });
-    db.run("PRAGMA foreign_keys = ON");
-    // Uso della modalità DELETE invece di WAL per maggiore persistenza dei dati in sviluppo
-    // La modalità WAL può perdere dati se il server viene terminato bruscamente
-    db.run("PRAGMA journal_mode = DELETE");
-  }
-  return db;
+/**
+ * Converte i placeholder `?` stile SQLite in `$1, $2, ...` stile PostgreSQL.
+ * Permette di mantenere la sintassi `?` in tutti i repository.
+ *
+ * @param sql - Query SQL con placeholder `?`
+ * @returns Query SQL con placeholder PostgreSQL `$N`
+ */
+function toPositional(sql: string): string {
+  let i = 0;
+  return sql.replace(/\?/g, () => `$${++i}`);
 }
 
 /**
- * @template T - Il tipo atteso per ogni riga nel set di risultati
- * @param sql - La query SQL con eventuali placeholder (?)
- * @param params - Array opzionale di valori da associare ai placeholder
- * @returns Una Promise che restituisce un array di righe corrispondenti alla query, tipizzate come T[]
- *
- * @example
- * // Ottieni tutti gli utenti attivi
- * const users = await queryAll<User>(
- *   'SELECT * FROM users WHERE deleted_at IS NULL'
- * );
- *
- * @example
- * // Ottieni utenti con un ruolo specifico
- * const admins = await queryAll<User>(
- *   'SELECT * FROM users WHERE role = ?',
- *   ['admin']
- * );
+ * Restituisce il runner corretto: il client di transazione se siamo dentro
+ * una withTransaction(), altrimenti il pool globale.
  */
-export async function queryAll<T = Record<string, unknown>>(
+function getRunner(): Pool | PoolClient {
+  return txStorage.getStore() ?? pool;
+}
+
+/**
+ * Esegue una query e restituisce tutte le righe.
+ * In sviluppo stampa la query e il tempo di esecuzione.
+ *
+ * @param sql - Query SQL (con `?` come placeholder)
+ * @param params - Parametri da iniettare in ordine
+ * @returns Array di righe tipizzate come T
+ *
+ * @example
+ * const posts = await queryAll<Post>('SELECT * FROM posts WHERE profile_id = ?', [profileId]);
+ */
+export async function queryAll<T extends QueryResultRow = Record<string, unknown>>(
   sql: string,
   params?: unknown[]
 ): Promise<T[]> {
-  return new Promise((resolve, reject) => {
-    const start = Date.now();
-    const database = getDb();
-
-    database.all(sql, params ?? [], (err, rows) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-
-      const duration = Date.now() - start;
-      if (!IS_PRODUCTION) {
-        console.log("[DB] Query eseguita", {
-          sql: sql.length > 80 ? sql.substring(0, 80) + "..." : sql,
-          duration: `${duration}ms`,
-          rows: Array.isArray(rows) ? rows.length : 0,
-        });
-      }
-
-      resolve(rows as T[]);
+  const start = Date.now();
+  const runner = getRunner();
+  const result = await runner.query<T>(toPositional(sql), params ?? []);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[DB] Query eseguita', {
+      sql: sql.length > 80 ? sql.substring(0, 80) + '...' : sql,
+      duration: `${Date.now() - start}ms`,
+      rows: result.rowCount,
     });
-  });
+  }
+  return result.rows;
 }
 
 /**
- * Esegue una query SELECT e restituisce la prima riga corrispondente.
+ * Esegue una query e restituisce solo la prima riga.
+ * Utile per ricerche per ID o unicità (email, username, ecc.).
  *
- * @template T - Il tipo atteso della riga risultato
- * @param sql - La query SQL con eventuali placeholder (?)
- * @param params - Array opzionale di valori da associare ai placeholder
- * @returns Una Promise che restituisce la prima riga corrispondente tipizzata come T, o undefined se non trovata
- *
- * @example
- * // Ottieni utente per ID
- * const user = await queryOne<User>(
- *   'SELECT * FROM users WHERE id = ?',
- *   [userId]
- * );
+ * @param sql - Query SQL (con `?` come placeholder)
+ * @param params - Parametri da iniettare in ordine
+ * @returns Prima riga tipizzata come T, oppure undefined se nessun risultato
  *
  * @example
- * // Ottieni utente per email (vincolo di unicità)
- * const user = await queryOne<User>(
- *   'SELECT * FROM users WHERE email = ? AND deleted_at IS NULL',
- *   [email]
- * );
+ * const user = await queryOne<User>('SELECT * FROM users WHERE id = ?', [id]);
  */
-export async function queryOne<T = Record<string, unknown>>(
+export async function queryOne<T extends QueryResultRow = Record<string, unknown>>(
   sql: string,
   params?: unknown[]
 ): Promise<T | undefined> {
-  return new Promise((resolve, reject) => {
-    const database = getDb();
-
-    database.get(sql, params ?? [], (err, row) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-
-      resolve(row as T | undefined);
-    });
-  });
+  const runner = getRunner();
+  const result = await runner.query<T>(toPositional(sql), params ?? []);
+  return result.rows[0];
 }
 
 /**
- * Esegue una query INSERT, UPDATE o DELETE.
+ * Esegue una query di scrittura (INSERT, UPDATE, DELETE).
  *
- * @param sql - L'istruzione SQL con eventuali placeholder (?)
- * @param params - Array opzionale di valori da associare ai placeholder
- * @returns Una Promise che restituisce un oggetto contenente:
- *   - `lastID`: Il rowid dell'ultima riga inserita (per INSERT)
- *   - `changes`: Numero di righe interessate
+ * - Per INSERT con `RETURNING id`: `lastID` conterrà l'ID generato
+ * - Per UPDATE/DELETE: `changes` conterrà il numero di righe modificate
  *
- * @example
- * // Inserisci un nuovo utente
- * const result = await execute(
- *   'INSERT INTO users (email, password_hash) VALUES (?, ?)',
- *   [email, passwordHash]
- * );
- * console.log('Nuovo ID utente:', result.lastID);
+ * NOTA: Gli INSERT che necessitano dell'ID generato devono includere `RETURNING id`
+ * nella query. PostgreSQL non ha un equivalente di `lastInsertRowId` di SQLite.
+ *
+ * @param sql - Query SQL (con `?` come placeholder)
+ * @param params - Parametri da iniettare in ordine
+ * @returns { lastID: number, changes: number }
  *
  * @example
- * // Aggiorna un utente
- * const result = await execute(
- *   'UPDATE users SET email = ? WHERE id = ?',
- *   [newEmail, userId]
- * );
- * console.log('Righe aggiornate:', result.changes);
- *
- * @example
- * // Eliminazione soft di un utente
- * await execute(
- *   "UPDATE users SET deleted_at = datetime('now') WHERE id = ?",
- *   [userId]
- * );
+ * const { lastID } = await execute('INSERT INTO posts (...) VALUES (?) RETURNING id', [...]);
+ * const { changes } = await execute('UPDATE posts SET ... WHERE id = ?', [...]);
  */
 export async function execute(
   sql: string,
   params?: unknown[]
 ): Promise<{ lastID: number; changes: number }> {
-  return new Promise((resolve, reject) => {
-    const database = getDb();
-
-    database.run(sql, params ?? [], function (err) {
-      if (err) {
-        reject(err);
-        return;
-      }
-
-      // Il contesto 'this' contiene lastID e changes
-      resolve({
-        lastID: this.lastID,
-        changes: this.changes,
-      });
-    });
-  });
+  const runner = getRunner();
+  const result = await runner.query(toPositional(sql), params ?? []);
+  return {
+    lastID: (result.rows[0]?.id as number) ?? 0,
+    changes: result.rowCount ?? 0,
+  };
 }
 
 /**
- * Esegue più istruzioni SQL contemporaneamente.
+ * Esegue uno script SQL multi-statement (es. durante migrazione o seeding).
+ * Acquisisce un client dedicato e lo rilascia al termine.
  *
- * Utile per eseguire migrazioni o script di inizializzazione.
- * Nota: Non supporta l'associazione di parametri.
- *
- * @param sql - Una stringa contenente una o più istruzioni SQL
- * @returns Una Promise che si risolve quando tutte le istruzioni sono eseguite
- * @throws Error se una qualsiasi istruzione fallisce l'esecuzione
- *
- * @example
- * // Esegui uno script di migrazione
- * const migrationSQL = await fs.readFile('migration.sql', 'utf-8');
- * await executeScript(migrationSQL);
+ * @param sql - Script SQL con più statement separati da `;`
  */
 export async function executeScript(sql: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const database = getDb();
-
-    database.exec(sql, (err) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-
-      resolve();
-    });
-  });
+  const client = await pool.connect();
+  try {
+    await client.query(sql);
+  } finally {
+    client.release();
+  }
 }
 
 /**
- * Chiude la connessione al database.
+ * Esegue una funzione all'interno di una transazione ACID.
  *
- * Dovrebbe essere chiamata quando l'applicazione si sta arrestando per garantire
- * che tutte le operazioni in sospeso siano completate e le risorse rilasciate.
+ * COME FUNZIONA:
+ * 1. Acquisisce un `PoolClient` dedicato
+ * 2. Invia `BEGIN`
+ * 3. Memorizza il client in `txStorage` (AsyncLocalStorage)
+ * 4. Esegue `fn()` — tutte le chiamate a queryAll/queryOne/execute
+ *    al suo interno troveranno automaticamente il client in storage
+ * 5. Se `fn()` ha successo → `COMMIT`, altrimenti → `ROLLBACK`
+ * 6. Rilascia il client al pool
  *
- * @returns Una Promise che si risolve quando la connessione è chiusa
+ * @param fn - Funzione da eseguire nella transazione
+ * @returns Il valore restituito da fn()
+ * @throws Rilancia l'errore dopo il ROLLBACK
  *
  * @example
- * // Nel gestore di arresto dell'app
- * process.on('SIGINT', async () => {
- *   await closeDb();
- *   process.exit(0);
- * });
- */
-export async function closeDb(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (db) {
-      db.close((err) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-
-        db = null;
-        if (!IS_PRODUCTION) {
-          console.log("[DB] Connessione chiusa");
-        }
-
-        resolve();
-      });
-    } else {
-      resolve();
-    }
-  });
-}
-
-
-/**
- * Esegue una funzione all'interno di una transazione database.
- * 
- * Se la funzione completa con successo, la transazione viene committata.
- * Se la funzione lancia un'eccezione, la transazione viene annullata (rollback).
- * 
- * @template T - Tipo del valore di ritorno della funzione
- * @param fn - Funzione async da eseguire nella transazione
- * @returns Il valore restituito dalla funzione
- * @throws L'errore originale se la funzione fallisce (dopo il rollback)
- * 
- * @example
- * const result = await withTransaction(async () => {
- *   const userId = await userRepository.create({ email, password_hash });
- *   await profileRepository.create({ user_id: userId, username });
- *   return userId;
+ * await withTransaction(async () => {
+ *   const postId = await postRepository.create(data);
+ *   await postRepository.addMedia({ post_id: postId, ... });
+ *   await profileRepository.incrementPostsCount(profileId);
  * });
  */
 export async function withTransaction<T>(fn: () => Promise<T>): Promise<T> {
-  await execute('BEGIN TRANSACTION');
-  
+  const client = await pool.connect();
   try {
-    const result = await fn();
-    await execute('COMMIT');
+    await client.query('BEGIN');
+    const result = await txStorage.run(client, fn);
+    await client.query('COMMIT');
     return result;
   } catch (error) {
     try {
-      await execute('ROLLBACK');
+      await client.query('ROLLBACK');
     } catch (rollbackError) {
       console.error('[DB] Errore rollback:', rollbackError);
     }
     throw error;
+  } finally {
+    client.release();
   }
 }
 
-// ============================================================================
-// ESPORTAZIONI
-// ============================================================================
+/**
+ * Chiude il pool di connessioni.
+ * Chiamare al termine del processo (es. durante il graceful shutdown).
+ */
+export async function closeDb(): Promise<void> {
+  await pool.end();
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[DB] Connessione chiusa');
+  }
+}
 
-// Tutte le esportazioni sono ora basate su async/Promise.
-export { getDb };
+/**
+ * Restituisce il pool di connessioni grezzo.
+ * Usare solo quando serve accesso diretto a `pg.Pool`
+ * (es. per stream o operazioni COPY).
+ */
+export function getDb() {
+  return pool;
+}

@@ -133,7 +133,7 @@ export const notificationRepository = {
          AND type = ?
          AND (reference_id = ? OR (reference_id IS NULL AND ? IS NULL))
          AND (reference_type = ? OR (reference_type IS NULL AND ? IS NULL))
-         AND created_at > datetime('now', '-1 hour')`,
+         AND created_at > NOW() - INTERVAL '1 hour'`,
       [
         data.recipient_profile_id,
         data.sender_profile_id,
@@ -149,7 +149,7 @@ export const notificationRepository = {
 
     const result = await execute(
       `INSERT INTO notifications (recipient_profile_id, sender_profile_id, type, reference_type, reference_id)
-       VALUES (?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?) RETURNING id`,
       [
         data.recipient_profile_id,
         data.sender_profile_id,
@@ -226,22 +226,26 @@ export const notificationRepository = {
       `SELECT
         n.id,
         n.recipient_profile_id,
-        n.actor_profile_id,
+        n.sender_profile_id as actor_profile_id,
         n.type,
-        n.post_id,
-        n.comment_id,
+        n.reference_type,
+        n.reference_id,
+        CASE WHEN n.reference_type = 'post' THEN n.reference_id ELSE NULL END as post_id,
+        CASE WHEN n.reference_type = 'comment' THEN n.reference_id ELSE NULL END as comment_id,
         n.is_read,
         n.created_at,
         p.username AS actor_username,
         p.full_name AS actor_full_name,
         p.profile_image_url AS actor_profile_image_url,
         p.is_verified AS actor_is_verified,
-        (SELECT media_url FROM post_media WHERE post_id = n.post_id ORDER BY position LIMIT 1) AS post_media_url
+        (SELECT media_url FROM post_media pm INNER JOIN posts po ON pm.post_id = po.id
+         WHERE po.id = CASE WHEN n.reference_type = 'post' THEN n.reference_id ELSE NULL END
+         ORDER BY pm.position LIMIT 1) AS post_media_url
        FROM notifications n
-       INNER JOIN profiles p ON n.actor_profile_id = p.id
+       LEFT JOIN profiles p ON n.sender_profile_id = p.id
        WHERE n.recipient_profile_id = ?
-         AND n.is_read = 0
-         AND p.deleted_at IS NULL
+         AND NOT n.is_read
+         AND (p.deleted_at IS NULL OR p.id IS NULL)
        ORDER BY n.created_at DESC
        LIMIT ?`,
       [profileId, limit]
@@ -266,7 +270,7 @@ export const notificationRepository = {
       `SELECT COUNT(*) as count
        FROM notifications
        WHERE recipient_profile_id = ?
-         AND is_read = 0`,
+         AND NOT is_read`,
       [profileId]
     );
     return result?.count || 0;
@@ -282,7 +286,7 @@ export const notificationRepository = {
   async markAsRead(id: number, profileId: number): Promise<boolean> {
     const result = await execute(
       `UPDATE notifications
-       SET is_read = 1
+       SET is_read = TRUE
        WHERE id = ? AND recipient_profile_id = ?`,
       [id, profileId]
     );
@@ -299,8 +303,8 @@ export const notificationRepository = {
   async markAllAsRead(profileId: number): Promise<number> {
     const result = await execute(
       `UPDATE notifications
-       SET is_read = 1
-       WHERE recipient_profile_id = ? AND is_read = 0`,
+       SET is_read = TRUE
+       WHERE recipient_profile_id = ? AND NOT is_read`,
       [profileId]
     );
     return result.changes;
@@ -544,7 +548,7 @@ export const notificationRepository = {
     // perché vogliamo sempre creare questa notifica specifica
     const result = await execute(
       `INSERT INTO notifications (recipient_profile_id, sender_profile_id, type, reference_type, reference_id)
-       VALUES (?, ?, 'follow_accepted', 'profile', ?)`,
+       VALUES (?, ?, 'follow_accepted', 'profile', ?) RETURNING id`,
       [requesterId, accepterId, accepterId]
     );
 
@@ -652,7 +656,7 @@ export const notificationRepository = {
         p.username as sender_username,
         p.full_name as sender_full_name,
         p.profile_image_url as sender_profile_image_url,
-        COALESCE(p.is_verified, 0) as sender_is_verified,
+        COALESCE(p.is_verified, FALSE) as sender_is_verified,
         COALESCE(pm_post.media_url, pm_comment.media_url, s.media_url) as reference_image_url,
         COALESCE(pm_post.media_type, pm_comment.media_type, s.media_type) as reference_media_type
       FROM notifications n
@@ -671,8 +675,8 @@ export const notificationRepository = {
 
     return rows.map(row => ({
       ...row,
-      is_read: row.is_read === 1,
-      sender_is_verified: row.sender_is_verified === 1,
+      is_read: Boolean(row.is_read),
+      sender_is_verified: Boolean(row.sender_is_verified),
     }));
   },
 };

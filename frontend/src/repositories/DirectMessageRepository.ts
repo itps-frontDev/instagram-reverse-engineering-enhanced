@@ -113,7 +113,7 @@ class DirectMessageRepository {
    */
   async getChatsWithDetails(profileId: number, limit: number = 50): Promise<ChatWithDetails[]> {
     return queryAll<ChatWithDetails>(
-      `SELECT DISTINCT
+      `SELECT
         c.id, 
         c.is_group, 
         c.name, 
@@ -146,9 +146,9 @@ class DirectMessageRepository {
    */
   async getFollowersWithoutChat(profileId: number, limit: number = 100): Promise<PotentialContact[]> {
     return queryAll<PotentialContact>(
-      `SELECT DISTINCT p.id, p.username, p.full_name, p.profile_image_url
-      FROM profiles p
-      JOIN follows f ON (
+      `SELECT p.id, p.username, p.full_name, p.profile_image_url
+       FROM profiles p
+       JOIN follows f ON (
         (f.follower_profile_id = p.id AND f.following_profile_id = ?)
         OR
         (f.following_profile_id = p.id AND f.follower_profile_id = ?)
@@ -252,15 +252,13 @@ class DirectMessageRepository {
   async sendMessage(chatId: number, senderProfileId: number, text: string): Promise<number> {
     // Inserisci il messaggio
     const result = await execute(
-      `INSERT INTO messages (chat_id, sender_profile_id, text) VALUES (?, ?, ?)`,
+      `INSERT INTO messages (chat_id, sender_profile_id, text) VALUES (?, ?, ?) RETURNING id`,
       [chatId, senderProfileId, text]
     );
 
-    // Aggiorna last_message_at sulla chat
-    const now = Date.now();
     await execute(
-      `UPDATE chats SET last_message_at = ? WHERE id = ?`,
-      [now, chatId]
+      `UPDATE chats SET last_message_at = NOW() WHERE id = ?`,
+      [chatId]
     );
 
     return result.lastID!;
@@ -277,7 +275,7 @@ class DirectMessageRepository {
     const chat = await queryOne<{ id: number }>(
       `SELECT c.id
        FROM chats c
-       WHERE c.is_group = 0
+       WHERE NOT c.is_group
          AND c.deleted_at IS NULL
          AND EXISTS (
            SELECT 1 FROM chat_participants cp1
@@ -302,8 +300,8 @@ class DirectMessageRepository {
   async createChat(creatorProfileId: number, otherProfileId: number): Promise<number> {
     // Crea la chat
     const chatResult = await execute(
-      'INSERT INTO chats (is_group, created_by_profile_id) VALUES (?, ?)',
-      [0, creatorProfileId]
+      'INSERT INTO chats (is_group, created_by_profile_id) VALUES (?, ?) RETURNING id',
+      [false, creatorProfileId]
     );
 
     const chatId = chatResult.lastID!;

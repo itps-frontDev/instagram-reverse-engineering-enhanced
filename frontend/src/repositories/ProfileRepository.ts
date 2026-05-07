@@ -8,9 +8,10 @@
  * - profiles: dati del profilo (username, bio, contatori)
  * - follows: relazioni follower-following con stato (pending/accepted)
  * 
- * NOTA SU SQLITE E BOOLEANI:
- * SQLite non ha un tipo booleano nativo, usa INTEGER (0/1).
- * Dobbiamo convertire manualmente con Boolean() dopo le query.
+ * NOTA SUI BOOLEANI:
+ * PostgreSQL restituisce i booleani nativamente, ma il driver `pg`
+ * può restituirli come stringa o number in alcune query con subquery scalari.
+ * Usiamo Boolean() in modo difensivo per garantire il tipo corretto.
  * 
  * @module repositories/ProfileRepository
  * 
@@ -109,8 +110,7 @@ export interface SearchResult {
 }
 
 /**
- * Row raw del database per SearchResult.
- * SQLite usa INTEGER (0/1/null) invece di boolean.
+ * Row raw del database per SearchResult (valori numerici prima della conversione).
  * @internal
  */
 interface SearchResultRow {
@@ -146,8 +146,7 @@ export interface FollowerWithStatus {
 }
 
 /**
- * Row raw del database per FollowerWithStatus.
- * SQLite usa INTEGER (0/1) invece di boolean.
+ * Row raw del database per FollowerWithStatus (valori numerici prima della conversione).
  * @internal
  */
 interface FollowerWithStatusRow {
@@ -171,7 +170,6 @@ interface FollowerWithStatusRow {
 export const profileRepository = {
   /**
    * Trova un profilo per ID.
-   * Converte automaticamente i booleani da SQLite INTEGER a boolean JS.
    * 
    * @param id - ID del profilo
    * @returns Profilo trovato o null
@@ -189,11 +187,10 @@ export const profileRepository = {
     );
     
     if (profile) {
-      // Conversione SQLite INTEGER -> JavaScript boolean
       profile.is_private = Boolean(profile.is_private);
       profile.is_verified = Boolean(profile.is_verified);
     }
-    
+
     return profile || null;
   },
 
@@ -220,17 +217,15 @@ export const profileRepository = {
       profile.is_private = Boolean(profile.is_private);
       profile.is_verified = Boolean(profile.is_verified);
     }
-    
+
     return profile || null;
   },
 
   /**
    * Trova un profilo per username.
-   * Usa COLLATE NOCASE per ricerca case-insensitive.
-   * 
-   * COLLATE NOCASE: clausola SQLite per ignorare maiuscole/minuscole.
-   * Così 'JohnDoe' e 'johndoe' trovano lo stesso profilo.
-   * 
+   * La ricerca è case-insensitive grazie al tipo CITEXT di PostgreSQL.
+   * 'JohnDoe' e 'johndoe' trovano lo stesso profilo senza clausole speciali.
+   *
    * @param username - Username da cercare
    * @returns Profilo trovato o null
    */
@@ -242,7 +237,7 @@ export const profileRepository = {
         followers_count, following_count, posts_count,
         created_at, updated_at
        FROM profiles
-       WHERE username = ? COLLATE NOCASE AND deleted_at IS NULL`,
+       WHERE username = ? AND deleted_at IS NULL`,
       [username.trim().toLowerCase()]
     );
     
@@ -250,7 +245,7 @@ export const profileRepository = {
       profile.is_private = Boolean(profile.is_private);
       profile.is_verified = Boolean(profile.is_verified);
     }
-    
+
     return profile || null;
   },
 
@@ -267,7 +262,7 @@ export const profileRepository = {
   async create(data: CreateProfileData): Promise<number> {
     const result = await execute(
       `INSERT INTO profiles (user_id, username, full_name, profile_image_url, bio, website_url, is_private)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id`,
       [
         data.user_id,
         data.username.trim().toLowerCase(),
@@ -275,7 +270,7 @@ export const profileRepository = {
         data.profile_image_url || null,
         data.bio || null,
         data.website_url || null,
-        data.is_private ? 1 : 0,
+        data.is_private ?? false,
       ]
     );
     return result.lastID;
@@ -328,12 +323,12 @@ export const profileRepository = {
     }
     if (data.is_private !== undefined) {
       fields.push('is_private = ?');
-      values.push(data.is_private ? 1 : 0);
+      values.push(data.is_private);
     }
 
     if (fields.length === 0) return false;
 
-    fields.push("updated_at = datetime('now')");
+    fields.push("updated_at = NOW()");
     values.push(id);
 
     const result = await execute(
@@ -354,8 +349,8 @@ export const profileRepository = {
   async isUsernameTaken(username: string, excludeProfileId?: number): Promise<boolean> {
     const normalizedUsername = username.trim().toLowerCase();
     const query = excludeProfileId
-      ? `SELECT 1 FROM profiles WHERE username = ? COLLATE NOCASE AND id != ? AND deleted_at IS NULL`
-      : `SELECT 1 FROM profiles WHERE username = ? COLLATE NOCASE AND deleted_at IS NULL`;
+      ? `SELECT 1 FROM profiles WHERE username = ? AND id != ? AND deleted_at IS NULL`
+      : `SELECT 1 FROM profiles WHERE username = ? AND deleted_at IS NULL`;
     const params = excludeProfileId ? [normalizedUsername, excludeProfileId] : [normalizedUsername];
     const result = await queryOne(query, params);
     return !!result;
@@ -471,7 +466,7 @@ export const profileRepository = {
     // Usa il tipo Row interno per i risultati raw del database
     const results = await queryAll<SearchResultRow>(sql, params);
 
-    // Converte i valori SQLite (0/1) in booleani JavaScript
+    // Converte i valori in booleani JavaScript
     return results.map(r => ({
       ...r,
       is_verified: Boolean(r.is_verified),
@@ -550,7 +545,7 @@ export const profileRepository = {
   ): Promise<number> {
     const result = await execute(
       `INSERT INTO follows (follower_profile_id, following_profile_id, status)
-       VALUES (?, ?, ?)`,
+       VALUES (?, ?, ?) RETURNING id`,
       [followerProfileId, followingProfileId, status]
     );
     return result.lastID;
@@ -571,7 +566,7 @@ export const profileRepository = {
     status: 'pending' | 'accepted' | 'rejected'
   ): Promise<boolean> {
     const result = await execute(
-      `UPDATE follows SET status = ?, updated_at = datetime('now')
+      `UPDATE follows SET status = ?, updated_at = NOW()
        WHERE follower_profile_id = ? AND following_profile_id = ? AND deleted_at IS NULL`,
       [status, followerProfileId, followingProfileId]
     );
@@ -589,7 +584,7 @@ export const profileRepository = {
    */
   async deleteFollow(followerProfileId: number, followingProfileId: number): Promise<boolean> {
     const result = await execute(
-      `UPDATE follows SET deleted_at = datetime('now')
+      `UPDATE follows SET deleted_at = NOW()
        WHERE follower_profile_id = ? AND following_profile_id = ? AND deleted_at IS NULL`,
       [followerProfileId, followingProfileId]
     );
@@ -648,7 +643,7 @@ export const profileRepository = {
       [viewerId, viewerId, profileId, limit, offset]
     );
     
-    // Converte i valori SQLite (0/1) in booleani JavaScript
+    // Converte i valori in booleani JavaScript
     return profiles.map(p => ({
       ...p,
       is_verified: Boolean(p.is_verified),
@@ -706,7 +701,7 @@ export const profileRepository = {
       [viewerId, viewerId, profileId, limit, offset]
     );
     
-    // Converte i valori SQLite (0/1) in booleani JavaScript
+    // Converte i valori in booleani JavaScript
     return profiles.map(p => ({
       ...p,
       is_verified: Boolean(p.is_verified),
@@ -821,7 +816,7 @@ export const profileRepository = {
   // - PRO: Query di lettura molto più veloci
   // - CON: Possibile inconsistenza se gli update falliscono
   //
-  // MAX(0, count - 1) previene valori negativi in caso di bug.
+  // GREATEST(0, count - 1) previene valori negativi in caso di bug.
 
   /**
    * Incrementa il contatore follower di un profilo.
@@ -832,7 +827,7 @@ export const profileRepository = {
    */
   async incrementFollowersCount(profileId: number, amount = 1): Promise<void> {
     await execute(
-      `UPDATE profiles SET followers_count = followers_count + ?, updated_at = datetime('now')
+      `UPDATE profiles SET followers_count = followers_count + ?, updated_at = NOW()
        WHERE id = ? AND deleted_at IS NULL`,
       [amount, profileId]
     );
@@ -841,13 +836,13 @@ export const profileRepository = {
   /**
    * Decrementa il contatore follower di un profilo.
    * Chiamare quando qualcuno smette di seguire il profilo.
-   * Usa MAX(0, ...) per evitare valori negativi.
+   * Usa GREATEST(0, ...) per evitare valori negativi.
    * 
    * @param profileId - ID del profilo che perde un follower
    */
   async decrementFollowersCount(profileId: number): Promise<void> {
     await execute(
-      `UPDATE profiles SET followers_count = MAX(0, followers_count - 1), updated_at = datetime('now')
+      `UPDATE profiles SET followers_count = GREATEST(0, followers_count - 1), updated_at = NOW()
        WHERE id = ? AND deleted_at IS NULL`,
       [profileId]
     );
@@ -861,7 +856,7 @@ export const profileRepository = {
    */
   async incrementFollowingCount(profileId: number): Promise<void> {
     await execute(
-      `UPDATE profiles SET following_count = following_count + 1, updated_at = datetime('now')
+      `UPDATE profiles SET following_count = following_count + 1, updated_at = NOW()
        WHERE id = ? AND deleted_at IS NULL`,
       [profileId]
     );
@@ -875,7 +870,7 @@ export const profileRepository = {
    */
   async decrementFollowingCount(profileId: number): Promise<void> {
     await execute(
-      `UPDATE profiles SET following_count = MAX(0, following_count - 1), updated_at = datetime('now')
+      `UPDATE profiles SET following_count = GREATEST(0, following_count - 1), updated_at = NOW()
        WHERE id = ? AND deleted_at IS NULL`,
       [profileId]
     );
@@ -889,7 +884,7 @@ export const profileRepository = {
    */
   async incrementPostsCount(profileId: number): Promise<void> {
     await execute(
-      `UPDATE profiles SET posts_count = posts_count + 1, updated_at = datetime('now')
+      `UPDATE profiles SET posts_count = posts_count + 1, updated_at = NOW()
        WHERE id = ? AND deleted_at IS NULL`,
       [profileId]
     );
@@ -903,7 +898,7 @@ export const profileRepository = {
    */
   async decrementPostsCount(profileId: number): Promise<void> {
     await execute(
-      `UPDATE profiles SET posts_count = MAX(0, posts_count - 1), updated_at = datetime('now')
+      `UPDATE profiles SET posts_count = GREATEST(0, posts_count - 1), updated_at = NOW()
        WHERE id = ? AND deleted_at IS NULL`,
       [profileId]
     );
@@ -965,7 +960,7 @@ export const profileRepository = {
           FROM stories s
           WHERE s.profile_id = profiles.id
             AND s.deleted_at IS NULL
-            AND datetime(s.expires_at) > datetime('now')
+            AND s.expires_at > NOW()
         ) as has_any_active_story,
         -- Subquery: ha storie NON viste dal viewer?
         (
@@ -974,7 +969,7 @@ export const profileRepository = {
               SELECT 1 FROM stories s2
               WHERE s2.profile_id = profiles.id
               AND s2.deleted_at IS NULL
-              AND datetime(s2.expires_at) > datetime('now')
+              AND s2.expires_at > NOW()
               AND (
                 s2.profile_id = ? OR
                 s2.profile_id IN (
@@ -982,7 +977,7 @@ export const profileRepository = {
                   WHERE follower_profile_id = ?
                   AND status = 'accepted'
                 ) OR
-                profiles.is_private = 0
+                NOT profiles.is_private
               )
               AND NOT EXISTS (
                 SELECT 1 FROM story_views sv2
@@ -993,7 +988,7 @@ export const profileRepository = {
           FROM stories s
           WHERE s.profile_id = profiles.id
             AND s.deleted_at IS NULL
-            AND datetime(s.expires_at) > datetime('now')
+            AND s.expires_at > NOW()
         ) as has_active_story,
         -- Subquery: il viewer ha visto almeno una storia?
         (
@@ -1003,16 +998,16 @@ export const profileRepository = {
           WHERE s.profile_id = profiles.id
             AND sv.viewer_profile_id = ?
             AND s.deleted_at IS NULL
-            AND datetime(s.expires_at) > datetime('now')
+            AND s.expires_at > NOW()
         ) as has_viewed_story
       FROM profiles
-      WHERE username = ? COLLATE NOCASE AND deleted_at IS NULL`,
+      WHERE username = ? AND deleted_at IS NULL`,
       [viewerId, viewerId, viewerId, viewerId, username]
     );
 
     if (!result) return null;
 
-    // Converti tutti i booleani SQLite (0/1) in JavaScript boolean
+    // Converti tutti i valori in booleani JavaScript
     return {
       id: result.id,
       user_id: result.user_id,
@@ -1098,7 +1093,7 @@ export const profileRepository = {
         ) as follow_status
       FROM profiles p
       WHERE p.id != ?
-        AND p.is_private = 0
+        AND NOT p.is_private
         AND p.deleted_at IS NULL
         AND NOT EXISTS (
           SELECT 1 FROM follows f
@@ -1131,7 +1126,7 @@ export const profileRepository = {
     const result = await execute(
       `UPDATE follows
        SET status = 'accepted',
-           updated_at = datetime('now')
+           updated_at = NOW()
        WHERE id = ?`,
       [followId]
     );
@@ -1147,7 +1142,7 @@ export const profileRepository = {
   async deleteFollowById(followId: number): Promise<boolean> {
     const result = await execute(
       `UPDATE follows
-       SET deleted_at = datetime('now')
+       SET deleted_at = NOW()
        WHERE id = ?`,
       [followId]
     );
@@ -1164,7 +1159,7 @@ export const profileRepository = {
   async acceptAllPendingFollowRequests(profileId: number): Promise<number> {
     const result = await execute(
       `UPDATE follows 
-       SET status = 'accepted', updated_at = datetime('now')
+       SET status = 'accepted', updated_at = NOW()
        WHERE following_profile_id = ? 
          AND status = 'pending' 
          AND deleted_at IS NULL`,

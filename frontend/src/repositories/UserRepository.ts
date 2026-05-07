@@ -188,7 +188,7 @@ export const userRepository = {
   async create(data: CreateUserData): Promise<number> {
     const result = await execute(
       `INSERT INTO users (email, phone_number, password_hash, date_of_birth)
-       VALUES (?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?) RETURNING id`,
       [
         data.email ? data.email.trim().toLowerCase() : null,
         data.phone_number ? data.phone_number.trim().toLowerCase() : null,
@@ -231,11 +231,11 @@ export const userRepository = {
     }
     if (data.is_email_verified !== undefined) {
       fields.push('is_email_verified = ?');
-      values.push(data.is_email_verified ? 1 : 0);
+      values.push(data.is_email_verified);
     }
     if (data.is_phone_verified !== undefined) {
       fields.push('is_phone_verified = ?');
-      values.push(data.is_phone_verified ? 1 : 0);
+      values.push(data.is_phone_verified);
     }
     if (data.last_login_at !== undefined) {
       fields.push('last_login_at = ?');
@@ -244,7 +244,7 @@ export const userRepository = {
 
     if (fields.length === 0) return false;
 
-    fields.push("updated_at = datetime('now')");
+    fields.push("updated_at = NOW()");
     values.push(id);
 
     const result = await execute(
@@ -262,7 +262,7 @@ export const userRepository = {
    */
   async updateLastLogin(id: number): Promise<void> {
     await execute(
-      `UPDATE users SET last_login_at = datetime('now'), updated_at = datetime('now')
+      `UPDATE users SET last_login_at = NOW(), updated_at = NOW()
        WHERE id = ? AND deleted_at IS NULL`,
       [id]
     );
@@ -285,7 +285,7 @@ export const userRepository = {
    */
   async softDelete(id: number): Promise<boolean> {
     const result = await execute(
-      `UPDATE users SET deleted_at = datetime('now'), updated_at = datetime('now')
+      `UPDATE users SET deleted_at = NOW(), updated_at = NOW()
        WHERE id = ? AND deleted_at IS NULL`,
       [id]
     );
@@ -335,7 +335,7 @@ export const userRepository = {
   async updateDateOfBirth(id: number, dateOfBirth: string): Promise<boolean> {
     const result = await execute(
       `UPDATE users 
-       SET date_of_birth = ?, updated_at = datetime('now')
+       SET date_of_birth = ?, updated_at = NOW()
        WHERE id = ? AND deleted_at IS NULL`,
       [dateOfBirth, id]
     );
@@ -352,7 +352,7 @@ export const userRepository = {
   async updatePassword(id: number, passwordHash: string): Promise<boolean> {
     const result = await execute(
       `UPDATE users 
-       SET password_hash = ?, updated_at = datetime('now')
+       SET password_hash = ?, updated_at = NOW()
        WHERE id = ? AND deleted_at IS NULL`,
       [passwordHash, id]
     );
@@ -374,7 +374,7 @@ export const userRepository = {
   ): Promise<boolean> {
     const result = await execute(
       `UPDATE users 
-       SET email = ?, phone_number = ?, updated_at = datetime('now')
+       SET email = ?, phone_number = ?, updated_at = NOW()
        WHERE id = ? AND deleted_at IS NULL`,
       [email, phoneNumber, id]
     );

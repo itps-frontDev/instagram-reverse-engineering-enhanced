@@ -1,10 +1,58 @@
 databaseChangeLog:
   - include:
-      file: db/changelog/migrations/001_initial_schema.sql
+      file: db/changelog/migrations/changelog-extensions.xml
       relativeToChangelogFile: false
   - include:
-      file: db/changelog/migrations/002_separate_likes.sql
+      file: db/changelog/migrations/changelog-users.xml
       relativeToChangelogFile: false
   - include:
-      file: db/changelog/migrations/003_add_public_uuid.sql
+      file: db/changelog/migrations/changelog-profiles.xml
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/migrations/changelog-follows.xml
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/migrations/changelog-posts.xml
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/migrations/changelog-post-media.xml
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/migrations/changelog-post-tags.xml
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/migrations/changelog-comments.xml
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/migrations/changelog-stories.xml
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/migrations/changelog-story-views.xml
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/migrations/changelog-saved-posts.xml
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/migrations/changelog-post-likes.xml
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/migrations/changelog-comment-likes.xml
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/migrations/changelog-story-likes.xml
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/migrations/changelog-chats.xml
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/migrations/changelog-messages.xml
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/migrations/changelog-chat-participants.xml
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/migrations/changelog-notifications.xml
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/seed/changelog-dev-seed.xml
       relativeToChangelogFile: false

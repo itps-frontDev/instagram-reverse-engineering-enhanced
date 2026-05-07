@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="STORY_VIEWS;2026-05-07;cbiallo;01" author="cbiallo">
+        <sql>
+            CREATE TABLE story_views (
+                story_id          BIGINT NOT NULL,
+                viewer_profile_id BIGINT NOT NULL,
+                created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+                CONSTRAINT STORY_VIEWS_PK      PRIMARY KEY (story_id, viewer_profile_id),
+                CONSTRAINT STORY_VIEWS_STORY_FK  FOREIGN KEY (story_id)          REFERENCES stories(id)  ON DELETE CASCADE,
+                CONSTRAINT STORY_VIEWS_VIEWER_FK FOREIGN KEY (viewer_profile_id) REFERENCES profiles(id) ON DELETE CASCADE
+            );
+
+            CREATE INDEX idx_story_views_story  ON story_views(story_id,  created_at DESC);
+            CREATE INDEX idx_story_views_viewer ON story_views(viewer_profile_id);
+        </sql>
+        <rollback>
+            DROP TABLE story_views;
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
