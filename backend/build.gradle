@@ -35,6 +35,10 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
+    // ── Jackson 3.x ────────────────────────────────────────────
+    // (richiesto da Spring Boot 4 / Hibernate 7 per il mapping JSONB)
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+
     // ── SVILUPPO ──────────────────────────────────────────
     developmentOnly 'org.springframework.boot:spring-boot-devtools' 
 
