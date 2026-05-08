@@ -34,4 +34,9 @@ public class RedisService {
         logger.debug("Key {} saved successfully on Redis", key);
     }
 
+    public void deleteFromRedis(String key) {
+        redisTemplate.delete(key);
+        logger.debug("Key {} deleted from Redis", key);
+    }
+
 }

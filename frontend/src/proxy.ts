@@ -20,7 +20,6 @@
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { jwtVerify } from 'jose';
 
 /**
  * Route che richiedono autenticazione.
@@ -43,27 +42,6 @@ const protectedRoutes = [
  */
 const authRoutes = ['/login', '/register'];
 
-/** Secret per verifica JWT (deve corrispondere a quello usato in auth.ts) */
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-secret-key-2025'
-);
-
-/**
- * Verifica validità di un token JWT.
- * 
- * @param token - Token JWT da verificare
- * @returns true se valido, false altrimenti
- */
-async function verifyJWT(token: string): Promise<boolean> {
-  try {
-    await jwtVerify(token, JWT_SECRET);
-    return true;
-  } catch (error) {
-    console.error('[Middleware] Verifica JWT fallita:', error);
-    return false;
-  }
-}
-
 /**
  * Middleware principale per protezione route.
  * 
@@ -73,10 +51,8 @@ async function verifyJWT(token: string): Promise<boolean> {
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Ottieni token dal cookie (supporta entrambi i nomi per retrocompatibilità)
-  const token = request.cookies.get('auth_token')?.value || request.cookies.get('authToken')?.value;
-
-  const isAuthenticated = token ? await verifyJWT(token) : false;
+  const accessToken = request.cookies.get('iree_access_token')?.value;
+  const isAuthenticated = Boolean(accessToken);
 
   // Verifica se la route corrente è protetta
   const isProtectedRoute = protectedRoutes.some((route) =>

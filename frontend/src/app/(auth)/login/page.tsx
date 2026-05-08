@@ -24,7 +24,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Footer, InstagramLogo } from '@/components/common';
 
@@ -52,7 +52,6 @@ function LoginForm() {
   // -------------------------------------------------------------------------
   // Hooks di navigazione
   // -------------------------------------------------------------------------
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   // -------------------------------------------------------------------------
@@ -86,30 +85,14 @@ function LoginForm() {
       // Recupera il parametro redirect per tornare alla pagina originale dopo il login
       const redirectParam = searchParams.get('redirect') || '/';
 
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: identifier,
-          password,
-          redirect: redirectParam
-        }),
-        credentials: 'include',
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(
-          data.error ||
-            'Spiacenti, la tua richiesta non è andata a buon fine. Riprova tra qualche istante.'
-        );
-        setLoading(false);
-        return;
+      const authStartUrl = new URL(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/v1/auth/start`
+      );
+      authStartUrl.searchParams.set('redirect', redirectParam);
+      if (identifier.trim()) {
+        authStartUrl.searchParams.set('login_hint', identifier.trim());
       }
-
-      // Login riuscito - forza un hard reload della pagina per aggiornare lo stato di autenticazione
-      window.location.href = data.redirectTo || '/';
+      window.location.href = authStartUrl.toString();
     } catch (err) {
       setError('Spiacenti, si è verificato un problema. Riprova più tardi.');
       setLoading(false);
@@ -121,7 +104,7 @@ function LoginForm() {
   // -------------------------------------------------------------------------
   
   /** Il form è valido quando entrambi i campi sono compilati */
-  const isFormValid = identifier.length > 0 && password.length > 5;
+  const isFormValid = identifier.length > 0;
 
   // -------------------------------------------------------------------------
   // Render
