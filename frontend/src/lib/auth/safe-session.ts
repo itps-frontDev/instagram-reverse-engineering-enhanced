@@ -1,6 +1,6 @@
 import { type ReadonlyHeaders } from "next/dist/server/web/spec-extension/adapters/headers";
 
-import { auth, type Session } from "@/lib/auth";
+import { auth, type Session } from "@/lib/auth/index";
 import { buildAuthBypassSession, isAuthBypassEnabled } from "@/lib/auth/bypass";
 import { isAuthEnforcementEnabled } from "@/lib/auth/enforcement";
 

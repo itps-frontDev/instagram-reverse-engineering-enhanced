@@ -51,8 +51,8 @@ const authRoutes = ['/login', '/register'];
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const accessToken = request.cookies.get('iree_access_token')?.value;
-  const isAuthenticated = Boolean(accessToken);
+  const sessionCookie = request.cookies.get('iree_session')?.value;
+  const isAuthenticated = Boolean(sessionCookie);
 
   // Verifica se la route corrente è protetta
   const isProtectedRoute = protectedRoutes.some((route) =>

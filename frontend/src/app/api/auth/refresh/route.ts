@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-import { serializeSession, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { serializeSession, SESSION_COOKIE_NAME } from "@/lib/auth/index";
 import {
   AuthBackendError,
   REFRESH_COOKIE_MAX_AGE_SECONDS,
@@ -8,7 +8,6 @@ import {
   REFRESH_COOKIE_PATH,
   buildSessionFromBackendUser,
   isAllowedAuthRequestOrigin,
-  mapBackendRoleToAppRole,
   meWithSpring,
   refreshWithSpring,
 } from "@/lib/auth/backend";
@@ -19,7 +18,7 @@ function clearAuthCookies(response: NextResponse): void {
     name: SESSION_COOKIE_NAME,
     value: "",
     httpOnly: true,
-    sameSite: "strict",
+    sameSite: "lax",
     path: "/",
     secure: process.env.NODE_ENV === "production",
     maxAge: 0,
@@ -29,7 +28,7 @@ function clearAuthCookies(response: NextResponse): void {
     name: REFRESH_COOKIE_NAME,
     value: "",
     httpOnly: true,
-    sameSite: "strict",
+    sameSite: "lax",
     path: REFRESH_COOKIE_PATH,
     secure: process.env.NODE_ENV === "production",
     maxAge: 0,
@@ -50,13 +49,10 @@ export async function POST(request: NextRequest) {
     const tokenPayload = await refreshWithSpring(refreshToken);
     const mePayload = await meWithSpring(tokenPayload.accessToken);
 
-    const role = mapBackendRoleToAppRole(mePayload.role);
-
     const session = buildSessionFromBackendUser({
       id: mePayload.id,
-      email: mePayload.email,
-      displayName: mePayload.displayName,
-      role,
+      email: mePayload.email ?? null,
+      phoneNumber: mePayload.phoneNumber ?? null,
     });
 
     const response = NextResponse.json({
@@ -67,8 +63,7 @@ export async function POST(request: NextRequest) {
       user: {
         id: session.user.id,
         email: session.user.email,
-        name: session.user.name,
-        role: session.user.role,
+        phoneNumber: session.user.phoneNumber ?? null,
       },
     });
 
@@ -76,7 +71,7 @@ export async function POST(request: NextRequest) {
       name: SESSION_COOKIE_NAME,
       value: serializeSession(session),
       httpOnly: true,
-      sameSite: "strict",
+      sameSite: "lax",
       path: "/",
       secure: process.env.NODE_ENV === "production",
       expires: new Date(session.expiresAt),
@@ -86,7 +81,7 @@ export async function POST(request: NextRequest) {
       name: REFRESH_COOKIE_NAME,
       value: tokenPayload.refreshToken,
       httpOnly: true,
-      sameSite: "strict",
+      sameSite: "lax",
       path: REFRESH_COOKIE_PATH,
       secure: process.env.NODE_ENV === "production",
       maxAge: REFRESH_COOKIE_MAX_AGE_SECONDS,

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { type Session } from "@/lib/auth";
+import { type Session } from "@/lib/auth/index";
 
 type ApiErrorPayload = {
   error?: string;
@@ -128,15 +128,19 @@ export async function authenticatedFetch(input: RequestInfo | URL, init: Request
 
 export const signIn = {
   async email(input: LoginInput): Promise<SignInResult> {
-    const response = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      cache: "no-store",
-      credentials: "same-origin",
-      body: JSON.stringify(input),
-    });
+  const response = await fetch("/api/auth/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    cache: "no-store",
+    credentials: "same-origin",
+    body: JSON.stringify({
+      identifier: input.email,
+      password: input.password,
+      redirect: "/",
+    }),
+  });
 
     const payload = await parseJsonSafe(response);
 

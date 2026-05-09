@@ -1,66 +1,46 @@
-import { cookies } from 'next/headers';
-import { queryOne } from '@/lib/db';
-import { Profile } from '@/types/profile';
-import { verifyToken, type TokenPayload } from '@/lib/jwt';
+import { cookies } from "next/headers";
 
-export const AUTH_COOKIE_NAME = 'iree_access_token';
-const BACKEND_AUTH_ME_URL = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/v1/auth/me`;
+import { auth } from "@/lib/auth/index";
+import { profileRepository } from "@/repositories";
+import { type Profile } from "@/types/profile";
 
-export interface User {
+export const AUTH_COOKIE_NAME = "iree_session";
+
+type CurrentUser = {
   id: number;
   email: string | null;
   phone_number: string | null;
-}
+};
 
-export async function getCurrentUser(): Promise<User | null> {
+export async function getCurrentUser(): Promise<CurrentUser | null> {
   try {
     const cookieStore = await cookies();
-    const localToken = cookieStore.get(AUTH_COOKIE_NAME)?.value
-      ?? cookieStore.get('authToken')?.value;
+    const headerParts = cookieStore
+      .getAll()
+      .map(({ name, value }) => `${name}=${value}`);
 
-    if (localToken) {
-      const payload = await verifyToken(localToken);
-      if (payload?.id) {
-        const localUser = await queryOne<User>(
-          `SELECT id, email, phone_number
-           FROM users
-           WHERE id = ? AND deleted_at IS NULL`,
-          [payload.id]
-        );
-        if (localUser) {
-          return localUser;
-        }
-      }
+    const headers = new Headers();
+    if (headerParts.length > 0) {
+      headers.set("cookie", headerParts.join("; "));
     }
 
-    const cookieHeader = cookieStore.getAll().map(({ name, value }) => `${name}=${value}`).join('; ');
-
-    if (!cookieHeader) {
+    const session = auth.api.getSession(headers);
+    if (!session?.user.id) {
       return null;
     }
 
-    const response = await fetch(BACKEND_AUTH_ME_URL, {
-      method: 'GET',
-      headers: { cookie: cookieHeader },
-      cache: 'no-store',
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = await response.json();
-    if (!data?.user?.id) {
+    const userId = Number(session.user.id);
+    if (!Number.isFinite(userId)) {
       return null;
     }
 
     return {
-      id: Number(data.user.id),
-      email: data.user.email ?? null,
-      phone_number: data.user.phoneNumber ?? null,
+      id: userId,
+      email: session.user.email ?? null,
+      phone_number: session.user.phoneNumber ?? null,
     };
   } catch (error) {
-    console.error('[Auth] Errore nel recupero dell\'utente corrente:', error);
+    console.error("[Auth] Errore nel recupero dell'utente corrente:", error);
     return null;
   }
 }
@@ -72,20 +52,10 @@ export async function getCurrentProfile(): Promise<Profile | null> {
       return null;
     }
 
-    const profile = await queryOne<Profile>(
-      `SELECT
-        id, user_id, username, full_name, profile_image_url,
-        bio, website_url, is_private, is_verified,
-        followers_count, following_count, posts_count,
-        created_at, updated_at
-       FROM profiles
-       WHERE user_id = ? AND deleted_at IS NULL`,
-      [user.id]
-    );
-
+    const profile = await profileRepository.findByUserId(user.id);
     return profile || null;
   } catch (error) {
-    console.error('[Auth] Errore nel recupero del profilo corrente:', error);
+    console.error("[Auth] Errore nel recupero del profilo corrente:", error);
     return null;
   }
 }
@@ -97,24 +67,10 @@ export async function isAuthenticated(): Promise<boolean> {
 
 export async function getCurrentUserId(): Promise<number | null> {
   const user = await getCurrentUser();
-  return user?.id || null;
+  return user?.id ?? null;
 }
 
 export async function getCurrentProfileId(): Promise<number | null> {
   const profile = await getCurrentProfile();
-  return profile?.id || null;
-}
-
-export async function getTokenPayload(): Promise<TokenPayload | null> {
-  const user = await getCurrentUser();
-  const profile = await getCurrentProfile();
-  if (!user) {
-    return null;
-  }
-
-  return {
-    id: user.id,
-    email: user.email,
-    username: profile?.username ?? null,
-  };
+  return profile?.id ?? null;
 }

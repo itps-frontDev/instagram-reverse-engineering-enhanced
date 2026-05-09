@@ -1,4 +1,4 @@
-import { type Session } from "@/lib/auth";
+import { type Session } from "@/lib/auth/index";
 
 export function isAuthBypassEnabled(): boolean {
   return process.env.AUTH_BYPASS?.toLowerCase() === "true";
@@ -9,8 +9,7 @@ export function buildAuthBypassSession(): Session {
     user: {
       id: "bypass-user",
       email: "bypass@localhost",
-      name: "Bypass User",
-      role: "admin",
+      phoneNumber: null,
     },
     expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
   };

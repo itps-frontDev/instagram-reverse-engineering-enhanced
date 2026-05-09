@@ -1,67 +1,103 @@
-import { NextRequest, NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
-import { userRepository } from '@/repositories';
-import { generateToken } from '@/lib/jwt';
-import { attemptLogin, parseLoginInput } from '@/lib/auth-login';
+import { type NextRequest, NextResponse } from "next/server";
 
-export const runtime = 'nodejs';
-
-const TOKEN_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
+import { serializeSession, SESSION_COOKIE_NAME } from "@/lib/auth/index";
+import {
+  AuthBackendError,
+  REFRESH_COOKIE_MAX_AGE_SECONDS,
+  REFRESH_COOKIE_NAME,
+  REFRESH_COOKIE_PATH,
+  buildSessionFromBackendUser,
+  isAllowedAuthRequestOrigin,
+  loginInputSchema,
+  loginWithSpring,
+  meWithSpring,
+} from "@/lib/auth/backend";
+import { sanitizeInternalRedirectPath } from "@/lib/auth/redirect";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
+  if (!isAllowedAuthRequestOrigin(request)) {
+    return NextResponse.json({ error: "Richiesta non autorizzata." }, { status: 403 });
+  }
+
+  const body = await request.json().catch(() => null);
+  const parsedInput = loginInputSchema.safeParse(body);
+  if (!parsedInput.success) {
+    return NextResponse.json({ error: "Payload non valido." }, { status: 400 });
+  }
+
+  const redirectTo = sanitizeInternalRedirectPath(
+    typeof body?.redirect === "string" ? body.redirect : undefined,
+    "/"
+  );
+
   try {
-    const body = await request.json();
-    const loginInput = parseLoginInput(body);
-    const loginResult = await attemptLogin(loginInput, {
-      findByCredentials: userRepository.findByCredentials,
-      comparePassword: bcrypt.compare,
-      updateLastLogin: userRepository.updateLastLogin,
+    const tokenPayload = await loginWithSpring(parsedInput.data);
+    const mePayload = await meWithSpring(tokenPayload.accessToken);
+
+    const session = buildSessionFromBackendUser({
+      id: mePayload.id,
+      email: mePayload.email ?? null,
+      phoneNumber: mePayload.phoneNumber ?? null,
     });
 
-    if (!loginResult.ok) {
-      return NextResponse.json(
-        { error: loginResult.error },
-        { status: loginResult.status }
-      );
-    }
-
-    const token = await generateToken({
-      id: loginResult.user.id,
-      email: loginResult.user.email,
-      username: loginResult.user.username,
-    });
-
-    const response = NextResponse.json(
-      {
-        message: 'Login effettuato con successo',
-        user: {
-          id: loginResult.user.id,
-          email: loginResult.user.email,
-          username: loginResult.user.username,
-          fullName: loginResult.user.full_name,
-        },
-        redirectTo: loginResult.redirectTo,
+    const response = NextResponse.json({
+      message: "Login effettuato con successo",
+      user: {
+        id: Number(mePayload.id),
+        email: mePayload.email ?? null,
+        username: mePayload.username ?? null,
+        fullName: mePayload.fullName ?? null,
       },
-      { status: 200 }
-    );
+      redirectTo,
+      accessToken: tokenPayload.accessToken,
+      expiresIn: tokenPayload.expiresIn,
+      tokenType: tokenPayload.tokenType,
+    });
 
-    const cookieOptions = {
+    response.cookies.set({
+      name: SESSION_COOKIE_NAME,
+      value: serializeSession(session),
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax' as const,
-      path: '/',
-      maxAge: TOKEN_MAX_AGE_SECONDS,
-    };
+      sameSite: "lax",
+      path: "/",
+      secure: process.env.NODE_ENV === "production",
+      expires: new Date(session.expiresAt),
+    });
 
-    response.cookies.set('iree_access_token', token, cookieOptions);
-    response.cookies.set('authToken', token, cookieOptions);
+    response.cookies.set({
+      name: REFRESH_COOKIE_NAME,
+      value: tokenPayload.refreshToken,
+      httpOnly: true,
+      sameSite: "lax",
+      path: REFRESH_COOKIE_PATH,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: REFRESH_COOKIE_MAX_AGE_SECONDS,
+    });
 
     return response;
   } catch (error) {
-    console.error('[Login] Errore:', error);
-    return NextResponse.json(
-      { error: 'Errore del server' },
-      { status: 500 }
-    );
+    if (error instanceof AuthBackendError) {
+      if (error.status === 401) {
+        return NextResponse.json({ error: "Credenziali non valide." }, { status: 401 });
+      }
+
+      if (error.status === 429) {
+        return NextResponse.json({ error: "Account temporaneamente bloccato." }, { status: 429 });
+      }
+
+      logger.warn(
+        { event: "auth_login_backend_error", status: error.status, code: error.backendErrorCode },
+        "Auth backend login error"
+      );
+
+      return NextResponse.json(
+        { error: "Autenticazione temporaneamente non disponibile." },
+        { status: error.status >= 500 ? 503 : error.status }
+      );
+    }
+
+    logger.error({ event: "auth_login_unexpected_error", error }, "Unexpected login error");
+    return NextResponse.json({ error: "Autenticazione temporaneamente non disponibile." }, { status: 500 });
   }
 }

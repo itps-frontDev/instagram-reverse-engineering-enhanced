@@ -1,43 +1,62 @@
-import { NextResponse } from 'next/server';
-import { NextRequest } from 'next/server';
+import { type NextRequest, NextResponse } from "next/server";
 
-export const runtime = 'nodejs';
+import { SESSION_COOKIE_NAME } from "@/lib/auth/index";
+import {
+  AuthBackendError,
+  REFRESH_COOKIE_NAME,
+  REFRESH_COOKIE_PATH,
+  extractBearerToken,
+  isAllowedAuthRequestOrigin,
+  logoutWithSpring,
+} from "@/lib/auth/backend";
+import { logger } from "@/lib/logger";
+
+function clearAuthCookies(response: NextResponse): void {
+  response.cookies.set({
+    name: SESSION_COOKIE_NAME,
+    value: "",
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 0,
+  });
+
+  response.cookies.set({
+    name: REFRESH_COOKIE_NAME,
+    value: "",
+    httpOnly: true,
+    sameSite: "lax",
+    path: REFRESH_COOKIE_PATH,
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 0,
+  });
+}
 
 export async function POST(request: NextRequest) {
-  const backendBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-  const response = await fetch(`${backendBaseUrl}/api/v1/auth/logout`, {
-    method: 'POST',
-    headers: {
-      cookie: request.headers.get('cookie') || '',
-    },
-  });
+  if (!isAllowedAuthRequestOrigin(request)) {
+    return NextResponse.json({ error: "Richiesta non autorizzata." }, { status: 403 });
+  }
 
-  const payload = response.ok
-    ? await response.json()
-    : { message: 'Logout completato con successo' };
+  const accessToken = extractBearerToken(request.headers.get("authorization"));
+  const refreshToken = request.cookies.get(REFRESH_COOKIE_NAME)?.value?.trim() ?? null;
 
-  const nextResponse = NextResponse.json(payload, { status: 200 });
-  nextResponse.cookies.set('iree_access_token', '', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 0,
-  });
-  nextResponse.cookies.set('iree_refresh_token', '', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 0,
-  });
-  nextResponse.cookies.set('authToken', '', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 0,
-  });
+  if (accessToken && refreshToken) {
+    try {
+      await logoutWithSpring({ accessToken, refreshToken });
+    } catch (error) {
+      if (error instanceof AuthBackendError) {
+        logger.warn(
+          { event: "auth_logout_backend_error", status: error.status },
+          "Auth backend logout error"
+        );
+      } else {
+        logger.error({ event: "auth_logout_unexpected_error", error }, "Unexpected logout error");
+      }
+    }
+  }
 
-  return nextResponse;
+  const response = new NextResponse(null, { status: 204 });
+  clearAuthCookies(response);
+  return response;
 }

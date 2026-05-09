@@ -1,6 +1,6 @@
 package it.evodev.instagram.auth.exceptions;
 
-import com.fatellicaterinasrl.fatellisync.auth.dto.AuthErrorDTO;
+import it.evodev.instagram.auth.dto.AuthErrorDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
 
-@RestControllerAdvice(basePackages = "com.fatellicaterinasrl.fatellisync.auth")
+@RestControllerAdvice(basePackages = "it.evodev.instagram.auth")
 public class AuthExceptionHandler {
 
     @ExceptionHandler(AccountLockedException.class)

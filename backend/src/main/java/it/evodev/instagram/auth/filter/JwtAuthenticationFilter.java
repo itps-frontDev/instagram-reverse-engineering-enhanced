@@ -1,7 +1,7 @@
 package it.evodev.instagram.auth.filter;
 
-import com.fatellicaterinasrl.fatellisync.auth.services.AuthRedisService;
-import com.fatellicaterinasrl.fatellisync.auth.services.JwtService;
+import it.evodev.instagram.auth.services.AuthRedisService;
+import it.evodev.instagram.auth.services.JwtService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -10,14 +10,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -46,13 +44,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
-            String email = claims.get("email", String.class);
-            String role = claims.get("role", String.class);
+            String subject = claims.getSubject();
 
             UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                    email,
+                    subject,
                     null,
-                    List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                    java.util.List.of()
             );
             authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authToken);

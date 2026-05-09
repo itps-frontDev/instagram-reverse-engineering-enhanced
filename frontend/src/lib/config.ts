@@ -123,34 +123,11 @@ export const config = {
   },
 
   /**
-   * Configurazione autenticazione JWT (JSON Web Token).
-   * 
-   * JWT è uno standard per la trasmissione sicura di informazioni
-   * tra parti come oggetto JSON. È composto da:
-   * - Header: algoritmo e tipo di token
-   * - Payload: dati (claims) come user_id, email, exp
-   * - Signature: firma per verificare l'integrità
+   * Configurazione autenticazione.
+   * La sessione viene gestita tramite cookie server-side.
    */
-  jwt: {
-    /** Chiave segreta per firmare i token - DEVE essere cambiata in produzione! */
-    secret: getEnv('JWT_SECRET', 'your-super-secret-jwt-key-change-in-production'),
-    /** Durata del token (default: 7 giorni). Formati: '7d', '24h', '60m' */
-    expiresIn: getEnv('JWT_EXPIRES_IN', '7d'),
-    /** Nome del cookie dove viene salvato il token */
-    cookieName: 'authToken',
-    /** 
-     * Opzioni del cookie per sicurezza:
-     * - httpOnly: previene accesso da JavaScript (protezione XSS)
-     * - secure: invia solo su HTTPS in produzione
-     * - sameSite: protezione CSRF
-     */
-    cookie: {
-      httpOnly: true,  // Il cookie non è accessibile via document.cookie
-      secure: process.env.NODE_ENV === 'production',  // Solo HTTPS in prod
-      sameSite: 'lax' as const,  // Protezione CSRF, permette navigazione normale
-      path: '/',  // Cookie valido per tutto il sito
-      maxAge: 7 * 24 * 60 * 60, // 7 giorni in secondi (604800)
-    },
+  auth: {
+    cookieName: 'iree_session',
   },
 
   /**

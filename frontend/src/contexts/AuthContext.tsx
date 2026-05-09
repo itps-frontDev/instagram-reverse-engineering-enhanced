@@ -36,7 +36,7 @@ interface AuthContextType {
   /** Se l'utente è autenticato */
   isAuthenticated: boolean;
   /** Funzione per effettuare il login */
-  login: (token: string) => Promise<void>;
+  login: () => Promise<void>;
   /** Funzione per effettuare il logout */
   logout: () => Promise<void>;
   /** Funzione per aggiornare il profilo */
@@ -105,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * 
    * @param token - Token JWT (gestito dal server)
    */
-  const login = async (token: string) => {
+  const login = async () => {
     await fetchProfile();
   };
 

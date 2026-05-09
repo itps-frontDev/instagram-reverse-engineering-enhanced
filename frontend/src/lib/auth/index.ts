@@ -1,15 +1,12 @@
 import { z } from "zod";
 
-import { isAppRole } from "@/lib/auth/rbac";
-
-export const SESSION_COOKIE_NAME = "fatellisync_session";
+export const SESSION_COOKIE_NAME = "iree_session";
 
 const sessionSchema = z.object({
   user: z.object({
     id: z.string().min(1),
-    email: z.string().email(),
-    name: z.string().min(1),
-    role: z.string().min(1),
+    email: z.string().email().nullable(),
+    phoneNumber: z.string().nullable().optional(),
   }),
   expiresAt: z.iso.datetime(),
 });
@@ -17,9 +14,8 @@ const sessionSchema = z.object({
 export type Session = {
   user: {
     id: string;
-    email: string;
-    name: string;
-    role: "admin" | "backoffice";
+    email: string | null;
+    phoneNumber?: string | null;
   };
   expiresAt: string;
 };
@@ -63,10 +59,6 @@ export function deserializeSession(serialized: string): Session | null {
       return null;
     }
 
-    if (!isAppRole(validated.data.user.role)) {
-      return null;
-    }
-
     const expiresAtMs = Date.parse(validated.data.expiresAt);
     if (!Number.isFinite(expiresAtMs) || expiresAtMs <= Date.now()) {
       return null;
@@ -76,8 +68,7 @@ export function deserializeSession(serialized: string): Session | null {
       user: {
         id: validated.data.user.id,
         email: validated.data.user.email,
-        name: validated.data.user.name,
-        role: validated.data.user.role,
+        phoneNumber: validated.data.user.phoneNumber ?? null,
       },
       expiresAt: validated.data.expiresAt,
     };

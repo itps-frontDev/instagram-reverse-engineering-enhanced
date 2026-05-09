@@ -120,6 +120,12 @@ export interface LoginResponse {
   };
   /** URL dove reindirizzare l'utente */
   redirectTo: string;
+  /** Token di accesso rilasciato da Spring */
+  accessToken: string;
+  /** Durata token in secondi */
+  expiresIn: number;
+  /** Tipo token (es. Bearer) */
+  tokenType?: string;
 }
 
 /**

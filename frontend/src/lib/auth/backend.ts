@@ -1,7 +1,6 @@
 import { z } from "zod";
 
-import { type AppRole } from "@/lib/auth/rbac";
-import { type Session } from "@/lib/auth";
+import { type Session } from "@/lib/auth/index";
 
 const LOGIN_TIMEOUT_MS = 10_000;
 const REFRESH_TIMEOUT_MS = 10_000;
@@ -9,12 +8,12 @@ const LOGOUT_TIMEOUT_MS = 10_000;
 const ME_TIMEOUT_MS = 8_000;
 const SESSION_TTL_SECONDS = 8 * 60 * 60;
 
-export const REFRESH_COOKIE_NAME = "fatellisync_refresh";
-export const REFRESH_COOKIE_PATH = "/api/auth";
+export const REFRESH_COOKIE_NAME = "iree_refresh_token";
+export const REFRESH_COOKIE_PATH = "/";
 export const REFRESH_COOKIE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
 
 export const loginInputSchema = z.object({
-  email: z.string().trim().email(),
+  identifier: z.string().trim().min(1),
   password: z.string().min(1),
 });
 
@@ -27,9 +26,10 @@ const springTokenResponseSchema = z.object({
 
 const springMeResponseSchema = z.object({
   id: z.union([z.string(), z.number()]).transform(String),
-  email: z.string().trim().email(),
-  displayName: z.string().trim().min(1).nullable().optional(),
-  role: z.string().trim().min(1),
+  email: z.string().trim().email().nullable().optional(),
+  phoneNumber: z.string().trim().min(1).nullable().optional(),
+  username: z.string().trim().min(1).nullable().optional(),
+  fullName: z.string().trim().min(1).nullable().optional(),
 });
 
 export type SpringTokenResponse = z.infer<typeof springTokenResponseSchema>;
@@ -176,35 +176,18 @@ async function getSpringJson<TSchema extends z.ZodTypeAny>(input: {
   return parsed.data;
 }
 
-export function mapBackendRoleToAppRole(role: string): AppRole {
-  const normalized = role.trim().toUpperCase();
-
-  if (normalized === "ADMIN") {
-    return "admin";
-  }
-
-  if (normalized === "OPERATOR") {
-    return "backoffice";
-  }
-
-  // RBAC disabilitato: fallback permissivo per evitare blocchi su ruoli non mappati.
-  return "backoffice";
-}
-
 export function buildSessionFromBackendUser(input: {
   id: string;
-  email: string;
-  displayName?: string | null;
-  role: AppRole;
+  email?: string | null;
+  phoneNumber?: string | null;
 }): Session {
   const expiresAt = new Date(Date.now() + SESSION_TTL_SECONDS * 1000).toISOString();
 
   return {
     user: {
       id: input.id,
-      email: input.email,
-      name: input.displayName ?? input.email,
-      role: input.role,
+      email: input.email ?? null,
+      phoneNumber: input.phoneNumber ?? null,
     },
     expiresAt,
   };

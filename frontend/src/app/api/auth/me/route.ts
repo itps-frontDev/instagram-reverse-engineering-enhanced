@@ -10,54 +10,70 @@
  * - Inizializzare il context di autenticazione nel frontend
  * 
  * FLUSSO:
- * 1. getCurrentProfile() legge il cookie auth_token
- * 2. Verifica e decodifica il JWT
+ * 1. Legge session cookie o access token
+ * 2. Recupera i dati utente da Spring se serve
  * 3. Recupera il profilo dal database
  * 4. Restituisce i dati del profilo
  * 
  * @module api/auth/me
  */
 
-import { NextResponse } from 'next/server';
-import { getCurrentProfile } from '@/lib/auth';
+import { type NextRequest, NextResponse } from "next/server";
 
-// Forza runtime Node.js
-export const runtime = 'nodejs';
+import { profileRepository } from "@/repositories";
+import { auth } from "@/lib/auth/index";
+import { AuthBackendError, extractBearerToken, meWithSpring } from "@/lib/auth/backend";
+import { logger } from "@/lib/logger";
 
-/**
- * Gestisce richiesta GET per ottenere profilo corrente.
- * 
- * @returns { profile: Profile } o errore 401 se non autenticato
- */
-export async function GET() {
-  try {
-    // Recupera profilo dall'auth helper
-    // Questo legge il cookie, verifica il JWT e fa la query al DB
-    const profile = await getCurrentProfile();
+export async function GET(request: NextRequest) {
+  const bearerToken = extractBearerToken(request.headers.get("authorization"));
+  const session = auth.api.getSession(request.headers);
 
-    if (!profile) {
-      return NextResponse.json(
-        { error: 'Non autorizzato' },
-        { status: 401 }
-      );
-    }
-
-    // Converti interi SQLite (0/1) in booleani JavaScript
-    const profileData = {
-      ...profile,
-      is_private: Boolean(profile.is_private),
-      is_verified: Boolean(profile.is_verified),
-    };
-
-    return NextResponse.json(
-      { profile: profileData },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error('[Me] Errore:', error);
-    return NextResponse.json(
-      { error: 'Errore interno del server' },
-      { status: 500 }
-    );
+  if (!bearerToken && !session?.user.id) {
+    return NextResponse.json({ error: "Non autorizzato" }, { status: 401 });
   }
+
+  let userId = session?.user.id ?? null;
+
+  if (bearerToken) {
+    try {
+      const mePayload = await meWithSpring(bearerToken);
+      userId = mePayload.id;
+    } catch (error) {
+      if (error instanceof AuthBackendError) {
+        if (error.status === 401) {
+          return NextResponse.json({ error: "Token non valido." }, { status: 401 });
+        }
+
+        if (error.status === 403) {
+          return NextResponse.json({ error: "Non autorizzato." }, { status: 403 });
+        }
+
+        return NextResponse.json(
+          { error: "Servizio autenticazione non disponibile." },
+          { status: error.status >= 500 ? 503 : error.status }
+        );
+      }
+
+      logger.error({ event: "auth_me_unexpected_error", error }, "Unexpected me error");
+      return NextResponse.json({ error: "Servizio autenticazione non disponibile." }, { status: 500 });
+    }
+  }
+
+  if (!userId) {
+    return NextResponse.json({ error: "Non autorizzato" }, { status: 401 });
+  }
+
+  const userIdNumber = Number(userId);
+  if (!Number.isFinite(userIdNumber)) {
+    return NextResponse.json({ error: "Non autorizzato" }, { status: 401 });
+  }
+
+  const profile = await profileRepository.findByUserId(userIdNumber);
+
+  if (!profile) {
+    return NextResponse.json({ error: "Profilo non trovato" }, { status: 404 });
+  }
+
+  return NextResponse.json({ profile }, { status: 200 });
 }

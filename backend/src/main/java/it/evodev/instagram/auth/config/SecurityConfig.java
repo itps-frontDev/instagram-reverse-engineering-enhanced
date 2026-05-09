@@ -1,6 +1,6 @@
 package it.evodev.instagram.auth.config;
 
-import com.fatellicaterinasrl.fatellisync.auth.filter.JwtAuthenticationFilter;
+import it.evodev.instagram.auth.filter.JwtAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
