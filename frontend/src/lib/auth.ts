@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { queryOne } from '@/lib/db';
 import { Profile } from '@/types/profile';
-import { type TokenPayload } from '@/lib/jwt';
+import { verifyToken, type TokenPayload } from '@/lib/jwt';
 
 export const AUTH_COOKIE_NAME = 'iree_access_token';
 const BACKEND_AUTH_ME_URL = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/v1/auth/me`;
@@ -15,6 +15,24 @@ export interface User {
 export async function getCurrentUser(): Promise<User | null> {
   try {
     const cookieStore = await cookies();
+    const localToken = cookieStore.get(AUTH_COOKIE_NAME)?.value
+      ?? cookieStore.get('authToken')?.value;
+
+    if (localToken) {
+      const payload = await verifyToken(localToken);
+      if (payload?.id) {
+        const localUser = await queryOne<User>(
+          `SELECT id, email, phone_number
+           FROM users
+           WHERE id = ? AND deleted_at IS NULL`,
+          [payload.id]
+        );
+        if (localUser) {
+          return localUser;
+        }
+      }
+    }
+
     const cookieHeader = cookieStore.getAll().map(({ name, value }) => `${name}=${value}`).join('; ');
 
     if (!cookieHeader) {

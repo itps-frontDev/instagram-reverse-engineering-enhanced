@@ -1,7 +1,7 @@
 package it.evodev.instagram.auth.services;
 
-import com.fatellicaterinasrl.fatellisync.auth.config.JwtProperties;
-import com.fatellicaterinasrl.fatellisync.auth.models.User;
+import it.evodev.instagram.auth.config.JwtProperties;
+import it.evodev.instagram.auth.models.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -30,7 +30,7 @@ public class JwtService {
                 .id(UUID.randomUUID().toString())
                 .subject(String.valueOf(user.getId()))
                 .claim("email", user.getEmail())
-                .claim("role", user.getRole().name())
+                .claim("phoneNumber", user.getPhoneNumber())
                 .issuer(props.getIssuer())
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusSeconds(props.getAccessTokenTtl())))

@@ -95,7 +95,9 @@ export interface TokenPayload {
  */
 export interface LoginRequest {
   /** Identificatore: può essere email, telefono, o username */
-  email: string;
+  identifier: string;
+  /** @deprecated Compatibilità con vecchi client/test che inviano il campo email */
+  email?: string;
   /** Password in chiaro (verrà verificata contro l'hash) */
   password: string;
   /** URL di redirect dopo login (opzionale) */

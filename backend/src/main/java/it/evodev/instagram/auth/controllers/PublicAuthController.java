@@ -1,9 +1,9 @@
 package it.evodev.instagram.auth.controllers;
 
-import com.fatellicaterinasrl.fatellisync.auth.dto.LoginRequestDTO;
-import com.fatellicaterinasrl.fatellisync.auth.dto.LoginResponseDTO;
-import com.fatellicaterinasrl.fatellisync.auth.dto.RefreshRequestDTO;
-import com.fatellicaterinasrl.fatellisync.auth.services.AuthService;
+import it.evodev.instagram.auth.dto.LoginRequestDTO;
+import it.evodev.instagram.auth.dto.LoginResponseDTO;
+import it.evodev.instagram.auth.dto.RefreshRequestDTO;
+import it.evodev.instagram.auth.services.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

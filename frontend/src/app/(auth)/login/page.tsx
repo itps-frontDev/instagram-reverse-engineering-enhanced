@@ -5,7 +5,7 @@
  * gestione errori e redirect post-autenticazione.
  * 
  * FUNZIONALITÀ:
- * - Login con email/username e password
+ * - Login con email/username/telefono e password
  * - Mostra/nascondi password
  * - Gestione errori di autenticazione
  * - Redirect dopo login riuscito
@@ -84,17 +84,29 @@ function LoginForm() {
     try {
       // Recupera il parametro redirect per tornare alla pagina originale dopo il login
       const redirectParam = searchParams.get('redirect') || '/';
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          identifier,
+          password,
+          redirect: redirectParam,
+        }),
+      });
 
-      const authStartUrl = new URL(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/v1/auth/start`
-      );
-      authStartUrl.searchParams.set('redirect', redirectParam);
-      if (identifier.trim()) {
-        authStartUrl.searchParams.set('login_hint', identifier.trim());
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data?.error || 'Credenziali non valide.');
+        return;
       }
-      window.location.href = authStartUrl.toString();
-    } catch (err) {
+
+      window.location.href = data?.redirectTo || redirectParam;
+    } catch {
       setError('Spiacenti, si è verificato un problema. Riprova più tardi.');
+    } finally {
       setLoading(false);
     }
   };
@@ -104,7 +116,7 @@ function LoginForm() {
   // -------------------------------------------------------------------------
   
   /** Il form è valido quando entrambi i campi sono compilati */
-  const isFormValid = identifier.length > 0;
+  const isFormValid = identifier.trim().length > 0 && password.length > 0;
 
   // -------------------------------------------------------------------------
   // Render

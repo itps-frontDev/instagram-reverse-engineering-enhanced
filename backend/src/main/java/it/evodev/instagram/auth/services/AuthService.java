@@ -1,15 +1,13 @@
 package it.evodev.instagram.auth.services;
 
-import com.fatellicaterinasrl.fatellisync.auth.config.JwtProperties;
-import com.fatellicaterinasrl.fatellisync.auth.config.LockoutProperties;
-import com.fatellicaterinasrl.fatellisync.auth.dto.LoginRequestDTO;
-import com.fatellicaterinasrl.fatellisync.auth.dto.LoginResponseDTO;
-import com.fatellicaterinasrl.fatellisync.auth.dto.UserInfoDTO;
-import com.fatellicaterinasrl.fatellisync.auth.exceptions.AccountLockedException;
-import com.fatellicaterinasrl.fatellisync.auth.exceptions.AuthException;
-import com.fatellicaterinasrl.fatellisync.auth.exceptions.InvalidTokenException;
-import com.fatellicaterinasrl.fatellisync.auth.models.User;
-import com.fatellicaterinasrl.fatellisync.auth.repositories.UserRepository;
+import it.evodev.instagram.auth.config.JwtProperties;
+import it.evodev.instagram.auth.dto.LoginRequestDTO;
+import it.evodev.instagram.auth.dto.LoginResponseDTO;
+import it.evodev.instagram.auth.dto.UserInfoDTO;
+import it.evodev.instagram.auth.exceptions.AuthException;
+import it.evodev.instagram.auth.exceptions.InvalidTokenException;
+import it.evodev.instagram.auth.models.User;
+import it.evodev.instagram.auth.repositories.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
@@ -29,37 +27,22 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuthRedisService authRedisService;
     private final JwtProperties jwtProperties;
-    private final LockoutProperties lockoutProperties;
 
     @Transactional
     public LoginResponseDTO login(LoginRequestDTO request) {
-        User user = userRepository.findByEmail(request.getEmail())
+        String normalizedIdentifier = request.getIdentifier().trim().toLowerCase();
+        User user = userRepository.findByLoginIdentifier(normalizedIdentifier)
                 .orElseThrow(() -> new AuthException("Invalid credentials"));
 
-        if (!Boolean.TRUE.equals(user.getEnabled())) {
-            throw new AuthException("Account is disabled");
-        }
-
-        if (Boolean.TRUE.equals(user.getLocked())) {
-            if (user.getLockedUntil() != null && LocalDateTime.now().isBefore(user.getLockedUntil())) {
-                throw new AccountLockedException("Account is locked. Try again later");
-            }
-            // Lock expired — reset
-            user.setLocked(false);
-            user.setLockedUntil(null);
-            user.setFailedLoginAttempts(0);
-        }
-
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            handleFailedLogin(user);
             throw new AuthException("Invalid credentials");
         }
-
-        handleSuccessfulLogin(user);
+        user.setLastLoginAt(LocalDateTime.now());
+        userRepository.save(user);
 
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken();
-        authRedisService.storeRefreshToken(refreshToken, user.getId(), user.getEmail(), user.getRole().name());
+        authRedisService.storeRefreshToken(refreshToken, user.getId(), user.getEmail(), user.getPhoneNumber());
 
         return new LoginResponseDTO(accessToken, refreshToken, jwtProperties.getAccessTokenTtl(), "Bearer");
     }
@@ -72,20 +55,15 @@ public class AuthService {
         }
 
         Long userId = ((Number) data.get("userId")).longValue();
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new InvalidTokenException("User not found"));
-
-        if (!Boolean.TRUE.equals(user.getEnabled()) || Boolean.TRUE.equals(user.getLocked())) {
-            authRedisService.revokeRefreshToken(refreshToken);
-            throw new AuthException("Account is not active");
-        }
 
         // Rotate: revoke old, issue new
         authRedisService.revokeRefreshToken(refreshToken);
 
         String newAccessToken = jwtService.generateAccessToken(user);
         String newRefreshToken = jwtService.generateRefreshToken();
-        authRedisService.storeRefreshToken(newRefreshToken, user.getId(), user.getEmail(), user.getRole().name());
+        authRedisService.storeRefreshToken(newRefreshToken, user.getId(), user.getEmail(), user.getPhoneNumber());
 
         return new LoginResponseDTO(newAccessToken, newRefreshToken, jwtProperties.getAccessTokenTtl(), "Bearer");
     }
@@ -101,25 +79,16 @@ public class AuthService {
         authRedisService.revokeRefreshToken(refreshToken);
     }
 
-    public UserInfoDTO getCurrentUser(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new AuthException("User not found"));
-        return new UserInfoDTO(user.getId(), user.getEmail(), user.getDisplayName(), user.getRole().name());
-    }
-
-    private void handleFailedLogin(User user) {
-        int attempts = user.getFailedLoginAttempts() + 1;
-        user.setFailedLoginAttempts(attempts);
-        if (attempts >= lockoutProperties.getMaxAttempts()) {
-            user.setLocked(true);
-            user.setLockedUntil(LocalDateTime.now().plusSeconds(lockoutProperties.getLockoutDuration()));
+    public UserInfoDTO getCurrentUser(String subject) {
+        Long userId;
+        try {
+            userId = Long.parseLong(subject);
+        } catch (NumberFormatException e) {
+            throw new AuthException("User not found");
         }
-        userRepository.save(user);
-    }
 
-    private void handleSuccessfulLogin(User user) {
-        user.setFailedLoginAttempts(0);
-        user.setLastLoginAt(LocalDateTime.now());
-        userRepository.save(user);
+        User user = userRepository.findByIdAndDeletedAtIsNull(userId)
+                .orElseThrow(() -> new AuthException("User not found"));
+        return new UserInfoDTO(user.getId(), user.getEmail(), user.getPhoneNumber());
     }
 }

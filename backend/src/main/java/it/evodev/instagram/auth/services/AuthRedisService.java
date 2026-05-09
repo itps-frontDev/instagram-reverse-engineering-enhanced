@@ -1,8 +1,7 @@
 package it.evodev.instagram.auth.services;
 
-import com.fatellicaterinasrl.fatellisync.auth.config.JwtProperties;
-import com.fatellicaterinasrl.fatellisync.redis.RedisService;
-import lombok.RequiredArgsConstructor;
+import it.evodev.instagram.auth.config.JwtProperties;
+import it.evodev.instagram.redis.RedisService;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +12,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Service
-@RequiredArgsConstructor
 public class AuthRedisService {
 
     private static final String PREFIX_REFRESH = "auth:refresh:";
@@ -23,11 +21,16 @@ public class AuthRedisService {
     private final RedisService redisService;
     private final JwtProperties jwtProperties;
 
-    public void storeRefreshToken(String refreshToken, Long userId, String email, String role) {
+    public AuthRedisService(RedisService redisService, JwtProperties jwtProperties) {
+        this.redisService = redisService;
+        this.jwtProperties = jwtProperties;
+    }
+
+    public void storeRefreshToken(String refreshToken, Long userId, String email, String phoneNumber) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("userId", userId);
         payload.put("email", email);
-        payload.put("role", role);
+        payload.put("phoneNumber", phoneNumber);
         payload.put("createdAt", Instant.now().toString());
 
         redisService.saveOnRedis(PREFIX_REFRESH + refreshToken, payload, jwtProperties.getRefreshTokenTtl());

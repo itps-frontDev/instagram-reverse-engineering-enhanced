@@ -8,6 +8,5 @@ import lombok.Data;
 public class UserInfoDTO {
     private Long id;
     private String email;
-    private String displayName;
-    private String role;
+    private String phoneNumber;
 }
