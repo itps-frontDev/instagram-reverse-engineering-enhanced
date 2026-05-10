@@ -44,7 +44,7 @@ public class AuthService {
         String refreshToken = jwtService.generateRefreshToken();
         authRedisService.storeRefreshToken(refreshToken, user.getId(), user.getEmail(), user.getPhoneNumber());
 
-        return new LoginResponseDTO(accessToken, refreshToken, jwtProperties.getAccessTokenTtl(), "Bearer");
+        return new LoginResponseDTO(accessToken, refreshToken, jwtProperties.getAccessTokenTtl(), jwtProperties.getRefreshTokenTtl(), "Bearer");
     }
 
     @Transactional
@@ -65,7 +65,7 @@ public class AuthService {
         String newRefreshToken = jwtService.generateRefreshToken();
         authRedisService.storeRefreshToken(newRefreshToken, user.getId(), user.getEmail(), user.getPhoneNumber());
 
-        return new LoginResponseDTO(newAccessToken, newRefreshToken, jwtProperties.getAccessTokenTtl(), "Bearer");
+        return new LoginResponseDTO(newAccessToken, newRefreshToken, jwtProperties.getAccessTokenTtl(), jwtProperties.getRefreshTokenTtl(), "Bearer");
     }
 
     public void logout(String accessToken, String refreshToken) {

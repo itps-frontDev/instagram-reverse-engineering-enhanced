@@ -9,5 +9,6 @@ public class LoginResponseDTO {
     private String accessToken;
     private String refreshToken;
     private long expiresIn;
+    private long refreshExpiresIn;
     private String tokenType;
 }

@@ -51,8 +51,21 @@ const authRoutes = ['/login', '/register'];
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const sessionCookie = request.cookies.get('iree_session')?.value;
-  const isAuthenticated = Boolean(sessionCookie);
+  const accessTokenCookieName = process.env.AUTH_ACCESS_TOKEN_COOKIE_NAME ?? 'iree_access_token';
+  const accessToken = request.cookies.get(accessTokenCookieName)?.value;
+
+  let isAuthenticated = false;
+  if (accessToken) {
+    try {
+      const springBaseUrl = process.env.SPRING_API_BASE_URL ?? 'http://localhost:8080';
+      const res = await fetch(`${springBaseUrl}/api/priv/auth/me`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      isAuthenticated = res.ok;
+    } catch {
+      isAuthenticated = false;
+    }
+  }
 
   // Verifica se la route corrente è protetta
   const isProtectedRoute = protectedRoutes.some((route) =>

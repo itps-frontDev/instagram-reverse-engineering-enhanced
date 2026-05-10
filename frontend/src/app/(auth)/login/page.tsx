@@ -27,6 +27,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Footer, InstagramLogo } from '@/components/common';
+import { loginAction } from '@/lib/auth/actions';
 
 // ============================================================================
 // FORM DI LOGIN
@@ -82,28 +83,15 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      // Recupera il parametro redirect per tornare alla pagina originale dopo il login
       const redirectParam = searchParams.get('redirect') || '/';
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          identifier,
-          password,
-          redirect: redirectParam,
-        }),
-      });
+      const result = await loginAction({ identifier, password, redirect: redirectParam });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data?.error || 'Credenziali non valide.');
+      if ('error' in result) {
+        setError(result.error);
         return;
       }
 
-      window.location.href = data?.redirectTo || redirectParam;
+      window.location.href = result.redirectTo;
     } catch {
       setError('Spiacenti, si è verificato un problema. Riprova più tardi.');
     } finally {

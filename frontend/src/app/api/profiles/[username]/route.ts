@@ -86,9 +86,11 @@ export async function GET(
      * Usato per personalizzare i dati del profilo richiesto,
      * ad esempio per calcolare se ci sono storie attive non viste.
      */
-    const currentProfileId = await getCurrentProfileId();
-    
-    
+    const currentProfileId = currentProfile.id;
+
+    // Risolve il segmento speciale "me" allo username dell'utente corrente
+    const resolvedUsername = username === 'me' ? currentProfile.username : username;
+
     /**
      * Il metodo findByUsernameWithDetails incapsula:
      * - Query base profilo
@@ -99,7 +101,7 @@ export async function GET(
      * - Conversione booleani SQLite -> JavaScript
      */
     const profile = await profileRepository.findByUsernameWithDetails(
-      username, 
+      resolvedUsername,
       currentProfileId
     );
 

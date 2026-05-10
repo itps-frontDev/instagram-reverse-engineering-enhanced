@@ -18,6 +18,10 @@ scripts:
 
       pm.collectionVariables.set(\"accessToken\", json.accessToken);\r
 
-      pm.collectionVariables.set(\"refreshToken\", json.refreshToken);"
+      pm.collectionVariables.set(\"refreshToken\", json.refreshToken);\r
+
+      pm.collectionVariables.set(\"expiresIn\", json.expiresIn);\r
+
+      pm.collectionVariables.set(\"refreshExpiresIn\", json.refreshExpiresIn);"
     language: text/javascript
 order: 1000

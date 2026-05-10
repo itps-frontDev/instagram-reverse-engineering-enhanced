@@ -18,6 +18,6 @@ events:
     pm.collectionVariables.set("refreshToken", json.refreshToken);
 scripts:
   - type: afterResponse
-    code: "var json = pm.response.json();\r\n\npm.collectionVariables.set(\"accessToken\", json.accessToken);\r\n\npm.collectionVariables.set(\"refreshToken\", json.refreshToken);"
+    code: "var json = pm.response.json();\r\n\npm.collectionVariables.set(\"accessToken\", json.accessToken);\r\n\npm.collectionVariables.set(\"refreshToken\", json.refreshToken);\r\n\npm.collectionVariables.set(\"expiresIn\", json.expiresIn);\r\n\npm.collectionVariables.set(\"refreshExpiresIn\", json.refreshExpiresIn);"
     language: text/javascript
 order: 2000

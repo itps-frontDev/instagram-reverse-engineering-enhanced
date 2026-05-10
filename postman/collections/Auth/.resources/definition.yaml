@@ -4,3 +4,5 @@ description: Endpoints di autenticazione.
 variables:
   accessToken: ""
   refreshToken: ""
+  expiresIn: ""
+  refreshExpiresIn: ""

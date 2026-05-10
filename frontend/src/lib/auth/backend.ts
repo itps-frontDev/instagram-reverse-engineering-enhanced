@@ -1,16 +1,37 @@
 import { z } from "zod";
 
-import { type Session } from "@/lib/auth/index";
-
 const LOGIN_TIMEOUT_MS = 10_000;
 const REFRESH_TIMEOUT_MS = 10_000;
 const LOGOUT_TIMEOUT_MS = 10_000;
 const ME_TIMEOUT_MS = 8_000;
-const SESSION_TTL_SECONDS = 8 * 60 * 60;
 
-export const REFRESH_COOKIE_NAME = "iree_refresh_token";
-export const REFRESH_COOKIE_PATH = "/";
-export const REFRESH_COOKIE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
+export function getAccessTokenCookieName(): string {
+  const value = process.env.AUTH_ACCESS_TOKEN_COOKIE_NAME?.trim();
+  if (!value) throw new AuthBackendError(500, "AUTH_ACCESS_TOKEN_COOKIE_NAME non configurata.");
+  return value;
+}
+
+export function getAccessTokenCookiePath(): string {
+  return process.env.AUTH_ACCESS_TOKEN_COOKIE_PATH?.trim() || "/";
+}
+
+export function getRefreshTokenCookieName(): string {
+  const value = process.env.AUTH_REFRESH_TOKEN_COOKIE_NAME?.trim();
+  if (!value) throw new AuthBackendError(500, "AUTH_REFRESH_TOKEN_COOKIE_NAME non configurata.");
+  return value;
+}
+
+export function getRefreshTokenCookiePath(): string {
+  return process.env.AUTH_REFRESH_TOKEN_COOKIE_PATH?.trim() || "/";
+}
+
+export function getRefreshTokenTtlSeconds(): number {
+  const value = parseInt(process.env.AUTH_REFRESH_TOKEN_TTL_SECONDS ?? "", 10);
+  if (!Number.isFinite(value) || value <= 0) {
+    throw new AuthBackendError(500, "AUTH_REFRESH_TOKEN_TTL_SECONDS non configurata o non valida.");
+  }
+  return value;
+}
 
 export const loginInputSchema = z.object({
   identifier: z.string().trim().min(1),
@@ -21,6 +42,7 @@ const springTokenResponseSchema = z.object({
   accessToken: z.string().min(1),
   refreshToken: z.string().min(1),
   expiresIn: z.number().int().positive(),
+  refreshExpiresIn: z.number().int().positive(),
   tokenType: z.string().min(1).optional().default("Bearer"),
 });
 
@@ -174,23 +196,6 @@ async function getSpringJson<TSchema extends z.ZodTypeAny>(input: {
   }
 
   return parsed.data;
-}
-
-export function buildSessionFromBackendUser(input: {
-  id: string;
-  email?: string | null;
-  phoneNumber?: string | null;
-}): Session {
-  const expiresAt = new Date(Date.now() + SESSION_TTL_SECONDS * 1000).toISOString();
-
-  return {
-    user: {
-      id: input.id,
-      email: input.email ?? null,
-      phoneNumber: input.phoneNumber ?? null,
-    },
-    expiresAt,
-  };
 }
 
 export function isAllowedAuthRequestOrigin(request: Request): boolean {

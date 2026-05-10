@@ -1,10 +1,8 @@
 import { cookies } from "next/headers";
 
-import { auth } from "@/lib/auth/index";
 import { profileRepository } from "@/repositories";
+import { AuthBackendError, getAccessTokenCookieName, meWithSpring } from "@/lib/auth/backend";
 import { type Profile } from "@/types/profile";
-
-export const AUTH_COOKIE_NAME = "iree_session";
 
 type CurrentUser = {
   id: number;
@@ -15,31 +13,20 @@ type CurrentUser = {
 export async function getCurrentUser(): Promise<CurrentUser | null> {
   try {
     const cookieStore = await cookies();
-    const headerParts = cookieStore
-      .getAll()
-      .map(({ name, value }) => `${name}=${value}`);
+    const accessToken = cookieStore.get(getAccessTokenCookieName())?.value?.trim();
+    if (!accessToken) return null;
 
-    const headers = new Headers();
-    if (headerParts.length > 0) {
-      headers.set("cookie", headerParts.join("; "));
-    }
-
-    const session = auth.api.getSession(headers);
-    if (!session?.user.id) {
-      return null;
-    }
-
-    const userId = Number(session.user.id);
-    if (!Number.isFinite(userId)) {
-      return null;
-    }
+    const me = await meWithSpring(accessToken);
+    const userId = Number(me.id);
+    if (!Number.isFinite(userId)) return null;
 
     return {
       id: userId,
-      email: session.user.email ?? null,
-      phone_number: session.user.phoneNumber ?? null,
+      email: me.email ?? null,
+      phone_number: me.phoneNumber ?? null,
     };
   } catch (error) {
+    if (error instanceof AuthBackendError) return null;
     console.error("[Auth] Errore nel recupero dell'utente corrente:", error);
     return null;
   }
@@ -48,12 +35,8 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
 export async function getCurrentProfile(): Promise<Profile | null> {
   try {
     const user = await getCurrentUser();
-    if (!user) {
-      return null;
-    }
-
-    const profile = await profileRepository.findByUserId(user.id);
-    return profile || null;
+    if (!user) return null;
+    return await profileRepository.findByUserId(user.id) || null;
   } catch (error) {
     console.error("[Auth] Errore nel recupero del profilo corrente:", error);
     return null;
@@ -61,16 +44,13 @@ export async function getCurrentProfile(): Promise<Profile | null> {
 }
 
 export async function isAuthenticated(): Promise<boolean> {
-  const user = await getCurrentUser();
-  return user !== null;
+  return (await getCurrentUser()) !== null;
 }
 
 export async function getCurrentUserId(): Promise<number | null> {
-  const user = await getCurrentUser();
-  return user?.id ?? null;
+  return (await getCurrentUser())?.id ?? null;
 }
 
 export async function getCurrentProfileId(): Promise<number | null> {
-  const profile = await getCurrentProfile();
-  return profile?.id ?? null;
+  return (await getCurrentProfile())?.id ?? null;
 }
