@@ -20,6 +20,7 @@ services:
     environment:
       NODE_ENV: development
       WATCHPACK_POLLING: "true"
+      SPRING_API_BASE_URL: http://backend:8080
       # Su Windows, Docker non propaga gli eventi di modifica
       # file al container WSL2. WATCHPACK_POLLING forza Next.js
       # a controllare i file ogni tot millisecondi invece di

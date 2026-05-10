@@ -1,0 +1,23 @@
+$kind: http-request
+name: Refresh Token
+description: Rinnova accessToken e refreshToken a partire dal refreshToken corrente.
+method: POST
+url: "{{baseUrl}}/api/public/auth/refresh"
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |
+    {
+      "refreshToken": "{{refreshToken}}"
+    }
+events:
+  test: |
+    var json = pm.response.json();
+    pm.collectionVariables.set("accessToken", json.accessToken);
+    pm.collectionVariables.set("refreshToken", json.refreshToken);
+scripts:
+  - type: afterResponse
+    code: "var json = pm.response.json();\r\n\npm.collectionVariables.set(\"accessToken\", json.accessToken);\r\n\npm.collectionVariables.set(\"refreshToken\", json.refreshToken);"
+    language: text/javascript
+order: 2000

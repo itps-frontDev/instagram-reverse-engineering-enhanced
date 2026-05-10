@@ -1,0 +1,8 @@
+$kind: http-request
+name: Me
+description: Restituisce le informazioni dell'utente autenticato.
+method: GET
+url: "{{baseUrl}}/api/priv/auth/me"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 1000

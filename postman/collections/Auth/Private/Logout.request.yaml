@@ -1,0 +1,15 @@
+$kind: http-request
+name: Logout
+description: Invalida accessToken e refreshToken correnti, terminando la sessione.
+method: POST
+url: "{{baseUrl}}/api/priv/auth/logout"
+headers:
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |
+    {
+      "refreshToken": "{{refreshToken}}"
+    }
+order: 2000

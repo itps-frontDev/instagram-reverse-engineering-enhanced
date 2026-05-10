@@ -1,0 +1,5 @@
+name: IREE - Local
+values:
+  - key: baseUrl
+    value: 'http://localhost:8080'
+color: 120

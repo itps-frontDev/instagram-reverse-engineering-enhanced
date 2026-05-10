@@ -1,0 +1,6 @@
+$kind: collection
+name: Auth
+description: Endpoints di autenticazione.
+variables:
+  accessToken: ""
+  refreshToken: ""

@@ -8,7 +8,7 @@ const sessionSchema = z.object({
     email: z.string().email().nullable(),
     phoneNumber: z.string().nullable().optional(),
   }),
-  expiresAt: z.iso.datetime(),
+  expiresAt: z.string().datetime(),
 });
 
 export type Session = {
