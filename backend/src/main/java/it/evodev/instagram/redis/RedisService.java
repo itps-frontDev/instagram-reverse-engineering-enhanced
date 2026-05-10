@@ -39,4 +39,12 @@ public class RedisService {
         logger.debug("Key {} deleted from Redis", key);
     }
 
+    public boolean existsInRedis(String key) {
+        return redisTemplate.hasKey(key);
+    }
+
+    public RedisTemplate<String, Object> getTemplate() {
+        return this.redisTemplate;
+    }
+
 }

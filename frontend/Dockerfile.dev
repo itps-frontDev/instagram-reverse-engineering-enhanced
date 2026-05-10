@@ -6,14 +6,14 @@ WORKDIR /app
 # Abilita corepack: strumento incluso in Node 22 che gestisce
 # pnpm, yarn e altri package manager alternativi a npm.
 # Senza questa riga, il comando "pnpm" non esiste nel container.
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable
 
 # Copia solo il file di lock e package.json per installare
 # le dipendenze nell'immagine durante il build.
 # I node_modules installati qui (per Linux/Alpine) vengono
 # protetti dal volume anonimo in docker-compose.override.yml
 # così non vengono sovrascritti da quelli del tuo PC.
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # --frozen-lockfile: installa ESATTAMENTE le versioni in pnpm-lock.yaml
 # senza aggiornare nulla — comportamento deterministico e sicuro

@@ -1,5 +1,6 @@
 package it.evodev.instagram.redis.config;
 
+import it.evodev.instagram.redis.RedisService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -42,6 +43,11 @@ public class RedisConfig {
 
         template.afterPropertiesSet();
         return template;
+    }
+
+    @Bean
+    public RedisService redisService(RedisTemplate<String, Object> redisTemplate) {
+        return new RedisService(redisTemplate);
     }
 
 }

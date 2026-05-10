@@ -9,5 +9,5 @@ public class JwtProperties {
     private String secret;
     private long accessTokenTtl = 900;
     private long refreshTokenTtl = 604800;
-    private String issuer = "fatellisync";
+    private String issuer = "instagram-be";
 }

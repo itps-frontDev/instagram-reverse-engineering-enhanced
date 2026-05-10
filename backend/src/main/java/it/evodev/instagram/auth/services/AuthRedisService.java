@@ -2,6 +2,7 @@ package it.evodev.instagram.auth.services;
 
 import it.evodev.instagram.auth.config.JwtProperties;
 import it.evodev.instagram.redis.RedisService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +13,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Service
+@RequiredArgsConstructor
 public class AuthRedisService {
 
     private static final String PREFIX_REFRESH = "auth:refresh:";
@@ -21,10 +23,6 @@ public class AuthRedisService {
     private final RedisService redisService;
     private final JwtProperties jwtProperties;
 
-    public AuthRedisService(RedisService redisService, JwtProperties jwtProperties) {
-        this.redisService = redisService;
-        this.jwtProperties = jwtProperties;
-    }
 
     public void storeRefreshToken(String refreshToken, Long userId, String email, String phoneNumber) {
         Map<String, Object> payload = new HashMap<>();
