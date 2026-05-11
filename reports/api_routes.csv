@@ -47,6 +47,7 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/feed/save,POST,"Toggle salvataggio da feed (save/unsave)",Yes,No,Yes,Yes
 /api/feed,GET,"Feed principale: post seguiti + explore, paginazione",Yes,No,Yes,Yes
 /api/feed/like,POST,"Toggle like su post dal feed",Yes,No,Yes,Yes
+/api/feed/comments,GET|POST,"GET: lista commenti di un post; POST: crea commento e notifica",Yes,No,Yes,Yes
 /api/feed/comments/like,POST,"Toggle like su commento; crea/elimina notifica",Yes,No,Yes,Yes
 /api/feed/comments/[id],DELETE,"Elimina singolo commento (owner commento o owner post)",Yes,No,Yes,Yes
 /api/explore,GET,"Explore: post popolari da profili pubblici",Yes,No,Yes,Yes
@@ -55,6 +56,3 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/direct/get-or-create,POST,"Ottieni o crea chat 1-to-1",Yes,No,Yes,No
 /api/direct/chats,GET,"Lista chat dell'utente con dettagli + contatti potenziali",Yes,No,Yes,No
 /api/auth/register,POST,"Registrazione utente (user + profile in transaction)",Yes,No,No,Yes
-/api/auth/me,GET,"Restituisce il profilo autenticato (getCurrentProfile)",Yes,No,Yes,Yes
-/api/auth/logout,POST,"Logout: invalida cookie auth_token (set maxAge=0)",No,No,Yes,Yes
-/api/auth/login,POST,"Login: verifica credenziali, imposta JWT in cookie",Yes,No,No,Yes
