@@ -290,6 +290,18 @@ la sostituzione degli endpoint legacy:
    non contenga più nessuna logica relativa al modulo migrato,
    solo componenti React che consumano le Server Actions
 
+6. **Migrazione degli endpoint frontend a UUID**: ogni volta che si migra
+   un modulo verso Spring Boot, TUTTI gli endpoint nel frontend
+   devono utilizzare UUID come identificativo e non più ID numerici.
+   Questo include:
+   - URL parametrizzati: `/path/[uuid]` anziché `/path/[id]`
+   - Query string: `?id=uuid` anziché `?id=123`
+   - Variabili nei parametri delle Server Actions: `uuid` anziché `id`
+   - Payload JSON: `{ uuid: "..." }` anziché `{ id: 123 }`
+   - Cache tags: usare UUID negli identificatori di invalidazione cache
+   - Le path di routing del frontend devono essere sincronizzate
+     con gli UUIDs restituiti dal backend Spring Boot
+
 ### Regola fondamentale della migrazione
 > Non eliminare il codice legacy prima che il corrispondente
 > modulo Spring Boot sia verificato e funzionante in staging.
