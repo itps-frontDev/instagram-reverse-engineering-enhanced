@@ -20,7 +20,7 @@ export interface Profile {
   /** ID univoco del profilo */
   id: number;
   /** ID dell'utente associato */
-  user_id: string | number;
+  user_id: number;
   /** Nome utente univoco */
   username: string;
   /** Nome completo (opzionale) */

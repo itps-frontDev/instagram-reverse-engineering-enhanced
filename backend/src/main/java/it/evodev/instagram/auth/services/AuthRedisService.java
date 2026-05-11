@@ -10,7 +10,6 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -25,9 +24,9 @@ public class AuthRedisService {
     private final JwtProperties jwtProperties;
 
 
-    public void storeRefreshToken(String refreshToken, UUID userId, String email, String phoneNumber) {
+    public void storeRefreshToken(String refreshToken, Long userId, String email, String phoneNumber) {
         Map<String, Object> payload = new HashMap<>();
-        payload.put("userId", userId.toString());
+        payload.put("userId", userId);
         payload.put("email", email);
         payload.put("phoneNumber", phoneNumber);
         payload.put("createdAt", Instant.now().toString());
@@ -44,7 +43,7 @@ public class AuthRedisService {
     public void revokeRefreshToken(String refreshToken) {
         Map<String, Object> data = getRefreshTokenData(refreshToken);
         if (data != null && data.get("userId") != null) {
-            UUID userId = UUID.fromString(String.valueOf(data.get("userId")));
+            Long userId = ((Number) data.get("userId")).longValue();
             removeFromUserSessions(userId, refreshToken);
         }
         redisService.deleteFromRedis(PREFIX_REFRESH + refreshToken);
@@ -60,7 +59,7 @@ public class AuthRedisService {
         return redisService.existsInRedis(PREFIX_BLACKLIST + jti);
     }
 
-    public void revokeAllUserSessions(UUID userId) {
+    public void revokeAllUserSessions(Long userId) {
         RedisTemplate<String, Object> template = redisService.getTemplate();
         String sessionsKey = PREFIX_SESSIONS + userId;
         Set<Object> tokens = template.opsForSet().members(sessionsKey);
@@ -72,14 +71,14 @@ public class AuthRedisService {
         redisService.deleteFromRedis(sessionsKey);
     }
 
-    private void addToUserSessions(UUID userId, String refreshToken) {
+    private void addToUserSessions(Long userId, String refreshToken) {
         RedisTemplate<String, Object> template = redisService.getTemplate();
         String sessionsKey = PREFIX_SESSIONS + userId;
         template.opsForSet().add(sessionsKey, refreshToken);
         template.expire(sessionsKey, jwtProperties.getRefreshTokenTtl(), TimeUnit.SECONDS);
     }
 
-    private void removeFromUserSessions(UUID userId, String refreshToken) {
+    private void removeFromUserSessions(Long userId, String refreshToken) {
         RedisTemplate<String, Object> template = redisService.getTemplate();
         template.opsForSet().remove(PREFIX_SESSIONS + userId, refreshToken);
     }

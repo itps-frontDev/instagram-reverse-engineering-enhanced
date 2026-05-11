@@ -5,7 +5,7 @@ import { AuthBackendError, getAccessTokenCookieName, meWithSpring } from "@/lib/
 import { type Profile } from "@/types/profile";
 
 type CurrentUser = {
-  id: string;
+  id: number;
   email: string | null;
   phone_number: string | null;
 };
@@ -17,8 +17,8 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     if (!accessToken) return null;
 
     const me = await meWithSpring(accessToken);
-    const userId = me.id?.trim();
-    if (!userId) return null;
+    const userId = Number(me.id);
+    if (!Number.isFinite(userId)) return null;
 
     return {
       id: userId,
@@ -47,7 +47,7 @@ export async function isAuthenticated(): Promise<boolean> {
   return (await getCurrentUser()) !== null;
 }
 
-export async function getCurrentUserId(): Promise<string | null> {
+export async function getCurrentUserId(): Promise<number | null> {
   return (await getCurrentUser())?.id ?? null;
 }
 

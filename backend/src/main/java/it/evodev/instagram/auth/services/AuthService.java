@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Map;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -55,7 +54,7 @@ public class AuthService {
             throw new InvalidTokenException("Refresh token is invalid or expired");
         }
 
-        UUID userId = UUID.fromString(String.valueOf(data.get("userId")));
+        Long userId = ((Number) data.get("userId")).longValue();
         User user = userRepository.findByIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new InvalidTokenException("User not found"));
 
@@ -81,10 +80,10 @@ public class AuthService {
     }
 
     public UserInfoDTO getCurrentUser(String subject) {
-        UUID userId;
+        Long userId;
         try {
-            userId = UUID.fromString(subject);
-        } catch (IllegalArgumentException e) {
+            userId = Long.parseLong(subject);
+        } catch (NumberFormatException e) {
             throw new AuthException("User not found");
         }
 
