@@ -1,5 +1,5 @@
 name: IREE - Local
 values:
   - key: baseUrl
-    value: 'http://localhost:8080'
+    value: ''
 color: 120
