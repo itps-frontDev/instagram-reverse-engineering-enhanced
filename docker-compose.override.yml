@@ -20,7 +20,7 @@ services:
     environment:
       NODE_ENV: development
       WATCHPACK_POLLING: "true"
-      AUTH_BYPASS: "false"
+      AUTH_BYPASS: ${AUTH_BYPASS:-false}
       # Su Windows, Docker non propaga gli eventi di modifica
       # file al container WSL2. WATCHPACK_POLLING forza Next.js
       # a controllare i file ogni tot millisecondi invece di

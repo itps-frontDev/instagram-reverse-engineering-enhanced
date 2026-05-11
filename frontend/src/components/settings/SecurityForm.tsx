@@ -31,7 +31,7 @@ import {
 
 interface SecurityFormProps {
   user: {
-    id: number;
+    id: string | number;
     email: string | null;
     phone_number: string | null;
   };

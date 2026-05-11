@@ -7,10 +7,8 @@ import java.util.UUID;
 
 @Data
 @AllArgsConstructor
-public class UserInfoDTO {
-    private UUID id;
-    private String email;
-    private String phoneNumber;
+public class RegisterResponseDTO {
+    private String message;
+    private UUID userId;
     private String username;
-    private String fullName;
 }

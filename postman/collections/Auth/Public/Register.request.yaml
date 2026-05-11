@@ -1,0 +1,22 @@
+$kind: http-request
+name: Register
+description: Crea un nuovo account utente pubblico con email, username e password.
+method: POST
+url: "{{baseUrl}}/api/public/auth/register"
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |
+    {
+      "email": "pierlu27@gmail.com",
+      "username": "pierlu27",
+      "password": "password123",
+      "fullName": "Pierlu Giordans",
+      "birthDate": {
+        "day": "27",
+        "month": "1",
+        "year": "2005"
+      }
+    }
+order: 1500

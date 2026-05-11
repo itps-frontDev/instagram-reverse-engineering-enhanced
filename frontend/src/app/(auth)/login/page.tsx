@@ -27,7 +27,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Footer, InstagramLogo } from '@/components/common';
-import { loginAction } from '@/lib/auth/actions';
+import { loginAction } from '@/features/auth/actions';
 
 // ============================================================================
 // FORM DI LOGIN
@@ -86,12 +86,12 @@ function LoginForm() {
       const redirectParam = searchParams.get('redirect') || '/';
       const result = await loginAction({ identifier, password, redirect: redirectParam });
 
-      if ('error' in result) {
+      if (!result.success) {
         setError(result.error);
         return;
       }
 
-      window.location.href = result.redirectTo;
+      window.location.href = result.data.redirectTo;
     } catch {
       setError('Spiacenti, si è verificato un problema. Riprova più tardi.');
     } finally {

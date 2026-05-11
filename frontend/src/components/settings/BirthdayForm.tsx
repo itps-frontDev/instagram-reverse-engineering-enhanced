@@ -29,7 +29,7 @@ import {
 
 interface BirthdayFormProps {
   user: {
-    id: number;
+    id: string | number;
     date_of_birth: string;
   };
 }

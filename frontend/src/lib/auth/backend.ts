@@ -25,17 +25,23 @@ export function getRefreshTokenCookiePath(): string {
   return process.env.AUTH_REFRESH_TOKEN_COOKIE_PATH?.trim() || "/";
 }
 
-export function getRefreshTokenTtlSeconds(): number {
-  const value = parseInt(process.env.AUTH_REFRESH_TOKEN_TTL_SECONDS ?? "", 10);
-  if (!Number.isFinite(value) || value <= 0) {
-    throw new AuthBackendError(500, "AUTH_REFRESH_TOKEN_TTL_SECONDS non configurata o non valida.");
-  }
-  return value;
-}
-
 export const loginInputSchema = z.object({
   identifier: z.string().trim().min(1),
   password: z.string().min(1),
+});
+
+export const registerInputSchema = z.object({
+  email: z.string().trim().email(),
+  username: z.string().trim().min(1),
+  password: z.string().min(1),
+  fullName: z.string().trim().optional(),
+  birthDate: z
+    .object({
+      day: z.string().trim().min(1),
+      month: z.string().trim().min(1),
+      year: z.string().trim().min(1),
+    })
+    .optional(),
 });
 
 const springTokenResponseSchema = z.object({
@@ -54,8 +60,15 @@ const springMeResponseSchema = z.object({
   fullName: z.string().trim().min(1).nullable().optional(),
 });
 
+const springRegisterResponseSchema = z.object({
+  message: z.string().min(1),
+  userId: z.string().trim().min(1),
+  username: z.string().trim().min(1),
+});
+
 export type SpringTokenResponse = z.infer<typeof springTokenResponseSchema>;
 export type SpringMeResponse = z.infer<typeof springMeResponseSchema>;
+export type SpringRegisterResponse = z.infer<typeof springRegisterResponseSchema>;
 
 export class AuthBackendError extends Error {
   readonly status: number;
@@ -248,6 +261,17 @@ export async function loginWithSpring(input: z.infer<typeof loginInputSchema>): 
     path: "/api/public/auth/login",
     body: input,
     schema: springTokenResponseSchema,
+    timeoutMs: LOGIN_TIMEOUT_MS,
+  });
+}
+
+export async function registerWithSpring(
+  input: z.infer<typeof registerInputSchema>
+): Promise<SpringRegisterResponse> {
+  return await postSpringJson({
+    path: "/api/public/auth/register",
+    body: input,
+    schema: springRegisterResponseSchema,
     timeoutMs: LOGIN_TIMEOUT_MS,
   });
 }

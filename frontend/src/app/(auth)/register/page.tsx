@@ -26,6 +26,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { InstagramLogo, ErrorMessage, OrDivider, ButtonSpinner } from '@/components/common';
+import { registerAction } from '@/features/auth/actions';
 
 // ============================================================================
 // COSTANTI
@@ -125,19 +126,13 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          birthDate: { day, month, year },
-        }),
+      const result = await registerAction({
+        ...formData,
+        birthDate: { day, month, year },
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || 'Errore durante la registrazione');
+      if (!result.success) {
+        setError(result.error || 'Errore durante la registrazione');
         setLoading(false);
         return;
       }

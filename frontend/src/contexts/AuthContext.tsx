@@ -18,7 +18,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { Profile } from '@/types/profile';
-import { logoutAction, getMyProfileAction } from '@/lib/auth/actions';
+import { logoutAction, getMyProfileAction } from '@/features/auth/actions';
 
 // ============================================================================
 // INTERFACCE
@@ -79,9 +79,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    */
   const fetchProfile = async () => {
     try {
-      const profile = await getMyProfileAction();
-      console.debug('[AuthContext] profile caricato:', profile);
-      setProfile(profile);
+      const result = await getMyProfileAction();
+      if (!result.success) {
+        setProfile(null);
+        return;
+      }
+      console.debug('[AuthContext] profile caricato:', result.data);
+      setProfile(result.data);
     } catch (error) {
       console.error('[AuthContext] Errore nel recupero del profilo:', error);
       setProfile(null);
@@ -111,8 +115,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    */
   const logout = async () => {
     try {
-      await logoutAction();
-      setProfile(null);
+      const result = await logoutAction();
+      if (result.success) {
+        setProfile(null);
+      }
     } catch (error) {
       console.error('[AuthContext] Errore durante il logout:', error);
     }

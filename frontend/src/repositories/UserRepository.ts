@@ -83,7 +83,7 @@ export const userRepository = {
    * @param id - ID dell'utente da cercare
    * @returns L'utente trovato o null se non esiste
    */
-  async findById(id: number): Promise<User | null> {
+  async findById(id: string | number): Promise<User | null> {
     const user = await queryOne<User>(
       `SELECT id, email, phone_number
        FROM users
@@ -165,7 +165,7 @@ export const userRepository = {
    * @param id - ID dell'utente
    * @returns Utente con password_hash o null
    */
-  async findWithPasswordById(id: number): Promise<UserWithPassword | null> {
+  async findWithPasswordById(id: string | number): Promise<UserWithPassword | null> {
     const user = await queryOne<UserWithPassword>(
       `SELECT id, email, phone_number, password_hash
        FROM users
@@ -213,7 +213,7 @@ export const userRepository = {
    * @param data - Campi da aggiornare (solo quelli specificati)
    * @returns true se l'update ha avuto effetto, false altrimenti
    */
-  async update(id: number, data: UpdateUserData): Promise<boolean> {
+  async update(id: string | number, data: UpdateUserData): Promise<boolean> {
     const fields: string[] = [];
     const values: unknown[] = [];
 
@@ -260,7 +260,7 @@ export const userRepository = {
    * 
    * @param id - ID dell'utente
    */
-  async updateLastLogin(id: number): Promise<void> {
+  async updateLastLogin(id: string | number): Promise<void> {
     await execute(
       `UPDATE users SET last_login_at = NOW(), updated_at = NOW()
        WHERE id = ? AND deleted_at IS NULL`,
@@ -283,7 +283,7 @@ export const userRepository = {
    * @param id - ID dell'utente da eliminare
    * @returns true se l'eliminazione ha avuto effetto
    */
-  async softDelete(id: number): Promise<boolean> {
+  async softDelete(id: string | number): Promise<boolean> {
     const result = await execute(
       `UPDATE users SET deleted_at = NOW(), updated_at = NOW()
        WHERE id = ? AND deleted_at IS NULL`,
@@ -300,7 +300,7 @@ export const userRepository = {
    * @param excludeUserId - ID utente da escludere (per update profilo proprio)
    * @returns true se l'email è già usata da un altro utente
    */
-  async isEmailTaken(email: string, excludeUserId?: number): Promise<boolean> {
+  async isEmailTaken(email: string, excludeUserId?: string | number): Promise<boolean> {
     const query = excludeUserId
       ? `SELECT 1 FROM users WHERE email = ? AND id != ? AND deleted_at IS NULL`
       : `SELECT 1 FROM users WHERE email = ? AND deleted_at IS NULL`;
@@ -316,7 +316,7 @@ export const userRepository = {
    * @param excludeUserId - ID utente da escludere (per update profilo proprio)
    * @returns true se il numero è già usato da un altro utente
    */
-  async isPhoneTaken(phone: string, excludeUserId?: number): Promise<boolean> {
+  async isPhoneTaken(phone: string, excludeUserId?: string | number): Promise<boolean> {
     const query = excludeUserId
       ? `SELECT 1 FROM users WHERE phone_number = ? AND id != ? AND deleted_at IS NULL`
       : `SELECT 1 FROM users WHERE phone_number = ? AND deleted_at IS NULL`;
@@ -332,7 +332,7 @@ export const userRepository = {
    * @param dateOfBirth - Data di nascita in formato ISO (YYYY-MM-DD)
    * @returns true se l'update ha avuto effetto
    */
-  async updateDateOfBirth(id: number, dateOfBirth: string): Promise<boolean> {
+  async updateDateOfBirth(id: string | number, dateOfBirth: string): Promise<boolean> {
     const result = await execute(
       `UPDATE users 
        SET date_of_birth = ?, updated_at = NOW()
@@ -349,7 +349,7 @@ export const userRepository = {
    * @param passwordHash - Nuovo hash della password (già hashata con bcrypt)
    * @returns true se l'update ha avuto effetto
    */
-  async updatePassword(id: number, passwordHash: string): Promise<boolean> {
+  async updatePassword(id: string | number, passwordHash: string): Promise<boolean> {
     const result = await execute(
       `UPDATE users 
        SET password_hash = ?, updated_at = NOW()
@@ -368,7 +368,7 @@ export const userRepository = {
    * @returns true se l'update ha avuto effetto
    */
   async updateContactInfo(
-    id: number, 
+    id: string | number, 
     email: string | null, 
     phoneNumber: string | null
   ): Promise<boolean> {
@@ -388,8 +388,8 @@ export const userRepository = {
    * @param id - ID dell'utente
    * @returns Dati sicurezza o null
    */
-  async getSecurityData(id: number): Promise<{ id: number; email: string | null; phone_number: string | null } | null> {
-    const user = await queryOne<{ id: number; email: string | null; phone_number: string | null }>(
+  async getSecurityData(id: string | number): Promise<{ id: string | number; email: string | null; phone_number: string | null } | null> {
+    const user = await queryOne<{ id: string | number; email: string | null; phone_number: string | null }>(
       `SELECT id, email, phone_number
        FROM users
        WHERE id = ? AND deleted_at IS NULL`,
@@ -405,8 +405,8 @@ export const userRepository = {
    * @param id - ID dell'utente
    * @returns Dati con data di nascita o null
    */
-  async getBirthdayData(id: number): Promise<{ id: number; date_of_birth: string } | null> {
-    const user = await queryOne<{ id: number; date_of_birth: string }>(
+  async getBirthdayData(id: string | number): Promise<{ id: string | number; date_of_birth: string } | null> {
+    const user = await queryOne<{ id: string | number; date_of_birth: string }>(
       `SELECT id, date_of_birth
        FROM users
        WHERE id = ? AND deleted_at IS NULL`,

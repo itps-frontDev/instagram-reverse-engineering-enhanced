@@ -24,7 +24,7 @@
  */
 export interface User {
   /** ID univoco dell'utente (chiave primaria) */
-  id: number;
+  id: string | number;
   /** Email dell'utente (può essere null se registrato con telefono) */
   email: string | null;
   /** Numero di telefono (può essere null se registrato con email) */
@@ -74,7 +74,7 @@ export interface UserWithProfile extends User {
  */
 export interface TokenPayload {
   /** ID dell'utente - claim personalizzato */
-  id: number;
+  id: string | number;
   /** Email dell'utente - claim personalizzato */
   email: string | null;
   /** Username dell'utente - claim personalizzato */
@@ -113,7 +113,7 @@ export interface LoginResponse {
   message: string;
   /** Dati utente per l'UI */
   user: {
-    id: number;
+    id: string | number;
     email: string | null;
     username: string | null;
     fullName: string | null;

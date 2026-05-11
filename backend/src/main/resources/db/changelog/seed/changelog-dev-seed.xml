@@ -76,7 +76,7 @@ DECLARE
     img     TEXT;
     priv    BOOLEAN;
     verif   BOOLEAN;
-    uid     BIGINT;
+    uid     UUID;
 BEGIN
     PERFORM setseed(0.42);
 

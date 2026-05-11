@@ -31,4 +31,66 @@
         </rollback>
     </changeSet>
 
+    <changeSet id="USERS;2026-05-11;copilot;02" author="copilot">
+        <sql splitStatements="false"><![CDATA[
+CREATE OR REPLACE FUNCTION uuid_generate_v7()
+RETURNS uuid
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    ts_ms BIGINT;
+    ts_hex TEXT;
+    rand_a TEXT;
+    rand_b TEXT;
+    variant TEXT;
+BEGIN
+    ts_ms := FLOOR(EXTRACT(EPOCH FROM clock_timestamp()) * 1000);
+    ts_hex := LPAD(TO_HEX(ts_ms), 12, '0');
+    rand_a := LPAD(TO_HEX(FLOOR(random() * 4096)::INT), 3, '0');
+    rand_b := SUBSTRING(MD5(random()::TEXT || clock_timestamp()::TEXT) FROM 1 FOR 15);
+    variant := SUBSTRING('89ab' FROM (FLOOR(random() * 4)::INT + 1) FOR 1);
+
+    RETURN (
+        SUBSTRING(ts_hex FROM 1 FOR 8) || '-' ||
+        SUBSTRING(ts_hex FROM 9 FOR 4) || '-' ||
+        '7' || rand_a || '-' ||
+        variant || SUBSTRING(rand_b FROM 1 FOR 3) || '-' ||
+        SUBSTRING(rand_b FROM 4 FOR 12)
+    )::uuid;
+END;
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'users' AND column_name = 'id_uuid'
+    ) THEN
+        ALTER TABLE users ADD COLUMN id_uuid UUID DEFAULT uuid_generate_v7();
+    END IF;
+END $$;
+
+UPDATE users
+SET id_uuid = uuid_generate_v7()
+WHERE id_uuid IS NULL;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE table_name = 'users'
+          AND constraint_name = 'users_id_uuid_key'
+    ) THEN
+        ALTER TABLE users ADD CONSTRAINT users_id_uuid_key UNIQUE (id_uuid);
+    END IF;
+END $$;
+        ]]></sql>
+        <rollback>
+            ALTER TABLE users DROP CONSTRAINT IF EXISTS users_id_uuid_key;
+            ALTER TABLE users DROP COLUMN IF EXISTS id_uuid;
+            DROP FUNCTION IF EXISTS uuid_generate_v7();
+        </rollback>
+    </changeSet>
+
 </databaseChangeLog>
