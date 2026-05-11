@@ -6,10 +6,11 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
+import java.util.UUID;
 
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
-    Optional<User> findByIdAndDeletedAtIsNull(Long id);
+    Optional<User> findByIdAndDeletedAtIsNull(UUID id);
 
     @Query(value = """
             SELECT u.*

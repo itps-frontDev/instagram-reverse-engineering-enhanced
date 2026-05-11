@@ -9,6 +9,9 @@ databaseChangeLog:
       file: db/changelog/migrations/changelog-profiles.xml
       relativeToChangelogFile: false
   - include:
+      file: db/changelog/migrations/changelog-users-uuid.xml
+      relativeToChangelogFile: false
+  - include:
       file: db/changelog/migrations/changelog-follows.xml
       relativeToChangelogFile: false
   - include:

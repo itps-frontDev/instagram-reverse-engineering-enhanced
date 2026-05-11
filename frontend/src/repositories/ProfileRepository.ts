@@ -41,7 +41,7 @@ import type { Profile, FollowRelationship } from '@/types/profile';
  */
 export interface CreateProfileData {
   /** ID dell'utente proprietario (foreign key verso users) */
-  user_id: number;
+  user_id: string | number;
   /** Username unico, usato nell'URL del profilo */
   username: string;
   /** Nome completo visualizzato */
@@ -201,7 +201,7 @@ export const profileRepository = {
    * @param userId - ID dell'utente (dalla tabella users)
    * @returns Profilo dell'utente o null
    */
-  async findByUserId(userId: number): Promise<Profile | null> {
+  async findByUserId(userId: string | number): Promise<Profile | null> {
     const profile = await queryOne<Profile>(
       `SELECT
         id, user_id, username, full_name, profile_image_url,
