@@ -1,0 +1,12 @@
+$kind: http-request
+name: Mark All Read
+description: >
+  Marca tutte le notifiche del destinatario autenticato come lette.
+  Success example: { "success": true, "data": { "success": true, "updatedCount": 5 } }.
+  Error case: 401 se token non valido.
+method: PATCH
+url: "{{baseUrl}}/api/priv/notifications/read-all"
+headers:
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+order: 1200

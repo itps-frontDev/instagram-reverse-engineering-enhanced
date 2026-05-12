@@ -1,0 +1,3 @@
+$kind: collection
+name: Notifications
+description: Endpoint privati per gestione e dispatch notifiche su Spring Boot.

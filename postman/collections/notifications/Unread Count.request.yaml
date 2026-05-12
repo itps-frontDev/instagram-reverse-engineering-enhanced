@@ -1,0 +1,11 @@
+$kind: http-request
+name: Unread Count
+description: >
+  Recupera il conteggio notifiche non lette.
+  Success example: { "success": true, "data": { "count": 3 } }.
+  Error case: 401 se non autenticato.
+method: GET
+url: "{{baseUrl}}/api/priv/notifications/unread-count"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 1100

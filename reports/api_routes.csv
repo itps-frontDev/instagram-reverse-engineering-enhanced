@@ -40,9 +40,6 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/posts/[postId]/is-saved,GET,"Verifica se post è salvato dall'utente",Yes,No,Yes,No
 /api/posts/[postId]/is-liked,GET,"Verifica se utente ha messo like al post",Yes,No,Yes,No
 /api/posts/[postId]/comment,POST,"Aggiunge commento; incrementa counter; crea notifica",Yes,No,Yes,Yes
-/api/notifications/unread-count,GET,"Conteggio notifiche non lette per badge",Yes,No,Yes,No
-/api/notifications,GET,"Recupera notifiche utente (formato legacy)",Yes,No,Yes,No
-/api/notifications/mark-read,PATCH,"Segna tutte le notifiche come lette",Yes,No,Yes,No
 /api/media/[...path],GET,"Serve file multimediali con controllo accessi (posts/stories/profiles/messages)",Yes,Yes,Yes,No
 /api/feed/save,POST,"Toggle salvataggio da feed (save/unsave)",Yes,No,Yes,Yes
 /api/feed,GET,"Feed principale: post seguiti + explore, paginazione",Yes,No,Yes,Yes

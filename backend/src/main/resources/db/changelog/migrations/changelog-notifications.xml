@@ -35,4 +35,82 @@
         </rollback>
     </changeSet>
 
+    <changeSet id="NOTIFICATIONS;2026-05-12;copilot;02" author="copilot">
+        <sql splitStatements="false"><![CDATA[
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'notifications' AND column_name = 'id_uuid'
+    ) THEN
+        ALTER TABLE notifications ADD COLUMN id_uuid UUID DEFAULT uuid_generate_v7();
+    END IF;
+END $$;
+
+UPDATE notifications
+SET id_uuid = uuid_generate_v7()
+WHERE id_uuid IS NULL;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE table_name = 'notifications'
+          AND constraint_name = 'notifications_id_uuid_key'
+    ) THEN
+        ALTER TABLE notifications ADD CONSTRAINT notifications_id_uuid_key UNIQUE (id_uuid);
+    END IF;
+END $$;
+
+ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_pkey;
+ALTER TABLE notifications RENAME COLUMN id TO id_legacy_tmp;
+ALTER TABLE notifications RENAME COLUMN id_uuid TO id;
+ALTER TABLE notifications ADD CONSTRAINT notifications_pkey PRIMARY KEY (id);
+ALTER TABLE notifications ALTER COLUMN id SET DEFAULT uuid_generate_v7();
+ALTER TABLE notifications DROP COLUMN id_legacy_tmp;
+
+ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_type_check;
+ALTER TABLE notifications
+    ADD CONSTRAINT notifications_type_check
+    CHECK (type IN (
+        'like_post','like_comment','like_story',
+        'comment','comment_reply',
+        'follow','follow_request','follow_accepted',
+        'mention_post','mention_comment','mention_story',
+        'tag','message','story_view'
+    ));
+
+ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_reference_type_check;
+ALTER TABLE notifications
+    ADD CONSTRAINT notifications_reference_type_check
+    CHECK (reference_type IS NULL OR reference_type IN ('post','comment','story','profile','message'));
+
+ALTER TABLE notifications
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+
+CREATE INDEX IF NOT EXISTS idx_notifications_deleted_at ON notifications(deleted_at);
+        ]]></sql>
+        <rollback>
+            ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_reference_type_check;
+            ALTER TABLE notifications
+                ADD CONSTRAINT notifications_reference_type_check
+                CHECK (reference_type IS NULL OR reference_type IN ('post','comment','story','chat','profile'));
+            ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_type_check;
+            ALTER TABLE notifications
+                ADD CONSTRAINT notifications_type_check
+                CHECK (type IN (
+                    'like_post','like_comment','like_story',
+                    'comment','comment_reply',
+                    'follow','follow_request','follow_accepted',
+                    'mention_post','mention_comment','mention_story',
+                    'tag','message','story_view'
+                ));
+            DROP INDEX IF EXISTS idx_notifications_deleted_at;
+            ALTER TABLE notifications DROP COLUMN IF EXISTS deleted_at;
+            ALTER TABLE notifications DROP COLUMN IF EXISTS updated_at;
+        </rollback>
+    </changeSet>
+
 </databaseChangeLog>

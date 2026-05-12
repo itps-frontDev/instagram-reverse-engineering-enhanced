@@ -25,9 +25,10 @@ import { VerifiedBadge } from '@/components/common';
 import Link from 'next/link';
 import {NotificationsSkeleton} from '@/components/common/skeletons';
 import {UnfollowModal} from '@/components/profile';
+import { getNotificationsAction, markAllNotificationsReadAction } from '@/features/notifications/actions';
 
 interface Notification {
-  id: number;
+  id: string;
   type: string;
   sender_profile_id: number | null;
   sender_username: string | null;
@@ -74,12 +75,12 @@ export default function NotificationsPanel({ isOpen, onClose, onMarkAllAsRead }:
   useEffect(() => {
     if (!isOpen) return;
 
-    const markAsRead = async () => {
+  const markAsRead = async () => {
       try {
-        await fetch('/api/notifications/mark-read', {
-          method: 'PATCH',
-        });
-        onMarkAllAsRead();
+        const result = await markAllNotificationsReadAction();
+        if (result.success) {
+          onMarkAllAsRead();
+        }
       } catch (error) {
         console.error('Error marking notifications as read:', error);
       }
@@ -91,14 +92,13 @@ export default function NotificationsPanel({ isOpen, onClose, onMarkAllAsRead }:
   const loadNotifications = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/notifications');
-      if (response.ok) {
-        const data = await response.json();
-        setNotifications(data.notifications || []);
+      const result = await getNotificationsAction({ limit: 50 });
+      if (result.success) {
+        setNotifications(result.data.notifications || []);
         
         // Carica lo stato di follow solo per le notifiche di tipo follow (non follow_request)
         // Le follow_request devono sempre mostrare Conferma/Elimina perché sei il destinatario
-        const followNotifications = data.notifications.filter((n: Notification) => 
+        const followNotifications = result.data.notifications.filter((n: Notification) => 
           n.type === 'follow' && n.sender_username
         );
         
