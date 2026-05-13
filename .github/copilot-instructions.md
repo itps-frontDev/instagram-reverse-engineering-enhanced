@@ -88,6 +88,10 @@ Seguire rigorosamente questo ordine per ogni nuovo modulo:
      indicando il metodo HTTP, il path e i parametri principali
    - Documentare ogni endpoint con commento sul perché
      della scelta del metodo HTTP e del path
+   - Usare `Authentication` o `@AuthenticationPrincipal` solo per
+     endpoint viewer-specific (`current user vs target`); per endpoint
+     resource-specific (`target profile`, `followers`, `following`)
+     evitare il principal se non serve a permessi o personalizzazione
 
 3. **Service**
    - Creare l'interfaccia e la sua implementazione
@@ -198,6 +202,10 @@ frontend/src/
   gli endpoint Spring Boot corrispondenti; ogni action legge
   i cookie di sessione, inietta il Bearer token nell'header
   Authorization e restituisce `{ success, data?, error? }`
+- **`index.ts`**: crea un barrel export solo quando la feature viene
+  consumata in più punti del frontend; in quel caso tutti i consumer
+  devono importare sempre da `@/features/[modulo]` e mai fare import
+  diretti da `actions.ts` o `schema.ts`
 
 ### Rendering & Data fetching
 - Preferire Server Components per il fetch dei dati
