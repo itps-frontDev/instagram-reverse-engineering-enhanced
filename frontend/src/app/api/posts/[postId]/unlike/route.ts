@@ -15,7 +15,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentProfileId } from '@/lib/auth';
-import { postRepository, notificationRepository } from '@/repositories';
+import { postRepository } from '@/repositories';
 
 // Forza runtime Node.js
 export const runtime = 'nodejs';
@@ -48,8 +48,17 @@ export async function POST(
     // (gestisce soft delete e decremento contatore automaticamente)
     await postRepository.unlike(postIdNum, profileId);
 
-    // Elimina notifica like associata tramite repository
-    await notificationRepository.deleteLikeNotification(profileId, postIdNum);
+    // TODO: gestire lato BE — delete notifica like_post
+    // const post = await postRepository.findById(postIdNum);
+    // if (post) {
+    //   deleteNotificationsByFilterInSpring(request, {
+    //     recipientProfileId: post.profile_id,
+    //     senderProfileId: profileId,
+    //     type: 'like_post',
+    //     referenceType: 'post',
+    //     referenceId: postIdNum,
+    //   });
+    // }
 
     return NextResponse.json({ message: 'Like rimosso con successo' });
   } catch (error) {

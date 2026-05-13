@@ -16,7 +16,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { profileRepository, notificationRepository } from '@/repositories';
+import { profileRepository } from '@/repositories';
 import { UnfollowRequest, UnfollowResponse } from '@/types/profile';
 import { getCurrentProfile } from '@/lib/auth';
 
@@ -101,11 +101,12 @@ export async function POST(request: NextRequest) {
       await profileRepository.decrementFollowersCount(targetProfileId);
     }
 
-    // Rimuove la notifica di follow usando il repository
-    await notificationRepository.deleteFollowNotification(
-      currentProfile.id,  // attore
-      targetProfileId     // destinatario
-    );
+    // TODO: gestire lato BE — delete notifiche follow/follow_request
+    // deleteNotificationsByFilterInSpring(request, {
+    //   recipientProfileId: targetProfileId,
+    //   senderProfileId: currentProfile.id,
+    //   types: ['follow', 'follow_request'],
+    // });
 
     // Risposta di successo
     const response: UnfollowResponse = {

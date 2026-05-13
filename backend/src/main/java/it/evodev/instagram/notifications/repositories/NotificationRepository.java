@@ -1,8 +1,8 @@
 package it.evodev.instagram.notifications.repositories;
 
 import it.evodev.instagram.notifications.models.Notification;
-import it.evodev.instagram.notifications.models.NotificationReferenceType;
-import it.evodev.instagram.notifications.models.NotificationType;
+import it.evodev.instagram.notifications.models.enums.NotificationReferenceType;
+import it.evodev.instagram.notifications.models.enums.NotificationType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -16,6 +16,12 @@ import java.util.UUID;
 public interface NotificationRepository extends JpaRepository<Notification, UUID> {
 
     Optional<Notification> findByIdAndRecipientProfileIdAndDeletedAtIsNull(UUID id, Long recipientProfileId);
+    List<Notification> findByRecipientProfileIdAndDeletedAtIsNullOrderByCreatedAtDesc(Long recipientProfileId);
+    List<Notification> findByRecipientProfileIdAndSenderProfileIdAndTypeAndDeletedAtIsNull(
+            Long recipientProfileId,
+            Long senderProfileId,
+            NotificationType type
+    );
 
     long countByRecipientProfileIdAndIsReadFalseAndDeletedAtIsNull(Long recipientProfileId);
 
@@ -43,7 +49,7 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
               n.id AS id,
               n.type AS type,
               n.sender_profile_id AS senderProfileId,
-              p.username AS senderUsername,
+              CAST(p.username AS TEXT) AS senderUsername,
               p.full_name AS senderFullName,
               p.profile_image_url AS senderProfileImageUrl,
               COALESCE(p.is_verified, FALSE) AS senderIsVerified,
@@ -68,7 +74,7 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
             LEFT JOIN stories s ON n.reference_type = 'story' AND n.reference_id = s.id AND s.deleted_at IS NULL
             WHERE n.recipient_profile_id = :recipientProfileId
               AND n.deleted_at IS NULL
-              AND (:cursorCreatedAt IS NULL OR n.created_at < :cursorCreatedAt)
+              AND (CAST(:cursorCreatedAt AS TIMESTAMPTZ) IS NULL OR n.created_at < CAST(:cursorCreatedAt AS TIMESTAMPTZ))
             ORDER BY n.created_at DESC
             LIMIT :limit
             """, nativeQuery = true)

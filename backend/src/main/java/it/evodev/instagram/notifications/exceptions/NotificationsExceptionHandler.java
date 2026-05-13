@@ -1,6 +1,6 @@
 package it.evodev.instagram.notifications.exceptions;
 
-import it.evodev.instagram.notifications.dto.NotificationActionResponseDTO;
+import it.evodev.instagram.notifications.dto.responses.NotificationActionResponseDTO;
 import it.evodev.instagram.notifications.dto.NotificationErrorDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,12 +40,6 @@ public class NotificationsExceptionHandler {
     public ResponseEntity<NotificationActionResponseDTO<Object>> handleStrategyNotFound(NotificationStrategyNotFoundException e) {
         logger.error("Notification exception handled: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error("NOTIFICATION_STRATEGY_NOT_FOUND", e.getMessage()));
-    }
-
-    @ExceptionHandler(NotificationDispatchException.class)
-    public ResponseEntity<NotificationActionResponseDTO<Object>> handleDispatch(NotificationDispatchException e) {
-        logger.error("Notification exception handled: {}", e.getMessage());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error("NOTIFICATION_DISPATCH_ERROR", e.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

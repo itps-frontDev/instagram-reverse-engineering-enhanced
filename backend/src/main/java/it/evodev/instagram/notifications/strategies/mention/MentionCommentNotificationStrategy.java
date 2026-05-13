@@ -1,7 +1,8 @@
-package it.evodev.instagram.notifications.strategies;
+package it.evodev.instagram.notifications.strategies.mention;
 
-import it.evodev.instagram.notifications.models.NotificationReferenceType;
-import it.evodev.instagram.notifications.models.NotificationType;
+import it.evodev.instagram.notifications.models.enums.NotificationReferenceType;
+import it.evodev.instagram.notifications.strategies.AbstractReferenceNotificationStrategy;
+import it.evodev.instagram.notifications.models.enums.NotificationType;
 import org.springframework.stereotype.Component;
 
 @Component

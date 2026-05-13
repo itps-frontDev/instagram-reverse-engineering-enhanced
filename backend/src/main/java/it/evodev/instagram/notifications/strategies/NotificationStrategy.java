@@ -1,6 +1,6 @@
 package it.evodev.instagram.notifications.strategies;
 
-import it.evodev.instagram.notifications.models.NotificationType;
+import it.evodev.instagram.notifications.models.enums.NotificationType;
 
 public interface NotificationStrategy {
     NotificationType supportedType();

@@ -16,7 +16,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { profileRepository, notificationRepository } from '@/repositories';
+import { profileRepository } from '@/repositories';
 import { FollowRequest, FollowResponse } from '@/types/profile';
 import { getCurrentProfile } from '@/lib/auth';
 
@@ -109,23 +109,20 @@ export async function POST(request: NextRequest) {
       await profileRepository.incrementFollowersCount(targetProfileId);
     }
 
-    // Crea notifica per il target usando il repository
-    const notificationType = followStatus === 'pending' ? 'follow_request' : 'follow';
-    
-    // Prima elimina notifiche di follow duplicate esistenti
-    await notificationRepository.deleteFollowNotification(
-      currentProfile.id,  // attore
-      targetProfileId     // destinatario
-    );
-    
-    // Poi crea la nuova notifica
-    await notificationRepository.create({
-      recipient_profile_id: targetProfileId,
-      sender_profile_id: currentProfile.id,
-      type: notificationType,
-      reference_type: 'profile',
-      reference_id: currentProfile.id,
-    });
+    // TODO: gestire lato BE — delete notifiche follow/follow_request duplicate + dispatch nuova notifica
+    // const notificationType = followStatus === 'pending' ? 'follow_request' : 'follow';
+    // deleteNotificationsByFilterInSpring(request, {
+    //   recipientProfileId: targetProfileId,
+    //   senderProfileId: currentProfile.id,
+    //   types: ['follow', 'follow_request'],
+    // });
+    // dispatchNotificationToSpring(request, {
+    //   recipientProfileId: targetProfileId,
+    //   senderProfileId: currentProfile.id,
+    //   type: notificationType,
+    //   referenceType: 'profile',
+    //   referenceId: currentProfile.id,
+    // });
 
     // Risposta di successo
     const response: FollowResponse = {

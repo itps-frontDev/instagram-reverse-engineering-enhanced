@@ -1,4 +1,4 @@
-package it.evodev.instagram.notifications.dto;
+package it.evodev.instagram.notifications.dto.requests;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

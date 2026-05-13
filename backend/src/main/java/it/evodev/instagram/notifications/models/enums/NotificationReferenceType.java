@@ -1,4 +1,4 @@
-package it.evodev.instagram.notifications.models;
+package it.evodev.instagram.notifications.models.enums;
 
 public enum NotificationReferenceType {
     POST,

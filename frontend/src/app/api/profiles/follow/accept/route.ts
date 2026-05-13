@@ -11,13 +11,13 @@
  * 5. Aggiorna la notifica da follow_request a follow
  * 6. Crea notifica follow_accepted per il richiedente
  *
- * REFACTORING: Usa ProfileRepository e NotificationRepository.
+ * REFACTORING: Usa ProfileRepository e Spring Notifications endpoints.
  * 
  * @module api/profiles/follow/accept
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { profileRepository, notificationRepository } from '@/repositories';
+import { profileRepository } from '@/repositories';
 import { getCurrentProfile } from '@/lib/auth';
 
 /**
@@ -92,23 +92,18 @@ export async function POST(request: NextRequest) {
     console.log('[Accept] Incremento following_count del richiedente');
     await profileRepository.incrementFollowingCount(followerId);
 
-    // -------------------------------------------------------------------------
-    // Gestione notifiche
-    // -------------------------------------------------------------------------
-    
-    // Aggiorna la notifica da follow_request a follow
-    console.log('[Accept] Aggiornamento tipo notifica');
-    await notificationRepository.convertFollowRequestToFollow(
-      followerId,
-      currentProfile.id
-    );
-
-    // Crea notifica follow_accepted per il richiedente
-    console.log('[Accept] Creazione notifica follow_accepted');
-    await notificationRepository.createFollowAcceptedNotification(
-      followerId,
-      currentProfile.id
-    );
+    // TODO: gestire lato BE — promote follow_request → follow + dispatch follow_accepted
+    // promoteFollowRequestNotificationsInSpring(request, {
+    //   followerProfileId: followerId,
+    //   recipientProfileId: currentProfile.id,
+    // });
+    // dispatchNotificationToSpring(request, {
+    //   recipientProfileId: followerId,
+    //   senderProfileId: currentProfile.id,
+    //   type: 'follow_accepted',
+    //   referenceType: 'profile',
+    //   referenceId: currentProfile.id,
+    // });
 
     console.log('[Accept] Successo!');
     return NextResponse.json({

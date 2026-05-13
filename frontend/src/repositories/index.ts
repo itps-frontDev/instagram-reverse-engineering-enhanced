@@ -21,8 +21,7 @@
  * import { 
  *   userRepository, 
  *   profileRepository,
- *   postRepository,
- *   notificationRepository 
+ *   postRepository
  * } from '@/repositories';
  * 
  * // Operazioni utente
@@ -34,8 +33,6 @@
  * // Operazioni post
  * const feed = await postRepository.getFeed(profileId, 20, 0);
  * 
- * // Operazioni notifiche
- * const unreadCount = await notificationRepository.getUnreadCount(profileId);
  */
 
 // ============================================================================
@@ -78,15 +75,6 @@ export {
   type CommentBase,
   type PostForComment,
 } from './CommentRepository';
-
-// Notification Repository - operazioni sulle notifiche
-export {
-  notificationRepository,
-  type Notification,
-  type NotificationWithActor,
-  type NotificationType,
-  type CreateNotificationData,
-} from './NotificationRepository';
 
 // Story Repository - operazioni su storie e visualizzazioni
 export {

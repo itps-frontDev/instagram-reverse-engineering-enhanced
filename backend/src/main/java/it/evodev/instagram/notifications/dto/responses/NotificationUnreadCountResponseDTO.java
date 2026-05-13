@@ -1,4 +1,4 @@
-package it.evodev.instagram.notifications.dto;
+package it.evodev.instagram.notifications.dto.responses;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

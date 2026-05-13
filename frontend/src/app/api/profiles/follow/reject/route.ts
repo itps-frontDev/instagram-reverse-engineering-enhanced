@@ -11,13 +11,13 @@
  * 5. Se era già accepted, decrementa anche followers_count
  * 6. Elimina le notifiche correlate
  *
- * REFACTORING: Usa ProfileRepository e NotificationRepository.
+ * REFACTORING: Usa ProfileRepository e Spring Notifications endpoints.
  * 
  * @module api/profiles/follow/reject
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { profileRepository, notificationRepository } from '@/repositories';
+import { profileRepository } from '@/repositories';
 import { getCurrentProfile } from '@/lib/auth';
 
 /**
@@ -72,11 +72,12 @@ export async function POST(request: NextRequest) {
       await profileRepository.decrementFollowersCount(currentProfile.id);
     }
 
-    // Elimina le notifiche correlate (follow_request e follow)
-    await notificationRepository.deleteFollowRequestNotifications(
-      followerId,
-      currentProfile.id
-    );
+    // TODO: gestire lato BE — delete notifiche follow_request/follow
+    // deleteNotificationsByFilterInSpring(request, {
+    //   recipientProfileId: currentProfile.id,
+    //   senderProfileId: followerId,
+    //   types: ['follow_request', 'follow'],
+    // });
 
     return NextResponse.json({
       success: true,

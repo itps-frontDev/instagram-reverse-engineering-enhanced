@@ -1,11 +1,8 @@
 $kind: http-request
 name: Delete Notification
-description: >
-  Esegue soft delete su una notifica owned dal destinatario autenticato.
-  Success example: { "success": true, "data": { "success": true, "updatedCount": 1 } }.
-  Error case: 403/404 in caso di ownership mismatch o notifica inesistente.
+description: Elimina (soft-delete) una singola notifica dell'utente autenticato.
 method: DELETE
 url: "{{baseUrl}}/api/priv/notifications/{{notificationUuid}}"
 headers:
   Authorization: Bearer {{accessToken}}
-order: 1400
+order: 1500

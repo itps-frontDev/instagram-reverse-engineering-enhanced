@@ -1,8 +1,8 @@
 package it.evodev.instagram.notifications.util;
 
 import it.evodev.instagram.notifications.exceptions.NotificationValidationException;
-import it.evodev.instagram.notifications.models.NotificationReferenceType;
-import it.evodev.instagram.notifications.models.NotificationType;
+import it.evodev.instagram.notifications.models.enums.NotificationReferenceType;
+import it.evodev.instagram.notifications.models.enums.NotificationType;
 
 import java.util.Locale;
 

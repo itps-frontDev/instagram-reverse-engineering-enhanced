@@ -18,7 +18,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentProfile } from '@/lib/auth';
-import { commentRepository, notificationRepository } from '@/repositories';
+import { commentRepository } from '@/repositories';
 
 export const runtime = 'nodejs';
 
@@ -77,13 +77,14 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Elimina notifica di like commento
-      await notificationRepository.deleteLikeNotification(
-        currentProfile.id,
-        commentId,
-        'comment'
-      );
-
+      // TODO: gestire lato BE — delete notifica like_comment
+      // deleteNotificationsByFilterInSpring(request, {
+      //   recipientProfileId: comment.profile_id,
+      //   senderProfileId: currentProfile.id,
+      //   type: 'like_comment',
+      //   referenceType: 'comment',
+      //   referenceId: commentId,
+      // });
       liked = false;
       newLikesCount = result.newLikesCount;
     } else {
@@ -97,17 +98,16 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Crea notifica (solo se non è il proprio commento)
-      if (comment.profile_id !== currentProfile.id) {
-        await notificationRepository.create({
-          recipient_profile_id: comment.profile_id,
-          sender_profile_id: currentProfile.id,
-          type: 'like_comment',
-          reference_type: 'comment',
-          reference_id: commentId,
-        });
-      }
-
+      // TODO: gestire lato BE — dispatch notifica like_comment
+      // if (comment.profile_id !== currentProfile.id) {
+      //   dispatchNotificationToSpring(request, {
+      //     recipientProfileId: comment.profile_id,
+      //     senderProfileId: currentProfile.id,
+      //     type: 'like_comment',
+      //     referenceType: 'comment',
+      //     referenceId: commentId,
+      //   });
+      // }
       liked = true;
       newLikesCount = result.newLikesCount;
     }

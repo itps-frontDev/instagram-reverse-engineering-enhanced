@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentProfile } from '@/lib/auth';
-import { postRepository, notificationRepository } from '@/repositories';
+import { postRepository } from '@/repositories';
 import type { LikePostRequest, LikePostResponse } from '@/types/feed';
 
 export const runtime = 'nodejs';
@@ -53,28 +53,29 @@ export async function POST(request: NextRequest) {
       // Rimuove il like (soft delete)
       await postRepository.unlike(postId, currentProfile.id);
       
-      // Elimina notifica di like
-      await notificationRepository.deleteLikeNotification(
-        currentProfile.id,
-        postId,
-        'post'
-      );
-      
+      // TODO: gestire lato BE — delete notifica like_post
+      // deleteNotificationsByFilterInSpring(request, {
+      //   recipientProfileId: post.profile_id,
+      //   senderProfileId: currentProfile.id,
+      //   type: 'like_post',
+      //   referenceType: 'post',
+      //   referenceId: postId,
+      // });
       liked = false;
       newLikesCount = Math.max(0, post.likes_count - 1);
     } else {
       // Aggiunge il like (o ri-attiva se era stato cancellato)
       await postRepository.like(postId, currentProfile.id);
-      
-      // Crea notifica (solo se non è like al proprio post)
-      if (post.profile_id !== currentProfile.id) {
-        await notificationRepository.createLikeNotification(
-          post.profile_id,
-          currentProfile.id,
-          postId
-        );
-      }
-      
+      // TODO: gestire lato BE — dispatch notifica like_post
+      // if (post.profile_id !== currentProfile.id) {
+      //   dispatchNotificationToSpring(request, {
+      //     recipientProfileId: post.profile_id,
+      //     senderProfileId: currentProfile.id,
+      //     type: 'like_post',
+      //     referenceType: 'post',
+      //     referenceId: postId,
+      //   });
+      // }
       liked = true;
       newLikesCount = post.likes_count + 1;
     }

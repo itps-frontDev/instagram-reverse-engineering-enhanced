@@ -1,7 +1,7 @@
 package it.evodev.instagram.notifications.strategies;
 
 import it.evodev.instagram.notifications.exceptions.NotificationStrategyNotFoundException;
-import it.evodev.instagram.notifications.models.NotificationType;
+import it.evodev.instagram.notifications.models.enums.NotificationType;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumMap;

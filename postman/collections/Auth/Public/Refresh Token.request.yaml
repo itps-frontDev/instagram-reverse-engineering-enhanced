@@ -11,13 +11,8 @@ body:
     {
       "refreshToken": "{{refreshToken}}"
     }
-events:
-  test: |
-    var json = pm.response.json();
-    pm.collectionVariables.set("accessToken", json.accessToken);
-    pm.collectionVariables.set("refreshToken", json.refreshToken);
 scripts:
   - type: afterResponse
-    code: "var json = pm.response.json();\r\n\npm.collectionVariables.set(\"accessToken\", json.accessToken);\r\n\npm.collectionVariables.set(\"refreshToken\", json.refreshToken);\r\n\npm.collectionVariables.set(\"expiresIn\", json.expiresIn);\r\n\npm.collectionVariables.set(\"refreshExpiresIn\", json.refreshExpiresIn);"
+    code: "var json = pm.response.json();\r\n\npm.environment.set(\"accessToken\", json.accessToken);\r\n\npm.environment.set(\"refreshToken\", json.refreshToken);\r\n\npm.environment.set(\"expiresIn\", json.expiresIn);\r\n\npm.environment.set(\"refreshExpiresIn\", json.refreshExpiresIn);"
     language: text/javascript
 order: 2000

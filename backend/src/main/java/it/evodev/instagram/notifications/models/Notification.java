@@ -1,11 +1,11 @@
 package it.evodev.instagram.notifications.models;
 
 import it.evodev.instagram.auth.util.UuidV7Generator;
+import it.evodev.instagram.notifications.models.enums.NotificationReferenceType;
+import it.evodev.instagram.notifications.models.enums.NotificationType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
@@ -35,11 +35,9 @@ public class Notification {
     @Column(name = "sender_profile_id")
     private Long senderProfileId;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false)
     private NotificationType type;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "reference_type")
     private NotificationReferenceType referenceType;
 

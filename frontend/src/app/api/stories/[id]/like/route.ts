@@ -17,7 +17,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentProfile } from '@/lib/auth';
-import { storyRepository, notificationRepository } from '@/repositories';
+import { storyRepository } from '@/repositories';
 
 /**
  * POST /api/stories/[id]/like
@@ -56,24 +56,26 @@ export async function POST(
   // Toggle like usando il repository (ritorna true se ha messo like, false se lo ha tolto)
   const liked = await storyRepository.likeStory(storyId, profile.id);
 
-  // Gestione notifiche (solo se non è like alla propria storia)
-  if (story.profile_id !== profile.id) {
-    if (liked) {
-      // Crea notifica di like
-      await notificationRepository.createLikeStoryNotification(
-        story.profile_id,
-        profile.id,
-        storyId
-      );
-    } else {
-      // Elimina notifica di like
-      await notificationRepository.deleteLikeNotification(
-        profile.id,
-        storyId,
-        'story'
-      );
-    }
-  }
+  // TODO: gestire lato BE — dispatch/delete notifica like_story
+  // if (story.profile_id !== profile.id) {
+  //   if (liked) {
+  //     dispatchNotificationToSpring(req, {
+  //       recipientProfileId: story.profile_id,
+  //       senderProfileId: profile.id,
+  //       type: 'like_story',
+  //       referenceType: 'story',
+  //       referenceId: storyId,
+  //     });
+  //   } else {
+  //     deleteNotificationsByFilterInSpring(req, {
+  //       recipientProfileId: story.profile_id,
+  //       senderProfileId: profile.id,
+  //       type: 'like_story',
+  //       referenceType: 'story',
+  //       referenceId: storyId,
+  //     });
+  //   }
+  // }
 
   return NextResponse.json({ liked });
 }

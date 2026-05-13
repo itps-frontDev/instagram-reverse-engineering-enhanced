@@ -1,12 +1,10 @@
 package it.evodev.instagram.notifications.controllers;
 
-import it.evodev.instagram.notifications.dto.NotificationActionResponseDTO;
-import it.evodev.instagram.notifications.dto.NotificationDispatchRequestDTO;
-import it.evodev.instagram.notifications.dto.NotificationListRequestDTO;
-import it.evodev.instagram.notifications.dto.NotificationListResponseDTO;
-import it.evodev.instagram.notifications.dto.NotificationMutationResponseDTO;
-import it.evodev.instagram.notifications.dto.NotificationResponseDTO;
-import it.evodev.instagram.notifications.dto.NotificationUnreadCountResponseDTO;
+import it.evodev.instagram.notifications.dto.responses.NotificationActionResponseDTO;
+import it.evodev.instagram.notifications.dto.requests.NotificationListRequestDTO;
+import it.evodev.instagram.notifications.dto.responses.NotificationListResponseDTO;
+import it.evodev.instagram.notifications.dto.responses.NotificationMutationResponseDTO;
+import it.evodev.instagram.notifications.dto.responses.NotificationUnreadCountResponseDTO;
 import it.evodev.instagram.notifications.services.NotificationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,8 +17,6 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -30,9 +26,9 @@ import java.util.UUID;
 @Validated
 @RequestMapping("/api/priv/notifications")
 @RequiredArgsConstructor
-public class PrivateNotificationsController {
+public class NotificationsController {
 
-    private static final Logger logger = LoggerFactory.getLogger(PrivateNotificationsController.class);
+    private static final Logger logger = LoggerFactory.getLogger(NotificationsController.class);
 
     private final NotificationService notificationService;
 
@@ -102,16 +98,4 @@ public class PrivateNotificationsController {
         return ResponseEntity.ok(NotificationActionResponseDTO.success(response));
     }
 
-    /**
-     * Usiamo POST su /api/priv/notifications/dispatch perché creiamo una nuova notifica tramite payload e regole strategiche lato service.
-     */
-    @PostMapping("/dispatch")
-    public ResponseEntity<NotificationActionResponseDTO<NotificationResponseDTO>> dispatch(
-            @RequestBody @Valid NotificationDispatchRequestDTO request,
-            Authentication authentication
-    ) {
-        logger.info("POST /api/priv/notifications/dispatch - dispatch request received, type: {}", request.getType());
-        NotificationResponseDTO response = notificationService.dispatch(UUID.fromString(authentication.getName()), request);
-        return ResponseEntity.status(201).body(NotificationActionResponseDTO.success(response));
-    }
 }
