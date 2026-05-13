@@ -190,7 +190,10 @@ export interface GetPostsResponse {
 }
 
 /**
- * Risposta da GET /api/profiles/[username]/follow-status
+ * Risposta da GET /api/priv/profiles/{username}/follow-status (Spring)
+ * 
+ * Rappresenta lo stato della relazione di follow tra utente corrente e profilo target.
+ * Mappato a {@link FollowStatus} per compatibilità UI.
  */
 export interface GetFollowStatusResponse {
   isFollowing: boolean;

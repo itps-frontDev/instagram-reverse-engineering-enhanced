@@ -36,7 +36,7 @@ import {
   StoryHighlight,
 } from '@/types/profile';
 import type { FeedPost } from '@/types/feed';
-import { canViewProfileAction } from '@/features/profile';
+import { canViewProfileAction, getFollowStatusAction } from '@/features/profile';
 
 // ============================================================================
 // COMPONENTE PRINCIPALE
@@ -214,10 +214,16 @@ export default function ProfilePage({
       // Fetch stato follow (richiede autenticazione)
       // -----------------------------------------------------------------------
       try {
-        const followRes = await fetch(`/api/profiles/${username}/follow-status`);
-        if (followRes.ok) {
-          const followData = await followRes.json();
-          setFollowStatus(followData);
+        const followResult = await getFollowStatusAction({ username });
+        if (followResult.success && followResult.data) {
+          // Mappa la nuova risposta Spring al vecchio formato per compatibilità UI
+          const status = followResult.data.status;
+          setFollowStatus({
+            isOwnProfile: status === 'self',
+            isFollowing: status === 'accepted',
+            isPending: status === 'pending',
+            isFollowedBy: false, // La nuova API non fornisce this info, va in altra query
+          });
         }
       } catch (err) {
         // Non autenticato - continua come ospite
@@ -314,7 +320,7 @@ export default function ProfilePage({
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ error: 'Errore nel follow' }));
-        throw new Error(errorData.error || 'Errore nel follow');
+        throw new Error(errorData.message || errorData.error || 'Errore nel follow');
       }
 
       const data = await res.json();
@@ -372,11 +378,16 @@ export default function ProfilePage({
       const res = await fetch('/api/profiles/actions/unfollow', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetProfileId: profile.id }),
+        credentials: 'include',
+        body: JSON.stringify({ targetProfileId: Number(profile.id) }),
       });
 
+      console.log('Unfollow response status:', res.status);
+      const responseData = await res.json();
+      console.log('Unfollow response data:', responseData);
+
       if (!res.ok) {
-        throw new Error("Errore nell'unfollow");
+        throw new Error(`Errore nell'unfollow: ${res.status} - ${responseData.error}`);
       }
 
       // Aggiorna contatore follower
