@@ -19,7 +19,7 @@ export const profileVisibilitySuccessResponseSchema = z.object({
   success: z.literal(true),
   data: profileVisibilityDataSchema,
   message: z.string().optional(),
-  error: z.never().optional(),
+  error: z.null().optional(),
 });
 
 // Uniform API response schema - error case

@@ -16,6 +16,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { profileRepository } from '@/repositories';
 import { postRepository } from '@/repositories/PostRepository';
 import { ProfilePreviewResponse } from '@/types/profile';
+import { canViewProfileAction } from '@/features/profile';
 
 /**
  * GET /api/profiles/[username]/preview
@@ -50,7 +51,20 @@ export async function GET(
     // 3. Ottiene il profilo corrente per verificare lo stato di follow
     const currentUserProfile = await profileRepository.findByUserId(user.id);
 
-    // 4. Verifica se l'utente corrente segue questo profilo
+    // 4. Verifica se il profilo è visibile tramite il gate condiviso.
+    const canViewResult = await canViewProfileAction({ username });
+    if (!canViewResult.success) {
+      const error = canViewResult.error || 'Errore nella verifica della visibilità';
+      const status =
+        error === 'Authentication required.' ? 401 :
+        error === 'Profile not found' ? 404 :
+        error === 'Service unavailable.' ? 503 :
+        500;
+
+      return NextResponse.json({ error }, { status });
+    }
+
+    // 5. Verifica se l'utente corrente segue questo profilo
     let isFollowing = false;
     if (currentUserProfile) {
       isFollowing = await profileRepository.isFollowing(
@@ -59,13 +73,12 @@ export async function GET(
       );
     }
 
-    // 5. Ottiene i post recenti solo se può visualizzarli
-    const canViewPosts = !profile.is_private || isFollowing;
-    const recentPosts = canViewPosts 
+    // 6. Ottiene i post recenti solo se può visualizzarli
+    const recentPosts = canViewResult.data?.canView
       ? await postRepository.getRecentPostsForPreview(profile.id, 3)
       : [];
 
-    // 6. Costruisce la risposta
+    // 7. Costruisce la risposta
     const response: ProfilePreviewResponse = {
       id: profile.id,
       username: profile.username,

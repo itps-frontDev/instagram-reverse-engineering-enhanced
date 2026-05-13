@@ -16,8 +16,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { profileRepository, postRepository } from '@/repositories';
-import { Profile, Post, GetPostsResponse, ProfileTab } from '@/types/profile';
+import { Post, GetPostsResponse, ProfileTab } from '@/types/profile';
 import { getCurrentProfile, getCurrentUser } from '@/lib/auth';
+import { canViewProfileAction } from '@/features/profile';
 
 // ============================================================================
 // COSTANTI
@@ -93,15 +94,20 @@ export async function GET(
       );
     }
 
-    // 5. Verifica permessi di visualizzazione
-    const currentProfile = await getCurrentProfile();
-    const canView = await profileRepository.canViewPosts(
-      targetProfile.id,
-      Boolean(targetProfile.is_private),
-      currentProfile?.id || null
-    );
+    // 5. Verifica permessi di visualizzazione tramite il gate condiviso.
+    const canViewResult = await canViewProfileAction({ username });
+    if (!canViewResult.success) {
+      const error = canViewResult.error || 'Errore nella verifica della visibilità';
+      const status =
+        error === 'Authentication required.' ? 401 :
+        error === 'Profile not found' ? 404 :
+        error === 'Service unavailable.' ? 503 :
+        500;
 
-    if (!canView) {
+      return NextResponse.json({ error }, { status });
+    }
+
+    if (!canViewResult.data?.canView) {
       return NextResponse.json(
         { error: 'Non puoi visualizzare i post di un profilo privato' },
         { status: 403 }
@@ -120,6 +126,7 @@ export async function GET(
       posts = await postRepository.getProfileReels(targetProfile.id, limit, offset);
     } else if (tab === 'saved') {
       // Solo il proprietario può vedere i post salvati
+      const currentProfile = await getCurrentProfile();
       if (!currentProfile || currentProfile.id !== targetProfile.id) {
         return NextResponse.json(
           { error: 'Non puoi visualizzare i post salvati di altri utenti' },

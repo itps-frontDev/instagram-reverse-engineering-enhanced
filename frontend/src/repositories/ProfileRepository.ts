@@ -1057,45 +1057,6 @@ export const profileRepository = {
     return result.changes;
   },
 
-  /**
-   * Verifica se l'utente corrente può visualizzare i post di un profilo.
-   * 
-   * LOGICA:
-   * - Profilo pubblico: chiunque può vedere
-   * - Profilo privato: solo il proprietario o chi lo segue con status 'accepted'
-   * 
-   * @param targetProfileId - ID del profilo da visualizzare
-   * @param isPrivate - Se il profilo è privato
-   * @param currentProfileId - ID del profilo corrente (null se non loggato)
-   * @returns true se può visualizzare, false altrimenti
-   */
-  async canViewPosts(
-    targetProfileId: number,
-    isPrivate: boolean,
-    currentProfileId: number | null
-  ): Promise<boolean> {
-    // Profilo pubblico: chiunque può vedere
-    if (!isPrivate) {
-      return true;
-    }
-
-    // Non loggato: non può vedere profilo privato
-    if (!currentProfileId) {
-      return false;
-    }
-
-    // Proprio profilo: può sempre vedere
-    if (currentProfileId === targetProfileId) {
-      return true;
-    }
-
-    // Verifica se segue con status 'accepted'
-    const followRelation = await this.getFollowRelationship(
-      currentProfileId,
-      targetProfileId
-    );
-    return followRelation?.status === 'accepted';
-  },
 };
 
 export default profileRepository;
