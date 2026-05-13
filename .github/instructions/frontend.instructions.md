@@ -1,6 +1,6 @@
 # Frontend — Next.js (Dettaglio)
 
-> Richiamare con `#file:.github/instructions/frontend.instructions.md`
+> Richiamare con `@file:.github/instructions/frontend.instructions.md`
 > quando si lavora su codice frontend.
 
 ---

@@ -72,7 +72,7 @@ Su Windows: `gradlew.bat`
 
 ## Riferimenti contestuali
 
-Per dettagli completi richiamare in chat con `#file:`:
+Per dettagli completi richiamare in chat con `@file:`:
 
 - `.github/instructions/backend.instructions.md` → workflow modulo Spring Boot,
   logging, sicurezza, gestione errori, struttura multi-controller

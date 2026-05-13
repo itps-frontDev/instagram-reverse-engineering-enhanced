@@ -1,6 +1,6 @@
 # Backend — Spring Boot (Dettaglio)
 
-> Richiamare con `#file:.github/instructions/backend.instructions.md`
+> Richiamare con `@file:.github/instructions/backend.instructions.md`
 > quando si lavora su codice backend.
 
 ---
