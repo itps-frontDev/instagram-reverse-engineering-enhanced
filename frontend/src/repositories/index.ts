@@ -51,7 +51,6 @@ export {
   type CreateProfileData,
   type UpdateProfileData,
   type ProfileWithFollowStatus,
-  type SearchResult,
   type FollowerWithStatus,
 } from './ProfileRepository';
 

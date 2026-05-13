@@ -1,0 +1,8 @@
+$kind: http-request
+name: Search Accounts
+description: Ricerca account per username o nome completo sull'endpoint Spring privato.
+method: GET
+url: "{{baseUrl}}/api/priv/search?q=john&type=account&limit=20"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 1000
