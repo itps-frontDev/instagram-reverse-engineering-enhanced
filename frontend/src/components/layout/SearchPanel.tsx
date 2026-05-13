@@ -21,17 +21,21 @@ import { Search as SearchIcon, X } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import {ProfilePicture} from '@/components';
 import { LoadingSpinner, VerifiedBadge } from '@/components/common';
+import { searchProfilesAction } from '@/features/search/actions';
+import type { SearchAccountResult } from '@/features/search/schema';
 import Link from 'next/link';
 
-interface SearchResult {
-  id: number;
-  username: string;
-  full_name: string | null;
-  profile_image_url: string | null;
-  is_verified: boolean;
-  is_private: boolean;
-  followers_count: number;
-  is_following?: boolean;
+function isRecentSearch(value: unknown): value is SearchAccountResult {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Record<string, unknown>;
+  return (
+    typeof candidate.uuid === 'string' &&
+    typeof candidate.username === 'string' &&
+    typeof candidate.isVerified === 'boolean' &&
+    typeof candidate.isPrivate === 'boolean' &&
+    typeof candidate.followersCount === 'number' &&
+    typeof candidate.isFollowing === 'boolean'
+  );
 }
 
 interface SearchPanelProps {
@@ -42,8 +46,8 @@ interface SearchPanelProps {
 export default function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
   const [query, setQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'account' | 'hashtag' | 'luoghi'>('account');
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [recentSearches, setRecentSearches] = useState<SearchResult[]>([]);
+  const [results, setResults] = useState<SearchAccountResult[]>([]);
+  const [recentSearches, setRecentSearches] = useState<SearchAccountResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -61,7 +65,10 @@ export default function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
     const stored = localStorage.getItem('recentSearches');
     if (stored) {
       try {
-        setRecentSearches(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          setRecentSearches(parsed.filter(isRecentSearch));
+        }
       } catch (e) {
         console.error('Error loading recent searches:', e);
       }
@@ -69,10 +76,10 @@ export default function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
   }, [isOpen]);
 
   // Salva una ricerca nei recenti
-  const saveToRecent = (result: SearchResult) => {
+  const saveToRecent = (result: SearchAccountResult) => {
     const updated = [
       result,
-      ...recentSearches.filter(r => r.id !== result.id)
+      ...recentSearches.filter(r => r.uuid !== result.uuid)
     ].slice(0, 10); // Mantieni solo le ultime 10
     
     setRecentSearches(updated);
@@ -80,8 +87,8 @@ export default function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
   };
 
   // Rimuovi una ricerca dai recenti
-  const removeFromRecent = (id: number) => {
-    const updated = recentSearches.filter(r => r.id !== id);
+  const removeFromRecent = (uuid: string) => {
+    const updated = recentSearches.filter(r => r.uuid !== uuid);
     setRecentSearches(updated);
     localStorage.setItem('recentSearches', JSON.stringify(updated));
   };
@@ -116,10 +123,16 @@ export default function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
     const timeoutId = setTimeout(async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&type=${activeTab}`);
-        if (response.ok) {
-          const data = await response.json();
-          setResults(data.results || []);
+        const actionResult = await searchProfilesAction({
+          q: query,
+          type: activeTab,
+          limit: 20,
+        });
+        if (actionResult.success) {
+          setResults(actionResult.data.results);
+        } else {
+          console.error('Search action error:', actionResult.error);
+          setResults([]);
         }
       } catch (error) {
         console.error('Search error:', error);
@@ -243,7 +256,7 @@ export default function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
                   // Results
                   activeTab === 'account' && results.map((result) => (
                     <Link
-                      key={result.id}
+                      key={result.uuid}
                       href={`/profile/${result.username}`}
                       onClick={() => {
                         saveToRecent(result);
@@ -253,7 +266,7 @@ export default function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
                       className="flex items-center gap-3 w-full py-2 px-4 hover:bg-[#F2F2F2] dark:hover:bg-[#121212] rounded-lg transition"
                     >
                       <ProfilePicture
-                        src={result.profile_image_url || ''}
+                        src={result.profileImageUrl || ''}
                         alt={result.username}
                         size={44}
                       />
@@ -262,13 +275,13 @@ export default function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
                           <p className="font-semibold text-[#262626] dark:text-white text-sm truncate">
                             {result.username}
                           </p>
-                          {result.is_verified && (
+                          {result.isVerified && (
                             <VerifiedBadge size={12} />
                           )}
                         </div>
                         <p className="text-xs text-[#8E8E8E] truncate">
-                          {result.full_name || result.username}
-                          {result.is_following && ' • Segui già'}
+                          {result.fullName || result.username}
+                          {result.isFollowing && ' • Segui già'}
                         </p>
                       </div>
                     </Link>
@@ -301,7 +314,7 @@ export default function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
                 <div className="space-y-1">
                   {recentSearches.map((result) => (
                     <div
-                      key={result.id}
+                      key={result.uuid}
                       className="flex items-center gap-3 w-full py-2 px-2 hover:bg-[#F2F2F2] dark:hover:bg-[#121212] rounded-lg transition"
                     >
                       <Link
@@ -313,7 +326,7 @@ export default function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
                         className="flex items-center gap-3 flex-1 overflow-hidden"
                       >
                         <ProfilePicture
-                          src={result.profile_image_url || ''}
+                          src={result.profileImageUrl || ''}
                           alt={result.username}
                           size={44}
                         />
@@ -322,18 +335,18 @@ export default function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
                             <p className="font-semibold text-[#262626] dark:text-white text-sm truncate">
                               {result.username}
                             </p>
-                            {result.is_verified && (
+                            {result.isVerified && (
                               <VerifiedBadge size={12} />
                             )}
                           </div>
                           <p className="text-xs text-[#8E8E8E] truncate">
-                            {result.full_name || result.username}
-                            {result.is_following && ' • Segui già'}
+                            {result.fullName || result.username}
+                            {result.isFollowing && ' • Segui già'}
                           </p>
                         </div>
                       </Link>
                       <button
-                        onClick={() => removeFromRecent(result.id)}
+                        onClick={() => removeFromRecent(result.uuid)}
                         className="p-2 text-[#8E8E8E] hover:text-[#262626] dark:hover:text-white transition flex-shrink-0"
                         aria-label="Rimuovi"
                       >

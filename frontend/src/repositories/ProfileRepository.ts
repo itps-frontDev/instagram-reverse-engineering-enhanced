@@ -87,44 +87,6 @@ export interface ProfileWithFollowStatus extends Profile {
 }
 
 /**
- * Risultato della ricerca profili.
- * Versione ridotta del profilo per i risultati di ricerca.
- */
-export interface SearchResult {
-  /** ID del profilo */
-  id: number;
-  /** Username univoco */
-  username: string;
-  /** Nome completo (può essere null) */
-  full_name: string | null;
-  /** URL immagine profilo (può essere null) */
-  profile_image_url: string | null;
-  /** Profilo verificato? */
-  is_verified: boolean;
-  /** Profilo privato? */
-  is_private: boolean;
-  /** Numero di follower */
-  followers_count: number;
-  /** L'utente corrente segue questo profilo? */
-  is_following: boolean;
-}
-
-/**
- * Row raw del database per SearchResult (valori numerici prima della conversione).
- * @internal
- */
-interface SearchResultRow {
-  id: number;
-  username: string;
-  full_name: string | null;
-  profile_image_url: string | null;
-  is_verified: number;
-  is_private: number;
-  followers_count: number;
-  is_following: number | null;
-}
-
-/**
  * Profilo follower/following con stato di relazione.
  * Usato nelle liste follower/following per mostrare pulsanti di azione.
  */
@@ -399,80 +361,6 @@ export const profileRepository = {
       ...p,
       is_private: Boolean(p.is_private),
       is_verified: Boolean(p.is_verified),
-    }));
-  },
-
-  /**
-   * Cerca profili con informazione sullo stato di follow.
-   * Versione estesa di search() per l'API di ricerca.
-   * 
-   * Include is_following per mostrare se l'utente corrente
-   * segue già i profili trovati nei risultati di ricerca.
-   * 
-   * STRATEGIA DI ORDINAMENTO (priorità rilevanza):
-   * 1. Match esatto username = priorità 0
-   * 2. Username inizia con query = priorità 1
-   * 3. Altri match = priorità 2
-   * 4. A parità, ordina per follower_count DESC (più popolari prima)
-   * 
-   * @param query - Testo da cercare
-   * @param currentProfileId - ID del profilo corrente (per calcolare is_following), null se non autenticato
-   * @param limit - Numero massimo risultati (default: 20)
-   * @returns Array di profili con flag is_following
-   */
-  async searchWithFollowStatus(
-    query: string, 
-    currentProfileId: number | null, 
-    limit = 20
-  ): Promise<SearchResult[]> {
-    const searchTerm = `%${query.trim().toLowerCase()}%`;
-    const queryTrimmed = query.trim();
-    const startsWithPattern = `${queryTrimmed.toLowerCase()}%`;
-
-    // Costruisce la subquery per is_following solo se l'utente è autenticato
-    const isFollowingSelect = currentProfileId
-      ? `(SELECT 1 FROM follows 
-         WHERE follower_profile_id = ? 
-         AND following_profile_id = profiles.id 
-         AND status = 'accepted' 
-         AND deleted_at IS NULL) as is_following`
-      : 'NULL as is_following';
-
-    // Costruisce la condizione per escludere l'utente corrente dai risultati
-    const excludeCurrentUser = currentProfileId ? 'AND id != ?' : '';
-
-    const sql = `
-      SELECT
-        id, username, full_name, profile_image_url,
-        is_verified, is_private, followers_count,
-        ${isFollowingSelect}
-      FROM profiles
-      WHERE deleted_at IS NULL
-        AND (LOWER(username) LIKE ? OR LOWER(full_name) LIKE ?)
-        ${excludeCurrentUser}
-      ORDER BY 
-        CASE 
-          WHEN LOWER(username) = LOWER(?) THEN 0
-          WHEN LOWER(username) LIKE ? THEN 1
-          ELSE 2
-        END,
-        followers_count DESC
-      LIMIT ?`;
-
-    // Parametri variano in base a se l'utente è autenticato
-    const params = currentProfileId
-      ? [currentProfileId, searchTerm, searchTerm, currentProfileId, queryTrimmed, startsWithPattern, limit]
-      : [searchTerm, searchTerm, queryTrimmed, startsWithPattern, limit];
-
-    // Usa il tipo Row interno per i risultati raw del database
-    const results = await queryAll<SearchResultRow>(sql, params);
-
-    // Converte i valori in booleani JavaScript
-    return results.map(r => ({
-      ...r,
-      is_verified: Boolean(r.is_verified),
-      is_private: Boolean(r.is_private),
-      is_following: Boolean(r.is_following),
     }));
   },
 
