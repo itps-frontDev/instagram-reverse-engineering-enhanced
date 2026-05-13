@@ -29,7 +29,7 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/profiles/[username]/following,GET,"Lista dei profili seguiti (rispetta privacy)",Yes,No,Yes,No
 /api/profiles/[username]/followers,GET,"Lista dei follower (rispetta privacy)",Yes,No,Yes,No
 /api/profiles/[username]/follow-status,GET,"Stato relazione follow tra current e target",Yes,No,Yes,No
-/api/profiles/[username]/can-view,GET,"Verifica se user può vedere contenuti del profilo (privacy)",Yes,No,Yes,No
+/api/profiles/[username]/can-view,GET,"MIGRATED to Spring: /api/priv/profiles/{username}/can-view - verifica se user può vedere contenuti del profilo (privacy)",Yes,No,Yes,No
 /api/posts/create,POST,"Crea post: salva immagini, crea post_media in transazione",Yes,Yes,Yes,Yes
 /api/posts/[postId]/unsave,POST,"Rimuove post dai salvati (soft delete)",Yes,No,Yes,Yes
 /api/posts/[postId]/unlike,POST,"Rimuove like da un post e elimina notifica",Yes,No,Yes,Yes

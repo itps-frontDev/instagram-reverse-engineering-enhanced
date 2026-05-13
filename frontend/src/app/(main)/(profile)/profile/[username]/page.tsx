@@ -36,6 +36,7 @@ import {
   StoryHighlight,
 } from '@/types/profile';
 import type { FeedPost } from '@/types/feed';
+import { canViewProfileAction } from '@/features/profile';
 
 // ============================================================================
 // COMPONENTE PRINCIPALE
@@ -226,10 +227,9 @@ export default function ProfilePage({
       // -----------------------------------------------------------------------
       // Fetch permessi di visualizzazione
       // -----------------------------------------------------------------------
-      const canViewRes = await fetch(`/api/profiles/${username}/can-view`);
-      if (canViewRes.ok) {
-        const canViewData = await canViewRes.json();
-        setCanView(canViewData.canView);
+      const canViewResult = await canViewProfileAction({ username });
+      if (canViewResult.success) {
+        setCanView(canViewResult.data?.canView ?? false);
       }
     } catch (err) {
       console.error('Errore caricamento profilo:', err);
