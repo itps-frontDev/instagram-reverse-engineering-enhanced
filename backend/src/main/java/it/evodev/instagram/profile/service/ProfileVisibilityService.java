@@ -1,6 +1,6 @@
 package it.evodev.instagram.profile.service;
 
-import it.evodev.instagram.profile.dto.ProfileVisibilityDataDTO;
+import it.evodev.instagram.profile.dto.response.ProfileVisibilityDataDTO;
 
 import java.util.UUID;
 

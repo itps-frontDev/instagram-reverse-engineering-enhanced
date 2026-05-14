@@ -1,4 +1,4 @@
-package it.evodev.instagram.profile.dto;
+package it.evodev.instagram.profile.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

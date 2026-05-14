@@ -1,6 +1,6 @@
 package it.evodev.instagram.profile.exception;
 
-import it.evodev.instagram.profile.dto.ProfileApiResponse;
+import it.evodev.instagram.profile.dto.response.ProfileApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +21,7 @@ public class ProfileExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ProfileApiResponse<Void>> handleGenericException(Exception exception) {
-        logger.error("Unhandled profile exception. Error: {}", exception.getMessage());
+        logger.error("Unhandled profile exception. Error: {}", exception.getMessage(), exception);
         return ResponseEntity.internalServerError()
                 .body(ProfileApiResponse.error("PROFILE_INTERNAL_ERROR", "Profile operation failed"));
     }

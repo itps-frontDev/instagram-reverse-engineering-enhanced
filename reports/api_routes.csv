@@ -5,7 +5,7 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/stories/[id]/view,POST,"Registra la view di una storia (idempotente)",Yes,No,Yes,No
 /api/stories/[id]/public,GET,"Recupera storie pubbliche di un profilo (senza auth ma codice usa currentProfile)",Yes,No,Hybrid,No
 /api/stories/[id]/like,POST,"Toggle like su una storia; crea/elimina notifica",Yes,No,Yes,No
-/api/search,GET,"Ricerca profili per username o nome (migrata su Spring /api/priv/search)",Yes,No,Yes,No
+/api/search,GET,"MIGRATED to Spring: /api/priv/search - ricerca profili per username o nome",Yes,No,Yes,No
 /api/reels,GET,"Reels feed (video posts) con paginazione",Yes,No,Yes,Yes
 /api/profiles/upload-image,POST,"Carica immagine profilo (form-data) con validazioni",Yes,Yes,Yes,No
 /api/profiles/suggestions,GET,"Suggerimenti profili da seguire",Yes,No,Yes,No
@@ -22,7 +22,7 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/profiles/actions/remove-follower,POST,"Rimuove un follower (soft delete) e aggiornamento contatori",Yes,No,Yes,No
 /api/profiles/actions/follow,POST,"Segui un utente (accepted o pending) e crea notifica",Yes,No,Yes,No
 /api/profiles/[username]/upload-image,POST,"Carica immagine profilo per username (owner only)",Yes,Yes,Yes,No
-/api/profiles/[username],GET,"Ottiene profilo by username con dettagli e flag",Yes,No,Yes,Yes
+/api/profiles/[username],GET,"MIGRATED to Spring: /api/priv/profiles/{username} - profilo centrale con flag contestuali e payload full/partial per privacy",Yes,No,Yes,No
 /api/profiles/[username]/preview,GET,"Anteprima profilo con post recenti per card hover",Yes,No,Yes,No
 /api/profiles/[username]/remove-image,POST,"Rimuove immagine profilo (owner only)",Yes,No,Yes,No
 /api/profiles/[username]/posts,GET,"Lista post di un profilo (tabs: posts,reels,saved,tagged)",Yes,No,Yes,No

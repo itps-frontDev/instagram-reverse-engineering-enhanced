@@ -1,6 +1,6 @@
 package it.evodev.instagram.profile.service;
 
-import it.evodev.instagram.profile.dto.FollowStatusDataDTO;
+import it.evodev.instagram.profile.dto.response.FollowStatusDataDTO;
 
 import java.util.UUID;
 

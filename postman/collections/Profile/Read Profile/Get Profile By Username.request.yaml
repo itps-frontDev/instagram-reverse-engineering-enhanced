@@ -1,0 +1,8 @@
+$kind: http-request
+name: Get Profile By Username
+description: Returns the contextual profile payload for the authenticated user. Supports full and partial response scenarios based on profile visibility.
+method: GET
+url: "{{baseUrl}}/api/priv/profiles/{{profileUsername}}"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 1010

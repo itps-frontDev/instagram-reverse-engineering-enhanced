@@ -1,7 +1,7 @@
 package it.evodev.instagram.profile.controller;
 
-import it.evodev.instagram.profile.dto.ProfileApiResponse;
-import it.evodev.instagram.profile.dto.ProfileVisibilityDataDTO;
+import it.evodev.instagram.profile.dto.response.ProfileApiResponse;
+import it.evodev.instagram.profile.dto.response.ProfileVisibilityDataDTO;
 import it.evodev.instagram.profile.service.ProfileVisibilityService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;

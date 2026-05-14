@@ -1,7 +1,7 @@
 package it.evodev.instagram.profile.controller;
 
-import it.evodev.instagram.profile.dto.FollowStatusDataDTO;
-import it.evodev.instagram.profile.dto.ProfileApiResponse;
+import it.evodev.instagram.profile.dto.response.FollowStatusDataDTO;
+import it.evodev.instagram.profile.dto.response.ProfileApiResponse;
 import it.evodev.instagram.profile.service.FollowService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;

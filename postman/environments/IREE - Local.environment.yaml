@@ -2,4 +2,10 @@ name: IREE - Local
 values:
   - key: baseUrl
     value: ''
+  - key: accessToken
+    value: ''
+  - key: profileUsername
+    value: ''
+  - key: followStatusUsername
+    value: ''
 color: 120

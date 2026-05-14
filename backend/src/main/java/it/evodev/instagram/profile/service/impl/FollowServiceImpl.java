@@ -1,6 +1,6 @@
 package it.evodev.instagram.profile.service.impl;
 
-import it.evodev.instagram.profile.dto.FollowStatusDataDTO;
+import it.evodev.instagram.profile.dto.response.FollowStatusDataDTO;
 import it.evodev.instagram.profile.exception.ProfileNotFoundException;
 import it.evodev.instagram.profile.model.ProfileVisibilityFollow;
 import it.evodev.instagram.profile.model.ProfileVisibilityProfile;
@@ -62,7 +62,7 @@ public class FollowServiceImpl implements FollowService {
             logger.info("Follow status: no follow relationship. Returning 'none'");
         } else {
             status = followOpt.get().getStatus();
-            logger.info("Follow status: follow relationship found. Returning '{}', Status: {}", status);
+            logger.info("Follow status: follow relationship found. Returning '{}'", status);
         }
 
         return new FollowStatusDataDTO(status);

@@ -33,6 +33,7 @@ import { ChatContactList, MessageList, MessageInput } from "@/components/direct"
 import type { ChatContact, MessageItem } from "@/components";
 import { ShareIcon, ChatSkeleton } from "@/components/common";
 import ProfilePicture from "@/components/ProfilePicture";
+import { getProfileByUsernameAction } from "@/features/profile";
 import { Search, PenSquare, ChevronDown, ArrowLeft, Phone, Video, Info } from "lucide-react";
 
 // ============================================================================
@@ -121,40 +122,41 @@ export default function DirectPage() {
     const usernameParam = searchParams.get('username');
     if (usernameParam && usernameParam !== loadedUsernameRef.current) {
       loadedUsernameRef.current = usernameParam;
-      
-      // Carica le informazioni del profilo usando l'API esistente
-      fetch(`/api/profiles/${usernameParam}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.profile) {
-            const profileId = data.profile.id;
-            setSelectedId(profileId);
-            
-            // Crea l'oggetto contatto
-            const newContact: ChatContact = {
-              id: data.profile.id,
-              name: data.profile.full_name || data.profile.username,
-              username: data.profile.username,
-              profile_image_url: data.profile.profile_image_url,
-              last_message_text: '',
-              last_message_at: undefined,
-              isFromMe: false,
-            };
-            
-            // Imposta immediatamente i dati del contatto selezionato
-            setSelectedContactData(newContact);
-            
-            // Aggiunge il contatto alla lista se non presente
-            setContacts(prev => {
-              const existingContact = prev.find(c => c.id === profileId);
-              if (!existingContact) {
-                return [newContact, ...prev];
-              }
-              return prev;
-            });
+
+      void (async () => {
+        try {
+          const result = await getProfileByUsernameAction({ username: usernameParam });
+          if (!result.success || !result.data) {
+            return;
           }
-        })
-        .catch(e => console.error('[DirectPage] Errore caricamento profilo:', e));
+
+          const loadedProfile = result.data.profile;
+          const profileId = loadedProfile.id;
+          setSelectedId(profileId);
+
+          const newContact: ChatContact = {
+            id: loadedProfile.id,
+            name: loadedProfile.full_name || loadedProfile.username,
+            username: loadedProfile.username,
+            profile_image_url: loadedProfile.profile_image_url ?? undefined,
+            last_message_text: '',
+            last_message_at: undefined,
+            isFromMe: false,
+          };
+
+          setSelectedContactData(newContact);
+
+          setContacts(prev => {
+            const existingContact = prev.find(c => c.id === profileId);
+            if (!existingContact) {
+              return [newContact, ...prev];
+            }
+            return prev;
+          });
+        } catch (e) {
+          console.error('[DirectPage] Errore caricamento profilo:', e);
+        }
+      })();
     } else if (!usernameParam && loadedUsernameRef.current) {
       // Reset quando non c'è più il parametro username
       loadedUsernameRef.current = null;

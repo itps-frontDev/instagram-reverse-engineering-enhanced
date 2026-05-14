@@ -36,7 +36,7 @@ import {
   StoryHighlight,
 } from '@/types/profile';
 import type { FeedPost } from '@/types/feed';
-import { canViewProfileAction, getFollowStatusAction } from '@/features/profile';
+import { getProfileByUsernameAction } from '@/features/profile';
 
 // ============================================================================
 // COMPONENTE PRINCIPALE
@@ -179,64 +179,38 @@ export default function ProfilePage({
   // ==========================================================================
 
   /**
-   * Recupera tutti i dati del profilo dall'API
-   * 
-   * Carica in sequenza:
-   * 1. Dati profilo base
-   * 2. Stato follow (se autenticato)
-   * 3. Permessi di visualizzazione
+   * Recupera tutti i dati del profilo dal nuovo endpoint Spring centralizzato.
    */
   async function fetchProfileData() {
     setIsLoading(true);
     setError(null);
 
     try {
-      // -----------------------------------------------------------------------
-      // Fetch dati profilo base
-      // -----------------------------------------------------------------------
-      const profileRes = await fetch(`/api/profiles/${username}`);
-      if (!profileRes.ok) {
-        if (profileRes.status === 404) {
+      const profileResult = await getProfileByUsernameAction({ username });
+      if (!profileResult.success || !profileResult.data) {
+        const message = profileResult.error || 'Errore nel caricamento del profilo';
+        if (message.toLowerCase().includes('not found')) {
           setError('Profilo non trovato');
           return;
         }
-        throw new Error('Errore nel caricamento del profilo');
+        throw new Error(message);
       }
-      const profileData = await profileRes.json();
-      setProfile(profileData.profile);
+
+      setProfile(profileResult.data.profile);
 
       // fallback locale: evita UI di follow sul proprio profilo anche se follow-status fallisce
-      if (authProfile?.id && authProfile.id === profileData.profile?.id) {
+      if (authProfile?.id && authProfile.id === profileResult.data.profile?.id) {
         setFollowStatus((prev) => ({ ...prev, isOwnProfile: true }));
       }
 
-      // -----------------------------------------------------------------------
-      // Fetch stato follow (richiede autenticazione)
-      // -----------------------------------------------------------------------
-      try {
-        const followResult = await getFollowStatusAction({ username });
-        if (followResult.success && followResult.data) {
-          // Mappa la nuova risposta Spring al vecchio formato per compatibilità UI
-          const status = followResult.data.status;
-          setFollowStatus({
-            isOwnProfile: status === 'self',
-            isFollowing: status === 'accepted',
-            isPending: status === 'pending',
-            isFollowedBy: false, // La nuova API non fornisce this info, va in altra query
-          });
-        }
-      } catch (err) {
-        // Non autenticato - continua come ospite
-        console.log('Non autenticato, visualizzazione come ospite');
-      }
-
-      // -----------------------------------------------------------------------
-      // Fetch permessi di visualizzazione
-      // -----------------------------------------------------------------------
-      const canViewResult = await canViewProfileAction({ username });
-      if (canViewResult.success) {
-        setCanView(canViewResult.data?.canView ?? false);
-      }
+      const context = profileResult.data.context;
+      setFollowStatus({
+        isOwnProfile: context.isOwner,
+        isFollowing: context.followStatus === 'accepted',
+        isPending: context.followStatus === 'pending',
+        isFollowedBy: false,
+      });
+      setCanView(context.canView);
     } catch (err) {
       console.error('Errore caricamento profilo:', err);
       setError('Errore nel caricamento del profilo');

@@ -1,6 +1,6 @@
 package it.evodev.instagram.profile.service.impl;
 
-import it.evodev.instagram.profile.dto.ProfileVisibilityDataDTO;
+import it.evodev.instagram.profile.dto.response.ProfileVisibilityDataDTO;
 import it.evodev.instagram.profile.exception.ProfileNotFoundException;
 import it.evodev.instagram.profile.model.ProfileVisibilityFollow;
 import it.evodev.instagram.profile.model.ProfileVisibilityProfile;
