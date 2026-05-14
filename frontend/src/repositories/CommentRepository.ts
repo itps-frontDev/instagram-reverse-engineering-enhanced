@@ -6,11 +6,8 @@
  *
  * STRUTTURA DATABASE:
  * - comments: testo, profilo, post, parent (per risposte), contatori
- * - comment_likes: like ai commenti (no deleted_at, usa ON CONFLICT DO NOTHING)
+ * - likes: like polimorfici (likeable_type='comment', soft delete con deleted_at)
  *
- * SISTEMA DI LIKE AI COMMENTI:
- * La tabella `comment_likes` non ha `deleted_at`. L'unlike è un DELETE fisico.
- * Per evitare duplicati si usa `ON CONFLICT DO NOTHING`.
  *
  * AUTORIZZAZIONE ELIMINAZIONE:
  * Un commento può essere eliminato dal suo autore O dal proprietario del post.
@@ -23,9 +20,6 @@
  * // Crea un commento
  * const comment = await commentRepository.create(postId, profileId, 'Bello!');
  *
- * // Like / Unlike
- * await commentRepository.like(commentId, profileId);
- * await commentRepository.unlike(commentId, profileId);
  */
 
 import { queryAll, queryOne, execute } from '@/lib/db';
@@ -75,11 +69,6 @@ export interface PostForComment {
   comments_disabled: boolean;
   comments_count: number;
   profile_id: number;
-}
-
-export interface CommentLikeResult {
-  success: boolean;
-  newLikesCount: number;
 }
 
 export interface CommentDeleteResult {
@@ -165,7 +154,7 @@ class CommentRepository {
          WHERE s.profile_id = p.id AND sv.viewer_profile_id = ?
            AND s.deleted_at IS NULL AND s.expires_at > NOW()
         ) as profile_has_viewed_story,
-        (SELECT 1 FROM comment_likes WHERE comment_id = c.id AND profile_id = ?) as is_liked
+        (SELECT 1 FROM likes WHERE likeable_type = 'comment' AND likeable_id = c.id AND profile_id = ? AND deleted_at IS NULL) as is_liked
       FROM comments c
       INNER JOIN profiles p ON c.profile_id = p.id
       WHERE c.post_id = ? AND c.deleted_at IS NULL AND p.deleted_at IS NULL
@@ -300,68 +289,6 @@ class CommentRepository {
     return { success: true };
   }
 
-  /**
-   * Aggiunge un like a un commento.
-   * USA `ON CONFLICT DO NOTHING` per like duplicati.
-   * Restituisce null se il like era già presente.
-   *
-   * @param commentId - ID del commento
-   * @param profileId - ID del profilo che mette like
-   * @returns { success, newLikesCount } o null se già messo like
-   */
-  async like(commentId: number, profileId: number): Promise<CommentLikeResult | null> {
-    const result = await execute(
-      `INSERT INTO comment_likes (profile_id, comment_id) VALUES (?, ?) ON CONFLICT DO NOTHING`,
-      [profileId, commentId]
-    );
-    if (result.changes === 0) return null;
-
-    await execute(`UPDATE comments SET likes_count = likes_count + 1 WHERE id = ?`, [commentId]);
-    const updated = await queryOne<{ likes_count: number }>(
-      `SELECT likes_count FROM comments WHERE id = ?`, [commentId]
-    );
-    return { success: true, newLikesCount: updated?.likes_count || 0 };
-  }
-
-  /**
-   * Rimuove un like da un commento (hard DELETE).
-   * Usa `GREATEST(0, likes_count - 1)` per evitare contatori negativi.
-   *
-   * @param commentId - ID del commento
-   * @param profileId - ID del profilo che rimuove il like
-   * @returns { success, newLikesCount } o null se il like non esisteva
-   */
-  async unlike(commentId: number, profileId: number): Promise<CommentLikeResult | null> {
-    const result = await execute(
-      `DELETE FROM comment_likes WHERE profile_id = ? AND comment_id = ?`,
-      [profileId, commentId]
-    );
-    if (result.changes === 0) return null;
-
-    await execute(
-      `UPDATE comments SET likes_count = GREATEST(0, likes_count - 1) WHERE id = ?`,
-      [commentId]
-    );
-    const updated = await queryOne<{ likes_count: number }>(
-      `SELECT likes_count FROM comments WHERE id = ?`, [commentId]
-    );
-    return { success: true, newLikesCount: updated?.likes_count || 0 };
-  }
-
-  /**
-   * Verifica se un profilo ha già messo like a un commento.
-   *
-   * @param commentId - ID del commento
-   * @param profileId - ID del profilo
-   * @returns true se il like esiste
-   */
-  async hasLiked(commentId: number, profileId: number): Promise<boolean> {
-    const result = await queryOne(
-      `SELECT 1 FROM comment_likes WHERE profile_id = ? AND comment_id = ?`,
-      [profileId, commentId]
-    );
-    return !!result;
-  }
 }
 
 export const commentRepository = new CommentRepository();

@@ -41,6 +41,7 @@ import {
   Play,
 } from 'lucide-react';
 import type { FeedPost, Comment, GetCommentsResponse } from '@/types/feed';
+import { toggleLikeAction } from '@/features/likes';
 
 interface PostModalProps {
   post: FeedPost;
@@ -248,32 +249,22 @@ export default function PostModal({
   };
 
   const handleCommentLike = async (commentId: number) => {
-    try {
-      const response = await fetch('/api/feed/comments/like', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ commentId }),
-      });
-
-      if (!response.ok) throw new Error('Failed to like comment');
-
-      const data = await response.json();
-
-      // Aggiornare lo stato locale del commento
-      setComments((prevComments) =>
-        prevComments.map((comment) =>
-          comment.id === commentId
-            ? {
-                ...comment,
-                is_liked_by_current_user: data.liked,
-                likes_count: data.likes_count,
-              }
+    const result = await toggleLikeAction({ likeableType: 'comment', likeableId: commentId });
+    if (!result.success) {
+      console.error('Failed to like comment:', result.error);
+      return;
+    }
+    setComments((prevComments) =>
+      prevComments.map((comment) =>
+        comment.id === commentId
+          ? {
+              ...comment,
+              is_liked_by_current_user: result.data.liked,
+              likes_count: result.data.count,
+            }
             : comment
         )
       );
-    } catch (error) {
-      console.error('Error liking comment:', error);
-    }
   };
 
   const formatLikesCount = (count: number) => {

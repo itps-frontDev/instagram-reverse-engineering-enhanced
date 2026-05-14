@@ -36,6 +36,7 @@ import {
   StoryHighlight,
 } from '@/types/profile';
 import type { FeedPost } from '@/types/feed';
+import { toggleLikeAction } from '@/features/likes';
 
 // ============================================================================
 // COMPONENTE PRINCIPALE
@@ -584,44 +585,16 @@ export default function ProfilePage({
    * @param postId - ID del post
    */
   async function handleLikePost(postId: number) {
-    if (!selectedPost) return;
-
-    const wasLiked = selectedPost.is_liked_by_current_user;
-    
-    // Aggiornamento ottimistico
-    setSelectedPost({
-      ...selectedPost,
-      is_liked_by_current_user: !wasLiked,
-      likes_count: wasLiked ? selectedPost.likes_count - 1 : selectedPost.likes_count + 1,
-    });
-
-    try {
-      const endpoint = `/api/posts/${postId}/like`;
-      const res = await fetch(endpoint, { method: 'POST' });
-      
-      if (!res.ok) throw new Error('Errore like/unlike post');
-
-      const data = await res.json();
-      
-      // Aggiorna l'array dei post con la risposta del server
-      setPosts(prev => prev.map(p => 
-        p.id === postId 
-          ? { 
-              ...p, 
-              is_liked_by_current_user: data.liked,
-              likes_count: data.likes_count 
-            }
-          : p
-      ));
-    } catch (err) {
-      // Ripristina aggiornamento ottimistico
-      setSelectedPost({
-        ...selectedPost,
-        is_liked_by_current_user: wasLiked,
-        likes_count: wasLiked ? selectedPost.likes_count + 1 : selectedPost.likes_count - 1,
-      });
-      console.error('Errore like post:', err);
+    const result = await toggleLikeAction({ likeableType: 'post', likeableId: postId });
+    if (!result.success) {
+      console.error('Errore like post:', result.error);
+      return;
     }
+    const { liked, count } = result.data;
+    setSelectedPost(prev => prev ? { ...prev, is_liked_by_current_user: liked, likes_count: count } : prev);
+    setPosts(prev => prev.map(p =>
+      p.id === postId ? { ...p, is_liked_by_current_user: liked, likes_count: count } : p
+    ));
   }
 
   /**

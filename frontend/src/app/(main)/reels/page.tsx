@@ -32,6 +32,7 @@ import { LoadingSpinner } from '@/components/common';
 import {ReelsSkeleton} from '@/components/common/skeletons';
 import { VerifiedBadge, ShareIcon } from '@/components/common';;
 import { formatTimeAgo } from '@/lib/date-utils';
+import { toggleLikeAction } from '@/features/likes';
 
 // ============================================================================
 // INTERFACCE E TIPI
@@ -507,28 +508,16 @@ export default function ReelsPage() {
    * @param reelId - ID del reel da likare/unlikare
    */
   const handleLike = async (reelId: number) => {
-    const reel = reels.find(r => r.id === reelId);
-    if (!reel) return;
-
-    try {
-      const response = await fetch(`/api/posts/${reelId}/like`, { method: 'POST' });
-      if (!response.ok) throw new Error('Errore nel like');
-
-      const data = await response.json();
-      
-      // Aggiorna lo state locale
-      setReels(prev => prev.map(r => 
-        r.id === reelId 
-          ? {
-              ...r,
-              is_liked_by_current_user: data.liked,
-              likes_count: data.likes_count,
-            }
-          : r
-      ));
-    } catch (error) {
-      console.error('Errore nel like del reel:', error);
+    const result = await toggleLikeAction({ likeableType: 'post', likeableId: reelId });
+    if (!result.success) {
+      console.error('Errore nel like del reel:', result.error);
+      return;
     }
+    setReels(prev => prev.map(r =>
+      r.id === reelId
+        ? { ...r, is_liked_by_current_user: result.data.liked, likes_count: result.data.count }
+        : r
+    ));
   };
 
   /**
@@ -632,25 +621,16 @@ export default function ReelsPage() {
    * @param commentId - ID del commento
    */
   const handleCommentLike = async (commentId: number) => {
-    try {
-      const response = await fetch('/api/feed/comments/like', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ commentId }),
-      });
-
-      if (!response.ok) throw new Error('Errore like commento');
-      const data = await response.json();
-
-      // Aggiorna lo state locale del commento
-      setComments(prev => prev.map(c => 
-        c.id === commentId 
-          ? { ...c, is_liked_by_current_user: data.liked, likes_count: data.likes_count }
-          : c
-      ));
-    } catch (error) {
-      console.error('Errore like commento:', error);
+    const result = await toggleLikeAction({ likeableType: 'comment', likeableId: commentId });
+    if (!result.success) {
+      console.error('Errore like commento:', result.error);
+      return;
     }
+    setComments(prev => prev.map(c =>
+      c.id === commentId
+        ? { ...c, is_liked_by_current_user: result.data.liked, likes_count: result.data.count }
+        : c
+    ));
   };
 
   // ==========================================================================

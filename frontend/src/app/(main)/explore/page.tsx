@@ -26,6 +26,7 @@ import {MobileSearchBar} from '@/components/feed';
 import { LoadingSpinner } from '@/components/common';
 import {ExploreSkeleton} from '@/components/common/skeletons';
 import type { FeedPost, GetFeedResponse } from '@/types/feed';
+import { toggleLikeAction } from '@/features/likes';
 
 // ============================================================================
 // COMPONENTE PAGINA
@@ -159,32 +160,18 @@ export default function ExplorePage() {
    * Aggiorna lo stato locale con la risposta del server.
    */
   const handleLike = async (postId: number) => {
-    try {
-      const response = await fetch('/api/feed/like', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postId }),
-      });
-
-      if (!response.ok) throw new Error('Errore like post');
-
-      const data = await response.json();
-
-      // Aggiorna lo stato locale
-      setPosts((prevPosts) =>
-        prevPosts.map((post) =>
-          post.id === postId
-            ? {
-                ...post,
-                is_liked_by_current_user: data.liked,
-                likes_count: data.likes_count,
-              }
-            : post
-        )
-      );
-    } catch (err) {
-      console.error('Errore like post:', err);
+    const result = await toggleLikeAction({ likeableType: 'post', likeableId: postId });
+    if (!result.success) {
+      console.error('Errore like post:', result.error);
+      return;
     }
+    setPosts((prevPosts) =>
+      prevPosts.map((post) =>
+        post.id === postId
+          ? { ...post, is_liked_by_current_user: result.data.liked, likes_count: result.data.count }
+          : post
+      )
+    );
   };
 
   /**

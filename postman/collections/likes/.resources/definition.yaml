@@ -1,0 +1,3 @@
+$kind: collection
+name: Likes
+description: Endpoint privato per il toggle like polimorfico su post, commento o storia.
