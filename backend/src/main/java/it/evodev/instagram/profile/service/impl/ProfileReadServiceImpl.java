@@ -2,10 +2,13 @@ package it.evodev.instagram.profile.service.impl;
 
 import it.evodev.instagram.profile.dto.response.FollowStatusDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfileByUsernameDataDTO;
+import it.evodev.instagram.profile.dto.response.ProfilePreviewDataDTO;
+import it.evodev.instagram.profile.dto.response.RecentPostPreviewDto;
 import it.evodev.instagram.profile.dto.response.ProfileVisibilityDataDTO;
 import it.evodev.instagram.profile.exception.ProfileNotFoundException;
 import it.evodev.instagram.profile.model.ProfileVisibilityProfile;
 import it.evodev.instagram.profile.repository.ProfileByUsernameProjection;
+import it.evodev.instagram.profile.repository.ProfilePreviewProjection;
 import it.evodev.instagram.profile.repository.ProfileVisibilityProfileJpaRepository;
 import it.evodev.instagram.profile.service.FollowService;
 import it.evodev.instagram.profile.service.ProfileReadService;
@@ -17,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -96,6 +100,41 @@ public class ProfileReadServiceImpl implements ProfileReadService {
                 .owner(isOwner)
                 .canView(true)
                 .followStatus(followStatus)
+                .build();
+    }
+
+    @Override
+    public ProfilePreviewDataDTO getProfilePreviewByUsername(UUID currentUserId, String targetUsername) {
+        logger.info("Fetching profile preview. Current user: {}, Target username: {}", currentUserId, targetUsername);
+
+        ProfilePreviewProjection projection = profileRepository.findProfilePreviewByUsername(targetUsername)
+                .orElseThrow(() -> {
+                    logger.warn("Target profile for preview not found. Username: {}", targetUsername);
+                    return new ProfileNotFoundException("Profile not found");
+                });
+
+        FollowStatusDataDTO followStatusData = followService.getFollowStatus(currentUserId, targetUsername);
+        String followStatus = followStatusData.getStatus();
+        boolean isOwner = "self".equalsIgnoreCase(followStatus);
+        boolean canView = isOwner
+                || !Boolean.TRUE.equals(projection.getIsPrivate())
+                || "accepted".equalsIgnoreCase(followStatus);
+
+        // TODO(Post): sostituire [] con chiamata a PostService.getRecentPosts(profileId, 3) quando il modulo post sarà migrato.
+        // TODO(Post): ogni mediaUrl dovrà essere un SAS URL temporaneo (15 min) generato via MediaService.
+        List<RecentPostPreviewDto> recentPosts = List.of();
+
+        return ProfilePreviewDataDTO.builder()
+                .username(projection.getUsername())
+                .fullName(projection.getFullName())
+                .profileImageUrl(projection.getProfileImageUrl())
+                .followersCount(defaultInt(projection.getFollowersCount()))
+                .followingCount(defaultInt(projection.getFollowingCount()))
+                .postsCount(defaultInt(projection.getPostsCount()))
+                .followStatus(followStatus)
+                .owner(isOwner)
+                .canView(canView)
+                .recentPosts(recentPosts)
                 .build();
     }
 

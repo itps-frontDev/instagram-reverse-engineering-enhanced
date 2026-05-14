@@ -2,6 +2,7 @@ package it.evodev.instagram.profile.controller;
 
 import it.evodev.instagram.profile.dto.response.ProfileApiResponse;
 import it.evodev.instagram.profile.dto.response.ProfileByUsernameDataDTO;
+import it.evodev.instagram.profile.dto.response.ProfilePreviewDataDTO;
 import it.evodev.instagram.profile.service.ProfileReadService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -44,5 +45,26 @@ public class ProfileController {
                 username, result.isCanView(), result.getFollowStatus());
 
         return ResponseEntity.ok(ProfileApiResponse.success(result, "Profile fetched successfully"));
+    }
+
+    /**
+     * GET /api/priv/profiles/{username}/preview
+     *
+     * Endpoint leggero per card hover profilo: restituisce dati minimali + recentPosts.
+     */
+    @GetMapping("/{username}/preview")
+    public ResponseEntity<ProfileApiResponse<ProfilePreviewDataDTO>> getProfilePreviewByUsername(
+            @PathVariable String username,
+            Authentication authentication
+    ) {
+        logger.info("GET /api/priv/profiles/{}/preview - User: {}", username, authentication.getName());
+
+        UUID currentUserId = UUID.fromString(authentication.getName());
+        ProfilePreviewDataDTO result = profileReadService.getProfilePreviewByUsername(currentUserId, username);
+
+        logger.info("Profile preview fetched successfully. Username: {}, CanView: {}, FollowStatus: {}",
+                username, result.isCanView(), result.getFollowStatus());
+
+        return ResponseEntity.ok(ProfileApiResponse.success(result, "Profile preview fetched successfully"));
     }
 }

@@ -14,6 +14,21 @@ public interface ProfileVisibilityProfileJpaRepository extends JpaRepository<Pro
 
     @Query(value = """
             SELECT
+                CAST(p.username AS VARCHAR) AS username,
+                CAST(p.full_name AS VARCHAR) AS fullName,
+                CAST(p.profile_image_url AS VARCHAR) AS profileImageUrl,
+                p.is_private AS isPrivate,
+                p.followers_count AS followersCount,
+                p.following_count AS followingCount,
+                p.posts_count AS postsCount
+            FROM profiles p
+            WHERE p.deleted_at IS NULL
+              AND LOWER(p.username) = LOWER(:username)
+            """, nativeQuery = true)
+    Optional<ProfilePreviewProjection> findProfilePreviewByUsername(@Param("username") String username);
+
+    @Query(value = """
+            SELECT
                 p.id AS id,
                 p.user_id AS userId,
                 CAST(p.username AS VARCHAR) AS username,

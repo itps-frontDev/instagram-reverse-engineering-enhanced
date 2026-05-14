@@ -23,7 +23,7 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/profiles/actions/follow,POST,"Segui un utente (accepted o pending) e crea notifica",Yes,No,Yes,No
 /api/profiles/[username]/upload-image,POST,"Carica immagine profilo per username (owner only)",Yes,Yes,Yes,No
 /api/profiles/[username],GET,"MIGRATED to Spring: /api/priv/profiles/{username} - profilo centrale con flag contestuali e payload full/partial per privacy",Yes,No,Yes,No
-/api/profiles/[username]/preview,GET,"Anteprima profilo con post recenti per card hover",Yes,No,Yes,No
+/api/profiles/[username]/preview,GET,"MIGRATED to Spring: /api/priv/profiles/{username}/preview - anteprima profilo con post recenti per card hover",Yes,No,Yes,No
 /api/profiles/[username]/remove-image,POST,"Rimuove immagine profilo (owner only)",Yes,No,Yes,No
 /api/profiles/[username]/posts,GET,"Lista post di un profilo (tabs: posts,reels,saved,tagged)",Yes,No,Yes,No
 /api/profiles/[username]/following,GET,"Lista dei profili seguiti (rispetta privacy)",Yes,No,Yes,No

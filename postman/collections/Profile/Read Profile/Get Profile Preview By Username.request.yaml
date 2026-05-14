@@ -1,0 +1,8 @@
+$kind: http-request
+name: Get Profile Preview By Username
+description: Returns a lightweight profile preview payload for hover cards, including contextual visibility, follow status, and recent posts.
+method: GET
+url: "{{baseUrl}}/api/priv/profiles/{{profileUsername}}/preview"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 1020

@@ -91,6 +91,10 @@ export const getProfileByUsernameInputSchema = z.object({
   username: z.string().min(1, 'Username is required'),
 });
 
+export const getProfilePreviewInputSchema = z.object({
+  username: z.string().min(1, 'Username is required'),
+});
+
 // Response data schema when success is true
 export const profileByUsernameDataSchema = z.object({
   id: z.number().int().positive(),
@@ -167,6 +171,69 @@ export const getProfileByUsernameResultSchema = z.object({
   error: z.string().optional(),
 });
 
+export const recentPostPreviewSchema = z.object({
+  id: z.number().int().positive(),
+  mediaUrl: z.string().nullable().optional(),
+  type: z.string().nullable().optional(),
+});
+
+export const profilePreviewDataSchema = z.object({
+  username: z.string().min(1),
+  fullName: z.string().nullable(),
+  profileImageUrl: z.string().nullable(),
+  followersCount: z.number().int(),
+  followingCount: z.number().int(),
+  postsCount: z.number().int(),
+  followStatus: z.enum(['self', 'none', 'pending', 'accepted']),
+  isOwner: z.boolean(),
+  canView: z.boolean(),
+  recentPosts: z.array(recentPostPreviewSchema),
+});
+
+export const profilePreviewSuccessResponseSchema = z.object({
+  success: z.literal(true),
+  data: profilePreviewDataSchema,
+  message: z.string().optional(),
+  error: z.null().optional(),
+});
+
+export const profilePreviewErrorResponseSchema = z.object({
+  success: z.literal(false),
+  data: z.never().optional(),
+  message: z.string().optional(),
+  error: z.string(),
+});
+
+export const profilePreviewResponseSchema = z.union([
+  profilePreviewSuccessResponseSchema,
+  profilePreviewErrorResponseSchema,
+]);
+
+export const getProfilePreviewResultSchema = z.object({
+  success: z.boolean(),
+  data: z
+    .object({
+      username: z.string(),
+      full_name: z.string().nullable(),
+      profile_image_url: z.string().nullable(),
+      posts_count: z.number().int(),
+      followers_count: z.number().int(),
+      following_count: z.number().int(),
+      follow_status: z.enum(['self', 'none', 'pending', 'accepted']),
+      is_owner: z.boolean(),
+      can_view: z.boolean(),
+      recent_posts: z.array(
+        z.object({
+          id: z.number().int().positive(),
+          media_url: z.string().nullable(),
+          type: z.string().nullable(),
+        })
+      ),
+    })
+    .optional(),
+  error: z.string().optional(),
+});
+
 export type CanViewProfileInput = z.infer<typeof canViewProfileInputSchema>;
 export type ProfileVisibilityData = z.infer<typeof profileVisibilityDataSchema>;
 export type ProfileVisibilityResponse = z.infer<typeof profileVisibilityResponseSchema>;
@@ -181,3 +248,7 @@ export type GetProfileByUsernameInput = z.infer<typeof getProfileByUsernameInput
 export type ProfileByUsernameData = z.infer<typeof profileByUsernameDataSchema>;
 export type ProfileByUsernameResponse = z.infer<typeof profileByUsernameResponseSchema>;
 export type GetProfileByUsernameResult = z.infer<typeof getProfileByUsernameResultSchema>;
+export type GetProfilePreviewInput = z.infer<typeof getProfilePreviewInputSchema>;
+export type ProfilePreviewData = z.infer<typeof profilePreviewDataSchema>;
+export type ProfilePreviewResponse = z.infer<typeof profilePreviewResponseSchema>;
+export type GetProfilePreviewResult = z.infer<typeof getProfilePreviewResultSchema>;

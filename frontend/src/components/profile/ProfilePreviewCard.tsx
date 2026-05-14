@@ -21,7 +21,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ProfilePicture } from '@/components';
-import { VerifiedBadge, ShareIcon } from '@/components/common';
+import { ShareIcon } from '@/components/common';
+import { getProfilePreviewAction } from '@/features/profile';
 
 
 // ============================================================================
@@ -37,20 +38,19 @@ interface ProfilePreviewCardProps {
 }
 
 interface ProfileData {
-  id: number;
   username: string;
   full_name: string | null;
-  bio: string | null;
   profile_image_url: string | null;
-  is_verified: boolean;
-  is_private: boolean;
   posts_count: number;
   followers_count: number;
   following_count: number;
+  follow_status: 'self' | 'none' | 'pending' | 'accepted';
+  is_owner: boolean;
+  can_view: boolean;
   recent_posts: Array<{
     id: number;
-    media_url: string;
-    media_type: string;
+    media_url: string | null;
+    type: string | null;
   }>;
 }
 
@@ -75,10 +75,9 @@ export default function ProfilePreviewCard({
     async function loadProfile() {
       try {
         setLoading(true);
-        const res = await fetch(`/api/profiles/${username}/preview`);
-        if (res.ok) {
-          const data = await res.json();
-          setProfile(data);
+        const result = await getProfilePreviewAction({ username });
+        if (result.success && result.data) {
+          setProfile(result.data);
         }
       } catch (error) {
         console.error('Error loading profile preview:', error);
@@ -113,7 +112,7 @@ export default function ProfilePreviewCard({
   }
 
   return (
-    <div className={`w-80 ml-[42px] rounded-lg shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700 ${profile.is_private && profile.recent_posts.length === 0 ? 'bg-gray-50 dark:bg-[#1a1a1a]' : 'bg-white dark:bg-[#262626]'}`}> 
+    <div className={`w-80 ml-[42px] rounded-lg shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700 ${!profile.can_view && profile.recent_posts.length === 0 ? 'bg-gray-50 dark:bg-[#1a1a1a]' : 'bg-white dark:bg-[#262626]'}`}> 
       {/* Header */}
       <div className="p-5 pb-2">
         <div className="flex items-start gap-4">
@@ -130,7 +129,6 @@ export default function ProfilePreviewCard({
               className="font-semibold text-sm text-[#262626] dark:text-white hover:opacity-70 flex items-center gap-1"
             >
               {profile.username}
-              {profile.is_verified && <VerifiedBadge size={12} />}
             </Link>
             <p className="text-sm text-[#8E8E8E] dark:text-gray-400">
               {profile.full_name}
@@ -156,7 +154,7 @@ export default function ProfilePreviewCard({
       </div>
 
       {/* Preview Post */}
-      {profile.is_private && profile.recent_posts.length === 0 ? (
+      {!profile.can_view && profile.recent_posts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-6 px-4">
           {/* Instagram gradient lock icon with circle */}
           <div className="mb-3">
@@ -175,7 +173,7 @@ export default function ProfilePreviewCard({
               <path d="M22 28 C22 16, 34 16, 34 28" stroke="url(#instagramGradient)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
             </svg>
           </div>
-          <p className="font-bold text-sm text-white mb-1">L'account è privato</p>
+          <p className="font-bold text-sm text-white mb-1">L&apos;account è privato</p>
           <p className="text-xs text-[#8E8E8E] text-center">Segui questo account per vedere le foto e i video.</p>
         </div>
       ) : profile.recent_posts.length > 0 ? (
@@ -186,9 +184,9 @@ export default function ProfilePreviewCard({
               href={`/p/${post.id}`}
               className="aspect-square relative overflow-hidden hover:opacity-80 transition-opacity"
             >
-              {post.media_type === 'video' ? (
+              {post.type === 'reel' ? (
                 <video
-                  src={post.media_url}
+                  src={post.media_url || ''}
                   className="w-full h-full object-cover"
                   preload="metadata"
                   muted
@@ -196,7 +194,7 @@ export default function ProfilePreviewCard({
                 />
               ) : (
                 <Image
-                  src={post.media_url}
+                  src={post.media_url || ''}
                   alt="Post"
                   fill
                   className="object-cover"
