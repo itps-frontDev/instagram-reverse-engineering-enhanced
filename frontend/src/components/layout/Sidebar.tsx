@@ -22,7 +22,7 @@ import Link from 'next/link';
 import ProfilePicture from '@/components/ProfilePicture';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createPortal } from 'react-dom';
 import {CreatePostModal} from '@/components/feed';
@@ -70,6 +70,9 @@ export default function Sidebar() {
   const isDirectPage = pathname.startsWith('/direct');
   const isProfilePage = pathname.startsWith('/profile/');
   const isCollapsed = isDirectPage || showSearchPanel || showNotificationsPanel;
+
+  // Stabile: non ricrea la reference ad ogni render, evita loop in NotificationsPanel
+  const handleMarkAllAsRead = useCallback(() => setUnreadCount(0), []);
 
   useEffect(() => {
     setMounted(true);
@@ -200,10 +203,10 @@ export default function Sidebar() {
       <SearchPanel isOpen={showSearchPanel} onClose={() => setShowSearchPanel(false)} />
       
       {/* Notifications Panel */}
-      <NotificationsPanel 
-        isOpen={showNotificationsPanel} 
+      <NotificationsPanel
+        isOpen={showNotificationsPanel}
         onClose={() => setShowNotificationsPanel(false)}
-        onMarkAllAsRead={() => setUnreadCount(0)}
+        onMarkAllAsRead={handleMarkAllAsRead}
       />
       
       {/* Sidebar */}
