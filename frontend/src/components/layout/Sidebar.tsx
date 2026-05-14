@@ -28,6 +28,7 @@ import { createPortal } from 'react-dom';
 import {CreatePostModal} from '@/components/feed';
 import {SearchPanel, NotificationsPanel} from '@/components/layout';
 import { ShareIcon, InstagramLogo } from '@/components/common';
+import { getUnreadCountAction } from '@/features/notifications/actions';
 import {
   Heart,
   Menu,
@@ -81,15 +82,13 @@ export default function Sidebar() {
     // Funzione per caricare il conteggio delle notifiche non lette
     const fetchUnreadCount = async () => {
       try {
-        const response = await fetch('/api/notifications/unread-count');
-        if (response.ok) {
-          const data = await response.json();
-          setUnreadCount(data.count || 0);
-        } else {
-          // Silent fail - don't log on auth errors
-          if (response.status !== 401) {
-            console.error('Error fetching unread notifications:', response.status);
-          }
+        const result = await getUnreadCountAction();
+        if (result.success) {
+          setUnreadCount(result.data.count || 0);
+          return;
+        }
+        if (result.error !== 'Authentication required.' && result.error !== 'Missing access token.') {
+          console.error('Error fetching unread notifications:', result.error);
         }
       } catch (error) {
         // Silent fail - network errors shouldn't break the UI

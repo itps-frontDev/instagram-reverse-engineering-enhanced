@@ -16,7 +16,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentProfileId } from '@/lib/auth';
-import { commentRepository, postRepository, notificationRepository } from '@/repositories';
+import { commentRepository, postRepository } from '@/repositories';
 
 // Forza runtime Node.js
 export const runtime = 'nodejs';
@@ -75,15 +75,16 @@ export async function POST(
       text.trim()
     );
 
-    // Crea notifica (solo se non è commento al proprio post)
-    if (post.profile_id !== profileId) {
-      await notificationRepository.createCommentNotification(
-        post.profile_id,
-        profileId,
-        postIdNum,
-        comment.id
-      );
-    }
+    // TODO: gestire lato BE — dispatch notifica comment
+    // if (post.profile_id !== profileId) {
+    //   dispatchNotificationToSpring(request, {
+    //     recipientProfileId: post.profile_id,
+    //     senderProfileId: profileId,
+    //     type: 'comment',
+    //     referenceType: 'comment',
+    //     referenceId: comment.id,
+    //   });
+    // }
 
     return NextResponse.json({ message: 'Commento aggiunto con successo' });
   } catch (error) {

@@ -1,0 +1,8 @@
+$kind: http-request
+name: Delete Notification
+description: Elimina (soft-delete) una singola notifica dell'utente autenticato.
+method: DELETE
+url: "{{baseUrl}}/api/priv/notifications/{{notificationUuid}}"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 1500

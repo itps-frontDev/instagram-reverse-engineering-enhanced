@@ -9,19 +9,19 @@ body:
   type: json
   content: |
     {
-      "identifier": "masonthompson4",
+      "identifier": "lukewhite",
       "password": "password123"
     }
 scripts:
   - type: afterResponse
     code: "var json = pm.response.json();\r
 
-      pm.collectionVariables.set(\"accessToken\", json.accessToken);\r
+      pm.environment.set(\"accessToken\", json.accessToken);\r
 
-      pm.collectionVariables.set(\"refreshToken\", json.refreshToken);\r
+      pm.environment.set(\"refreshToken\", json.refreshToken);\r
 
-      pm.collectionVariables.set(\"expiresIn\", json.expiresIn);\r
+      pm.environment.set(\"expiresIn\", json.expiresIn);\r
 
-      pm.collectionVariables.set(\"refreshExpiresIn\", json.refreshExpiresIn);"
+      pm.environment.set(\"refreshExpiresIn\", json.refreshExpiresIn);"
     language: text/javascript
 order: 1000

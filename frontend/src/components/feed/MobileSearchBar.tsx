@@ -23,6 +23,7 @@ import ProfilePicture from '@/components/ProfilePicture';
 import { LoadingSpinner, VerifiedBadge } from '@/components';
 import { formatTimeAgo } from '@/lib/date-utils';
 import Link from 'next/link';
+import { getNotificationsAction, getUnreadCountAction, markAllNotificationsReadAction } from '@/features/notifications/actions';
 
 // ============================================================================
 // INTERFACCE
@@ -34,7 +35,7 @@ import Link from 'next/link';
  */
 interface Notification {
   /** Identificativo univoco della notifica */
-  id: number;
+  id: string;
   /** Tipo di notifica (follow, like_post, comment, etc.) */
   type: string;
   /** ID profilo del mittente */
@@ -104,10 +105,9 @@ export default function MobileSearchBar() {
   useEffect(() => {
     const fetchUnreadCount = async () => {
       try {
-        const response = await fetch('/api/notifications/unread-count');
-        if (response.ok) {
-          const data = await response.json();
-          setUnreadCount(data.count || 0);
+        const result = await getUnreadCountAction();
+        if (result.success) {
+          setUnreadCount(result.data.count || 0);
         }
       } catch (error) {
         console.error('Errore recupero conteggio non lette:', error);
@@ -136,10 +136,9 @@ export default function MobileSearchBar() {
     const loadNotifications = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('/api/notifications');
-        if (response.ok) {
-          const data = await response.json();
-          setNotifications(data.notifications || []);
+        const result = await getNotificationsAction({ limit: 50 });
+        if (result.success) {
+          setNotifications(result.data.notifications || []);
         }
       } catch (error) {
         console.error('Errore caricamento notifiche:', error);
@@ -153,10 +152,10 @@ export default function MobileSearchBar() {
     // Marca tutte come lette
     const markAsRead = async () => {
       try {
-        await fetch('/api/notifications/mark-read', {
-          method: 'PATCH',
-        });
-        setUnreadCount(0);
+        const result = await markAllNotificationsReadAction();
+        if (result.success) {
+          setUnreadCount(0);
+        }
       } catch (error) {
         console.error('Errore marcatura notifiche come lette:', error);
       }

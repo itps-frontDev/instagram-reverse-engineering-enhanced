@@ -19,7 +19,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentProfile } from '@/lib/auth';
-import { commentRepository, notificationRepository } from '@/repositories';
+import { commentRepository } from '@/repositories';
 import type {
   Comment,
   CreateCommentRequest,
@@ -187,15 +187,16 @@ export async function POST(request: NextRequest) {
       parentId
     );
 
-    // 6. Crea notifica (solo se non è un commento sul proprio post)
-    if (post.profile_id !== currentProfile.id) {
-      await notificationRepository.createCommentNotification(
-        post.profile_id,
-        currentProfile.id,
-        postId,
-        commentData.id
-      );
-    }
+    // TODO: gestire lato BE — dispatch notifica comment
+    // if (post.profile_id !== currentProfile.id) {
+    //   dispatchNotificationToSpring(request, {
+    //     recipientProfileId: post.profile_id,
+    //     senderProfileId: currentProfile.id,
+    //     type: 'comment',
+    //     referenceType: 'comment',
+    //     referenceId: commentData.id,
+    //   });
+    // }
 
     // 7. Trasforma in formato risposta
     const comment: Comment = {

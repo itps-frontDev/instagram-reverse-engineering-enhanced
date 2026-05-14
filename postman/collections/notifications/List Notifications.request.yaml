@@ -1,0 +1,10 @@
+$kind: http-request
+name: List Notifications
+description: "Recupera la lista notifiche del destinatario autenticato. Error case: 401 se il bearer token manca o non è valido."
+method: GET
+url: "{{baseUrl}}/api/priv/notifications?limit=60"
+headers:
+  Authorization: Bearer {{accessToken}}
+queryParams:
+  limit: "60"
+order: 1000
