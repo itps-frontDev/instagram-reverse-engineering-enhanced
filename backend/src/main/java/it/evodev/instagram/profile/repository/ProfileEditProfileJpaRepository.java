@@ -8,4 +8,5 @@ import java.util.UUID;
 
 public interface ProfileEditProfileJpaRepository extends JpaRepository<ProfileEditProfile, Long> {
     Optional<ProfileEditProfile> findByUserIdAndDeletedAtIsNull(UUID userId);
+    boolean existsByUsernameIgnoreCaseAndDeletedAtIsNullAndIdNot(String username, Long excludedProfileId);
 }

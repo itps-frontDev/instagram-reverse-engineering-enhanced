@@ -1,8 +1,11 @@
 package it.evodev.instagram.profile.controller;
 
 import it.evodev.instagram.profile.dto.request.ProfileEditRequestDTO;
+import it.evodev.instagram.profile.dto.request.ProfilePersonalRequestDTO;
 import it.evodev.instagram.profile.dto.response.ProfileEditDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfileEditResponseDTO;
+import it.evodev.instagram.profile.dto.response.ProfilePersonalDataDTO;
+import it.evodev.instagram.profile.dto.response.ProfilePersonalResponseDTO;
 import it.evodev.instagram.profile.service.ProfileEditService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -43,5 +46,24 @@ public class ProfileEditController {
         ProfileEditDataDTO updated = profileEditService.editProfile(currentUserId, request);
 
         return ResponseEntity.ok(new ProfileEditResponseDTO(true, updated, "Profile updated successfully"));
+    }
+
+    /**
+     * PUT /api/priv/profiles/personal
+     *
+     * Metodo PUT perché aggiorna in modo idempotente i dati personali del profilo autenticato.
+     * Il path mantiene allineamento semantico con la route legacy /api/profiles/personal durante la migrazione Strangler.
+     */
+    @PutMapping("/personal")
+    public ResponseEntity<ProfilePersonalResponseDTO> updatePersonalInfo(
+            @Valid @RequestBody ProfilePersonalRequestDTO request,
+            Authentication authentication
+    ) {
+        logger.info("PUT /api/priv/profiles/personal - User: {}", authentication.getName());
+
+        UUID currentUserId = UUID.fromString(authentication.getName());
+        ProfilePersonalDataDTO updated = profileEditService.updatePersonalInfo(currentUserId, request);
+
+        return ResponseEntity.ok(new ProfilePersonalResponseDTO(true, updated, "Personal information updated successfully"));
     }
 }

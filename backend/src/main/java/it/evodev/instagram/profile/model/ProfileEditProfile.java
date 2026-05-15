@@ -28,6 +28,9 @@ public class ProfileEditProfile {
     @Column(name = "username", nullable = false, columnDefinition = "citext")
     private String username;
 
+    @Column(name = "full_name", length = 64)
+    private String fullName;
+
     @Column(name = "bio", length = 150)
     private String bio;
 

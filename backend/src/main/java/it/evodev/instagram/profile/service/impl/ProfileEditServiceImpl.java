@@ -1,9 +1,12 @@
 package it.evodev.instagram.profile.service.impl;
 
 import it.evodev.instagram.profile.dto.request.ProfileEditRequestDTO;
+import it.evodev.instagram.profile.dto.request.ProfilePersonalRequestDTO;
 import it.evodev.instagram.profile.dto.response.ProfileEditDataDTO;
+import it.evodev.instagram.profile.dto.response.ProfilePersonalDataDTO;
 import it.evodev.instagram.profile.enums.ProfileGender;
 import it.evodev.instagram.profile.exception.ProfileBadRequestException;
+import it.evodev.instagram.profile.exception.ProfileConflictException;
 import it.evodev.instagram.profile.exception.ProfileNotFoundException;
 import it.evodev.instagram.profile.model.ProfileEditProfile;
 import it.evodev.instagram.profile.repository.ProfileEditProfileJpaRepository;
@@ -14,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -63,6 +67,43 @@ public class ProfileEditServiceImpl implements ProfileEditService {
         logger.info("Profile edited successfully. Profile ID: {}", saved.getId());
 
         return new ProfileEditDataDTO(saved.getBio(), saved.getWebsiteUrl(), saved.getGender(), saved.getCustomGender());
+    }
+
+    @Override
+    public ProfilePersonalDataDTO updatePersonalInfo(UUID currentUserId, ProfilePersonalRequestDTO request) {
+        logger.info("Updating personal profile info. Current user: {}", currentUserId);
+
+        ProfileEditProfile currentProfile = profileEditRepository.findByUserIdAndDeletedAtIsNull(currentUserId)
+                .orElseThrow(() -> {
+                    logger.warn("Current user profile not found for personal update. User ID: {}", currentUserId);
+                    return new ProfileNotFoundException("Profile not found");
+                });
+
+        String normalizedUsername = request.getUsername().trim().toLowerCase(Locale.ROOT);
+        String normalizedCurrentUsername = currentProfile.getUsername().trim().toLowerCase(Locale.ROOT);
+
+        if (!normalizedUsername.equals(normalizedCurrentUsername)) {
+            boolean usernameTaken = profileEditRepository.existsByUsernameIgnoreCaseAndDeletedAtIsNullAndIdNot(
+                    normalizedUsername,
+                    currentProfile.getId()
+            );
+
+            if (usernameTaken) {
+                logger.warn("Username already in use. Requested username: {}, Current profile ID: {}",
+                        normalizedUsername,
+                        currentProfile.getId());
+                throw new ProfileConflictException("Username already in use");
+            }
+        }
+
+        currentProfile.setUsername(normalizedUsername);
+        currentProfile.setFullName(normalizeOptionalText(request.getFullName()));
+
+        ProfileEditProfile saved = profileEditRepository.save(currentProfile);
+
+        logger.info("Personal profile info updated successfully. Profile ID: {}", saved.getId());
+
+        return new ProfilePersonalDataDTO(saved.getUsername(), saved.getFullName());
     }
 
     private void validateWebsite(String websiteUrl) {

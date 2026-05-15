@@ -8,3 +8,5 @@ export * from './read/actions';
 export * from './visibility/actions';
 export * from './suggestions/actions';
 export * from './edit/actions';
+export * from './personal/schema';
+export * from './personal/actions';
