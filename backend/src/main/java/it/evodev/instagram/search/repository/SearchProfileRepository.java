@@ -15,9 +15,9 @@ public interface SearchProfileRepository extends JpaRepository<SearchProfile, Lo
     @Query(value = """
             SELECT
                 p.user_id AS uuid,
-                p.username AS username,
-                p.full_name AS fullName,
-                p.profile_image_url AS profileImageUrl,
+                CAST(p.username AS VARCHAR) AS username,
+                CAST(p.full_name AS VARCHAR) AS fullName,
+                CAST(p.profile_image_url AS VARCHAR) AS profileImageUrl,
                 p.is_verified AS verified,
                 p.is_private AS privateProfile,
                 p.followers_count AS followersCount,
