@@ -95,6 +95,59 @@ export const getProfilePreviewInputSchema = z.object({
   username: z.string().min(1, 'Username is required'),
 });
 
+export const getProfileFollowersInputSchema = z.object({
+  username: z.string().min(1, 'Username is required'),
+});
+
+export const profileFollowerDataSchema = z.object({
+  id: z.number().int().positive(),
+  username: z.string().min(1),
+  fullName: z.string().nullable().optional(),
+  profileImageUrl: z.string().nullable().optional(),
+  followStatus: z.enum(['none', 'pending', 'accepted']),
+});
+
+export const profileFollowersSuccessResponseSchema = z.object({
+  success: z.literal(true),
+  data: z.array(profileFollowerDataSchema),
+  message: z.string().optional(),
+  error: z.null().optional(),
+});
+
+export const profileFollowersErrorResponseSchema = z.object({
+  success: z.literal(false),
+  data: z.never().optional(),
+  message: z.string().optional(),
+  error: z.string(),
+});
+
+export const profileFollowersResponseSchema = z.union([
+  profileFollowersSuccessResponseSchema,
+  profileFollowersErrorResponseSchema,
+]);
+
+export const getProfileFollowersResultSchema = z.object({
+  success: z.boolean(),
+  data: z
+    .object({
+      followers: z.array(
+        z.object({
+          id: z.number().int().positive(),
+          username: z.string(),
+          full_name: z.string().nullable(),
+          profile_image_url: z.string().nullable(),
+          follow_status: z.enum(['none', 'pending', 'accepted']),
+          is_following: z.boolean(),
+          isPending: z.boolean(),
+          is_verified: z.boolean(),
+          follows_you: z.boolean(),
+        })
+      ),
+    })
+    .optional(),
+  error: z.string().optional(),
+});
+
 // Response data schema when success is true
 export const profileByUsernameDataSchema = z.object({
   id: z.number().int().positive(),
@@ -243,6 +296,11 @@ export type GetFollowStatusInput = z.infer<typeof getFollowStatusInputSchema>;
 export type FollowStatusData = z.infer<typeof followStatusDataSchema>;
 export type FollowStatusResponse = z.infer<typeof followStatusResponseSchema>;
 export type GetFollowStatusResult = z.infer<typeof getFollowStatusResultSchema>;
+
+export type GetProfileFollowersInput = z.infer<typeof getProfileFollowersInputSchema>;
+export type ProfileFollowerData = z.infer<typeof profileFollowerDataSchema>;
+export type ProfileFollowersResponse = z.infer<typeof profileFollowersResponseSchema>;
+export type GetProfileFollowersResult = z.infer<typeof getProfileFollowersResultSchema>;
 
 export type GetProfileByUsernameInput = z.infer<typeof getProfileByUsernameInputSchema>;
 export type ProfileByUsernameData = z.infer<typeof profileByUsernameDataSchema>;

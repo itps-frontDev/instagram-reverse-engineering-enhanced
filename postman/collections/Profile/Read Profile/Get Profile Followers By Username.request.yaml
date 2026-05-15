@@ -1,0 +1,8 @@
+$kind: http-request
+name: Get Profile Followers By Username
+description: Returns profile followers for the authenticated user context. The endpoint applies privacy rules for private profiles and provides item-level followStatus for UI actions.
+method: GET
+url: "{{baseUrl}}/api/priv/profiles/{{profileUsername}}/followers"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 1040

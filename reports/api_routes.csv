@@ -13,7 +13,7 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/profiles/remove-image,DELETE,"Rimuove immagine profilo (DB + deleteFile)",Yes,Yes,Yes,No
 /api/profiles/privacy,PUT,"Cambia privacy e gestisce richieste pending",Yes,No,Yes,No
 /api/profiles/personal,PUT,"Aggiorna username e nome completo (unicità)",Yes,No,Yes,No
-/api/profiles/me/followers,GET,"Lista follower dell'utente corrente",Yes,No,Yes,No
+/api/profiles/me/followers,GET,"DEPRECATED: endpoint legacy rimosso; usare GET /api/priv/profiles/{username}/followers (username da auth/me o route profile)",No,No,Yes,No
 /api/profiles/follow/reject,POST,"Rifiuta/elimina richiesta di follow (soft delete)",Yes,No,Yes,No
 /api/profiles/follow/accept,POST,"Accetta richiesta di follow; aggiorna contatori e notifiche",Yes,No,Yes,No
 /api/profiles/edit,PUT,"Aggiorna bio, website, genere del profilo",Yes,No,Yes,No
@@ -27,7 +27,7 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/profiles/[username]/remove-image,POST,"Rimuove immagine profilo (owner only)",Yes,No,Yes,No
 /api/profiles/[username]/posts,GET,"Lista post di un profilo (tabs: posts,reels,saved,tagged)",Yes,No,Yes,No
 /api/profiles/[username]/following,GET,"Lista dei profili seguiti (rispetta privacy)",Yes,No,Yes,No
-/api/profiles/[username]/followers,GET,"Lista dei follower (rispetta privacy)",Yes,No,Yes,No
+/api/profiles/[username]/followers,GET,"MIGRATED to Spring: /api/priv/profiles/{username}/followers - lista follower con privacy check + followStatus per ogni item",No,No,Yes,No
 /api/profiles/[username]/follow-status,GET,"MIGRATED to Spring: /api/priv/profiles/{username}/follow-status - stato della relazione follow tra utente corrente e profilo target",Yes,No,Yes,No
 /api/profiles/[username]/can-view,GET,"MIGRATED to Spring: /api/priv/profiles/{username}/can-view - verifica se user può vedere contenuti del profilo (privacy)",Yes,No,Yes,No
 /api/posts/create,POST,"Crea post: salva immagini, crea post_media in transazione",Yes,Yes,Yes,Yes

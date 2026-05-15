@@ -17,10 +17,11 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
 import Link from 'next/link';
+import { getProfileFollowersAction } from '@/features/profile';
 
 interface FollowersModalProps {
   isOpen: boolean;
@@ -69,40 +70,35 @@ export default function FollowersModal({
   const [isFocused, setIsFocused] = useState(false);
   const [removedUsers, setRemovedUsers] = useState<Set<number>>(new Set());
 
-  // Carica follower/following quando si apre il modal
-  useEffect(() => {
-    if (isOpen) {
-      fetchUsers();
-      // Recupera suggeriti SOLO se profilo proprio E tab followers
-      if (type === 'followers' && isOwnProfile) {
-        fetchSuggestedUsers();
-      }
-    }
-  }, [isOpen, type, username, isOwnProfile]);
-
   // Funzione per caricare follower o following
-  async function fetchUsers() {
+  const fetchUsers = useCallback(async () => {
     setIsLoading(true);
     try {
-      const endpoint = type === 'followers' ? 'followers' : 'following';
-      const res = await fetch(`/api/profiles/${username}/${endpoint}`);
+      if (type === 'followers') {
+        const actionResult = await getProfileFollowersAction({ username });
+        if (!actionResult.success || !actionResult.data) {
+          throw new Error(actionResult.error || 'Failed to fetch followers');
+        }
+        setUsers(actionResult.data.followers);
+      } else {
+        const res = await fetch(`/api/profiles/${username}/following`);
+        if (!res.ok) {
+          throw new Error('Failed to fetch users');
+        }
 
-      if (!res.ok) {
-        throw new Error('Failed to fetch users');
+        const data = await res.json();
+        setUsers(data.following || []);
       }
-
-      const data = await res.json();
-      setUsers(data.followers || data.following || []);
     } catch (error) {
       console.error('Error fetching users:', error);
       setUsers([]);
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [type, username]);
 
   // Funzione per caricare utenti suggeriti
-  async function fetchSuggestedUsers() {
+  const fetchSuggestedUsers = useCallback(async () => {
     try {
       const res = await fetch('/api/profiles/suggestions');
 
@@ -122,7 +118,22 @@ export default function FollowersModal({
       console.error('Error fetching suggested users:', error);
       setSuggestedUsers([]);
     }
-  }
+  }, []);
+
+  // Carica follower/following quando si apre il modal
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => {
+        void fetchUsers();
+      }, 0);
+      // Recupera suggeriti SOLO se profilo proprio E tab followers
+      if (type === 'followers' && isOwnProfile) {
+        setTimeout(() => {
+          void fetchSuggestedUsers();
+        }, 0);
+      }
+    }
+  }, [fetchSuggestedUsers, fetchUsers, isOpen, isOwnProfile, type]);
 
   // Funzione per seguire un utente
   async function handleFollow(targetProfileId: number) {
