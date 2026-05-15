@@ -12,7 +12,7 @@ import {
   type GetProfileByUsernameResult,
   type GetProfilePreviewInput,
   type GetProfilePreviewResult,
-} from '@/features/profile/schema';
+} from './schema';
 import { getProfileAccessToken, parseJsonSafe } from '@/features/profile/shared';
 
 const GET_PROFILE_BY_USERNAME_TIMEOUT_MS = 5_000;

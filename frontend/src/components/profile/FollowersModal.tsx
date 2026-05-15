@@ -21,7 +21,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getProfileFollowersAction, getProfileFollowingAction } from '@/features/profile';
+import { getProfileFollowersAction, getProfileFollowingAction, getProfileSuggestionsAction } from '@/features/profile';
 
 interface FollowersModalProps {
   isOpen: boolean;
@@ -109,16 +109,18 @@ export default function FollowersModal({
   // Funzione per caricare utenti suggeriti
   const fetchSuggestedUsers = useCallback(async () => {
     try {
-      const res = await fetch('/api/profiles/suggestions');
-
-      if (!res.ok) {
-        throw new Error('Failed to fetch suggestions');
+      const result = await getProfileSuggestionsAction();
+      if (!result.success || !result.data) {
+        throw new Error(result.error || 'Failed to fetch suggestions');
       }
 
-      const data = await res.json();
-      // Ensure is_following and isPending are initialized
-      const suggestions = (data.suggestions || []).map((user: SuggestedUser) => ({
-        ...user,
+      const suggestions = result.data.map((user) => ({
+        id: user.id,
+        username: user.username,
+        full_name: user.fullName ?? null,
+        profile_image_url: user.profileImageUrl ?? null,
+        is_verified: false,
+        followers_count: user.followersCount,
         is_following: user.is_following ?? false,
         isPending: user.isPending ?? false,
       }));

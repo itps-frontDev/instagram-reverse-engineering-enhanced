@@ -17,7 +17,7 @@ import {
   type GetFollowStatusResult,
   type GetProfileFollowingInput,
   type GetProfileFollowingResult,
-} from '@/features/profile/schema';
+} from './schema';
 import { getProfileAccessToken, parseJsonSafe } from '@/features/profile/shared';
 
 const GET_FOLLOW_STATUS_TIMEOUT_MS = 5_000;

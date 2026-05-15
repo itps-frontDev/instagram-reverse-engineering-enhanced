@@ -21,7 +21,7 @@ import Link from 'next/link';
 import { VerifiedBadge } from '@/components/common';
 import {ProfilePicture} from '@/components';
 import {ProfilePreviewCard} from '@/components/profile';
-import { getProfileSuggestionsAction } from '@/features/profile/suggestions/actions';
+import { getProfileSuggestionsAction } from '@/features/profile';
 
 interface SuggestedUser {
   id: number;
@@ -334,4 +334,3 @@ export default function Suggestions() {
     </aside>
   );
 }
-

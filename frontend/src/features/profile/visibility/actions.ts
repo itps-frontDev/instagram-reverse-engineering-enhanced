@@ -7,7 +7,7 @@ import {
   profileVisibilityResponseSchema,
   type CanViewProfileInput,
   type CanViewProfileResult,
-} from '@/features/profile/schema';
+} from './schema';
 import { getProfileAccessToken, parseJsonSafe } from '@/features/profile/shared';
 
 const CAN_VIEW_PROFILE_TIMEOUT_MS = 5_000;

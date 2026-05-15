@@ -1,14 +1,14 @@
 package it.evodev.instagram.search.service.impl;
 
-import it.evodev.instagram.search.dto.SearchAccountResultDTO;
-import it.evodev.instagram.search.dto.SearchDataDTO;
+import it.evodev.instagram.search.dto.request.SearchRequestDTO;
+import it.evodev.instagram.search.dto.response.SearchAccountResultDTO;
+import it.evodev.instagram.search.dto.response.SearchDataDTO;
 import it.evodev.instagram.search.exception.SearchException;
 import it.evodev.instagram.search.exception.SearchUnauthorizedException;
 import it.evodev.instagram.search.exception.SearchValidationException;
 import it.evodev.instagram.search.model.SearchProfile;
-import it.evodev.instagram.search.repository.SearchAccountRow;
+import it.evodev.instagram.search.repository.SearchAccountProjection;
 import it.evodev.instagram.search.repository.SearchProfileRepository;
-import it.evodev.instagram.search.repository.SearchRepository;
 import it.evodev.instagram.search.service.SearchService;
 import jakarta.persistence.PersistenceException;
 import lombok.RequiredArgsConstructor;
@@ -28,29 +28,34 @@ public class SearchServiceImpl implements SearchService {
     private static final int DEFAULT_LIMIT = 20;
     private static final int MAX_LIMIT = 50;
 
-    private final SearchRepository searchRepository;
     private final SearchProfileRepository searchProfileRepository;
 
     @Override
-    public SearchDataDTO searchAccounts(String authSubject, String query, String type, Integer limit) {
-        logger.info("Search service started with type: {}, limit: {}", type, limit);
+    public SearchDataDTO searchAccounts(String authSubject, SearchRequestDTO request) {
+        logger.info("Search service started with type: {}, limit: {}", request.getType(), request.getLimit());
 
         UUID userId = parseUserId(authSubject);
         SearchProfile currentProfile = searchProfileRepository.findByUserIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new SearchUnauthorizedException("Authenticated profile not found"));
 
-        String normalizedQuery = normalizeQuery(query);
-        int normalizedLimit = normalizeLimit(limit);
+        String normalizedQuery = normalizeQuery(request.getQ());
+        int normalizedLimit = normalizeLimit(request.getLimit());
 
-        if (!"account".equalsIgnoreCase(type)) {
-            logger.warn("Unsupported search type received: {}", type);
+        if (!"account".equalsIgnoreCase(request.getType())) {
+            logger.warn("Unsupported search type received: {}", request.getType());
             logger.info("Search service completed with empty results for unsupported type");
             return new SearchDataDTO(List.of());
         }
 
-        List<SearchAccountRow> rows;
+        List<SearchAccountProjection> rows;
         try {
-            rows = searchRepository.searchAccounts(normalizedQuery, currentProfile.getId(), normalizedLimit);
+            rows = searchProfileRepository.searchAccounts(
+                    "%" + normalizedQuery + "%",
+                    normalizedQuery,
+                    normalizedQuery + "%",
+                    currentProfile.getId(),
+                    normalizedLimit
+            );
         } catch (PersistenceException exception) {
             logger.error("Search query failed. Error: {}", exception.getMessage());
             throw new SearchException("SEARCH_INTERNAL_ERROR", "Search temporarily unavailable", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -90,16 +95,16 @@ public class SearchServiceImpl implements SearchService {
         return limit;
     }
 
-    private SearchAccountResultDTO toDto(SearchAccountRow row) {
+    private SearchAccountResultDTO toDto(SearchAccountProjection row) {
         return new SearchAccountResultDTO(
-                row.userId().toString(),
-                row.username(),
-                row.fullName(),
-                row.profileImageUrl(),
-                row.isVerified(),
-                row.isPrivate(),
-                row.followersCount(),
-                row.isFollowing()
+                row.getUuid().toString(),
+                row.getUsername(),
+                row.getFullName(),
+                row.getProfileImageUrl(),
+                Boolean.TRUE.equals(row.getVerified()),
+                Boolean.TRUE.equals(row.getPrivateProfile()),
+                row.getFollowersCount() != null ? row.getFollowersCount() : 0,
+                Boolean.TRUE.equals(row.getFollowing())
         );
     }
 }

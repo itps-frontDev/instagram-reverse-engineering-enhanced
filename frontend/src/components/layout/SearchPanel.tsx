@@ -53,6 +53,37 @@ export default function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
   const [isFocused, setIsFocused] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
+  const refreshRecentFollowStates = async (items: SearchAccountResult[]): Promise<SearchAccountResult[]> => {
+    // Aggiorna lo stato follow dai dati backend per evitare stato stale nei recenti.
+    const refreshed = await Promise.all(
+      items.map(async (item) => {
+        try {
+          const actionResult = await searchProfilesAction({
+            q: item.username,
+            type: 'account',
+            limit: 5,
+          });
+
+          if (!actionResult.success) {
+            return item;
+          }
+
+          const exactMatch = actionResult.data.results.find(
+            (result) =>
+              result.uuid === item.uuid ||
+              result.username.toLowerCase() === item.username.toLowerCase()
+          );
+
+          return exactMatch ? { ...item, isFollowing: exactMatch.isFollowing } : item;
+        } catch {
+          return item;
+        }
+      })
+    );
+
+    return refreshed;
+  };
+
   // Detect when mounted on client to avoid hydration mismatch
   useEffect(() => {
     setMounted(true);
@@ -67,7 +98,14 @@ export default function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
       try {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
-          setRecentSearches(parsed.filter(isRecentSearch));
+          const validRecentSearches = parsed.filter(isRecentSearch);
+          setRecentSearches(validRecentSearches);
+
+          // Sincronizza lo stato follow con il backend ad ogni apertura pannello.
+          void refreshRecentFollowStates(validRecentSearches).then((updatedRecentSearches) => {
+            setRecentSearches(updatedRecentSearches);
+            localStorage.setItem('recentSearches', JSON.stringify(updatedRecentSearches));
+          });
         }
       } catch (e) {
         console.error('Error loading recent searches:', e);

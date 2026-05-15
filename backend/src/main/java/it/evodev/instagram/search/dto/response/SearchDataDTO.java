@@ -1,4 +1,4 @@
-package it.evodev.instagram.search.dto;
+package it.evodev.instagram.search.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

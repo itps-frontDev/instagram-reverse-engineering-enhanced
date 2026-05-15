@@ -1,4 +1,4 @@
-package it.evodev.instagram.search.dto;
+package it.evodev.instagram.search.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -11,11 +11,15 @@ public class SearchAccountResultDTO {
     private String username;
     private String fullName;
     private String profileImageUrl;
+
     @JsonProperty("isVerified")
     private boolean verified;
+
     @JsonProperty("isPrivate")
     private boolean privateProfile;
+
     private int followersCount;
+
     @JsonProperty("isFollowing")
     private boolean following;
 }
