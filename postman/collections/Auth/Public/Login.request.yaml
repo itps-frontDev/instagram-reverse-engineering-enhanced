@@ -9,7 +9,7 @@ body:
   type: json
   content: |
     {
-      "identifier": "isabelladavis3@yahoo.com",
+      "identifier": "lukewhite",
       "password": "password123"
     }
 scripts:

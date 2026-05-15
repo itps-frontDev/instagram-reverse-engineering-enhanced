@@ -27,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -151,7 +152,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void dispatchInternal(NotificationDispatchCommand command) {
         logger.info("Internal dispatch started - senderProfileId: {}, recipientProfileId: {}, type: {}",
                 command.senderProfileId(), command.recipientProfileId(), command.type());
@@ -203,7 +204,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void deleteByFilterInternal(NotificationDeleteByFilterCommand command) {
         logger.info("Internal delete by filter started - recipientProfileId: {}, senderProfileId: {}",
                 command.recipientProfileId(), command.senderProfileId());

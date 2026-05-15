@@ -1,5 +1,7 @@
 "use server";
 
+import { redirect } from "next/navigation";
+
 import { springFetch } from "@/lib/spring-client";
 import { SpringAuthError } from "@/lib/spring-error";
 import {
@@ -12,6 +14,7 @@ import {
 function mapLikeError(status: number): string {
   if (status === 404) return "Content not found.";
   if (status === 400) return "Invalid like request.";
+  if (status === 401) return "Session expired, please log in again.";
   return "Likes service temporarily unavailable.";
 }
 
@@ -25,16 +28,21 @@ export async function toggleLikeAction(
 
   const { likeableType, likeableId } = parsed.data;
 
-  let response: Response;
+  let response: Response | null = null;
   try {
     response = await springFetch(`/api/priv/likes/${likeableType}/${likeableId}`, {
       method: "POST",
     });
   } catch (error) {
     if (error instanceof SpringAuthError) {
-      return { success: false, error: error.message };
+      response = null;
+    } else {
+      return { success: false, error: "Likes service is unreachable." };
     }
-    return { success: false, error: "Likes service is unreachable." };
+  }
+
+  if (response === null) {
+    redirect("/login");
   }
 
   if (!response.ok) {
