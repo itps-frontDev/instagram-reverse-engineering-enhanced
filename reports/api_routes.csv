@@ -16,7 +16,7 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/profiles/me/followers,GET,"DEPRECATED: endpoint legacy rimosso; usare GET /api/priv/profiles/{username}/followers (username da auth/me o route profile)",No,No,Yes,No
 /api/profiles/follow/reject,POST,"Rifiuta/elimina richiesta di follow (soft delete)",Yes,No,Yes,No
 /api/profiles/follow/accept,POST,"Accetta richiesta di follow; aggiorna contatori e notifiche",Yes,No,Yes,No
-/api/profiles/edit,PUT,"Aggiorna bio, website, genere del profilo",Yes,No,Yes,No
+/api/profiles/edit,PUT,"MIGRATED to Spring: /api/priv/profiles/edit - aggiorna bio, website e genere del profilo autenticato",No,No,Yes,No
 /api/profiles/birthday,PUT,"Aggiorna data di nascita (min 13 anni)",Yes,No,Yes,No
 /api/profiles/actions/unfollow,POST,"Smettere di seguire (soft delete) e aggiornare contatori",Yes,No,Yes,No
 /api/profiles/actions/remove-follower,POST,"Rimuove un follower (soft delete) e aggiornamento contatori",Yes,No,Yes,No
