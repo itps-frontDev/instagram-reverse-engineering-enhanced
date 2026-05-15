@@ -21,6 +21,6 @@ public class NotificationResponseDTO {
     private Long referencePostId;
     private String referenceImageUrl;
     private String referenceMediaType;
-    private boolean isRead;
+    private Boolean isRead;
     private LocalDateTime createdAt;
 }

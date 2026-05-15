@@ -113,14 +113,18 @@ function getSpringApiBaseUrl(): string {
 
 export function buildSpringAuthUrl(path: string): string {
   const baseUrl = getSpringApiBaseUrl();
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  const qIndex = path.indexOf("?");
+  const pathOnly = qIndex >= 0 ? path.slice(0, qIndex) : path;
+  const queryString = qIndex >= 0 ? path.slice(qIndex) : "";
+
+  const normalizedPath = pathOnly.startsWith("/") ? pathOnly : `/${pathOnly}`;
 
   const parsedBaseUrl = new URL(baseUrl);
   const basePath = parsedBaseUrl.pathname.replace(/\/+$/, "");
   const mergedPath = `${basePath === "/" ? "" : basePath}${normalizedPath}`;
 
   parsedBaseUrl.pathname = mergedPath.replace(/\/{2,}/g, "/");
-  parsedBaseUrl.search = "";
+  parsedBaseUrl.search = queryString;
   parsedBaseUrl.hash = "";
 
   return parsedBaseUrl.toString();
