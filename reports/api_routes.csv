@@ -8,7 +8,7 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/search,GET,"MIGRATED to Spring: /api/priv/search - ricerca profili per username o nome",Yes,No,Yes,No
 /api/reels,GET,"Reels feed (video posts) con paginazione",Yes,No,Yes,Yes
 /api/profiles/upload-image,POST,"Carica immagine profilo (form-data) con validazioni",Yes,Yes,Yes,No
-/api/profiles/suggestions,GET,"Suggerimenti profili da seguire",Yes,No,Yes,No
+/api/profiles/suggestions,GET,"MIGRATED to Spring: /api/priv/profiles/suggestions - suggerimenti profili da seguire (top-20 pubblici non seguiti, shuffled per varietà)",No,No,Yes,No
 /api/profiles/security,PUT,"Aggiorna email/telefono/password (bcrypt)",Yes,No,Yes,No
 /api/profiles/remove-image,DELETE,"Rimuove immagine profilo (DB + deleteFile)",Yes,Yes,Yes,No
 /api/profiles/privacy,PUT,"Cambia privacy e gestisce richieste pending",Yes,No,Yes,No

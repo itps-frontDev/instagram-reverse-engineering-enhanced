@@ -2,11 +2,13 @@ package it.evodev.instagram.profile.service.impl;
 
 import it.evodev.instagram.profile.dto.response.FollowStatusDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfileFollowerDataDTO;
+import it.evodev.instagram.profile.dto.response.ProfileSuggestionDTO;
 import it.evodev.instagram.profile.exception.ProfileForbiddenException;
 import it.evodev.instagram.profile.exception.ProfileNotFoundException;
 import it.evodev.instagram.profile.model.ProfileVisibilityFollow;
 import it.evodev.instagram.profile.model.ProfileVisibilityProfile;
 import it.evodev.instagram.profile.repository.ProfileFollowerProjection;
+import it.evodev.instagram.profile.repository.ProfileSuggestionProjection;
 import it.evodev.instagram.profile.repository.ProfileVisibilityFollowJpaRepository;
 import it.evodev.instagram.profile.repository.ProfileVisibilityProfileJpaRepository;
 import it.evodev.instagram.profile.service.FollowService;
@@ -15,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -192,5 +195,45 @@ public class FollowServiceImpl implements FollowService {
             return "pending";
         }
         return "none";
+    }
+
+    @Override
+    public List<ProfileSuggestionDTO> getSuggestions(UUID currentUserId) {
+        logger.info("Fetching profile suggestions for current user: {}", currentUserId);
+
+        // Resolve current user's profile
+        Optional<ProfileVisibilityProfile> currentOpt = profileRepository.findByUserIdAndDeletedAtIsNull(currentUserId);
+        if (currentOpt.isEmpty()) {
+            logger.warn("Current user profile not found. User ID: {}", currentUserId);
+            throw new ProfileNotFoundException("User profile not found");
+        }
+
+        ProfileVisibilityProfile currentProfile = currentOpt.get();
+
+        // Query top-20 public profiles not yet followed
+        List<ProfileSuggestionProjection> top20 = followRepository.findSuggestionsForCurrentUser(currentProfile.getId());
+
+        if (top20.isEmpty()) {
+            logger.info("No suggestions available for user: {}", currentUserId);
+            return Collections.emptyList();
+        }
+
+        // Shuffle in-memory to provide variety while maintaining popularity priority
+        Collections.shuffle(top20);
+
+        // Take first 5 after shuffle
+        List<ProfileSuggestionDTO> suggestions = top20.stream()
+                .limit(5)
+                .map(proj -> new ProfileSuggestionDTO(
+                        proj.getId(),
+                        proj.getUsername(),
+                        proj.getFullName(),
+                        proj.getProfileImageUrl(),
+                        proj.getFollowersCount()
+                ))
+                .toList();
+
+        logger.info("Profile suggestions fetched successfully. Count: {}", suggestions.size());
+        return suggestions;
     }
 }

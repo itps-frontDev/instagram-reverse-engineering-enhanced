@@ -3,6 +3,7 @@ package it.evodev.instagram.profile.controller;
 import it.evodev.instagram.profile.dto.response.FollowStatusDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfileApiResponse;
 import it.evodev.instagram.profile.dto.response.ProfileFollowerDataDTO;
+import it.evodev.instagram.profile.dto.response.ProfileSuggestionDTO;
 import it.evodev.instagram.profile.service.FollowService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -111,5 +112,37 @@ public class FollowController {
         logger.info("Following fetched successfully. Username: {}, Count: {}", username, result.size());
 
         return ResponseEntity.ok(ProfileApiResponse.success(result, "Following fetched successfully"));
+    }
+
+    /**
+     * GET /api/priv/profiles/suggestions
+     *
+     * Get profile suggestions for the authenticated user to discover new profiles to follow.
+     * Returns top public profiles not yet followed, shuffled for variety.
+     * 
+     * Excludes:
+     * - Current user's own profile
+     * - Profiles already followed (accepted status)
+     * - Profiles with pending follow request
+     * - Soft-deleted profiles
+     * - Private profiles
+     * 
+     * Authentication is verified by Spring Security; no manual JWT validation needed.
+     *
+     * @param authentication Spring Security authentication containing current user UUID
+     * @return response with list of up to 5 ProfileSuggestionDTO ordered by popularity
+     */
+    @GetMapping("/suggestions")
+    public ResponseEntity<ProfileApiResponse<List<ProfileSuggestionDTO>>> getSuggestions(
+            Authentication authentication
+    ) {
+        logger.info("GET /api/priv/profiles/suggestions - User: {}", authentication.getName());
+
+        UUID currentUserId = UUID.fromString(authentication.getName());
+        List<ProfileSuggestionDTO> result = followService.getSuggestions(currentUserId);
+
+        logger.info("Suggestions fetched successfully. Count: {}", result.size());
+
+        return ResponseEntity.ok(ProfileApiResponse.success(result, "Suggestions fetched successfully"));
     }
 }
