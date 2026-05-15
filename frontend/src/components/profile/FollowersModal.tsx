@@ -21,7 +21,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getProfileFollowersAction } from '@/features/profile';
+import { getProfileFollowersAction, getProfileFollowingAction } from '@/features/profile';
 
 interface FollowersModalProps {
   isOpen: boolean;
@@ -81,13 +81,22 @@ export default function FollowersModal({
         }
         setUsers(actionResult.data.followers);
       } else {
-        const res = await fetch(`/api/profiles/${username}/following`);
-        if (!res.ok) {
-          throw new Error('Failed to fetch users');
+        const actionResult = await getProfileFollowingAction({ username });
+        if (!actionResult.success || !actionResult.data) {
+          throw new Error(actionResult.error || 'Failed to fetch following');
         }
-
-        const data = await res.json();
-        setUsers(data.following || []);
+        // Trasforma la struttura della response in quella aspettata da FollowerUser
+        const followingUsers: FollowerUser[] = actionResult.data.map((profile: { id: number; username: string; fullName: string | null; profileImageUrl: string | null; followStatus: 'none' | 'pending' | 'accepted' }) => ({
+          id: profile.id,
+          username: profile.username,
+          full_name: profile.fullName ?? null,
+          profile_image_url: profile.profileImageUrl ?? null,
+          is_verified: false, // TODO: aggiungere al backend se necessario
+          is_following: profile.followStatus === 'accepted',
+          follows_you: false, // TODO: calcolare dal backend
+          isPending: profile.followStatus === 'pending',
+        }));
+        setUsers(followingUsers);
       }
     } catch (error) {
       console.error('Error fetching users:', error);

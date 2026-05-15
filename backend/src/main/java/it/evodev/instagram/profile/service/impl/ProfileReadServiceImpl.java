@@ -2,16 +2,12 @@ package it.evodev.instagram.profile.service.impl;
 
 import it.evodev.instagram.profile.dto.response.FollowStatusDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfileByUsernameDataDTO;
-import it.evodev.instagram.profile.dto.response.ProfileFollowerDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfilePreviewDataDTO;
 import it.evodev.instagram.profile.dto.response.RecentPostPreviewDto;
 import it.evodev.instagram.profile.dto.response.ProfileVisibilityDataDTO;
-import it.evodev.instagram.profile.exception.ProfileForbiddenException;
 import it.evodev.instagram.profile.exception.ProfileNotFoundException;
-import it.evodev.instagram.profile.model.ProfileVisibilityFollow;
 import it.evodev.instagram.profile.model.ProfileVisibilityProfile;
 import it.evodev.instagram.profile.repository.ProfileByUsernameProjection;
-import it.evodev.instagram.profile.repository.ProfileFollowerProjection;
 import it.evodev.instagram.profile.repository.ProfileVisibilityFollowJpaRepository;
 import it.evodev.instagram.profile.repository.ProfilePreviewProjection;
 import it.evodev.instagram.profile.repository.ProfileVisibilityProfileJpaRepository;
@@ -34,7 +30,6 @@ public class ProfileReadServiceImpl implements ProfileReadService {
     private static final Logger logger = LoggerFactory.getLogger(ProfileReadServiceImpl.class);
 
     private final ProfileVisibilityProfileJpaRepository profileRepository;
-    private final ProfileVisibilityFollowJpaRepository followRepository;
     private final ProfileVisibilityService profileVisibilityService;
     private final FollowService followService;
 
@@ -144,73 +139,7 @@ public class ProfileReadServiceImpl implements ProfileReadService {
                 .build();
     }
 
-    @Override
-    public List<ProfileFollowerDataDTO> getFollowers(UUID currentUserId, String targetUsername) {
-        logger.info("Fetching followers. Current user: {}, Target username: {}", currentUserId, targetUsername);
-
-        ProfileVisibilityProfile currentProfile = profileRepository.findByUserIdAndDeletedAtIsNull(currentUserId)
-                .orElseThrow(() -> {
-                    logger.warn("Current user profile not found while fetching followers. User ID: {}", currentUserId);
-                    return new ProfileNotFoundException("User profile not found");
-                });
-
-        ProfileVisibilityProfile targetProfile = profileRepository.findByUsernameIgnoreCaseAndDeletedAtIsNull(targetUsername)
-                .orElseThrow(() -> {
-                    logger.warn("Target profile not found while fetching followers. Username: {}", targetUsername);
-                    return new ProfileNotFoundException("Profile not found");
-                });
-
-        boolean isOwner = currentProfile.getId().equals(targetProfile.getId());
-        if (!isOwner && Boolean.TRUE.equals(targetProfile.getIsPrivate())) {
-            Optional<ProfileVisibilityFollow> viewerFollowOpt = followRepository
-                    .findByFollowerProfileIdAndFollowingProfileIdAndDeletedAtIsNull(
-                            currentProfile.getId(),
-                            targetProfile.getId()
-                    );
-
-            boolean canViewPrivateFollowers = viewerFollowOpt.isPresent()
-                    && "accepted".equalsIgnoreCase(viewerFollowOpt.get().getStatus());
-
-            if (!canViewPrivateFollowers) {
-                logger.warn("Forbidden followers access. Viewer profile: {}, Target profile: {}, Relationship status: {}",
-                        currentProfile.getId(),
-                        targetProfile.getId(),
-                        viewerFollowOpt.map(ProfileVisibilityFollow::getStatus).orElse("none"));
-                throw new ProfileForbiddenException("You cannot view followers for this private profile");
-            }
-        }
-
-        List<ProfileFollowerProjection> followerRows = followRepository.findFollowersWithViewerStatus(
-                targetProfile.getId(),
-                currentProfile.getId()
-        );
-
-        List<ProfileFollowerDataDTO> result = followerRows.stream()
-                .map(row -> new ProfileFollowerDataDTO(
-                        row.getId(),
-                        row.getUsername(),
-                        row.getFullName(),
-                        row.getProfileImageUrl(),
-                        normalizeFollowerStatus(row.getFollowStatus())
-                ))
-                .toList();
-
-        logger.info("Followers fetched successfully. Target username: {}, Count: {}, IsOwner: {}",
-                targetUsername, result.size(), isOwner);
-        return result;
-    }
-
     private int defaultInt(Integer value) {
         return value == null ? 0 : value;
-    }
-
-    private String normalizeFollowerStatus(String status) {
-        if ("accepted".equalsIgnoreCase(status)) {
-            return "accepted";
-        }
-        if ("pending".equalsIgnoreCase(status)) {
-            return "pending";
-        }
-        return "none";
     }
 }

@@ -148,6 +148,45 @@ export const getProfileFollowersResultSchema = z.object({
   error: z.string().optional(),
 });
 
+export const getProfileFollowingInputSchema = z.object({
+  username: z.string().min(1, 'Username is required'),
+});
+
+export const profileFollowingSuccessResponseSchema = z.object({
+  success: z.literal(true),
+  data: z.array(profileFollowerDataSchema),
+  message: z.string().optional(),
+  error: z.null().optional(),
+});
+
+export const profileFollowingErrorResponseSchema = z.object({
+  success: z.literal(false),
+  data: z.never().optional(),
+  message: z.string().optional(),
+  error: z.string(),
+});
+
+export const profileFollowingResponseSchema = z.union([
+  profileFollowingSuccessResponseSchema,
+  profileFollowingErrorResponseSchema,
+]);
+
+export const getProfileFollowingResultSchema = z.object({
+  success: z.boolean(),
+  data: z
+    .array(
+      z.object({
+        id: z.number().int().positive(),
+        username: z.string(),
+        fullName: z.string().nullable(),
+        profileImageUrl: z.string().nullable(),
+        followStatus: z.enum(['none', 'pending', 'accepted']),
+      })
+    )
+    .optional(),
+  error: z.string().optional(),
+});
+
 // Response data schema when success is true
 export const profileByUsernameDataSchema = z.object({
   id: z.number().int().positive(),
@@ -301,6 +340,10 @@ export type GetProfileFollowersInput = z.infer<typeof getProfileFollowersInputSc
 export type ProfileFollowerData = z.infer<typeof profileFollowerDataSchema>;
 export type ProfileFollowersResponse = z.infer<typeof profileFollowersResponseSchema>;
 export type GetProfileFollowersResult = z.infer<typeof getProfileFollowersResultSchema>;
+
+export type GetProfileFollowingInput = z.infer<typeof getProfileFollowingInputSchema>;
+export type ProfileFollowingResponse = z.infer<typeof profileFollowingResponseSchema>;
+export type GetProfileFollowingResult = z.infer<typeof getProfileFollowingResultSchema>;
 
 export type GetProfileByUsernameInput = z.infer<typeof getProfileByUsernameInputSchema>;
 export type ProfileByUsernameData = z.infer<typeof profileByUsernameDataSchema>;

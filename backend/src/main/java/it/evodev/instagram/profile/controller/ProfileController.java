@@ -2,7 +2,6 @@ package it.evodev.instagram.profile.controller;
 
 import it.evodev.instagram.profile.dto.response.ProfileApiResponse;
 import it.evodev.instagram.profile.dto.response.ProfileByUsernameDataDTO;
-import it.evodev.instagram.profile.dto.response.ProfileFollowerDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfilePreviewDataDTO;
 import it.evodev.instagram.profile.service.ProfileReadService;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +14,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -68,26 +66,5 @@ public class ProfileController {
                 username, result.isCanView(), result.getFollowStatus());
 
         return ResponseEntity.ok(ProfileApiResponse.success(result, "Profile preview fetched successfully"));
-    }
-
-    /**
-     * GET /api/priv/profiles/{username}/followers
-     *
-     * Metodo GET perché legge la lista follower senza mutazioni.
-     * Il path usa {username} per mantenere un endpoint unico e riusabile per owner e visitor.
-     */
-    @GetMapping("/{username}/followers")
-    public ResponseEntity<ProfileApiResponse<List<ProfileFollowerDataDTO>>> getFollowersByUsername(
-            @PathVariable String username,
-            Authentication authentication
-    ) {
-        logger.info("GET /api/priv/profiles/{}/followers - User: {}", username, authentication.getName());
-
-        UUID currentUserId = UUID.fromString(authentication.getName());
-        List<ProfileFollowerDataDTO> result = profileReadService.getFollowers(currentUserId, username);
-
-        logger.info("Followers fetched successfully. Username: {}, Count: {}", username, result.size());
-
-        return ResponseEntity.ok(ProfileApiResponse.success(result, "Followers fetched successfully"));
     }
 }

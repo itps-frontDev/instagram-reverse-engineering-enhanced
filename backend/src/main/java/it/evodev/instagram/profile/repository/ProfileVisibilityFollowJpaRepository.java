@@ -38,4 +38,32 @@ public interface ProfileVisibilityFollowJpaRepository extends JpaRepository<Prof
             @Param("targetProfileId") Long targetProfileId,
             @Param("viewerProfileId") Long viewerProfileId
     );
+
+    @Query(value = """
+            SELECT
+                p.id AS id,
+                CAST(p.username AS VARCHAR) AS username,
+                CAST(p.full_name AS VARCHAR) AS fullName,
+                CAST(p.profile_image_url AS VARCHAR) AS profileImageUrl,
+                COALESCE((
+                    SELECT f2.status
+                    FROM follows f2
+                    WHERE f2.follower_profile_id = :viewerProfileId
+                      AND f2.following_profile_id = p.id
+                      AND f2.deleted_at IS NULL
+                    ORDER BY f2.updated_at DESC
+                    LIMIT 1
+                ), 'none') AS followStatus
+            FROM follows f
+            INNER JOIN profiles p ON p.id = f.following_profile_id
+            WHERE f.follower_profile_id = :targetProfileId
+              AND f.status = 'accepted'
+              AND f.deleted_at IS NULL
+              AND p.deleted_at IS NULL
+            ORDER BY f.created_at DESC
+            """, nativeQuery = true)
+    List<ProfileFollowerProjection> findFollowingWithViewerStatus(
+            @Param("targetProfileId") Long targetProfileId,
+            @Param("viewerProfileId") Long viewerProfileId
+    );
 }

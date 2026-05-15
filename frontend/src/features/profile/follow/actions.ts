@@ -8,15 +8,21 @@ import {
   getFollowStatusInputSchema,
   getFollowStatusResultSchema,
   profileFollowersResponseSchema,
+  getProfileFollowingInputSchema,
+  getProfileFollowingResultSchema,
+  profileFollowingResponseSchema,
   type GetProfileFollowersInput,
   type GetProfileFollowersResult,
   type GetFollowStatusInput,
   type GetFollowStatusResult,
+  type GetProfileFollowingInput,
+  type GetProfileFollowingResult,
 } from '@/features/profile/schema';
 import { getProfileAccessToken, parseJsonSafe } from '@/features/profile/shared';
 
 const GET_FOLLOW_STATUS_TIMEOUT_MS = 5_000;
 const GET_PROFILE_FOLLOWERS_TIMEOUT_MS = 5_000;
+const GET_PROFILE_FOLLOWING_TIMEOUT_MS = 5_000;
 
 export async function getFollowStatusAction(input: GetFollowStatusInput): Promise<GetFollowStatusResult> {
   const parsed = getFollowStatusInputSchema.safeParse(input);
@@ -115,5 +121,58 @@ export async function getProfileFollowersAction(input: GetProfileFollowersInput)
         follows_you: false,
       })),
     },
+  });
+}
+
+export async function getProfileFollowingAction(
+  input: GetProfileFollowingInput
+): Promise<GetProfileFollowingResult> {
+  const parsed = getProfileFollowingInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: 'Invalid input.' };
+  }
+
+  const accessToken = await getProfileAccessToken();
+  if (!accessToken) {
+    return { success: false, error: 'Authentication required.' };
+  }
+
+  const { username } = parsed.data;
+  const url = `${buildSpringAuthUrl(`/api/priv/profiles/${encodeURIComponent(username)}/following`)}`;
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: 'GET',
+      cache: 'no-store',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      signal: AbortSignal.timeout(GET_PROFILE_FOLLOWING_TIMEOUT_MS),
+    });
+  } catch {
+    return { success: false, error: 'Service unavailable.' };
+  }
+
+  const payload = await parseJsonSafe(response);
+  const parsedPayload = profileFollowingResponseSchema.safeParse(payload);
+  if (!parsedPayload.success) {
+    return { success: false, error: 'Invalid response payload.' };
+  }
+
+  if (!parsedPayload.data.success) {
+    return { success: false, error: parsedPayload.data.message || parsedPayload.data.error };
+  }
+
+  const following = parsedPayload.data.data;
+  return getProfileFollowingResultSchema.parse({
+    success: true,
+    data: following.map((profile) => ({
+      id: profile.id,
+      username: profile.username,
+      fullName: profile.fullName ?? null,
+      profileImageUrl: profile.profileImageUrl ?? null,
+      followStatus: profile.followStatus,
+    })),
   });
 }
