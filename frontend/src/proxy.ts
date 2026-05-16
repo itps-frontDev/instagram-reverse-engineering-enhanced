@@ -42,28 +42,97 @@ const protectedRoutes = [
  */
 const authRoutes = ['/login', '/register'];
 
+type RefreshedTokens = {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+  refreshExpiresIn: number;
+};
+
+async function tryRefresh(refreshToken: string): Promise<RefreshedTokens | null> {
+  try {
+    const springBaseUrl = process.env.SPRING_API_BASE_URL ?? 'http://localhost:8080';
+    const res = await fetch(`${springBaseUrl}/api/public/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!res.ok) {
+      return null;
+    }
+    return await res.json() as RefreshedTokens;
+  } catch (err) {
+    return null;
+  }
+}
+
+function applyTokenCookies(response: NextResponse, tokens: RefreshedTokens, accessTokenName: string, refreshTokenName: string) {
+  const secure = process.env.NODE_ENV === 'production';
+  response.cookies.set({
+    name: accessTokenName,
+    value: tokens.accessToken,
+    httpOnly: true,
+    sameSite: 'lax',
+    path: process.env.AUTH_ACCESS_TOKEN_COOKIE_PATH ?? '/',
+    maxAge: tokens.expiresIn,
+    secure,
+  });
+  response.cookies.set({
+    name: refreshTokenName,
+    value: tokens.refreshToken,
+    httpOnly: true,
+    sameSite: 'lax',
+    path: process.env.AUTH_REFRESH_TOKEN_COOKIE_PATH ?? '/',
+    maxAge: tokens.refreshExpiresIn,
+    secure,
+  });
+}
+
 /**
  * Middleware principale per protezione route.
- * 
+ *
  * @param request - Request Next.js
  * @returns Response (redirect o next)
  */
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const accessTokenCookieName = process.env.AUTH_ACCESS_TOKEN_COOKIE_NAME ?? 'iree_access_token';
-  const accessToken = request.cookies.get(accessTokenCookieName)?.value;
+  const accessTokenName = process.env.AUTH_ACCESS_TOKEN_COOKIE_NAME ?? 'iree_access_token';
+  const refreshTokenName = process.env.AUTH_REFRESH_TOKEN_COOKIE_NAME ?? 'iree_refresh_token';
+  const accessToken = request.cookies.get(accessTokenName)?.value;
+  const refreshToken = request.cookies.get(refreshTokenName)?.value;
 
   let isAuthenticated = false;
+
   if (accessToken) {
     try {
       const springBaseUrl = process.env.SPRING_API_BASE_URL ?? 'http://localhost:8080';
       const res = await fetch(`${springBaseUrl}/api/priv/auth/me`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
-      isAuthenticated = res.ok;
+
+      if (res.ok) {
+        isAuthenticated = true;
+      } else if (res.status === 401 && refreshToken) {
+        // Token presente ma scaduto lato server — prova refresh silenzioso
+        const newTokens = await tryRefresh(refreshToken);
+        if (newTokens) {
+          const redirectRes = NextResponse.redirect(request.url);
+          applyTokenCookies(redirectRes, newTokens, accessTokenName, refreshTokenName);
+          return redirectRes;
+        }
+      }
     } catch {
       isAuthenticated = false;
+    }
+  } else if (refreshToken) {
+    // Cookie access token scaduto — prova refresh silenzioso
+    const newTokens = await tryRefresh(refreshToken);
+    if (newTokens) {
+      const redirectRes = NextResponse.redirect(request.url);
+      applyTokenCookies(redirectRes, newTokens, accessTokenName, refreshTokenName);
+      return redirectRes;
     }
   }
 
@@ -78,7 +147,7 @@ export async function proxy(request: NextRequest) {
   // Reindirizza a login se si accede a route protetta senza autenticazione
   if (isProtectedRoute && !isAuthenticated) {
     const url = new URL('/login', request.url);
-    url.searchParams.set('redirect', pathname); // Salva URL per redirect post-login
+    url.searchParams.set('redirect', pathname);
     return NextResponse.redirect(url);
   }
 
@@ -87,7 +156,6 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  // Nessuna regola applicata, continua normalmente
   return NextResponse.next();
 }
 

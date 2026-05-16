@@ -33,13 +33,7 @@ databaseChangeLog:
       file: db/changelog/migrations/changelog-saved-posts.xml
       relativeToChangelogFile: false
   - include:
-      file: db/changelog/migrations/changelog-post-likes.xml
-      relativeToChangelogFile: false
-  - include:
-      file: db/changelog/migrations/changelog-comment-likes.xml
-      relativeToChangelogFile: false
-  - include:
-      file: db/changelog/migrations/changelog-story-likes.xml
+      file: db/changelog/migrations/changelog-likes.xml
       relativeToChangelogFile: false
   - include:
       file: db/changelog/migrations/changelog-chats.xml

@@ -21,6 +21,7 @@ import Post from './Post';
 import {FeedPostSkeleton} from '@/components/common/skeletons';
 import { LoadingSpinner } from '@/components/common';
 import type { FeedPost } from '@/types/feed';
+import { toggleLikeAction } from '@/features/likes';
 
 export default function FeedContainer() {
   const [posts, setPosts] = useState<FeedPost[]>([]); // Post nel feed
@@ -82,34 +83,18 @@ export default function FeedContainer() {
   }, [offset, hasMore, loading]);
 
   const handleLike = async (postId: number) => {
-    try {
-      const response = await fetch('/api/feed/like', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postId }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to like post');
-      }
-
-      const data = await response.json();
-
-      // Aggiorna post nello stato
-      setPosts((prev) =>
-        prev.map((post) =>
-          post.id === postId
-            ? {
-                ...post,
-                is_liked_by_current_user: data.liked,
-                likes_count: data.likes_count,
-              }
-            : post
-        )
-      );
-    } catch (err) {
-      console.error('Error liking post:', err);
+    const result = await toggleLikeAction({ likeableType: 'post', likeableId: postId });
+    if (!result.success) {
+      console.error('Error liking post:', result.error);
+      return;
     }
+    setPosts((prev) =>
+      prev.map((post) =>
+        post.id === postId
+          ? { ...post, is_liked_by_current_user: result.data.liked, likes_count: result.data.count }
+          : post
+      )
+    );
   };
 
   const handleSave = async (postId: number) => {

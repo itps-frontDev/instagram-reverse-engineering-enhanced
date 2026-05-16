@@ -1,0 +1,14 @@
+$kind: http-request
+name: Toggle Like
+description: >
+  Toggle like polimorfico su post, commento o storia (stesso endpoint per tutti i tipi).
+  likeableType: "post" | "comment" | "story".
+  Success (liked): { "success": true, "liked": true, "count": 42 }.
+  Success (unliked): { "success": true, "liked": false, "count": 41 }.
+  Error 404: { "success": false, "error": "LIKEABLE_NOT_FOUND", "message": "..." }.
+  Error 400: { "success": false, "error": "INVALID_LIKEABLE_TYPE", "message": "..." }.
+method: POST
+url: "{{baseUrl}}/api/priv/likes/{{likeableType}}/{{likeableId}}"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 100

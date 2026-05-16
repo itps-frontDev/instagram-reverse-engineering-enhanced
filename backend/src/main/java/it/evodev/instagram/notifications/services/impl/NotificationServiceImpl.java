@@ -27,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -125,17 +126,88 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @Transactional
-    public NotificationMutationResponseDTO deleteByFilter(UUID authSubjectUuid, NotificationDeleteByFilterCommand command) {
+    public NotificationMutationResponseDTO promoteFollowRequest(UUID authSubjectUuid, Long recipientProfileId, Long followerProfileId) {
         Long authenticatedProfileId = resolveCurrentProfileId(authSubjectUuid);
-        logger.info("Delete notifications by filter started - authProfileId: {}, recipientProfileId: {}, senderProfileId: {}",
-                authenticatedProfileId, command.recipientProfileId(), command.senderProfileId());
+        logger.info("Promote follow request notifications started - authProfileId: {}, recipientProfileId: {}, followerProfileId: {}",
+                authenticatedProfileId, recipientProfileId, followerProfileId);
 
-        if (!authenticatedProfileId.equals(command.recipientProfileId())
-                && (command.senderProfileId() == null || !authenticatedProfileId.equals(command.senderProfileId()))) {
-            logger.warn("Delete notifications by filter denied - authProfileId: {}, recipientProfileId: {}, senderProfileId: {}",
-                    authenticatedProfileId, command.recipientProfileId(), command.senderProfileId());
-            throw new NotificationAccessDeniedException("Delete filter is not allowed for authenticated profile");
+        if (!authenticatedProfileId.equals(recipientProfileId)) {
+            logger.warn("Promote follow request denied - authProfileId: {}, recipientProfileId: {}", authenticatedProfileId, recipientProfileId);
+            throw new NotificationAccessDeniedException("Only recipient can promote follow request notifications");
         }
+
+        List<Notification> notifications = notificationRepository.findByRecipientProfileIdAndSenderProfileIdAndTypeAndDeletedAtIsNull(
+                recipientProfileId,
+                followerProfileId,
+                NotificationType.FOLLOW_REQUEST
+        );
+
+        notifications.forEach(n -> n.setType(NotificationType.FOLLOW));
+        if (!notifications.isEmpty()) {
+            notificationRepository.saveAll(notifications);
+        }
+
+        logger.info("Promote follow request notifications completed - updatedCount: {}", notifications.size());
+        return new NotificationMutationResponseDTO(true, notifications.size(), "Follow request notifications promoted");
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void dispatchInternal(NotificationDispatchCommand command) {
+        logger.info("Internal dispatch started - senderProfileId: {}, recipientProfileId: {}, type: {}",
+                command.senderProfileId(), command.recipientProfileId(), command.type());
+
+        if (command.senderProfileId() != null && command.senderProfileId().equals(command.recipientProfileId())) {
+            logger.warn("Internal dispatch skipped (self notification) - profileId: {}", command.senderProfileId());
+            return;
+        }
+
+        NotificationType normalizedType = NotificationTypeMapper.toNotificationType(command.type());
+        NotificationReferenceType normalizedReferenceType = NotificationTypeMapper.toReferenceType(command.referenceType());
+        NotificationContext context = new NotificationContext(
+                command.recipientProfileId(),
+                command.senderProfileId(),
+                normalizedType,
+                normalizedReferenceType,
+                command.referenceId()
+        );
+
+        NotificationStrategy strategy = strategyRegistry.resolve(normalizedType);
+        strategy.validate(context);
+        NotificationBuildResult buildResult = strategy.build(context);
+
+        LocalDateTime deduplicationBoundary = LocalDateTime.now().minus(notificationsProperties.getDeduplicationTtl());
+        boolean duplicated = notificationRepository.existsByRecipientProfileIdAndSenderProfileIdAndTypeAndReferenceTypeAndReferenceIdAndCreatedAtAfterAndDeletedAtIsNull(
+                context.getRecipientProfileId(),
+                context.getSenderProfileId(),
+                buildResult.getType(),
+                buildResult.getReferenceType(),
+                buildResult.getReferenceId(),
+                deduplicationBoundary
+        );
+
+        if (duplicated) {
+            logger.warn("Internal dispatch skipped (duplicate) - recipientProfileId: {}, senderProfileId: {}, type: {}",
+                    context.getRecipientProfileId(), context.getSenderProfileId(), buildResult.getType().name().toLowerCase());
+            return;
+        }
+
+        Notification entity = new Notification();
+        entity.setRecipientProfileId(context.getRecipientProfileId());
+        entity.setSenderProfileId(context.getSenderProfileId());
+        entity.setType(buildResult.getType());
+        entity.setReferenceType(buildResult.getReferenceType());
+        entity.setReferenceId(buildResult.getReferenceId());
+        entity.setIsRead(false);
+        Notification saved = notificationRepository.save(entity);
+        logger.info("Internal dispatch completed - notificationUuid: {}", saved.getId());
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void deleteByFilterInternal(NotificationDeleteByFilterCommand command) {
+        logger.info("Internal delete by filter started - recipientProfileId: {}, senderProfileId: {}",
+                command.recipientProfileId(), command.senderProfileId());
 
         if (command.type() != null && command.types() != null && !command.types().isEmpty()) {
             throw new NotificationValidationException("Use either type or types in delete filter command");
@@ -164,94 +236,7 @@ public class NotificationServiceImpl implements NotificationService {
             notificationRepository.saveAll(toDelete);
         }
 
-        logger.info("Delete notifications by filter completed - updatedCount: {}", toDelete.size());
-        return new NotificationMutationResponseDTO(true, toDelete.size(), "Notifications deleted by filter");
-    }
-
-    @Override
-    @Transactional
-    public NotificationMutationResponseDTO promoteFollowRequest(UUID authSubjectUuid, Long recipientProfileId, Long followerProfileId) {
-        Long authenticatedProfileId = resolveCurrentProfileId(authSubjectUuid);
-        logger.info("Promote follow request notifications started - authProfileId: {}, recipientProfileId: {}, followerProfileId: {}",
-                authenticatedProfileId, recipientProfileId, followerProfileId);
-
-        if (!authenticatedProfileId.equals(recipientProfileId)) {
-            logger.warn("Promote follow request denied - authProfileId: {}, recipientProfileId: {}", authenticatedProfileId, recipientProfileId);
-            throw new NotificationAccessDeniedException("Only recipient can promote follow request notifications");
-        }
-
-        List<Notification> notifications = notificationRepository.findByRecipientProfileIdAndSenderProfileIdAndTypeAndDeletedAtIsNull(
-                recipientProfileId,
-                followerProfileId,
-                NotificationType.FOLLOW_REQUEST
-        );
-
-        notifications.forEach(n -> n.setType(NotificationType.FOLLOW));
-        if (!notifications.isEmpty()) {
-            notificationRepository.saveAll(notifications);
-        }
-
-        logger.info("Promote follow request notifications completed - updatedCount: {}", notifications.size());
-        return new NotificationMutationResponseDTO(true, notifications.size(), "Follow request notifications promoted");
-    }
-
-    @Override
-    @Transactional
-    public NotificationResponseDTO dispatch(UUID authSubjectUuid, NotificationDispatchCommand command) {
-        logger.info("Dispatch notification started - senderProfileId: {}, recipientProfileId: {}, type: {}",
-                command.senderProfileId(), command.recipientProfileId(), command.type());
-        Long authenticatedProfileId = resolveCurrentProfileId(authSubjectUuid);
-        if (!authenticatedProfileId.equals(command.senderProfileId())) {
-            logger.warn("Dispatch denied due to sender mismatch - authenticatedProfileId: {}, senderProfileId: {}",
-                    authenticatedProfileId, command.senderProfileId());
-            throw new NotificationAccessDeniedException("Sender profile mismatch");
-        }
-
-        NotificationType normalizedType = NotificationTypeMapper.toNotificationType(command.type());
-        NotificationReferenceType normalizedReferenceType = NotificationTypeMapper.toReferenceType(command.referenceType());
-        NotificationContext context = new NotificationContext(
-                command.recipientProfileId(),
-                command.senderProfileId(),
-                normalizedType,
-                normalizedReferenceType,
-                command.referenceId()
-        );
-
-        if (context.getRecipientProfileId().equals(context.getSenderProfileId())) {
-            logger.warn("Dispatch skipped because sender and recipient are the same - profileId: {}", context.getSenderProfileId());
-            throw new NotificationValidationException("Self notifications are not allowed");
-        }
-
-        NotificationStrategy strategy = strategyRegistry.resolve(normalizedType);
-        strategy.validate(context);
-        NotificationBuildResult buildResult = strategy.build(context);
-
-        LocalDateTime deduplicationBoundary = LocalDateTime.now().minus(notificationsProperties.getDeduplicationTtl());
-        boolean duplicated = notificationRepository.existsByRecipientProfileIdAndSenderProfileIdAndTypeAndReferenceTypeAndReferenceIdAndCreatedAtAfterAndDeletedAtIsNull(
-                context.getRecipientProfileId(),
-                context.getSenderProfileId(),
-                buildResult.getType(),
-                buildResult.getReferenceType(),
-                buildResult.getReferenceId(),
-                deduplicationBoundary
-        );
-
-        if (duplicated) {
-            logger.warn("Dispatch skipped because duplicate notification exists - recipientProfileId: {}, senderProfileId: {}, type: {}",
-                    context.getRecipientProfileId(), context.getSenderProfileId(), buildResult.getType().name().toLowerCase());
-            throw new NotificationValidationException("Duplicate notification detected");
-        }
-
-        Notification entity = new Notification();
-        entity.setRecipientProfileId(context.getRecipientProfileId());
-        entity.setSenderProfileId(context.getSenderProfileId());
-        entity.setType(buildResult.getType());
-        entity.setReferenceType(buildResult.getReferenceType());
-        entity.setReferenceId(buildResult.getReferenceId());
-        entity.setIsRead(false);
-        Notification saved = notificationRepository.save(entity);
-        logger.info("Dispatch notification completed - notificationUuid: {}", saved.getId());
-        return toResponse(saved);
+        logger.info("Internal delete by filter completed - deletedCount: {}", toDelete.size());
     }
 
     private Long resolveCurrentProfileId(UUID authSubjectUuid) {
@@ -294,22 +279,4 @@ public class NotificationServiceImpl implements NotificationService {
         );
     }
 
-    private NotificationResponseDTO toResponse(Notification entity) {
-        return new NotificationResponseDTO(
-                entity.getId(),
-                NotificationTypeMapper.toExternalType(entity.getType()),
-                entity.getSenderProfileId(),
-                null,
-                null,
-                null,
-                false,
-                NotificationTypeMapper.toExternalReferenceType(entity.getReferenceType()),
-                entity.getReferenceId(),
-                null,
-                null,
-                null,
-                Boolean.TRUE.equals(entity.getIsRead()),
-                entity.getCreatedAt()
-        );
-    }
 }

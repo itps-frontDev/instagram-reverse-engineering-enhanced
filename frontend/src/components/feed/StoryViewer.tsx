@@ -24,6 +24,7 @@ import {ProfilePicture} from '@/components';
 import { LoadingSpinner } from '@/components/common';
 import {StoryViewerSkeleton} from '@/components/common/skeletons';
 import { VerifiedBadge, ShareIcon } from '@/components/common';
+import { toggleLikeAction } from '@/features/likes';
 
 interface Story {
   id: number;
@@ -437,26 +438,23 @@ export default function StoryViewer({
         return updated;
       });
 
-      // Chiama API per persistere il like
-      const res = await fetch(`/api/stories/${currentStory.id}/like`, {
-        method: 'POST',
-      });
+      // Chiama server action per persistere il like
+      const result = await toggleLikeAction({ likeableType: 'story', likeableId: currentStory.id });
 
-      if (!res.ok) {
-        throw new Error('Failed to toggle like');
+      if (!result.success) {
+        throw new Error(result.error);
       }
 
-      const data = await res.json();
       // Aggiorna stato con risposta del server
-      setIsLiked(data.liked);
-      
+      setIsLiked(result.data.liked);
+
       // Sincronizza la risposta del server con l'array delle storie
       setStories(prevStories => {
         const updated = [...prevStories];
         if (updated[currentIndex]) {
           updated[currentIndex] = {
             ...updated[currentIndex],
-            is_liked_by_me: data.liked,
+            is_liked_by_me: result.data.liked,
           };
         }
         return updated;

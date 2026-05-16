@@ -15,7 +15,7 @@ public interface NotificationService {
     NotificationMutationResponseDTO markAllAsRead(UUID authSubjectUuid);
     NotificationMutationResponseDTO markAsRead(UUID authSubjectUuid, UUID notificationUuid);
     NotificationMutationResponseDTO delete(UUID authSubjectUuid, UUID notificationUuid);
-    NotificationMutationResponseDTO deleteByFilter(UUID authSubjectUuid, NotificationDeleteByFilterCommand command);
     NotificationMutationResponseDTO promoteFollowRequest(UUID authSubjectUuid, Long recipientProfileId, Long followerProfileId);
-    NotificationResponseDTO dispatch(UUID authSubjectUuid, NotificationDispatchCommand command);
+    void dispatchInternal(NotificationDispatchCommand command);
+    void deleteByFilterInternal(NotificationDeleteByFilterCommand command);
 }

@@ -7,13 +7,9 @@
  * TABELLE PRINCIPALI:
  * - posts: dati del post (caption, contatori, flag)
  * - post_media: media allegati (immagini/video) con posizione
- * - post_likes: like ai post (no deleted_at, usa ON CONFLICT DO NOTHING)
+ * - likes: like polimorfici (likeable_type='post', soft delete con deleted_at)
  * - saved_posts: post salvati (soft delete con deleted_at)
  * - post_tags: tag di profili nelle foto
- *
- * NOTA SUL SISTEMA DI LIKE:
- * La tabella `post_likes` non ha `deleted_at`. L'unlike è un DELETE fisico.
- * Per evitare duplicati in fase di like, si usa `ON CONFLICT DO NOTHING`.
  *
  * @module repositories/PostRepository
  *
@@ -24,9 +20,6 @@
  * const postId = await postRepository.create({ profile_id: 1, caption: 'Ciao!' });
  * await postRepository.addMedia({ post_id: postId, media_url: '...', media_type: 'image', position: 0 });
  *
- * // Like / Unlike
- * await postRepository.like(postId, profileId);
- * await postRepository.unlike(postId, profileId);
  */
 
 import { queryOne, queryAll, execute } from '@/lib/db';
@@ -352,86 +345,6 @@ export const postRepository = {
   },
 
   /**
-   * Aggiunge un like a un post.
-   *
-   * USA `ON CONFLICT DO NOTHING` per gestire like duplicati senza errore.
-   * Se il like già esiste (rowCount=0), restituisce false senza aggiornare il contatore.
-   *
-   * @param postId - ID del post
-   * @param profileId - ID del profilo che mette like
-   * @returns true se il like è stato aggiunto, false se era già presente
-   */
-  async like(postId: number, profileId: number): Promise<boolean> {
-    const result = await execute(
-      `INSERT INTO post_likes (profile_id, post_id) VALUES (?, ?) ON CONFLICT DO NOTHING`,
-      [profileId, postId]
-    );
-    if (result.changes === 0) return false;
-    await execute(
-      `UPDATE posts SET likes_count = likes_count + 1 WHERE id = ?`,
-      [postId]
-    );
-    return true;
-  },
-
-  /**
-   * Rimuove un like da un post (hard DELETE, la tabella non ha deleted_at).
-   * Usa `GREATEST(0, likes_count - 1)` per evitare contatori negativi.
-   *
-   * @param postId - ID del post
-   * @param profileId - ID del profilo che rimuove il like
-   * @returns true se il like è stato rimosso
-   */
-  async unlike(postId: number, profileId: number): Promise<boolean> {
-    const result = await execute(
-      `DELETE FROM post_likes WHERE profile_id = ? AND post_id = ?`,
-      [profileId, postId]
-    );
-    if (result.changes > 0) {
-      await execute(
-        `UPDATE posts SET likes_count = GREATEST(0, likes_count - 1) WHERE id = ?`,
-        [postId]
-      );
-      return true;
-    }
-    return false;
-  },
-
-  /**
-   * Verifica se un profilo ha già messo like a un post.
-   *
-   * @param postId - ID del post
-   * @param profileId - ID del profilo
-   * @returns true se il like esiste
-   */
-  async hasLiked(postId: number, profileId: number): Promise<boolean> {
-    const result = await queryOne(
-      `SELECT 1 FROM post_likes WHERE profile_id = ? AND post_id = ?`,
-      [profileId, postId]
-    );
-    return !!result;
-  },
-
-  /**
-   * Ottiene gli ID dei post (da un array) che il profilo ha già messo like.
-   * Usato per evidenziare i like nel feed senza N query separate.
-   *
-   * @param postIds - Array di ID post da controllare
-   * @param profileId - ID del profilo
-   * @returns Set di post_id messi like dal profilo
-   */
-  async getLikedPostIds(postIds: number[], profileId: number): Promise<Set<number>> {
-    if (postIds.length === 0) return new Set();
-    const placeholders = postIds.map(() => '?').join(',');
-    const likes = await queryAll<{ post_id: number }>(
-      `SELECT post_id FROM post_likes
-       WHERE post_id IN (${placeholders}) AND profile_id = ?`,
-      [...postIds, profileId]
-    );
-    return new Set(likes.map(l => l.post_id));
-  },
-
-  /**
    * Salva un post nella collezione dell'utente.
    * Se era già salvato (soft-deleted), lo riattiva invece di creare un duplicato.
    *
@@ -567,7 +480,7 @@ export const postRepository = {
         pr.profile_image_url,
         pr.is_verified as profile_is_verified,
         pr.is_private as profile_is_private,
-        (SELECT 1 FROM post_likes WHERE post_id = p.id AND profile_id = ?) as is_liked,
+        (SELECT 1 FROM likes WHERE likeable_type = 'post' AND likeable_id = p.id AND profile_id = ? AND deleted_at IS NULL) as is_liked,
         (SELECT 1 FROM saved_posts WHERE post_id = p.id AND profile_id = ? AND deleted_at IS NULL) as is_saved
       FROM posts p
       INNER JOIN profiles pr ON pr.id = p.profile_id
@@ -682,7 +595,7 @@ export const postRepository = {
         (SELECT 1 FROM follows
          WHERE follower_profile_id = ? AND following_profile_id = pr.id
            AND status = 'accepted' AND deleted_at IS NULL) as is_following_author,
-        (SELECT 1 FROM post_likes WHERE post_id = p.id AND profile_id = ?) as is_liked,
+        (SELECT 1 FROM likes WHERE likeable_type = 'post' AND likeable_id = p.id AND profile_id = ? AND deleted_at IS NULL) as is_liked,
         (SELECT 1 FROM saved_posts WHERE post_id = p.id AND profile_id = ? AND deleted_at IS NULL) as is_saved
       FROM posts p
       INNER JOIN profiles pr ON p.profile_id = pr.id
@@ -725,7 +638,7 @@ export const postRepository = {
         pr.full_name as profile_full_name,
         pr.profile_image_url,
         pr.is_verified as profile_is_verified,
-        (SELECT 1 FROM post_likes WHERE post_id = p.id AND profile_id = ?) as is_liked,
+        (SELECT 1 FROM likes WHERE likeable_type = 'post' AND likeable_id = p.id AND profile_id = ? AND deleted_at IS NULL) as is_liked,
         (SELECT 1 FROM saved_posts WHERE post_id = p.id AND profile_id = ? AND deleted_at IS NULL) as is_saved
       FROM posts p
       INNER JOIN profiles pr ON p.profile_id = pr.id
@@ -968,7 +881,7 @@ export const postRepository = {
                      AND s3.deleted_at IS NULL AND s3.expires_at > NOW())
            THEN 1 ELSE 0 END
         ) as profile_has_viewed_story,
-        (SELECT 1 FROM post_likes WHERE post_id = p.id AND profile_id = ?) as is_liked,
+        (SELECT 1 FROM likes WHERE likeable_type = 'post' AND likeable_id = p.id AND profile_id = ? AND deleted_at IS NULL) as is_liked,
         (SELECT 1 FROM saved_posts WHERE post_id = p.id AND profile_id = ? AND deleted_at IS NULL) as is_saved,
         (SELECT 1 FROM follows WHERE follower_profile_id = ? AND following_profile_id = p.profile_id
            AND status = 'accepted' AND deleted_at IS NULL) as is_following

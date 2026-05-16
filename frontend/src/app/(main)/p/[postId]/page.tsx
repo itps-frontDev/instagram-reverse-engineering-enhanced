@@ -19,6 +19,7 @@ import { useRouter } from 'next/navigation';
 import Post from '@/components/feed/Post';
 import { LoadingSpinner } from '@/components/common';
 import type { FeedPost } from '@/types/feed';
+import { toggleLikeAction } from '@/features/likes';
 
 // ============================================================================
 // INTERFACCE
@@ -149,17 +150,15 @@ export default function PostPage({ params }: PostPageProps) {
    * @param postId - ID del post
    */
   const handleLike = async (postId: number) => {
-    try {
-      const response = await fetch(`/api/posts/${postId}/like`, {
-        method: 'POST',
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setPost(data.post);
-      }
-    } catch (error) {
-      console.error('Errore like post:', error);
+    const result = await toggleLikeAction({ likeableType: 'post', likeableId: postId });
+    if (!result.success) {
+      console.error('Errore like post:', result.error);
+      return;
     }
+    setPost(prev => prev
+      ? { ...prev, is_liked_by_current_user: result.data.liked, likes_count: result.data.count }
+      : prev
+    );
   };
 
   /**

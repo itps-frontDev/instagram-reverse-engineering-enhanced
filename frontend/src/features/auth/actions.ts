@@ -122,8 +122,9 @@ export async function getMyProfileAction(): Promise<AuthActionResult<Profile | n
 }
 
 export async function logoutAction(): Promise<AuthActionResult<null>> {
+  const cookieStore = await cookies();
+
   try {
-    const cookieStore = await cookies();
     const accessToken = cookieStore.get(getAccessTokenCookieName())?.value;
     const refreshToken = cookieStore.get(getRefreshTokenCookieName())?.value;
 
@@ -140,11 +141,12 @@ export async function logoutAction(): Promise<AuthActionResult<null>> {
         signal: AbortSignal.timeout(10_000),
       });
     }
-
+  } catch {
+    // Spring call failed (timeout, network error, etc.) — ignore, always clear cookies
+  } finally {
     cookieStore.set({ name: getAccessTokenCookieName(), value: "", path: getAccessTokenCookiePath(), maxAge: 0 });
     cookieStore.set({ name: getRefreshTokenCookieName(), value: "", path: getRefreshTokenCookiePath(), maxAge: 0 });
-    return { success: true, data: null };
-  } catch {
-    return { success: false, error: "Logout failed." };
   }
+
+  return { success: true, data: null };
 }

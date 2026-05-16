@@ -25,8 +25,6 @@
  * // Registra una visualizzazione
  * await storyRepository.recordView(storyId, viewerProfileId);
  *
- * // Toggle like
- * const isNowLiked = await storyRepository.likeStory(storyId, profileId);
  */
 
 import { queryOne, queryAll, execute } from '@/lib/db';
@@ -109,7 +107,7 @@ class StoryRepository {
         s.id, s.profile_id, s.media_url, s.media_type, s.duration_seconds, s.views_count,
         s.created_at, s.expires_at,
         p.username, p.profile_image_url, p.is_verified,
-        (SELECT 1 FROM story_likes WHERE story_id = s.id AND profile_id = ?) as is_liked_by_me,
+        (SELECT 1 FROM likes WHERE likeable_type = 'story' AND likeable_id = s.id AND profile_id = ? AND deleted_at IS NULL) as is_liked_by_me,
         (SELECT 1 FROM story_views WHERE story_id = s.id AND viewer_profile_id = ?) as is_viewed
       FROM stories s
       JOIN profiles p ON p.id = s.profile_id
@@ -269,44 +267,6 @@ class StoryRepository {
   }
 
   /**
-   * Mette/toglie il like a una storia (toggle).
-   *
-   * La tabella `story_likes` non ha `deleted_at`, quindi il toggle
-   * funziona con SELECT + DELETE (se esiste) o INSERT (se non esiste).
-   *
-   * @param storyId - ID della storia
-   * @param profileId - ID del profilo
-   * @returns true se il like è stato aggiunto, false se rimosso
-   */
-  async likeStory(storyId: number, profileId: number): Promise<boolean> {
-    const existing = await queryOne(
-      `SELECT 1 FROM story_likes WHERE profile_id = ? AND story_id = ?`,
-      [profileId, storyId]
-    );
-    if (existing) {
-      await execute(`DELETE FROM story_likes WHERE profile_id = ? AND story_id = ?`, [profileId, storyId]);
-      return false;
-    }
-    await execute(`INSERT INTO story_likes (profile_id, story_id) VALUES (?, ?)`, [profileId, storyId]);
-    return true;
-  }
-
-  /**
-   * Verifica se un profilo ha messo like a una storia.
-   *
-   * @param storyId - ID della storia
-   * @param profileId - ID del profilo
-   * @returns true se il like esiste
-   */
-  async hasLiked(storyId: number, profileId: number): Promise<boolean> {
-    const like = await queryOne(
-      `SELECT 1 FROM story_likes WHERE profile_id = ? AND story_id = ?`,
-      [profileId, storyId]
-    );
-    return like !== null;
-  }
-
-  /**
    * Ottiene la lista dei profili che hanno visualizzato una storia.
    * Ordinata per data decrescente (più recente prima).
    *
@@ -340,7 +300,7 @@ class StoryRepository {
    */
   async getPublicStoriesByProfile(profileId: number, viewerProfileId: number | null): Promise<StoryWithProfile[]> {
     const likeSelect = viewerProfileId !== null
-      ? `(SELECT 1 FROM story_likes sl WHERE sl.profile_id = ? AND sl.story_id = s.id) AS is_liked_by_me`
+      ? `(SELECT 1 FROM likes WHERE likeable_type = 'story' AND likeable_id = s.id AND profile_id = ? AND deleted_at IS NULL) AS is_liked_by_me`
       : 'FALSE AS is_liked_by_me';
 
     const params = viewerProfileId !== null ? [viewerProfileId, profileId] : [profileId];
