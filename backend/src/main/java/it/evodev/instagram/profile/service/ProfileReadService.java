@@ -1,5 +1,6 @@
 package it.evodev.instagram.profile.service;
 
+import it.evodev.instagram.profile.dto.response.BirthdayDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfileByUsernameDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfilePreviewDataDTO;
 
@@ -32,4 +33,13 @@ public interface ProfileReadService {
      * @throws it.evodev.instagram.profile.exception.ProfileNotFoundException if profile not found or soft-deleted
      */
     ProfilePreviewDataDTO getProfilePreviewByUsername(UUID currentUserId, String targetUsername);
+
+    /**
+     * Fetch the birthday of the authenticated user.
+     * 
+     * @param currentUserId UUID of the authenticated user
+     * @return BirthdayDataDTO with birthday in LocalDate format
+     * @throws it.evodev.instagram.profile.exception.ProfileNotFoundException if profile not found
+     */
+    BirthdayDataDTO getBirthday(UUID currentUserId);
 }

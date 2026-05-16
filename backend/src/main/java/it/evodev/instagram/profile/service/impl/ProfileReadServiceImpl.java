@@ -1,5 +1,6 @@
 package it.evodev.instagram.profile.service.impl;
 
+import it.evodev.instagram.profile.dto.response.BirthdayDataDTO;
 import it.evodev.instagram.profile.dto.response.FollowStatusDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfileByUsernameDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfilePreviewDataDTO;
@@ -14,6 +15,8 @@ import it.evodev.instagram.profile.repository.ProfileVisibilityProfileJpaReposit
 import it.evodev.instagram.profile.service.FollowService;
 import it.evodev.instagram.profile.service.ProfileReadService;
 import it.evodev.instagram.profile.service.ProfileVisibilityService;
+import it.evodev.instagram.auth.repositories.UserRepository;
+import it.evodev.instagram.auth.models.User;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +35,7 @@ public class ProfileReadServiceImpl implements ProfileReadService {
     private final ProfileVisibilityProfileJpaRepository profileRepository;
     private final ProfileVisibilityService profileVisibilityService;
     private final FollowService followService;
+    private final UserRepository userRepository;
 
     @Override
     public ProfileByUsernameDataDTO getProfileByUsername(UUID currentUserId, String targetUsername) {
@@ -141,5 +145,19 @@ public class ProfileReadServiceImpl implements ProfileReadService {
 
     private int defaultInt(Integer value) {
         return value == null ? 0 : value;
+    }
+
+    @Override
+    public BirthdayDataDTO getBirthday(UUID currentUserId) {
+        logger.info("Fetching birthday for user: {}", currentUserId);
+
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> {
+                    logger.warn("User not found for birthday fetch. User ID: {}", currentUserId);
+                    return new ProfileNotFoundException("Profile not found");
+                });
+
+        logger.info("Birthday fetched successfully for user: {}", currentUserId);
+        return new BirthdayDataDTO(user.getDateOfBirth());
     }
 }

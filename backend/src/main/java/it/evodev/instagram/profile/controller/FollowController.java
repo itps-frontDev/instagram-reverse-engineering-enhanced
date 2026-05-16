@@ -19,8 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * REST Controller for managing follow relationships between profiles.
- * Handles follow status checks, follow lists, and future follow/unfollow/accept/reject operations.
+ * Controller per operazioni di relazione follow tra profili.
  */
 @RestController
 @RequestMapping("/api/priv/profiles")
@@ -33,14 +32,7 @@ public class FollowController {
 
     /**
      * GET /api/priv/profiles/{username}/follow-status
-     *
-     * Determines the follow relationship status between the authenticated user and a target profile.
-     * Authentication is verified by Spring Security; no manual JWT validation needed.
-     * This is a viewer-specific endpoint: uses the authenticated principal to compare with the target.
-     *
-     * @param username target profile username (case-insensitive)
-     * @param authentication Spring Security authentication containing current user UUID
-     * @return response with follow status: "self" | "none" | "pending" | "accepted"
+     * Restituisce lo stato di follow tra utente autenticato e profilo target.
      */
     @GetMapping("/{username}/follow-status")
     public ResponseEntity<ProfileApiResponse<FollowStatusDataDTO>> getFollowStatus(
@@ -60,15 +52,7 @@ public class FollowController {
 
     /**
      * GET /api/priv/profiles/{username}/followers
-     *
-     * Fetch the list of profiles that follow the target profile.
-     * Respects privacy: owner always sees it, public profiles visible to all,
-     * private profiles only visible to accepted followers.
-     * Authentication is verified by Spring Security; no manual JWT validation needed.
-     *
-     * @param username target profile username whose followers are requested (case-insensitive)
-     * @param authentication Spring Security authentication containing current user UUID
-     * @return response with list of ProfileFollowerDataDTO, each with follow status relative to current user
+     * Restituisce la lista follower del profilo target rispettando le regole di privacy.
      */
     @GetMapping("/{username}/followers")
     public ResponseEntity<ProfileApiResponse<List<ProfileFollowerDataDTO>>> getFollowersByUsername(
@@ -87,17 +71,7 @@ public class FollowController {
 
     /**
      * GET /api/priv/profiles/{username}/following
-     *
-     * Fetch the list of profiles that the target profile follows.
-     * Respects privacy: owner always sees it, public profiles visible to all,
-     * private profiles only visible to accepted followers.
-     * Authentication is verified by Spring Security; no manual JWT validation needed.
-     * This is the inverse of the followers list: instead of "who follows the target",
-     * it returns "who the target follows".
-     *
-     * @param username target profile username whose following list is requested (case-insensitive)
-     * @param authentication Spring Security authentication containing current user UUID
-     * @return response with list of ProfileFollowerDataDTO, each with follow status relative to current user
+     * Restituisce la lista profili seguiti dal target rispettando le regole di privacy.
      */
     @GetMapping("/{username}/following")
     public ResponseEntity<ProfileApiResponse<List<ProfileFollowerDataDTO>>> getFollowingByUsername(
@@ -116,21 +90,7 @@ public class FollowController {
 
     /**
      * GET /api/priv/profiles/suggestions
-     *
-     * Get profile suggestions for the authenticated user to discover new profiles to follow.
-     * Returns top public profiles not yet followed, shuffled for variety.
-     * 
-     * Excludes:
-     * - Current user's own profile
-     * - Profiles already followed (accepted status)
-     * - Profiles with pending follow request
-     * - Soft-deleted profiles
-     * - Private profiles
-     * 
-     * Authentication is verified by Spring Security; no manual JWT validation needed.
-     *
-     * @param authentication Spring Security authentication containing current user UUID
-     * @return response with list of up to 5 ProfileSuggestionDTO ordered by popularity
+     * Restituisce suggerimenti di profili pubblici non ancora seguiti dall'utente autenticato.
      */
     @GetMapping("/suggestions")
     public ResponseEntity<ProfileApiResponse<List<ProfileSuggestionDTO>>> getSuggestions(

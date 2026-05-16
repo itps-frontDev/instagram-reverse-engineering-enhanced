@@ -1,45 +1,45 @@
 /**
  * @fileoverview Pagina Impostazioni Data di Nascita
  * 
- * Permette all'utente di visualizzare e modificare la data di nascita:
- * - Visualizzazione data attuale
- * - Form per modifica (se consentito)
- * - Informazioni su perché la data è richiesta
+ * Server Component che legge la data di nascita dal backend Spring Boot
+ * tramite server action e renderizza il form.
  * 
  * Route: /accounts/birthday
  * 
- * @module app/(main)/accounts/birthday/page
+ * @module app/(main)/(profile)/accounts/birthday/page
  */
 
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
-import { userRepository } from '@/repositories';
+import { getBirthdayAction } from '@/features/profile';
 import { BirthdayForm } from '@/components/settings';
 
-// ============================================================================
-// COMPONENTE PAGINA
-// ============================================================================
+// Disabilita il caching - sempre fetch fresh dal backend
+export const revalidate = 0;
 
 /**
- * BirthdayPage - Pagina impostazioni data di nascita
+ * BirthdayPage - Server Component
  * 
- * Server Component che recupera i dati utente tramite repository
- * e renderizza il form per la data di nascita.
+ * Carica la data di nascita dal backend Spring Boot tramite getBirthdayAction()
+ * e passa il valore al BirthdayForm client component.
  * 
  * @returns Pagina impostazioni data di nascita
  */
 export default async function BirthdayPage() {
+  // Verifica che l'utente sia autenticato
   const user = await getCurrentUser();
 
   if (!user) {
     redirect('/login');
   }
 
-  const userData = await userRepository.getBirthdayData(user.id);
+  // Fetch birthday data dal backend Spring Boot
+  const result = await getBirthdayAction();
 
-  if (!userData) {
+  if (!result.success) {
+    // Se non riesce a leggere i dati, reindirizza a login
     redirect('/login');
   }
 
-  return <BirthdayForm user={userData} />;
+  return <BirthdayForm initialBirthday={result.data.birthday} />;
 }

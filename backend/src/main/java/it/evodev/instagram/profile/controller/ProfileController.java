@@ -1,5 +1,6 @@
 package it.evodev.instagram.profile.controller;
 
+import it.evodev.instagram.profile.dto.response.BirthdayDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfileApiResponse;
 import it.evodev.instagram.profile.dto.response.ProfileByUsernameDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfilePreviewDataDTO;
@@ -27,9 +28,7 @@ public class ProfileController {
 
     /**
      * GET /api/priv/profiles/{username}
-     *
-     * Metodo GET perché l'operazione è di sola lettura del profilo target.
-     * Il path usa {username} perché identifica in modo naturale la risorsa profilo lato UI.
+     * Restituisce il profilo target con visibilità e follow status rispetto all'utente autenticato.
      */
     @GetMapping("/{username}")
     public ResponseEntity<ProfileApiResponse<ProfileByUsernameDataDTO>> getProfileByUsername(
@@ -49,8 +48,7 @@ public class ProfileController {
 
     /**
      * GET /api/priv/profiles/{username}/preview
-     *
-     * Endpoint leggero per card hover profilo: restituisce dati minimali + recentPosts.
+     * Restituisce una preview leggera del profilo target per hover card e UI compatte.
      */
     @GetMapping("/{username}/preview")
     public ResponseEntity<ProfileApiResponse<ProfilePreviewDataDTO>> getProfilePreviewByUsername(
@@ -66,5 +64,20 @@ public class ProfileController {
                 username, result.isCanView(), result.getFollowStatus());
 
         return ResponseEntity.ok(ProfileApiResponse.success(result, "Profile preview fetched successfully"));
+    }
+
+    /**
+     * GET /api/priv/profiles/birthday
+     * Restituisce la data di nascita del profilo autenticato.
+     */
+    @GetMapping("/birthday")
+    public ResponseEntity<ProfileApiResponse<BirthdayDataDTO>> getBirthday(Authentication authentication) {
+        logger.info("GET /api/priv/profiles/birthday - User: {}", authentication.getName());
+
+        UUID currentUserId = UUID.fromString(authentication.getName());
+        BirthdayDataDTO response = profileReadService.getBirthday(currentUserId);
+
+        logger.info("Birthday retrieved successfully for user: {}", currentUserId);
+        return ResponseEntity.ok(ProfileApiResponse.success(response, "Birthday retrieved successfully"));
     }
 }

@@ -2,21 +2,27 @@ package it.evodev.instagram.profile.service.impl;
 
 import it.evodev.instagram.profile.dto.request.ProfileEditRequestDTO;
 import it.evodev.instagram.profile.dto.request.ProfilePersonalRequestDTO;
+import it.evodev.instagram.profile.dto.request.UpdateBirthdayRequestDTO;
+import it.evodev.instagram.profile.dto.response.BirthdayDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfileEditDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfilePersonalDataDTO;
 import it.evodev.instagram.profile.enums.ProfileGender;
+import it.evodev.instagram.profile.exception.InvalidAgeException;
 import it.evodev.instagram.profile.exception.ProfileBadRequestException;
 import it.evodev.instagram.profile.exception.ProfileConflictException;
 import it.evodev.instagram.profile.exception.ProfileNotFoundException;
 import it.evodev.instagram.profile.model.ProfileEditProfile;
 import it.evodev.instagram.profile.repository.ProfileEditProfileJpaRepository;
 import it.evodev.instagram.profile.service.ProfileEditService;
+import it.evodev.instagram.auth.models.User;
+import it.evodev.instagram.auth.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
+import java.time.LocalDate;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -25,8 +31,10 @@ import java.util.UUID;
 public class ProfileEditServiceImpl implements ProfileEditService {
 
     private static final Logger logger = LoggerFactory.getLogger(ProfileEditServiceImpl.class);
+    private static final int MIN_AGE = 13;
 
     private final ProfileEditProfileJpaRepository profileEditRepository;
+    private final UserRepository userRepository;
 
     @Override
     public ProfileEditDataDTO editProfile(UUID currentUserId, ProfileEditRequestDTO request) {
@@ -153,5 +161,54 @@ public class ProfileEditServiceImpl implements ProfileEditService {
 
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    @Override
+    public BirthdayDataDTO updateBirthday(UUID currentUserId, UpdateBirthdayRequestDTO request) {
+        logger.info("Updating birthday for user: {} with date: {}", currentUserId, request.getBirthday());
+
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> {
+                    logger.warn("User not found for birthday update. User ID: {}", currentUserId);
+                    return new ProfileNotFoundException("Profile not found");
+                });
+
+        LocalDate birthday = request.getBirthday();
+
+        // Validazione età minima (13 anni)
+        int age = calculateAge(birthday, LocalDate.now());
+
+        if (age < MIN_AGE) {
+            logger.warn("Birthday update rejected: user age {} < {} for user: {}", age, MIN_AGE, currentUserId);
+            throw new InvalidAgeException("User must be at least " + MIN_AGE + " years old");
+        }
+
+        // Aggiorna la data di nascita
+        user.setDateOfBirth(birthday);
+
+        // Salva l'entità User
+        User saved = userRepository.save(user);
+
+        logger.info("Birthday updated successfully for user: {} to: {}", currentUserId, birthday);
+        return new BirthdayDataDTO(saved.getDateOfBirth());
+    }
+
+    /**
+     * Calcola l'età in base alla data di nascita e la data odierna.
+     * 
+     * @param birthDate data di nascita
+     * @param today data di riferimento (solitamente LocalDate.now())
+     * @return età in anni
+     */
+    private int calculateAge(LocalDate birthDate, LocalDate today) {
+        int age = today.getYear() - birthDate.getYear();
+        
+        // Se il compleanno non è ancora passato quest'anno, sottrai 1
+        if (today.getMonthValue() < birthDate.getMonthValue() ||
+            (today.getMonthValue() == birthDate.getMonthValue() && today.getDayOfMonth() < birthDate.getDayOfMonth())) {
+            age--;
+        }
+        
+        return age;
     }
 }

@@ -26,13 +26,7 @@ public class ProfileVisibilityController {
 
     /**
      * GET /api/priv/profiles/{username}/can-view
-     *
-     * Determines if the authenticated user can view a target profile's contents.
-     * Authentication is verified by Spring Security; no manual JWT validation needed.
-     *
-     * @param username target profile username (path param)
-     * @param authentication spring security authentication containing current user UUID
-     * @return response with canView flag
+     * Valuta se l'utente autenticato può vedere i contenuti del profilo target.
      */
     @GetMapping("/{username}/can-view")
     public ResponseEntity<ProfileApiResponse<ProfileVisibilityDataDTO>> canViewProfile(

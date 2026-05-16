@@ -5,8 +5,8 @@
  * 
  * FUNZIONALITÀ:
  * - 3 dropdown per giorno, mese, anno (stile Instagram)
- * - Conversione automatica da datetime
- * - Salvataggio via API
+ * - Conversione automatica da ISO string
+ * - Salvataggio via server action (Spring Boot)
  * - Spinner durante invio
  * - Messaggio successo temporaneo
  * 
@@ -16,6 +16,7 @@
 'use client';
 
 import { useState } from 'react';
+import { updateBirthdayAction } from '@/features/profile';
 import { 
   PageHeader, 
   FormField, 
@@ -28,16 +29,11 @@ import {
 } from '@/components/ui';
 
 interface BirthdayFormProps {
-  user: {
-    id: string | number;
-    date_of_birth: string;
-  };
+  initialBirthday: string | null; // ISO date YYYY-MM-DD from server action
 }
 
-export default function BirthdayForm({ user }: BirthdayFormProps) {
-  // Parse della data esistente (formato YYYY-MM-DD o datetime)
-  const datePart = user.date_of_birth.split('T')[0] || user.date_of_birth.split(' ')[0];
-  const initialDate = isoToDatePicker(datePart);
+export default function BirthdayForm({ initialBirthday }: BirthdayFormProps) {
+  const initialDate = isoToDatePicker(initialBirthday || '');
   
   const [birthday, setBirthday] = useState<DatePickerValue>(initialDate);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,29 +54,20 @@ export default function BirthdayForm({ user }: BirthdayFormProps) {
       return;
     }
 
-    try {
-      const res = await fetch('/api/profiles/birthday', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date_of_birth: dateOfBirth,
-        }),
-      });
+    // Call server action
+    const result = await updateBirthdayAction(dateOfBirth);
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to update birthday');
-      }
-
-      setSuccessMessage('Data di nascita aggiornata!');
-      setTimeout(() => setSuccessMessage(''), 3000);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Errore durante l\'aggiornamento';
-      setErrorMessage(message);
-      setTimeout(() => setErrorMessage(''), 5000);
-    } finally {
+    if (!result.success) {
+      setErrorMessage(result.error);
       setIsSubmitting(false);
+      return;
     }
+
+    setSuccessMessage('Data di nascita aggiornata!');
+    // Reset form with new birthday
+    setBirthday(isoToDatePicker(result.data.birthday));
+    setTimeout(() => setSuccessMessage(''), 3000);
+    setIsSubmitting(false);
   };
 
   return (

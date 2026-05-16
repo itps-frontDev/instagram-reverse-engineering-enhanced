@@ -47,7 +47,6 @@ export default function Suggestions() {
       try {
         const result = await getProfileSuggestionsAction();
         if (result.success && result.data) {
-          console.log('Suggestions API response:', result.data);
           // Map response to SuggestedUser interface
           const mapped: SuggestedUser[] = result.data.map(item => ({
             id: item.id,
@@ -85,7 +84,6 @@ export default function Suggestions() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Follow response:', data);
         if (data.status === 'pending') {
           setPendingIds(prev => new Set(prev).add(userId));
         } else if (data.status === 'accepted') {

@@ -2,6 +2,9 @@ package it.evodev.instagram.profile.controller;
 
 import it.evodev.instagram.profile.dto.request.ProfileEditRequestDTO;
 import it.evodev.instagram.profile.dto.request.ProfilePersonalRequestDTO;
+import it.evodev.instagram.profile.dto.request.UpdateBirthdayRequestDTO;
+import it.evodev.instagram.profile.dto.response.BirthdayDataDTO;
+import it.evodev.instagram.profile.dto.response.ProfileApiResponse;
 import it.evodev.instagram.profile.dto.response.ProfileEditDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfileEditResponseDTO;
 import it.evodev.instagram.profile.dto.response.ProfilePersonalDataDTO;
@@ -31,9 +34,8 @@ public class ProfileEditController {
 
     /**
      * PUT /api/priv/profiles/edit
-     *
-     * Metodo PUT per aggiornare i campi descrittivi del profilo autenticato.
-     * Il path /edit mantiene compatibilità funzionale con il legacy Next.js durante la migrazione Strangler.
+     * Aggiorna i campi descrittivi del profilo autenticato.
+     * Mantiene il path legacy per compatibilità durante la migrazione Strangler.
      */
     @PutMapping("/edit")
     public ResponseEntity<ProfileEditResponseDTO> editProfile(
@@ -50,9 +52,8 @@ public class ProfileEditController {
 
     /**
      * PUT /api/priv/profiles/personal
-     *
-     * Metodo PUT perché aggiorna in modo idempotente i dati personali del profilo autenticato.
-     * Il path mantiene allineamento semantico con la route legacy /api/profiles/personal durante la migrazione Strangler.
+     * Aggiorna i dati personali del profilo autenticato.
+     * Mantiene il path legacy per compatibilità durante la migrazione Strangler.
      */
     @PutMapping("/personal")
     public ResponseEntity<ProfilePersonalResponseDTO> updatePersonalInfo(
@@ -65,5 +66,25 @@ public class ProfileEditController {
         ProfilePersonalDataDTO updated = profileEditService.updatePersonalInfo(currentUserId, request);
 
         return ResponseEntity.ok(new ProfilePersonalResponseDTO(true, updated, "Personal information updated successfully"));
+    }
+
+    /**
+     * PUT /api/priv/profiles/birthday
+     * Aggiorna la data di nascita del profilo autenticato.
+     * La validazione di età minima (13 anni) è applicata nel service layer.
+     */
+    @PutMapping("/birthday")
+    public ResponseEntity<ProfileApiResponse<BirthdayDataDTO>> updateBirthday(
+            Authentication authentication,
+            @Valid @RequestBody UpdateBirthdayRequestDTO request
+    ) {
+        logger.info("PUT /api/priv/profiles/birthday - User: {} - Birthday: {}", 
+                authentication.getName(), request.getBirthday());
+
+        UUID currentUserId = UUID.fromString(authentication.getName());
+        BirthdayDataDTO response = profileEditService.updateBirthday(currentUserId, request);
+
+        logger.info("Birthday updated successfully for user: {} to: {}", currentUserId, request.getBirthday());
+        return ResponseEntity.ok(ProfileApiResponse.success(response, "Birthday updated successfully"));
     }
 }
