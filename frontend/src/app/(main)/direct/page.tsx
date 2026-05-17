@@ -130,7 +130,8 @@ export default function DirectPage() {
             return;
           }
 
-          const loadedProfile = result.data.profile;
+          const payload = result.data;
+          const loadedProfile = payload.profile ?? payload;
           const profileId = loadedProfile.id;
           setSelectedId(profileId);
 

@@ -74,7 +74,7 @@ export const birthdayApiResponseSchema = z.union([
 ]);
 
 // ============================================================================
-// TYPE INFERENCE (No separate types.ts needed!)
+// TYPE INFERENCE
 // ============================================================================
 
 /**

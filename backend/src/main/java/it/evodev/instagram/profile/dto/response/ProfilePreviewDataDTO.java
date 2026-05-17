@@ -23,5 +23,5 @@ public class ProfilePreviewDataDTO {
     private boolean owner;
 
     private boolean canView;
-    private List<RecentPostPreviewDto> recentPosts;
+    private List<RecentPostPreviewDTO> recentPosts;
 }

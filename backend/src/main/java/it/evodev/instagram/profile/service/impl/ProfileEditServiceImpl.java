@@ -1,10 +1,12 @@
 package it.evodev.instagram.profile.service.impl;
 
 import it.evodev.instagram.profile.dto.request.ProfileEditRequestDTO;
+import it.evodev.instagram.profile.dto.request.ProfilePrivacyRequestDTO;
 import it.evodev.instagram.profile.dto.request.ProfilePersonalRequestDTO;
 import it.evodev.instagram.profile.dto.request.UpdateBirthdayRequestDTO;
 import it.evodev.instagram.profile.dto.response.BirthdayDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfileEditDataDTO;
+import it.evodev.instagram.profile.dto.response.ProfilePrivacyDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfilePersonalDataDTO;
 import it.evodev.instagram.profile.enums.ProfileGender;
 import it.evodev.instagram.profile.exception.InvalidAgeException;
@@ -20,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.time.LocalDate;
@@ -191,6 +194,50 @@ public class ProfileEditServiceImpl implements ProfileEditService {
 
         logger.info("Birthday updated successfully for user: {} to: {}", currentUserId, birthday);
         return new BirthdayDataDTO(saved.getDateOfBirth());
+    }
+
+    @Override
+    @Transactional
+    public ProfilePrivacyDataDTO updatePrivacy(UUID currentUserId, ProfilePrivacyRequestDTO request) {
+        logger.info("Updating privacy for user: {} with requested isPrivate: {}", currentUserId, request.getIsPrivate());
+
+        ProfileEditProfile currentProfile = profileEditRepository.findByUserIdAndDeletedAtIsNull(currentUserId)
+                .orElseThrow(() -> {
+                    logger.warn("Current user profile not found for privacy update. User ID: {}", currentUserId);
+                    return new ProfileNotFoundException("Profile not found");
+                });
+
+        boolean currentPrivacy = Boolean.TRUE.equals(currentProfile.getIsPrivate());
+        boolean requestedPrivacy = Boolean.TRUE.equals(request.getIsPrivate());
+        if (currentPrivacy == requestedPrivacy) {
+            logger.info("Privacy unchanged for user: {}. isPrivate remains: {}", currentUserId, currentPrivacy);
+            return new ProfilePrivacyDataDTO(currentPrivacy, 0);
+        }
+
+        int promotedFollowsCount = 0;
+        if (!requestedPrivacy) {
+            int pendingBeforePromotion = profileEditRepository.countPendingFollowRequests(currentProfile.getId());
+            if (pendingBeforePromotion > 0) {
+                int followingRowsUpdated = profileEditRepository.incrementFollowingCountForFollowersOfPendingRequests(currentProfile.getId());
+                promotedFollowsCount = profileEditRepository.promotePendingFollowRequestsToAccepted(currentProfile.getId());
+                int followerRowsUpdated = profileEditRepository.incrementFollowersCountById(currentProfile.getId(), promotedFollowsCount);
+
+                logger.info("Bulk promotion completed. profileId: {} - promotedFollowsCount: {} - followersRowsUpdated: {} - followingRowsUpdated: {}",
+                        currentProfile.getId(),
+                        promotedFollowsCount,
+                        followerRowsUpdated,
+                        followingRowsUpdated);
+            }
+        }
+
+        currentProfile.setIsPrivate(requestedPrivacy);
+        profileEditRepository.save(currentProfile);
+
+        logger.info("Privacy update committed for user: {}. isPrivate: {} - promotedFollowsCount: {}",
+                currentUserId,
+                requestedPrivacy,
+                promotedFollowsCount);
+        return new ProfilePrivacyDataDTO(requestedPrivacy, promotedFollowsCount);
     }
 
     /**

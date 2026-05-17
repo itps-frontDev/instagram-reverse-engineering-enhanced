@@ -666,34 +666,6 @@ export const profileRepository = {
     }));
   },
 
-  /**
-   * Ottiene le richieste di follow in attesa per un profilo privato.
-   * Mostra chi vuole seguire l'utente ma non è ancora stato approvato.
-   * 
-   * @param profileId - ID del profilo che ha le richieste pending
-   * @param limit - Numero massimo di risultati (default: 50)
-   * @returns Array di profili che hanno richiesto di seguire
-   */
-  async getPendingFollowRequests(profileId: number, limit = 50): Promise<Profile[]> {
-    const profiles = await queryAll<Profile>(
-      `SELECT
-        p.id, p.user_id, p.username, p.full_name, p.profile_image_url,
-        p.bio, p.is_private, p.is_verified
-       FROM profiles p
-       INNER JOIN follows f ON f.follower_profile_id = p.id
-       WHERE f.following_profile_id = ? AND f.status = 'pending' AND f.deleted_at IS NULL
-         AND p.deleted_at IS NULL
-       ORDER BY f.created_at DESC
-       LIMIT ?`,
-      [profileId, limit]
-    );
-    
-    return profiles.map(p => ({
-      ...p,
-      is_private: Boolean(p.is_private),
-      is_verified: Boolean(p.is_verified),
-    }));
-  },
 
   // ============================================================================
   // OPERAZIONI SUI CONTATORI
@@ -1036,25 +1008,6 @@ export const profileRepository = {
       [followId]
     );
     return result.changes > 0;
-  },
-
-  /**
-   * Accetta tutte le richieste di follow pending verso un profilo.
-   * Usato quando un profilo passa da privato a pubblico.
-   * 
-   * @param profileId - ID del profilo che riceve le richieste
-   * @returns Numero di richieste accettate
-   */
-  async acceptAllPendingFollowRequests(profileId: number): Promise<number> {
-    const result = await execute(
-      `UPDATE follows 
-       SET status = 'accepted', updated_at = NOW()
-       WHERE following_profile_id = ? 
-         AND status = 'pending' 
-         AND deleted_at IS NULL`,
-      [profileId]
-    );
-    return result.changes;
   },
 
 };

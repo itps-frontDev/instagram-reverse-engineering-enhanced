@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class RecentPostPreviewDto {
+public class RecentPostPreviewDTO {
     private Long id;
     private String mediaUrl;   // TODO(Post): sarà valorizzato con SAS URL temporaneo (15 min) via MediaService
     private String type;       // TODO(Post): "post" | "reel"

@@ -197,14 +197,20 @@ export default function ProfilePage({
         throw new Error(message);
       }
 
-      setProfile(profileResult.data.profile);
+      const payload = profileResult.data;
+      const profilePayload = payload.profile ?? payload;
+      setProfile(profilePayload);
 
       // fallback locale: evita UI di follow sul proprio profilo anche se follow-status fallisce
-      if (authProfile?.id && authProfile.id === profileResult.data.profile?.id) {
+      if (authProfile?.id && authProfile.id === profilePayload?.id) {
         setFollowStatus((prev) => ({ ...prev, isOwnProfile: true }));
       }
 
-      const context = profileResult.data.context;
+      const context = payload.context ?? {
+        isOwner: (payload as any).isOwner ?? (payload as any).owner ?? false,
+        followStatus: (payload as any).followStatus ?? 'none',
+        canView: (payload as any).canView ?? true,
+      };
       setFollowStatus({
         isOwnProfile: context.isOwner,
         isFollowing: context.followStatus === 'accepted',

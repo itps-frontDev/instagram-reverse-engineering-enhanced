@@ -11,7 +11,7 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/profiles/suggestions,GET,"MIGRATED to Spring: /api/priv/profiles/suggestions - suggerimenti profili da seguire (top-20 pubblici non seguiti, shuffled per varietà)",No,No,Yes,No
 /api/profiles/security,PUT,"Aggiorna email/telefono/password (bcrypt)",Yes,No,Yes,No
 /api/profiles/remove-image,DELETE,"Rimuove immagine profilo (DB + deleteFile)",Yes,Yes,Yes,No
-/api/profiles/privacy,PUT,"Cambia privacy e gestisce richieste pending",Yes,No,Yes,No
+/api/profiles/privacy,PUT,"MIGRATED to Spring: /api/priv/profiles/privacy - aggiorna privacy profilo e promuove in bulk le richieste follow pending",No,No,Yes,No
 /api/profiles/personal,PUT,"MIGRATED to Spring: /api/priv/profiles/personal - aggiorna username e nome completo con verifica unicità",No,No,Yes,No
 /api/profiles/me/followers,GET,"DEPRECATED: endpoint legacy rimosso; usare GET /api/priv/profiles/{username}/followers (username da auth/me o route profile)",No,No,Yes,No
 /api/profiles/follow/reject,POST,"Rifiuta/elimina richiesta di follow (soft delete)",Yes,No,Yes,No

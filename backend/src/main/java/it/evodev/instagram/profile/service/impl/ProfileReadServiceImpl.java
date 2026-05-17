@@ -4,7 +4,7 @@ import it.evodev.instagram.profile.dto.response.BirthdayDataDTO;
 import it.evodev.instagram.profile.dto.response.FollowStatusDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfileByUsernameDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfilePreviewDataDTO;
-import it.evodev.instagram.profile.dto.response.RecentPostPreviewDto;
+import it.evodev.instagram.profile.dto.response.RecentPostPreviewDTO;
 import it.evodev.instagram.profile.dto.response.ProfileVisibilityDataDTO;
 import it.evodev.instagram.profile.exception.ProfileNotFoundException;
 import it.evodev.instagram.profile.model.ProfileVisibilityProfile;
@@ -127,7 +127,7 @@ public class ProfileReadServiceImpl implements ProfileReadService {
 
         // TODO(Post): sostituire [] con chiamata a PostService.getRecentPosts(profileId, 3) quando il modulo post sarà migrato.
         // TODO(Post): ogni mediaUrl dovrà essere un SAS URL temporaneo (15 min) generato via MediaService.
-        List<RecentPostPreviewDto> recentPosts = List.of();
+        List<RecentPostPreviewDTO> recentPosts = List.of();
 
         return ProfilePreviewDataDTO.builder()
                 .username(projection.getUsername())

@@ -121,8 +121,8 @@ export default function FollowersModal({
         profile_image_url: user.profileImageUrl ?? null,
         is_verified: false,
         followers_count: user.followersCount,
-        is_following: user.is_following ?? false,
-        isPending: user.isPending ?? false,
+        is_following: (user as any).is_following ?? (user as any).isFollowing ?? false,
+        isPending: (user as any).isPending ?? false,
       }));
       setSuggestedUsers(suggestions);
     } catch (error) {

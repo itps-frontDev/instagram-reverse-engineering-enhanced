@@ -158,8 +158,27 @@ export interface StoryHighlight {
 /**
  * Risposta da GET /api/profiles/[username]
  */
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string | null;
+  message?: string | null;
+}
+
+export interface ProfileContext {
+  isOwner?: boolean;
+  followStatus?: 'none' | 'pending' | 'accepted';
+  canView?: boolean;
+}
+
 export interface GetProfileResponse {
-  profile: Profile;
+  // New shape: payload may contain profile and context
+  profile?: Profile;
+  context?: ProfileContext;
+  // Back-compat top-level fields that older API clients used
+  isOwner?: boolean;
+  followStatus?: 'none' | 'pending' | 'accepted';
+  canView?: boolean;
 }
 
 /**
