@@ -22,6 +22,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ProfilePicture } from '@/components';
 import { VerifiedBadge, ShareIcon } from '@/components/common';
+import { getMediaUrl } from '@/lib/media';
 
 
 // ============================================================================
@@ -188,7 +189,7 @@ export default function ProfilePreviewCard({
             >
               {post.media_type === 'video' ? (
                 <video
-                  src={post.media_url}
+                  src={getMediaUrl(post.media_url) ?? ''}
                   className="w-full h-full object-cover"
                   preload="metadata"
                   muted
@@ -196,7 +197,7 @@ export default function ProfilePreviewCard({
                 />
               ) : (
                 <Image
-                  src={post.media_url}
+                  src={getMediaUrl(post.media_url) ?? ''}
                   alt="Post"
                   fill
                   className="object-cover"

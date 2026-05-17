@@ -25,6 +25,7 @@ import { VerifiedBadge, MoreOptionsIcon, ShareIcon, TagIcon } from '@/components
 import {ProfilePreviewCard} from '@/components/profile';
 import {PostOptionsModal, DeletePostModal}  from '@/components/feed';
 import { formatTimeAgo } from '@/lib/date-utils';
+import { getMediaUrl } from '@/lib/media';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -298,7 +299,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
                     }
                   }
                 }}
-                src={post.media[0].media_url}
+                src={getMediaUrl(post.media[0].media_url) ?? ''}
                 className="w-full h-full object-cover rounded-xl cursor-pointer"
                 autoPlay
                 loop
@@ -340,7 +341,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
             </div>
           ) : (
             <Image
-              src={post.media[0].media_url}
+              src={getMediaUrl(post.media[0].media_url) ?? ''}
               alt={post.caption || 'Post image'}
               fill
               className="object-cover rounded-xl"

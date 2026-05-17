@@ -25,6 +25,7 @@ import { LoadingSpinner } from '@/components/common';
 import {StoryViewerSkeleton} from '@/components/common/skeletons';
 import { VerifiedBadge, ShareIcon } from '@/components/common';
 import { toggleLikeAction } from '@/features/likes';
+import { getMediaUrl } from '@/lib/media';
 
 interface Story {
   id: number;
@@ -585,7 +586,7 @@ export default function StoryViewer({
           <div className="relative w-full h-full">
             <Image
               unoptimized
-              src={preview.media_url || ''}
+              src={getMediaUrl(preview.media_url) ?? ''}
               alt={`Previous user ${index + 1}`}
               fill
               className={`object-cover ${
@@ -640,7 +641,7 @@ export default function StoryViewer({
           <div className="relative w-full h-full">
             <Image
               unoptimized
-              src={currentStory.media_url}
+              src={getMediaUrl(currentStory.media_url) ?? ''}
               alt="storia"
               fill
               className="object-cover"
@@ -650,7 +651,7 @@ export default function StoryViewer({
           <video
             key={currentStory.id}
             ref={videoRef}
-            src={currentStory.media_url}
+            src={getMediaUrl(currentStory.media_url) ?? ''}
             className="w-full h-full object-cover"
             autoPlay
             playsInline
@@ -819,7 +820,7 @@ export default function StoryViewer({
           <div className="relative w-full h-full">
             <Image
               unoptimized
-              src={preview.media_url || ''}
+              src={getMediaUrl(preview.media_url) ?? ''}
               alt={`Next user ${index + 1}`}
               fill
               className={`object-cover ${

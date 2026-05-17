@@ -28,6 +28,7 @@ import { Play } from 'lucide-react';
 import type { FeedPost } from '@/types/feed';
 import { PostModal } from '@/components/feed';
 import { CarouselIcon, PostHoverOverlay } from '@/components/common';
+import { getMediaUrl } from '@/lib/media';
 
 // ============================================================================
 // INTERFACCE
@@ -108,14 +109,14 @@ export default function ExploreGrid({
               {/* Image/Video */}
               {isVideo ? (
                 <video
-                  src={firstMedia.media_url}
+                  src={getMediaUrl(firstMedia.media_url) ?? ''}
                   className="w-full h-full object-cover"
                   preload="metadata"
                   muted
                 />
               ) : (
                 <Image
-                  src={firstMedia.media_url}
+                  src={getMediaUrl(firstMedia.media_url) ?? ''}
                   alt={post.caption || 'Post'}
                   fill
                   sizes="(max-width: 768px) 33vw, (max-width: 1200px) 25vw, 20vw"

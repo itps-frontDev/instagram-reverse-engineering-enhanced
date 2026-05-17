@@ -33,6 +33,7 @@ import Image from 'next/image';
 import { ProfileGridProps } from '@/types/profile';
 import ProfileEmptyState from './ProfileEmptyState';
 import { CarouselIcon, LoadingSpinner, PostHoverOverlay } from '@/components/common';
+import { getMediaUrl } from '@/lib/media';
 
 // ============================================================================
 // COMPONENTE PRINCIPALE
@@ -169,7 +170,7 @@ export default function ProfileGrid({
               <>
                 {/* Anteprima video (muto, senza controlli) */}
                 <video
-                  src={post.media_url || undefined}
+                  src={getMediaUrl(post.media_url) ?? undefined}
                   className="w-full h-full object-cover"
                   preload="metadata"
                   muted
@@ -193,7 +194,7 @@ export default function ProfileGrid({
             ) : (
               /* Immagine del post con riempimento object-cover */
               <Image
-                src={post.media_url || '/images/placeholder.png'}
+                src={getMediaUrl(post.media_url) ?? '/images/placeholder.png'}
                 alt={post.caption || 'Post'}
                 fill
                 className="object-cover"

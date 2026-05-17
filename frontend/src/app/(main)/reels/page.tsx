@@ -32,6 +32,7 @@ import { LoadingSpinner } from '@/components/common';
 import {ReelsSkeleton} from '@/components/common/skeletons';
 import { VerifiedBadge, ShareIcon } from '@/components/common';;
 import { formatTimeAgo } from '@/lib/date-utils';
+import { getMediaUrl } from '@/lib/media';
 import { toggleLikeAction } from '@/features/likes';
 
 // ============================================================================
@@ -758,7 +759,7 @@ export default function ReelsPage() {
                             ref={(el) => {
                               if (el) videoRefs.current.set(index, el);
                             }}
-                            src={reelPrimaryMedia.media_url}
+                            src={getMediaUrl(reelPrimaryMedia.media_url) ?? ''}
                             className="absolute inset-0 w-full h-full object-cover"
                             loop
                             muted={isMuted}
@@ -767,7 +768,7 @@ export default function ReelsPage() {
                           />
                         ) : (
                           <img
-                            src={reelPrimaryMedia.media_url}
+                            src={getMediaUrl(reelPrimaryMedia.media_url) ?? ''}
                             alt="Reel media"
                             className="absolute inset-0 w-full h-full object-cover"
                           />

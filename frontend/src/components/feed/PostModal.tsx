@@ -26,6 +26,7 @@ import { VerifiedBadge, ShareIcon, TagIcon } from '@/components/common';
 import {StoryViewer, PostOptionsModal, DeletePostModal, EditPostModal} from '@/components/feed';
 import ProfilePreviewCard from '@/components/profile/ProfilePreviewCard';
 import { formatTimeAgo } from '@/lib/date-utils';
+import { getMediaUrl } from '@/lib/media';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -448,7 +449,7 @@ export default function PostModal({
                         }
                       }
                     }}
-                    src={post.media[currentMediaIndex].media_url}
+                    src={getMediaUrl(post.media[currentMediaIndex].media_url) ?? ''}
                     className="w-full h-full object-cover cursor-pointer"
                     autoPlay
                     loop
@@ -490,7 +491,7 @@ export default function PostModal({
                 </div>
               ) : (
                 <Image
-                  src={post.media[currentMediaIndex].media_url}
+                  src={getMediaUrl(post.media[currentMediaIndex].media_url) ?? ''}
                   alt={post.caption || 'Post image'}
                   fill
                   className="object-cover"
@@ -1084,7 +1085,7 @@ export default function PostModal({
           onClose={() => setShowEditPostModal(false)}
           postId={post.id}
           currentCaption={post.caption || ''}
-          mediaUrl={post.media[0]?.media_url || ''}
+          mediaUrl={getMediaUrl(post.media[0]?.media_url) ?? ''}
           mediaType={post.media[0]?.media_type || 'image'}
           onSave={(newCaption) => {
             // Aggiorna la caption localmente

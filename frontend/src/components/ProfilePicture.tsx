@@ -16,6 +16,7 @@
  */
 
 import Image from 'next/image';
+import { getMediaUrl } from '@/lib/media';
 
 // ============================================================================
 // INTERFACCE
@@ -77,7 +78,7 @@ export default function ProfilePicture({
   onStoryClick
 }: ProfilePictureProps) {
   // Usa immagine default se src mancante o invalido
-  const imageSrc = src && src.trim() !== '' ? src : DEFAULT_PROFILE_IMAGE;
+  const imageSrc = getMediaUrl(src) ?? DEFAULT_PROFILE_IMAGE;
 
   if (hasStory) {
     // Render with story ring like in Stories component

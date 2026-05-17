@@ -3,4 +3,6 @@ name: Get Profile Image
 description: "Serve l'immagine profilo dal blob storage. Nessuna auth richiesta (sempre pubblica). Error case: 404 se il file non esiste in Azurite."
 method: GET
 url: "{{baseUrl}}/api/priv/media/profiles/{{profileId}}/{{filename}}"
+headers:
+  Authorization: Bearer {{accessToken}}
 order: 1000
