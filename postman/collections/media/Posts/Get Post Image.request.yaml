@@ -1,0 +1,8 @@
+$kind: http-request
+name: Get Post Image
+description: "Serve un'immagine di un post dal blob storage. Pubblica se il profilo è pubblico, richiede auth se privato. Error case: 403 se profilo privato e non si segue; 404 se il file non esiste."
+method: GET
+url: "{{baseUrl}}/api/priv/media/posts/{{postId}}/{{filename}}"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 1000

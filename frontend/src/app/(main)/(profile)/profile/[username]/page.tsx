@@ -484,7 +484,7 @@ export default function ProfilePage({
       const data = await res.json();
 
       // Aggiorna lo stato del profilo con la nuova immagine
-      setProfile(prev => prev ? { ...prev, profile_image_url: data.imageUrl } : null);
+      setProfile(prev => prev ? { ...prev, profile_image_url: data.profileImageUrl } : null);
       
       // Aggiorna il profilo nell'AuthContext per aggiornare la sidebar
       await refreshProfile();

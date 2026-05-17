@@ -1,0 +1,3 @@
+$kind: folder
+name: Profiles
+description: Endpoint per la gestione dell'immagine profilo (upload, delete, serve).

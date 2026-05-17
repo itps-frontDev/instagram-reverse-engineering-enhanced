@@ -40,4 +40,10 @@ public class Profile {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    @Column(name = "profile_image_url", columnDefinition = "TEXT")
+    private String profileImageUrl;
+
+    @Column(name = "is_private", nullable = false)
+    private boolean isPrivate;
 }

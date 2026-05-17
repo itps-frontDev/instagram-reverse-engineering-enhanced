@@ -23,6 +23,7 @@ import ProfileImageModal from '@/components/profile/ProfileImageModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { PageHeader, SuccessMessage, SubmitButton } from '@/components/ui';
 import { ButtonSpinner } from '@/components/common';
+import { uploadPfpAction, deletePfpAction } from '@/features/profiles/pfp/actions';
 
 interface EditProfileFormProps {
   profile: {
@@ -75,26 +76,20 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
       const formData = new FormData();
       formData.append('image', file);
 
-      const res = await fetch(`/api/profiles/${profile.username}/upload-image`, {
-        method: 'POST',
-        body: formData,
-      });
+      const result = await uploadPfpAction(formData);
 
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Upload failed');
+      if (!result.success) {
+        alert(result.error);
+        return;
       }
 
-      const data = await res.json();
-      setProfileImage(data.imageUrl);
+      setProfileImage(`/api/media/${result.data.profileImageUrl}`);
       setSuccessMessage('Foto del profilo aggiornata!');
       setTimeout(() => setSuccessMessage(''), 3000);
-      
-      // Aggiorna il profilo nell'AuthContext per aggiornare la sidebar
       await refreshProfile();
     } catch (error) {
       console.error('Error uploading image:', error);
-      alert(error instanceof Error ? error.message : 'Errore durante il caricamento dell\'immagine');
+      alert('Errore durante il caricamento dell\'immagine');
     } finally {
       setIsUploadingImage(false);
     }
@@ -104,24 +99,20 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
     setIsUploadingImage(true);
 
     try {
-      const res = await fetch(`/api/profiles/${profile.username}/remove-image`, {
-        method: 'POST',
-      });
+      const result = await deletePfpAction();
 
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to remove image');
+      if (!result.success) {
+        alert(result.error);
+        return;
       }
 
       setProfileImage(null);
       setSuccessMessage('Foto del profilo rimossa!');
       setTimeout(() => setSuccessMessage(''), 3000);
-      
-      // Aggiorna il profilo nell'AuthContext per aggiornare la sidebar
       await refreshProfile();
     } catch (error) {
       console.error('Error removing image:', error);
-      alert(error instanceof Error ? error.message : 'Errore durante la rimozione dell\'immagine');
+      alert('Errore durante la rimozione dell\'immagine');
     } finally {
       setIsUploadingImage(false);
     }

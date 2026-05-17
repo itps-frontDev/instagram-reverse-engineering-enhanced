@@ -36,8 +36,7 @@ services:
                                    # riscaricherebbe centinaia di MB di dipendenze.
     environment:
       SPRING_PROFILES_ACTIVE: dev
-      AZURE_STORAGE_CONNECTION_STRING: >-
-        DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OdFHQjFQYQRAFxRBUMJELnMmLmApXQKGzWhEZqkT0aT3GQqfJHKzA==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
+      AZURE_STORAGE_CONNECTION_STRING: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;"
       # Sovrascrive la variabile del base compose.
       # Usa "azurite" come hostname: Docker risolve il nome
       # del servizio nella rete interna dei container.

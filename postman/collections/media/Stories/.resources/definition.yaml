@@ -1,0 +1,3 @@
+$kind: folder
+name: Stories
+description: Endpoint per servire i media delle stories. Richiede autenticazione.

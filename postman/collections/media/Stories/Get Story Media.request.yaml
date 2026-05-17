@@ -1,0 +1,8 @@
+$kind: http-request
+name: Get Story Media
+description: "Serve il media di una story dal blob storage. Richiede autenticazione. Error case: 401 se non autenticato; 403 se non si segue il profilo privato; 410 se la story è scaduta; 404 se non esiste."
+method: GET
+url: "{{baseUrl}}/api/priv/media/stories/{{storyId}}/{{filename}}"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 1000

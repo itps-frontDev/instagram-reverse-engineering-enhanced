@@ -54,3 +54,12 @@ export async function getCurrentUserId(): Promise<string | null> {
 export async function getCurrentProfileId(): Promise<number | null> {
   return (await getCurrentProfile())?.id ?? null;
 }
+
+export async function getAccessToken(): Promise<string | null> {
+  try {
+    const cookieStore = await cookies();
+    return cookieStore.get(getAccessTokenCookieName())?.value?.trim() ?? null;
+  } catch {
+    return null;
+  }
+}

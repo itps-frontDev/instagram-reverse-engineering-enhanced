@@ -1,0 +1,3 @@
+$kind: folder
+name: Posts
+description: Endpoint per servire i media dei post (immagini e video).

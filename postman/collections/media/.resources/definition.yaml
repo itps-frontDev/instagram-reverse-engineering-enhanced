@@ -1,0 +1,3 @@
+$kind: collection
+name: Media
+description: Endpoint per upload, download e gestione media su blob storage (Azurite in dev, Azure Blob Storage in prod).
