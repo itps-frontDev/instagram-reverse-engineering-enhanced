@@ -90,7 +90,8 @@ export default function Sidebar() {
           setUnreadCount(result.data.count || 0);
           return;
         }
-        if (result.error !== 'Authentication required.' && result.error !== 'Missing access token.') {
+        const silentErrors = ['Authentication required.', 'Missing access token.', 'Notifications backend is unreachable.'];
+        if (!silentErrors.includes(result.error ?? '')) {
           console.error('Error fetching unread notifications:', result.error);
         }
       } catch (error) {

@@ -10,18 +10,28 @@ export async function GET(
 
   const accessToken = await getAccessToken();
 
-  let upstream: Response;
-  try {
-    upstream = await fetch(springUrl, {
-      headers: {
-        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-      },
-      signal: AbortSignal.timeout(10_000),
-      cache: "no-store",
-    });
-  } catch {
-    return NextResponse.json({ error: "Media service unreachable" }, { status: 503 });
+  const fetchOptions = {
+    headers: {
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    },
+    cache: "no-store" as const,
+  };
+
+  let upstream: Response | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      upstream = await fetch(springUrl, {
+        ...fetchOptions,
+        signal: AbortSignal.timeout(15_000),
+      });
+      break;
+    } catch {
+      if (attempt === 2) {
+        return NextResponse.json({ error: "Media service unreachable" }, { status: 503 });
+      }
+    }
   }
+  upstream = upstream!;
 
   if (!upstream.ok) {
     const errorBody = await upstream.text();
@@ -33,14 +43,14 @@ export async function GET(
     });
   }
 
-  const blob = await upstream.blob();
-  return new NextResponse(blob, {
-    status: 200,
-    headers: {
-      "Content-Type":           upstream.headers.get("Content-Type") ?? "application/octet-stream",
-      "Content-Length":         upstream.headers.get("Content-Length") ?? "",
-      "Cache-Control":          "public, max-age=31536000",
-      "X-Content-Type-Options": "nosniff",
-    },
-  });
+  const headers: Record<string, string> = {
+    "Cache-Control":          "public, max-age=31536000",
+    "X-Content-Type-Options": "nosniff",
+  };
+  const contentType = upstream.headers.get("Content-Type");
+  if (contentType) headers["Content-Type"] = contentType;
+  const contentLength = upstream.headers.get("Content-Length");
+  if (contentLength) headers["Content-Length"] = contentLength;
+
+  return new NextResponse(upstream.body, { status: 200, headers });
 }
