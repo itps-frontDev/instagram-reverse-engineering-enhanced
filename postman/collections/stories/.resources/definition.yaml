@@ -1,0 +1,3 @@
+$kind: collection
+name: Stories
+description: Endpoint privati per registrazione view e gestione stories migrate su Spring Boot.

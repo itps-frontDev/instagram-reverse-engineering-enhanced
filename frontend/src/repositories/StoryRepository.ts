@@ -22,9 +22,6 @@
  * // Crea una storia
  * const storyId = await storyRepository.create({ profile_id: 1, media_url: '...', media_type: 'image' });
  *
- * // Registra una visualizzazione
- * await storyRepository.recordView(storyId, viewerProfileId);
- *
  */
 
 import { queryOne, queryAll, execute } from '@/lib/db';
@@ -161,39 +158,6 @@ class StoryRepository {
   }
 
   /**
-   * Trova una storia attiva accessibile al profilo corrente.
-   * Controlla che la storia non sia scaduta E che il viewer abbia i permessi.
-   *
-   * PERMESSI:
-   * - Il proprietario può sempre vedere le proprie storie
-   * - I following (accepted) possono vedere le storie degli utenti seguiti
-   * - I profili pubblici sono visibili a tutti
-   *
-   * @param storyId - ID della storia
-   * @param currentProfileId - ID del profilo che richiede l'accesso
-   * @returns Story o null se non accessibile/scaduta
-   */
-  async findAccessibleById(storyId: number, currentProfileId: number): Promise<Story | null> {
-    const story = await queryOne<Story>(
-      `SELECT s.id, s.profile_id, s.media_url, s.media_type,
-              s.duration_seconds, s.views_count, s.created_at, s.expires_at, s.deleted_at
-       FROM stories s
-       JOIN profiles p ON p.id = s.profile_id
-       WHERE s.id = ? AND s.deleted_at IS NULL AND s.expires_at > NOW()
-         AND (
-           s.profile_id = ?
-           OR s.profile_id IN (
-             SELECT following_profile_id FROM follows
-             WHERE follower_profile_id = ? AND deleted_at IS NULL AND status = 'accepted'
-           )
-           OR (NOT p.is_private AND s.profile_id != ?)
-         )`,
-      [storyId, currentProfileId, currentProfileId, currentProfileId]
-    );
-    return story ?? null;
-  }
-
-  /**
    * Verifica se una storia esiste ed è ancora attiva (non scaduta).
    *
    * @param storyId - ID della storia
@@ -235,35 +199,6 @@ class StoryRepository {
       [storyId, profileId]
     );
     return story !== null;
-  }
-
-  /**
-   * Registra la visualizzazione di una storia.
-   * Se la storia è già stata vista dal profilo, non fa nulla (idempotente).
-   *
-   * NOTA: La tabella `story_views` non ha né `id` né `viewed_at`.
-   * La colonna di timestamp si chiama `created_at`.
-   *
-   * @param storyId - ID della storia
-   * @param viewerProfileId - ID del profilo che ha visto la storia
-   * @returns true se la vista è nuova, false se già registrata
-   */
-  async recordView(storyId: number, viewerProfileId: number): Promise<boolean> {
-    const existingView = await queryOne(
-      `SELECT 1 FROM story_views WHERE story_id = ? AND viewer_profile_id = ?`,
-      [storyId, viewerProfileId]
-    );
-    if (existingView) return false;
-
-    await execute(
-      `INSERT INTO story_views (story_id, viewer_profile_id) VALUES (?, ?)`,
-      [storyId, viewerProfileId]
-    );
-    await execute(
-      `UPDATE stories SET views_count = views_count + 1 WHERE id = ?`,
-      [storyId]
-    );
-    return true;
   }
 
   /**

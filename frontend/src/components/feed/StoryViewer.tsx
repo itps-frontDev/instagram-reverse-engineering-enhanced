@@ -6,7 +6,7 @@
  * - Mostra tutte le storie di un profilo sequenzialmente
  * - Progress bar animata per ogni storia
  * - Auto-advance alla prossima storia quando scade il timer
- * - Registra le visualizzazioni via POST /api/stories/:id/view
+ * - Registra le visualizzazioni via Server Action stories -> Spring Boot
  * - Naviga con frecce o tastiera (ArrowLeft/ArrowRight)
  * 
  * Restrizioni:
@@ -25,6 +25,7 @@ import { LoadingSpinner } from '@/components/common';
 import {StoryViewerSkeleton} from '@/components/common/skeletons';
 import { VerifiedBadge, ShareIcon } from '@/components/common';
 import { toggleLikeAction } from '@/features/likes';
+import { registerStoryViewAction } from '@/features/stories/actions';
 import { getMediaUrl } from '@/lib/media';
 
 interface Story {
@@ -194,10 +195,7 @@ export default function StoryViewer({
     // Funzione asincrona per registrare la visualizzazione
     async function recordView() {
       try {
-        await fetch(`/api/stories/${currentStory.id}/view`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        });
+        await registerStoryViewAction({ storyId: currentStory.id });
         // Aggiorna lo stato della storia come vista
         setStories((prevStories) => {
           const updated = [...prevStories];
@@ -891,4 +889,3 @@ export default function StoryViewer({
     </div>
   );
 }
-

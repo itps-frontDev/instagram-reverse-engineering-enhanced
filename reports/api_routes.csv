@@ -1,15 +1,15 @@
 path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/test-db,GET,"Health-check DB: versione sqlite + lista tabelle",Yes,No,No,No
-/api/stories,GET|POST,"GET: recupera storie attive; POST: registra visualizzazione",Yes,No,POST:Yes|GET:No,Yes
+/api/stories,GET,"GET: recupera storie attive",Yes,No,No,Yes
 /api/stories/[id]/viewers,GET,"Lista visualizzatori di una storia (solo proprietario)",Yes,No,Yes,No
-/api/stories/[id]/view,POST,"Registra la view di una storia (idempotente)",Yes,No,Yes,No
+/api/stories/[id]/view,POST,"MIGRATED to Spring: /api/priv/stories/{storyId}/view - endpoint legacy rimosso",No,No,Yes,No
 /api/stories/[id]/public,GET,"Recupera storie pubbliche di un profilo (senza auth ma codice usa currentProfile)",Yes,No,Hybrid,No
 /api/stories/[id]/like,POST,"Toggle like su una storia; crea/elimina notifica",Yes,No,Yes,No
 /api/search,GET,"MIGRATED to Spring: /api/priv/search - ricerca profili per username o nome",Yes,No,Yes,No
 /api/reels,GET,"Reels feed (video posts) con paginazione",Yes,No,Yes,Yes
 /api/profiles/upload-image,POST,"Carica immagine profilo (form-data) con validazioni",Yes,Yes,Yes,No
 /api/profiles/suggestions,GET,"MIGRATED to Spring: /api/priv/profiles/suggestions - suggerimenti profili da seguire (top-20 pubblici non seguiti, shuffled per varietà)",No,No,Yes,No
-/api/profiles/security,PUT,"Aggiorna email/telefono/password (bcrypt)",Yes,No,Yes,No
+/api/profiles/security,PUT,"MIGRATED to Spring: /api/priv/profiles/security - Aggiorna email/telefono/password (bcrypt)",Yes,No,Yes,No
 /api/profiles/remove-image,DELETE,"Rimuove immagine profilo (DB + deleteFile)",Yes,Yes,Yes,No
 /api/profiles/privacy,PUT,"MIGRATED to Spring: /api/priv/profiles/privacy - aggiorna privacy profilo e promuove in bulk le richieste follow pending",No,No,Yes,No
 /api/profiles/personal,PUT,"MIGRATED to Spring: /api/priv/profiles/personal - aggiorna username e nome completo con verifica unicità",No,No,Yes,No
@@ -52,4 +52,4 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/direct/messages,GET,"Recupera messaggi di una chat (chatId query param)",Yes,No,Yes,No
 /api/direct/get-or-create,POST,"Ottieni o crea chat 1-to-1",Yes,No,Yes,No
 /api/direct/chats,GET,"Lista chat dell'utente con dettagli + contatti potenziali",Yes,No,Yes,No
-/api/auth/register,POST,"Registrazione utente (user + profile in transaction)",Yes,No,No,Yes
+/api/auth/register,POST,"MIGRATED to Spring: /api/public/auth/register - Registrazione utente (user + profile in transaction)",Yes,No,No,Yes

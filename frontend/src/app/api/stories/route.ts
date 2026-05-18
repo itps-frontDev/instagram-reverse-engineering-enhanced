@@ -1,9 +1,8 @@
 /**
  * @fileoverview API per gestione storie
  * 
- * Endpoint disponibili:
- * - GET  /api/stories - Recupera storie attive (proprie + seguite)
- * - POST /api/stories - Registra visualizzazione storia
+ * Endpoint disponibile:
+ * - GET /api/stories - Recupera storie attive (proprie + seguite)
  * 
  * CONCETTO STORIE:
  * Le storie sono contenuti effimeri che scadono dopo 24 ore.
@@ -16,18 +15,13 @@
  * expires_at > datetime('now') garantisce che solo storie
  * non scadute vengano restituite.
  * 
- * VISUALIZZAZIONI:
- * Quando un utente visualizza una storia:
- * 1. Viene creato un record in story_views
- * 2. Il contatore views_count viene incrementato
- * 
  * PATTERN REPOSITORY:
  * Usa StoryRepository per accesso centralizzato ai dati delle storie.
  * 
  * @module api/stories
  */
 
-import { NextResponse, NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getCurrentProfile } from '@/lib/auth';
 import { storyRepository } from '@/repositories';
 
@@ -78,72 +72,3 @@ export async function GET() {
     );
   }
 }
-
-// ============================================================================
-// POST /api/stories
-// ============================================================================
-
-/**
- * Registra la visualizzazione di una storia.
- * 
- * Processo:
- * 1. Verifica autenticazione
- * 2. Valida story_id
- * 3. Verifica che la storia esista e sia accessibile
- * 4. Se non già visualizzata, crea record e incrementa contatore
- * 
- * IDEMPOTENZA:
- * Se la storia è già stata visualizzata, non crea duplicati.
- * 
- * @param request - Body JSON { story_id: number }
- * @returns { success: true, message: string }
- */
-export async function POST(request: NextRequest) {
-  try {
-    const currentProfile = await getCurrentProfile();
-
-    // Autenticazione richiesta
-    if (!currentProfile) {
-      return NextResponse.json(
-        { error: 'Non autorizzato' },
-        { status: 401 }
-      );
-    }
-
-    // Parse body e valida
-    const { story_id } = await request.json();
-
-    if (!story_id) {
-      return NextResponse.json(
-        { error: 'story_id mancante' },
-        { status: 400 }
-      );
-    }
-
-    // Verifica che la storia esista e sia accessibile usando il repository
-    const story = await storyRepository.findAccessibleById(story_id, currentProfile.id);
-
-    // Storia non trovata o non accessibile
-    if (!story) {
-      return NextResponse.json(
-        { error: 'Storia non trovata o non accessibile' },
-        { status: 404 }
-      );
-    }
-
-    // Registra la visualizzazione (idempotente)
-    const wasNewView = await storyRepository.recordView(story_id, currentProfile.id);
-
-    return NextResponse.json({
-      success: true,
-      message: wasNewView ? 'Visualizzazione registrata' : 'Già visualizzata',
-    });
-  } catch (error) {
-    console.error('[Stories] Errore POST:', error);
-    return NextResponse.json(
-      { error: 'Errore interno del server' },
-      { status: 500 }
-    );
-  }
-}
-

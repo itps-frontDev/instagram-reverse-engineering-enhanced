@@ -1,0 +1,12 @@
+$kind: http-request
+name: Register Story View
+description: >
+  Registra la visualizzazione di una storia in modo idempotente.
+  Success: { "success": true, "message": "View registered successfully." }.
+  Success (already viewed): { "success": true, "message": "Story already viewed." }.
+  Error 404: { "success": false, "error": "STORY_NOT_FOUND", "message": "..." }.
+method: POST
+url: "{{baseUrl}}/api/priv/stories/{{storyId}}/view"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 100
