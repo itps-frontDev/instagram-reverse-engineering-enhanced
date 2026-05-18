@@ -32,7 +32,7 @@
  */
 
 import { queryOne, execute } from '@/lib/db';
-import type { User, UserWithPassword, UserWithProfile } from '@/types/auth';
+import type { User, UserWithProfile } from '@/types/auth';
 
 // ============================================================================
 // TIPI PER LE OPERAZIONI DEL REPOSITORY
@@ -158,24 +158,6 @@ export const userRepository = {
   },
 
   /**
-   * Trova un utente includendo l'hash della password.
-   * Usato per operazioni che richiedono verifica password
-   * (es. cambio password, conferma azioni sensibili).
-   * 
-   * @param id - ID dell'utente
-   * @returns Utente con password_hash o null
-   */
-  async findWithPasswordById(id: string | number): Promise<UserWithPassword | null> {
-    const user = await queryOne<UserWithPassword>(
-      `SELECT id, email, phone_number, password_hash
-       FROM users
-       WHERE id = ? AND deleted_at IS NULL`,
-      [id]
-    );
-    return user || null;
-  },
-
-  /**
    * Crea un nuovo utente nel database.
    * Restituisce l'ID del nuovo utente (lastID in SQLite).
    * 
@@ -290,95 +272,6 @@ export const userRepository = {
       [id]
     );
     return result.changes > 0;
-  },
-
-  /**
-   * Verifica se un'email è già in uso.
-   * Usato durante registrazione e modifica profilo.
-   * 
-   * @param email - Email da verificare
-   * @param excludeUserId - ID utente da escludere (per update profilo proprio)
-   * @returns true se l'email è già usata da un altro utente
-   */
-  async isEmailTaken(email: string, excludeUserId?: string | number): Promise<boolean> {
-    const query = excludeUserId
-      ? `SELECT 1 FROM users WHERE email = ? AND id != ? AND deleted_at IS NULL`
-      : `SELECT 1 FROM users WHERE email = ? AND deleted_at IS NULL`;
-    const params = excludeUserId ? [email, excludeUserId] : [email];
-    const result = await queryOne(query, params);
-    return !!result;
-  },
-
-  /**
-   * Verifica se un numero di telefono è già in uso.
-   * 
-   * @param phone - Numero di telefono da verificare
-   * @param excludeUserId - ID utente da escludere (per update profilo proprio)
-   * @returns true se il numero è già usato da un altro utente
-   */
-  async isPhoneTaken(phone: string, excludeUserId?: string | number): Promise<boolean> {
-    const query = excludeUserId
-      ? `SELECT 1 FROM users WHERE phone_number = ? AND id != ? AND deleted_at IS NULL`
-      : `SELECT 1 FROM users WHERE phone_number = ? AND deleted_at IS NULL`;
-    const params = excludeUserId ? [phone, excludeUserId] : [phone];
-    const result = await queryOne(query, params);
-    return !!result;
-  },
-
-  /**
-   * Aggiorna l'hash della password di un utente.
-   * 
-   * @param id - ID dell'utente
-   * @param passwordHash - Nuovo hash della password (già hashata con bcrypt)
-   * @returns true se l'update ha avuto effetto
-   */
-  async updatePassword(id: string | number, passwordHash: string): Promise<boolean> {
-    const result = await execute(
-      `UPDATE users 
-       SET password_hash = ?, updated_at = NOW()
-       WHERE id = ? AND deleted_at IS NULL`,
-      [passwordHash, id]
-    );
-    return result.changes > 0;
-  },
-
-  /**
-   * Aggiorna email e/o telefono di un utente.
-   * 
-   * @param id - ID dell'utente
-   * @param email - Nuova email (null per rimuovere)
-   * @param phoneNumber - Nuovo telefono (null per rimuovere)
-   * @returns true se l'update ha avuto effetto
-   */
-  async updateContactInfo(
-    id: string | number, 
-    email: string | null, 
-    phoneNumber: string | null
-  ): Promise<boolean> {
-    const result = await execute(
-      `UPDATE users 
-       SET email = ?, phone_number = ?, updated_at = NOW()
-       WHERE id = ? AND deleted_at IS NULL`,
-      [email, phoneNumber, id]
-    );
-    return result.changes > 0;
-  },
-
-  /**
-   * Recupera i dati di sicurezza di un utente (email e telefono).
-   * Usato nella pagina impostazioni sicurezza.
-   * 
-   * @param id - ID dell'utente
-   * @returns Dati sicurezza o null
-   */
-  async getSecurityData(id: string | number): Promise<{ id: string | number; email: string | null; phone_number: string | null } | null> {
-    const user = await queryOne<{ id: string | number; email: string | null; phone_number: string | null }>(
-      `SELECT id, email, phone_number
-       FROM users
-       WHERE id = ? AND deleted_at IS NULL`,
-      [id]
-    );
-    return user || null;
   },
 
 };

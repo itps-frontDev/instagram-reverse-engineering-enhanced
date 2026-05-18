@@ -20,6 +20,7 @@
 'use client';
 
 import { useState } from 'react';
+import { updateSecurityAction } from '@/features/profile';
 import { 
   PageHeader, 
   FormField, 
@@ -31,16 +32,19 @@ import {
 
 interface SecurityFormProps {
   user: {
-    id: string | number;
     email: string | null;
-    phone_number: string | null;
+    phoneNumber: string | null;
   };
 }
 
 export default function SecurityForm({ user }: SecurityFormProps) {
-  const [formData, setFormData] = useState({
+  const [initialValues, setInitialValues] = useState({
     email: user.email || '',
-    phoneNumber: user.phone_number || '',
+    phoneNumber: user.phoneNumber || '',
+  });
+  const [formData, setFormData] = useState({
+    email: initialValues.email,
+    phoneNumber: initialValues.phoneNumber,
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
@@ -56,6 +60,9 @@ export default function SecurityForm({ user }: SecurityFormProps) {
   });
 
   const validateEmail = (email: string): string => {
+    if (email.length > 255) {
+      return 'L\'email non può superare i 255 caratteri';
+    }
     if (email && !/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(email)) {
       return 'Inserisci un indirizzo email valido';
     }
@@ -86,8 +93,8 @@ export default function SecurityForm({ user }: SecurityFormProps) {
 
   // Verifica se il form può essere inviato
   const hasErrors = Object.values(errors).some(error => error !== '');
-  const emailChanged = formData.email !== (user.email || '');
-  const phoneChanged = formData.phoneNumber !== (user.phone_number || '');
+  const emailChanged = formData.email !== initialValues.email;
+  const phoneChanged = formData.phoneNumber !== initialValues.phoneNumber;
   const passwordChanging = formData.newPassword || formData.confirmPassword || formData.currentPassword;
   const hasChanges = emailChanged || phoneChanged || passwordChanging;
   const passwordFieldsComplete = !passwordChanging || (formData.currentPassword && formData.newPassword && formData.confirmPassword);
@@ -125,37 +132,51 @@ export default function SecurityForm({ user }: SecurityFormProps) {
     }
 
     try {
-      const res = await fetch('/api/profiles/security', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: formData.email || null,
-          phone_number: formData.phoneNumber || null,
-          current_password: formData.currentPassword || null,
-          new_password: formData.newPassword || null,
-        }),
-      });
+      const payload: {
+        email?: string | null;
+        phoneNumber?: string | null;
+        currentPassword?: string;
+        newPassword?: string;
+      } = {};
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        // Mappa errori ai campi appropriati
-        if (errorData.error.includes('email') || errorData.error.includes('Email')) {
-          setErrors(prev => ({ ...prev, email: errorData.error }));
-        } else if (errorData.error.includes('password') || errorData.error.includes('Password')) {
-          setErrors(prev => ({ ...prev, currentPassword: errorData.error }));
-        } else if (errorData.error.includes('phone') || errorData.error.includes('telefono')) {
-          setErrors(prev => ({ ...prev, phoneNumber: errorData.error }));
+      if (emailChanged) {
+        payload.email = formData.email.trim() || null;
+      }
+      if (phoneChanged) {
+        payload.phoneNumber = formData.phoneNumber.trim() || null;
+      }
+      if (formData.currentPassword || formData.newPassword) {
+        payload.currentPassword = formData.currentPassword;
+        payload.newPassword = formData.newPassword;
+      }
+
+      const result = await updateSecurityAction(payload);
+      if (!result.success) {
+        const message = result.error || 'Errore durante l\'aggiornamento delle impostazioni di sicurezza';
+        if (message.toLowerCase().includes('email')) {
+          setErrors(prev => ({ ...prev, email: message }));
+        } else if (message.toLowerCase().includes('phone')) {
+          setErrors(prev => ({ ...prev, phoneNumber: message }));
+        } else if (message.toLowerCase().includes('password')) {
+          setErrors(prev => ({ ...prev, currentPassword: message }));
         } else {
-          setErrors(prev => ({ ...prev, email: errorData.error }));
+          setErrors(prev => ({ ...prev, email: message }));
         }
         setIsSubmitting(false);
         return;
       }
 
       setSuccessMessage('Impostazioni di sicurezza aggiornate!');
+      const nextEmail = result.data?.email ?? null;
+      const nextPhoneNumber = result.data?.phoneNumber ?? null;
+      setInitialValues({
+        email: nextEmail || '',
+        phoneNumber: nextPhoneNumber || '',
+      });
       // Pulisce i campi password
       setFormData({
-        ...formData,
+        email: nextEmail || '',
+        phoneNumber: nextPhoneNumber || '',
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',

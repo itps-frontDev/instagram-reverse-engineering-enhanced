@@ -11,6 +11,8 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
     Optional<User> findByIdAndDeletedAtIsNull(UUID id);
+    boolean existsByEmailIgnoreCaseAndDeletedAtIsNullAndIdNot(String email, UUID excludedUserId);
+    boolean existsByPhoneNumberAndDeletedAtIsNullAndIdNot(String phoneNumber, UUID excludedUserId);
 
     @Query(value = """
             SELECT u.*
