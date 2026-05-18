@@ -13,7 +13,7 @@
 
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
-import { profileRepository } from '@/repositories';
+import { getProfileByUsernameAction } from '@/features/profile';
 import { AccountPrivacyForm } from '@/components/settings';
 
 // ============================================================================
@@ -35,11 +35,14 @@ export default async function AccountPrivacyPage() {
     redirect('/login');
   }
 
-  const profile = await profileRepository.findByUserId(user.id);
-
-  if (!profile) {
+  if (!user.username) {
     redirect('/login');
   }
 
-  return <AccountPrivacyForm profile={profile} />;
+  const profileResult = await getProfileByUsernameAction({ username: user.username });
+  if (!profileResult.success || !profileResult.data) {
+    redirect('/login');
+  }
+
+  return <AccountPrivacyForm profile={profileResult.data.profile} />;
 }

@@ -14,7 +14,7 @@
 
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
-import { userRepository } from '@/repositories';
+import { getSecurityDataAction } from '@/features/profile';
 import { SecurityForm } from '@/components/settings';
 
 // ============================================================================
@@ -36,11 +36,18 @@ export default async function SecurityPage() {
     redirect('/login');
   }
 
-  const userData = await userRepository.getSecurityData(user.id);
+  const userDataResult = await getSecurityDataAction();
 
-  if (!userData) {
+  if (!userDataResult.success || !userDataResult.data) {
     redirect('/login');
   }
 
-  return <SecurityForm user={userData} />;
+  return (
+    <SecurityForm
+      user={{
+        email: userDataResult.data.email,
+        phoneNumber: userDataResult.data.phoneNumber,
+      }}
+    />
+  );
 }

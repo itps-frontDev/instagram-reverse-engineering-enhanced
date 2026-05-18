@@ -13,7 +13,6 @@
 
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
-import { profileRepository } from '@/repositories';
 import { PersonalInfoForm } from '@/components/settings';
 
 // ============================================================================
@@ -35,11 +34,17 @@ export default async function PersonalAccountPage() {
     redirect('/login');
   }
 
-  const profile = await profileRepository.findByUserId(user.id);
-
-  if (!profile) {
+  if (!user.username) {
     redirect('/login');
   }
 
-  return <PersonalInfoForm profile={profile} />;
+  return (
+    <PersonalInfoForm
+      profile={{
+        id: 0,
+        username: user.username,
+        full_name: user.full_name,
+      }}
+    />
+  );
 }

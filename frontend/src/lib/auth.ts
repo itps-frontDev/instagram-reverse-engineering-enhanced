@@ -8,6 +8,8 @@ type CurrentUser = {
   id: string;
   email: string | null;
   phone_number: string | null;
+  username: string | null;
+  full_name: string | null;
 };
 
 export async function getCurrentUser(): Promise<CurrentUser | null> {
@@ -24,6 +26,8 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
       id: userId,
       email: me.email ?? null,
       phone_number: me.phoneNumber ?? null,
+      username: me.username ?? null,
+      full_name: me.fullName ?? null,
     };
   } catch (error) {
     if (error instanceof AuthBackendError) return null;
