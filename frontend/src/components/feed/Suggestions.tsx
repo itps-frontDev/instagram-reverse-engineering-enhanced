@@ -21,15 +21,14 @@ import Link from 'next/link';
 import { VerifiedBadge } from '@/components/common';
 import {ProfilePicture} from '@/components';
 import {ProfilePreviewCard} from '@/components/profile';
+import { getProfileSuggestionsAction } from '@/features/profile';
 
 interface SuggestedUser {
   id: number;
   username: string;
-  full_name: string | null;
-  profile_image_url: string | null;
-  is_verified: boolean;
-  is_private?: boolean;
-  followers_count: number;
+  fullName: string | null;
+  profileImageUrl: string | null;
+  followersCount: number;
 }
 
 export default function Suggestions() {
@@ -46,11 +45,17 @@ export default function Suggestions() {
   useEffect(() => {
     async function fetchSuggestions() {
       try {
-        const response = await fetch('/api/profiles/suggestions');
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Suggestions API response:', data);
-          setSuggestions(data.suggestions || []);
+        const result = await getProfileSuggestionsAction();
+        if (result.success && result.data) {
+          // Map response to SuggestedUser interface
+          const mapped: SuggestedUser[] = result.data.map(item => ({
+            id: item.id,
+            username: item.username,
+            fullName: item.fullName || null,
+            profileImageUrl: item.profileImageUrl || null,
+            followersCount: item.followersCount,
+          }));
+          setSuggestions(mapped);
         }
       } catch (error) {
         console.error('Failed to fetch suggestions:', error);
@@ -79,7 +84,6 @@ export default function Suggestions() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Follow response:', data);
         if (data.status === 'pending') {
           setPendingIds(prev => new Set(prev).add(userId));
         } else if (data.status === 'accepted') {
@@ -223,7 +227,7 @@ export default function Suggestions() {
                   <Link href={`/profile/${user.username}`} className="flex items-center gap-3 flex-1">
                     <div className="rounded-full overflow-hidden">
                       <ProfilePicture
-                        src={user.profile_image_url}
+                        src={user.profileImageUrl}
                         alt={user.username}
                         size={40}
                       />
@@ -231,10 +235,9 @@ export default function Suggestions() {
                     <div>
                       <p className="font-semibold text-sm text-[#262626] dark:text-white flex items-center gap-1">
                         <span className="text-[15px]">{user.username}</span>
-                        {user.is_verified && <VerifiedBadge size={12} />}
                       </p>
                       <p className="text-xs text-[#8E8E8E] dark:text-gray-400">
-                        {user.full_name || `${user.followers_count} follower`}
+                        {user.fullName || `${user.followersCount} follower`}
                       </p>
                     </div>
                   </Link>
@@ -257,7 +260,7 @@ export default function Suggestions() {
                   </button>
 
                   {/* Profile Preview Card on Hover */}
-                  {hoveredUser === user.username && (!user.is_private || followingIds.has(user.id)) && (
+                  {hoveredUser === user.username && (
                     <div className="absolute left-0 top-0 z-50">
                       <ProfilePreviewCard
                         username={user.username}
@@ -329,4 +332,3 @@ export default function Suggestions() {
     </aside>
   );
 }
-

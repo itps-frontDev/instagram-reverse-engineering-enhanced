@@ -33,9 +33,11 @@ import { getCurrentProfile } from '@/lib/auth';
  * @returns Risposta con stato (pending o accepted)
  */
 export async function POST(request: NextRequest) {
+  console.log('[FOLLOW API] Request received');
   try {
     // Ottiene il profilo corrente autenticato
     const currentProfile = await getCurrentProfile();
+    console.log('[FOLLOW API] Current profile:', currentProfile?.id);
 
     if (!currentProfile) {
       return NextResponse.json(
@@ -46,7 +48,9 @@ export async function POST(request: NextRequest) {
 
     // Parsing del body della richiesta
     const body: FollowRequest = await request.json();
+    console.log('[FOLLOW API] Request body:', body);
     const targetProfileId = Number((body as { targetProfileId?: number | string }).targetProfileId);
+    console.log('[FOLLOW API] Target profile ID:', targetProfileId);
 
     // Validazione
     if (!Number.isInteger(targetProfileId) || targetProfileId <= 0) {
@@ -96,11 +100,20 @@ export async function POST(request: NextRequest) {
     const followStatus = targetProfile.is_private ? 'pending' : 'accepted';
 
     // Crea la relazione di follow usando il repository
-    await profileRepository.createFollow(
+    console.log('[DEBUG] Creating follow:', {
+      followerProfileId: currentProfile.id,
+      followingProfileId: targetProfileId,
+      status: followStatus,
+      targetIsPrivate: targetProfile.is_private,
+    });
+
+    const followId = await profileRepository.createFollow(
       currentProfile.id,
       targetProfileId,
       followStatus
     );
+
+    console.log('[DEBUG] Follow created with ID:', followId);
 
     // Aggiorna i contatori solo se il follow è accettato immediatamente
     // Se è pending, i contatori verranno aggiornati quando la richiesta sarà accettata

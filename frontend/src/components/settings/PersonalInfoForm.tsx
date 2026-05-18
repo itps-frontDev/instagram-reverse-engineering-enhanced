@@ -18,6 +18,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { updatePersonalProfileAction } from '@/features/profile';
 import { 
   PageHeader, 
   FormField, 
@@ -105,22 +106,16 @@ export default function PersonalInfoForm({ profile }: PersonalInfoFormProps) {
     }
 
     try {
-      const res = await fetch('/api/profiles/personal', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: formData.username,
-          full_name: formData.fullName,
-        }),
+      const result = await updatePersonalProfileAction({
+        username: formData.username,
+        full_name: formData.fullName,
       });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        // Mostra l'errore sotto il campo appropriato
-        if (errorData.error.includes('username') || errorData.error.includes('Nome utente')) {
-          setErrors({ ...errors, username: errorData.error });
+      if (!result.success) {
+        if (result.error.toLowerCase().includes('username')) {
+          setErrors({ ...errors, username: result.error });
         } else {
-          setErrors({ ...errors, fullName: errorData.error });
+          setErrors({ ...errors, fullName: result.error });
         }
         return;
       }

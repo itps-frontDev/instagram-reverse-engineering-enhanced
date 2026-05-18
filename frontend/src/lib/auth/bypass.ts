@@ -11,6 +11,5 @@ export function buildAuthBypassSession(): Session {
       email: "bypass@localhost",
       phoneNumber: null,
     },
-    expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
   };
 }

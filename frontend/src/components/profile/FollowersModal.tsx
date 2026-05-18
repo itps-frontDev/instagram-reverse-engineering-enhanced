@@ -17,10 +17,11 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
 import Link from 'next/link';
+import { getProfileFollowersAction, getProfileFollowingAction, getProfileSuggestionsAction } from '@/features/profile';
 
 interface FollowersModalProps {
   isOpen: boolean;
@@ -69,60 +70,81 @@ export default function FollowersModal({
   const [isFocused, setIsFocused] = useState(false);
   const [removedUsers, setRemovedUsers] = useState<Set<number>>(new Set());
 
-  // Carica follower/following quando si apre il modal
-  useEffect(() => {
-    if (isOpen) {
-      fetchUsers();
-      // Recupera suggeriti SOLO se profilo proprio E tab followers
-      if (type === 'followers' && isOwnProfile) {
-        fetchSuggestedUsers();
-      }
-    }
-  }, [isOpen, type, username, isOwnProfile]);
-
   // Funzione per caricare follower o following
-  async function fetchUsers() {
+  const fetchUsers = useCallback(async () => {
     setIsLoading(true);
     try {
-      const endpoint = type === 'followers' ? 'followers' : 'following';
-      const res = await fetch(`/api/profiles/${username}/${endpoint}`);
-
-      if (!res.ok) {
-        throw new Error('Failed to fetch users');
+      if (type === 'followers') {
+        const actionResult = await getProfileFollowersAction({ username });
+        if (!actionResult.success || !actionResult.data) {
+          throw new Error(actionResult.error || 'Failed to fetch followers');
+        }
+        setUsers(actionResult.data.followers);
+      } else {
+        const actionResult = await getProfileFollowingAction({ username });
+        if (!actionResult.success || !actionResult.data) {
+          throw new Error(actionResult.error || 'Failed to fetch following');
+        }
+        // Trasforma la struttura della response in quella aspettata da FollowerUser
+        const followingUsers: FollowerUser[] = actionResult.data.map((profile: { id: number; username: string; fullName: string | null; profileImageUrl: string | null; followStatus: 'none' | 'pending' | 'accepted' }) => ({
+          id: profile.id,
+          username: profile.username,
+          full_name: profile.fullName ?? null,
+          profile_image_url: profile.profileImageUrl ?? null,
+          is_verified: false, // TODO: aggiungere al backend se necessario
+          is_following: profile.followStatus === 'accepted',
+          follows_you: false, // TODO: calcolare dal backend
+          isPending: profile.followStatus === 'pending',
+        }));
+        setUsers(followingUsers);
       }
-
-      const data = await res.json();
-      setUsers(data.followers || data.following || []);
     } catch (error) {
       console.error('Error fetching users:', error);
       setUsers([]);
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [type, username]);
 
   // Funzione per caricare utenti suggeriti
-  async function fetchSuggestedUsers() {
+  const fetchSuggestedUsers = useCallback(async () => {
     try {
-      const res = await fetch('/api/profiles/suggestions');
-
-      if (!res.ok) {
-        throw new Error('Failed to fetch suggestions');
+      const result = await getProfileSuggestionsAction();
+      if (!result.success || !result.data) {
+        throw new Error(result.error || 'Failed to fetch suggestions');
       }
 
-      const data = await res.json();
-      // Ensure is_following and isPending are initialized
-      const suggestions = (data.suggestions || []).map((user: SuggestedUser) => ({
-        ...user,
-        is_following: user.is_following ?? false,
-        isPending: user.isPending ?? false,
+      const suggestions = result.data.map((user) => ({
+        id: user.id,
+        username: user.username,
+        full_name: user.fullName ?? null,
+        profile_image_url: user.profileImageUrl ?? null,
+        is_verified: false,
+        followers_count: user.followersCount,
+        is_following: (user as any).is_following ?? (user as any).isFollowing ?? false,
+        isPending: (user as any).isPending ?? false,
       }));
       setSuggestedUsers(suggestions);
     } catch (error) {
       console.error('Error fetching suggested users:', error);
       setSuggestedUsers([]);
     }
-  }
+  }, []);
+
+  // Carica follower/following quando si apre il modal
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => {
+        void fetchUsers();
+      }, 0);
+      // Recupera suggeriti SOLO se profilo proprio E tab followers
+      if (type === 'followers' && isOwnProfile) {
+        setTimeout(() => {
+          void fetchSuggestedUsers();
+        }, 0);
+      }
+    }
+  }, [fetchSuggestedUsers, fetchUsers, isOpen, isOwnProfile, type]);
 
   // Funzione per seguire un utente
   async function handleFollow(targetProfileId: number) {

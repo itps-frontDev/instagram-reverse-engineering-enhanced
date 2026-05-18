@@ -93,7 +93,8 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
       const response = await fetch('/api/auth/me');
       if (response.ok) {
         const data = await response.json();
-        setCurrentProfile(data.profile);
+        const payload = data.data ?? data;
+        setCurrentProfile(payload.profile ?? payload);
       }
     } catch (error) {
       console.error('Error fetching current profile:', error);

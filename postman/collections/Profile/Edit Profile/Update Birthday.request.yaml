@@ -1,0 +1,19 @@
+$kind: http-request
+name: Update Birthday
+description: Aggiorna la data di nascita dell'utente autenticato tramite Spring Boot. Validazione backend per età minima (13 anni) e formato data (YYYY-MM-DD). Usa questa request per verificare il flusso write del modulo birthday dopo la migrazione Strangler.
+method: PUT
+url: "{{baseUrl}}/api/priv/profiles/birthday"
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+body:
+  type: json
+  content: |
+    {
+      "birthday": "1984-05-07"
+    }
+scripts:
+  - type: afterResponse
+    code: "var json = pm.response.json();\r\n\r\npm.test('Request succeeded', function () {\r\n  pm.expect(json.success).to.eql(true);\r\n});\r\n\r\npm.test('Birthday data is present', function () {\r\n  pm.expect(json.data).to.be.an('object');\r\n  pm.expect(json.data.birthday).to.be.a('string');\r\n});\r\n\r\npm.test('Birthday format is ISO (YYYY-MM-DD)', function () {\r\n  pm.expect(json.data.birthday).to.match(/^\\d{4}-\\d{2}-\\d{2}$/);\r\n});"
+    language: text/javascript
+order: 1041

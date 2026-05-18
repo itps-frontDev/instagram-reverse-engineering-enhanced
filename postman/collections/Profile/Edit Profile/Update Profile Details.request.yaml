@@ -1,0 +1,21 @@
+$kind: http-request
+name: Update Profile Details
+description: Aggiorna bio, website e genere del profilo autenticato tramite Spring Boot. Questa request copre il write endpoint base del modulo profile dopo la migrazione Strangler.
+method: PUT
+url: "{{baseUrl}}/api/priv/profiles/edit"
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+body:
+  type: json
+  content: |
+    {
+      "bio": "Photographer based in Milan",
+      "website_url": "https://miosite.com",
+      "gender": "male"
+    }
+scripts:
+  - type: afterResponse
+    code: "var json = pm.response.json();\r\n\r\npm.test('Request succeeded', function () {\r\n  pm.expect(json.success).to.eql(true);\r\n});\r\n\r\npm.test('Profile payload is present (data.profile or legacy profile)', function () {\r\n  pm.expect(json.data && json.data.profile || json.profile).to.be.ok;\r\n});"
+    language: text/javascript
+order: 1020

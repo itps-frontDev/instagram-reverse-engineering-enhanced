@@ -1,0 +1,12 @@
+$kind: http-request
+name: Get Birthday
+description: Recupera la data di nascita dell'utente autenticato dal backend Spring Boot. Utilizzo per verificare il flusso read del modulo birthday dopo la migrazione Strangler.
+method: GET
+url: "{{baseUrl}}/api/priv/profiles/birthday"
+headers:
+  Authorization: Bearer {{accessToken}}
+scripts:
+  - type: afterResponse
+    code: "var json = pm.response.json();\r\n\r\npm.test('Request succeeded', function () {\r\n  pm.expect(json.success).to.eql(true);\r\n});\r\n\r\npm.test('Birthday data is present', function () {\r\n  pm.expect(json.data).to.be.an('object');\r\n  pm.expect(json.data.birthday).to.be.a('string');\r\n});"
+    language: text/javascript
+order: 1040

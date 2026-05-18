@@ -36,6 +36,7 @@ import {
   StoryHighlight,
 } from '@/types/profile';
 import type { FeedPost } from '@/types/feed';
+import { getProfileByUsernameAction } from '@/features/profile';
 import { toggleLikeAction } from '@/features/likes';
 
 // ============================================================================
@@ -179,59 +180,44 @@ export default function ProfilePage({
   // ==========================================================================
 
   /**
-   * Recupera tutti i dati del profilo dall'API
-   * 
-   * Carica in sequenza:
-   * 1. Dati profilo base
-   * 2. Stato follow (se autenticato)
-   * 3. Permessi di visualizzazione
+   * Recupera tutti i dati del profilo dal nuovo endpoint Spring centralizzato.
    */
   async function fetchProfileData() {
     setIsLoading(true);
     setError(null);
 
     try {
-      // -----------------------------------------------------------------------
-      // Fetch dati profilo base
-      // -----------------------------------------------------------------------
-      const profileRes = await fetch(`/api/profiles/${username}`);
-      if (!profileRes.ok) {
-        if (profileRes.status === 404) {
+      const profileResult = await getProfileByUsernameAction({ username });
+      if (!profileResult.success || !profileResult.data) {
+        const message = profileResult.error || 'Errore nel caricamento del profilo';
+        if (message.toLowerCase().includes('not found')) {
           setError('Profilo non trovato');
           return;
         }
-        throw new Error('Errore nel caricamento del profilo');
+        throw new Error(message);
       }
-      const profileData = await profileRes.json();
-      setProfile(profileData.profile);
+
+      const payload = profileResult.data;
+      const profilePayload = payload.profile ?? payload;
+      setProfile(profilePayload);
 
       // fallback locale: evita UI di follow sul proprio profilo anche se follow-status fallisce
-      if (authProfile?.id && authProfile.id === profileData.profile?.id) {
+      if (authProfile?.id && authProfile.id === profilePayload?.id) {
         setFollowStatus((prev) => ({ ...prev, isOwnProfile: true }));
       }
 
-      // -----------------------------------------------------------------------
-      // Fetch stato follow (richiede autenticazione)
-      // -----------------------------------------------------------------------
-      try {
-        const followRes = await fetch(`/api/profiles/${username}/follow-status`);
-        if (followRes.ok) {
-          const followData = await followRes.json();
-          setFollowStatus(followData);
-        }
-      } catch (err) {
-        // Non autenticato - continua come ospite
-        console.log('Non autenticato, visualizzazione come ospite');
-      }
-
-      // -----------------------------------------------------------------------
-      // Fetch permessi di visualizzazione
-      // -----------------------------------------------------------------------
-      const canViewRes = await fetch(`/api/profiles/${username}/can-view`);
-      if (canViewRes.ok) {
-        const canViewData = await canViewRes.json();
-        setCanView(canViewData.canView);
-      }
+      const context = payload.context ?? {
+        isOwner: (payload as any).isOwner ?? (payload as any).owner ?? false,
+        followStatus: (payload as any).followStatus ?? 'none',
+        canView: (payload as any).canView ?? true,
+      };
+      setFollowStatus({
+        isOwnProfile: context.isOwner,
+        isFollowing: context.followStatus === 'accepted',
+        isPending: context.followStatus === 'pending',
+        isFollowedBy: false,
+      });
+      setCanView(context.canView);
     } catch (err) {
       console.error('Errore caricamento profilo:', err);
       setError('Errore nel caricamento del profilo');
@@ -315,7 +301,7 @@ export default function ProfilePage({
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ error: 'Errore nel follow' }));
-        throw new Error(errorData.error || 'Errore nel follow');
+        throw new Error(errorData.message || errorData.error || 'Errore nel follow');
       }
 
       const data = await res.json();
@@ -373,11 +359,16 @@ export default function ProfilePage({
       const res = await fetch('/api/profiles/actions/unfollow', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetProfileId: profile.id }),
+        credentials: 'include',
+        body: JSON.stringify({ targetProfileId: Number(profile.id) }),
       });
 
+      console.log('Unfollow response status:', res.status);
+      const responseData = await res.json();
+      console.log('Unfollow response data:', responseData);
+
       if (!res.ok) {
-        throw new Error("Errore nell'unfollow");
+        throw new Error(`Errore nell'unfollow: ${res.status} - ${responseData.error}`);
       }
 
       // Aggiorna contatore follower

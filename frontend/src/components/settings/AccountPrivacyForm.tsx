@@ -15,8 +15,8 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { PageHeader, SuccessMessage } from '@/components/ui';
+import { updatePrivacyAction } from '@/features/profile/privacy/actions';
 
 interface AccountPrivacyFormProps {
   profile: {
@@ -42,20 +42,12 @@ export default function AccountPrivacyForm({ profile }: AccountPrivacyFormProps)
     try {
       const newPrivateState = !isPrivate;
 
-      const res = await fetch('/api/profiles/privacy', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          is_private: newPrivateState,
-        }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to update privacy settings');
+      const result = await updatePrivacyAction({ isPrivate: newPrivateState });
+      if (!result.success || !result.data) {
+        throw new Error(result.error || 'Failed to update privacy settings');
       }
 
-      setIsPrivate(newPrivateState);
+      setIsPrivate(result.data.isPrivate);
       setSuccessMessage(
         newPrivateState 
           ? 'Account impostato come privato!' 

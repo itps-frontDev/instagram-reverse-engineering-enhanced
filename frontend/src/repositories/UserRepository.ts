@@ -326,23 +326,6 @@ export const userRepository = {
   },
 
   /**
-   * Aggiorna la data di nascita di un utente.
-   * 
-   * @param id - ID dell'utente
-   * @param dateOfBirth - Data di nascita in formato ISO (YYYY-MM-DD)
-   * @returns true se l'update ha avuto effetto
-   */
-  async updateDateOfBirth(id: string | number, dateOfBirth: string): Promise<boolean> {
-    const result = await execute(
-      `UPDATE users 
-       SET date_of_birth = ?, updated_at = NOW()
-       WHERE id = ? AND deleted_at IS NULL`,
-      [dateOfBirth, id]
-    );
-    return result.changes > 0;
-  },
-
-  /**
    * Aggiorna l'hash della password di un utente.
    * 
    * @param id - ID dell'utente
@@ -398,22 +381,6 @@ export const userRepository = {
     return user || null;
   },
 
-  /**
-   * Recupera la data di nascita di un utente.
-   * Usato nella pagina impostazioni data di nascita.
-   * 
-   * @param id - ID dell'utente
-   * @returns Dati con data di nascita o null
-   */
-  async getBirthdayData(id: string | number): Promise<{ id: string | number; date_of_birth: string } | null> {
-    const user = await queryOne<{ id: string | number; date_of_birth: string }>(
-      `SELECT id, date_of_birth
-       FROM users
-       WHERE id = ? AND deleted_at IS NULL`,
-      [id]
-    );
-    return user || null;
-  },
 };
 
 export default userRepository;

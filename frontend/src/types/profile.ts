@@ -158,8 +158,27 @@ export interface StoryHighlight {
 /**
  * Risposta da GET /api/profiles/[username]
  */
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string | null;
+  message?: string | null;
+}
+
+export interface ProfileContext {
+  isOwner?: boolean;
+  followStatus?: 'none' | 'pending' | 'accepted';
+  canView?: boolean;
+}
+
 export interface GetProfileResponse {
-  profile: Profile;
+  // New shape: payload may contain profile and context
+  profile?: Profile;
+  context?: ProfileContext;
+  // Back-compat top-level fields that older API clients used
+  isOwner?: boolean;
+  followStatus?: 'none' | 'pending' | 'accepted';
+  canView?: boolean;
 }
 
 /**
@@ -190,7 +209,10 @@ export interface GetPostsResponse {
 }
 
 /**
- * Risposta da GET /api/profiles/[username]/follow-status
+ * Risposta da GET /api/priv/profiles/{username}/follow-status (Spring)
+ * 
+ * Rappresenta lo stato della relazione di follow tra utente corrente e profilo target.
+ * Mappato a {@link FollowStatus} per compatibilità UI.
  */
 export interface GetFollowStatusResponse {
   isFollowing: boolean;

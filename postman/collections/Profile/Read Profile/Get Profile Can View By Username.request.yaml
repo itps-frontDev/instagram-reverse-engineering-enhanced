@@ -1,0 +1,8 @@
+$kind: http-request
+name: Get Profile Can View By Username
+description: Returns whether the authenticated user can view the target profile content based on privacy and follow relationship.
+method: GET
+url: "{{baseUrl}}/api/priv/profiles/{{profileUsername}}/can-view"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 1030

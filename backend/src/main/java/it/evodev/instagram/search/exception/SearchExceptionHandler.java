@@ -1,6 +1,6 @@
 package it.evodev.instagram.search.exception;
 
-import it.evodev.instagram.search.dto.SearchApiResponse;
+import it.evodev.instagram.search.dto.response.SearchApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;

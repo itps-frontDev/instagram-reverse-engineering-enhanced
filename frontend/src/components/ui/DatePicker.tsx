@@ -141,11 +141,34 @@ export function datePickerToISO(value: DatePickerValue): string | null {
 }
 
 /**
- * Converte una stringa ISO date in DatePickerValue.
+ * Converte una stringa ISO date o un oggetto Date in DatePickerValue.
+ * Gestisce sia il formato ISO (YYYY-MM-DD) che gli oggetti Date dal database.
  */
-export function isoToDatePicker(isoDate: string | null): DatePickerValue {
+export function isoToDatePicker(isoDate: string | Date | null): DatePickerValue {
   if (!isoDate) return { day: '', month: '', year: '' };
-  const date = new Date(isoDate);
+  
+  let date: Date;
+  
+  // Se è una stringa, prova prima il formato ISO YYYY-MM-DD
+  if (typeof isoDate === 'string') {
+    const match = isoDate.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) {
+      const [, year, month, day] = match;
+      return {
+        day: String(parseInt(day, 10)),
+        month: String(parseInt(month, 10)),
+        year,
+      };
+    }
+    // Se non è ISO, prova a convertire come Data
+    date = new Date(isoDate);
+  } else if (isoDate instanceof Date) {
+    date = isoDate;
+  } else {
+    return { day: '', month: '', year: '' };
+  }
+  
+  // Usa gli accessor locali per estrarre giorno, mese, anno
   return {
     day: String(date.getDate()),
     month: String(date.getMonth() + 1),

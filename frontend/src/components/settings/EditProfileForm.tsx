@@ -24,6 +24,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { PageHeader, SuccessMessage, SubmitButton } from '@/components/ui';
 import { ButtonSpinner } from '@/components/common';
 import { uploadPfpAction, deletePfpAction } from '@/features/profiles/pfp/actions';
+import { editProfileAction } from '@/features/profile';
 
 interface EditProfileFormProps {
   profile: {
@@ -165,20 +166,15 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
     }
 
     try {
-      const res = await fetch('/api/profiles/edit', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          website_url: formData.websiteUrl,
-          bio: formData.bio,
-          gender: formData.gender,
-          custom_gender: formData.gender === 'custom' ? formData.customGender : null,
-        }),
+      const result = await editProfileAction({
+        website_url: formData.websiteUrl,
+        bio: formData.bio,
+        gender: formData.gender,
+        custom_gender: formData.gender === 'custom' ? formData.customGender : null,
       });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to update profile');
+      if (!result.success) {
+        throw new Error(result.error);
       }
 
       setSuccessMessage('Profilo aggiornato con successo!');
