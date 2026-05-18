@@ -14,6 +14,9 @@ public interface ProfileRepository extends JpaRepository<Profile, Long> {
     Optional<Profile> findByUsernameIgnoreCaseAndDeletedAtIsNull(String username);
     Optional<Profile> findByUserIdAndDeletedAtIsNull(UUID userId);
 
+    @Query("select p.id from Profile p where p.userId = :userId and p.deletedAt is null")
+    Optional<Long> findIdByUserIdAndDeletedAtIsNull(@Param("userId") UUID userId);
+
     @Modifying
     @Transactional
     @Query("UPDATE Profile p SET p.profileImageUrl = :url WHERE p.id = :id")

@@ -37,9 +37,8 @@ public class LikeServiceImpl implements LikeService {
     @Transactional
     public LikeToggleResponseDTO toggle(UUID authSubjectUuid, LikeableType type, Long likeableId) {
         Long profileId = profileRepository
-                .findByUserIdAndDeletedAtIsNull(authSubjectUuid)
-                .orElseThrow(() -> new LikeValidationException("Authenticated profile not found"))
-                .getId();
+                .findIdByUserIdAndDeletedAtIsNull(authSubjectUuid)
+                .orElseThrow(() -> new LikeValidationException("Authenticated profile not found"));
 
         logger.info("Toggle like started - profileId: {}, type: {}, likeableId: {}", profileId, type, likeableId);
 
