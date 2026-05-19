@@ -40,6 +40,7 @@ import { getProfileByUsernameAction } from '@/features/profile';
 import { uploadPfpAction, deletePfpAction } from '@/features/profile/picture/actions';
 import { getMediaUrl } from '@/lib/media';
 import { toggleLikeAction } from '@/features/likes';
+import { togglePostSaveAction } from '@/features/posts';
 
 // ============================================================================
 // COMPONENTE PRINCIPALE
@@ -594,10 +595,16 @@ export default function ProfilePage({
     });
 
     try {
-      const endpoint = wasSaved ? `/api/posts/${postId}/unsave` : `/api/posts/${postId}/save`;
-      const res = await fetch(endpoint, { method: 'POST' });
-      
-      if (!res.ok) throw new Error('Errore salvataggio post');
+      const result = await togglePostSaveAction({ postId });
+      if (!result.success) throw new Error(result.error);
+
+      setSelectedPost(prev => prev
+        ? { ...prev, is_saved_by_current_user: result.data.saved }
+        : prev
+      );
+      setPosts(prev => prev.map(p =>
+        p.id === postId ? { ...p, is_saved_by_current_user: result.data.saved } : p
+      ));
     } catch (err) {
       // Ripristina aggiornamento ottimistico
       setSelectedPost({

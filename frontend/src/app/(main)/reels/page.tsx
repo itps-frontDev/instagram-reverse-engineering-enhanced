@@ -34,6 +34,7 @@ import { VerifiedBadge, ShareIcon } from '@/components/common';;
 import { formatTimeAgo } from '@/lib/date-utils';
 import { getMediaUrl } from '@/lib/media';
 import { toggleLikeAction } from '@/features/likes';
+import { togglePostSaveAction } from '@/features/posts';
 
 // ============================================================================
 // INTERFACCE E TIPI
@@ -527,32 +528,17 @@ export default function ReelsPage() {
    * @param reelId - ID del reel da salvare/rimuovere
    */
   const handleSave = async (reelId: number) => {
-    const reel = reels.find(r => r.id === reelId);
-    if (!reel) return;
-
-    try {
-      // Determina l'endpoint in base allo stato corrente
-      const endpoint = reel.is_saved_by_current_user 
-        ? `/api/posts/${reelId}/unsave`
-        : `/api/posts/${reelId}/save`;
-      
-      const response = await fetch(endpoint, { method: 'POST' });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Errore salvataggio:', response.status, errorData);
-        throw new Error(errorData.error || 'Errore nel salvataggio');
-      }
-
-      // Toggle dello stato locale
-      setReels(prev => prev.map(r => 
-        r.id === reelId 
-          ? { ...r, is_saved_by_current_user: !r.is_saved_by_current_user }
-          : r
-      ));
-    } catch (error) {
-      console.error('Errore nel salvataggio reel:', error);
+    const result = await togglePostSaveAction({ postId: reelId });
+    if (!result.success) {
+      console.error('Errore nel salvataggio reel:', result.error);
+      return;
     }
+
+    setReels(prev => prev.map(r =>
+      r.id === reelId
+        ? { ...r, is_saved_by_current_user: result.data.saved }
+        : r
+    ));
   };
 
   /**

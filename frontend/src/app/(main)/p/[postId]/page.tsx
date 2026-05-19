@@ -20,6 +20,7 @@ import Post from '@/components/feed/Post';
 import { LoadingSpinner } from '@/components/common';
 import type { FeedPost } from '@/types/feed';
 import { toggleLikeAction } from '@/features/likes';
+import { togglePostSaveAction } from '@/features/posts';
 
 // ============================================================================
 // INTERFACCE
@@ -168,13 +169,14 @@ export default function PostPage({ params }: PostPageProps) {
    */
   const handleSave = async (postId: number) => {
     try {
-      const response = await fetch(`/api/posts/${postId}/save`, {
-        method: 'POST',
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setPost(data.post);
+      const result = await togglePostSaveAction({ postId });
+      if (!result.success) {
+        throw new Error(result.error);
       }
+      setPost(prev => prev
+        ? { ...prev, is_saved_by_current_user: result.data.saved }
+        : prev
+      );
     } catch (error) {
       console.error('Errore salvataggio post:', error);
     }

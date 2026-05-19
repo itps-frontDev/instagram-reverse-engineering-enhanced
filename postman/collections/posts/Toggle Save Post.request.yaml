@@ -1,0 +1,11 @@
+$kind: http-request
+name: Toggle Save Post
+description: >
+  Toggle save/unsave di un post autenticato.
+  Success: { "success": true, "data": { "saved": true|false }, "message": "Post save status updated" }.
+  Error 404: { "success": false, "error": "POST_SAVE_NOT_FOUND", "message": "Post not found" }.
+method: POST
+url: "{{baseUrl}}/api/priv/posts/{{postId}}/save-toggle"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 110

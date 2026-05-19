@@ -22,6 +22,7 @@ import {FeedPostSkeleton} from '@/components/common/skeletons';
 import { LoadingSpinner } from '@/components/common';
 import type { FeedPost } from '@/types/feed';
 import { toggleLikeAction } from '@/features/likes';
+import { togglePostSaveAction } from '@/features/posts';
 
 export default function FeedContainer() {
   const [posts, setPosts] = useState<FeedPost[]>([]); // Post nel feed
@@ -98,30 +99,19 @@ export default function FeedContainer() {
   };
 
   const handleSave = async (postId: number) => {
-    try {
-      const response = await fetch('/api/feed/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postId }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save post');
-      }
-
-      const data = await response.json();
-
-      // Aggiorna post nello stato
-      setPosts((prev) =>
-        prev.map((post) =>
-          post.id === postId
-            ? { ...post, is_saved_by_current_user: data.saved }
-            : post
-        )
-      );
-    } catch (err) {
-      console.error('Error saving post:', err);
+    const result = await togglePostSaveAction({ postId });
+    if (!result.success) {
+      console.error('Error saving post:', result.error);
+      return;
     }
+
+    setPosts((prev) =>
+      prev.map((post) =>
+        post.id === postId
+          ? { ...post, is_saved_by_current_user: result.data.saved }
+          : post
+      )
+    );
   };
 
   const handleComment = async (postId: number, text: string) => {
@@ -203,4 +193,3 @@ export default function FeedContainer() {
     </div>
   );
 }
-

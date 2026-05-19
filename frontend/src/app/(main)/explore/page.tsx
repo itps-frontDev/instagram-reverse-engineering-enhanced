@@ -27,6 +27,7 @@ import { LoadingSpinner } from '@/components/common';
 import {ExploreSkeleton} from '@/components/common/skeletons';
 import type { FeedPost, GetFeedResponse } from '@/types/feed';
 import { toggleLikeAction } from '@/features/likes';
+import { togglePostSaveAction } from '@/features/posts';
 
 // ============================================================================
 // COMPONENTE PAGINA
@@ -179,28 +180,19 @@ export default function ExplorePage() {
    * Aggiorna lo stato locale con la risposta del server.
    */
   const handleSave = async (postId: number) => {
-    try {
-      const response = await fetch('/api/feed/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postId }),
-      });
-
-      if (!response.ok) throw new Error('Errore salvataggio post');
-
-      const data = await response.json();
-
-      // Aggiorna lo stato locale
-      setPosts((prevPosts) =>
-        prevPosts.map((post) =>
-          post.id === postId
-            ? { ...post, is_saved_by_current_user: data.saved }
-            : post
-        )
-      );
-    } catch (err) {
-      console.error('Errore salvataggio post:', err);
+    const result = await togglePostSaveAction({ postId });
+    if (!result.success) {
+      console.error('Errore salvataggio post:', result.error);
+      return;
     }
+
+    setPosts((prevPosts) =>
+      prevPosts.map((post) =>
+        post.id === postId
+          ? { ...post, is_saved_by_current_user: result.data.saved }
+          : post
+      )
+    );
   };
 
   /**

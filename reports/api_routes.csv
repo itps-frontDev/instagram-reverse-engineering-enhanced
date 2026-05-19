@@ -31,17 +31,17 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/profiles/[username]/follow-status,GET,"MIGRATED to Spring: /api/priv/profiles/{username}/follow-status - stato della relazione follow tra utente corrente e profilo target",Yes,No,Yes,No
 /api/profiles/[username]/can-view,GET,"MIGRATED to Spring: /api/priv/profiles/{username}/can-view - verifica se user può vedere contenuti del profilo (privacy)",Yes,No,Yes,No
 /api/posts/create,POST,"Crea post: salva immagini, crea post_media in transazione",Yes,Yes,Yes,Yes
-/api/posts/[postId]/unsave,POST,"Rimuove post dai salvati (soft delete)",Yes,No,Yes,Yes
+/api/posts/[postId]/unsave,POST,"MIGRATED to Spring: POST /api/priv/posts/{postId}/save-toggle - unsave gestito come toggle (legacy endpoint removed)",No,No,Yes,No
 /api/posts/[postId]/unlike,POST,"MIGRATED to Spring: POST /api/priv/likes/{post}/{id} - unlike handled via Spring likes toggle (legacy endpoint replaced)",Yes,No,Yes,Yes
 /api/posts/[postId]/tags,GET,"Restituisce tag di un post",Yes,No,No,No
-/api/posts/[postId]/save,POST,"Salva post per l'utente (idempotente)",Yes,No,Yes,Yes
+/api/posts/[postId]/save,POST,"MIGRATED to Spring: POST /api/priv/posts/{postId}/save-toggle - save/unsave unificati con risposta {success,data.saved}",No,No,Yes,No
 /api/posts/[postId],GET|DELETE|PATCH,"GET: recupera post+media; DELETE: soft-delete; PATCH: modifica caption",Yes,Yes,Yes,Yes
 /api/posts/[postId]/like,POST,"MIGRATED to Spring: POST /api/priv/likes/{post}/{id} - toggle like (replaced by Spring likes service)",Yes,No,Yes,Yes
 /api/posts/[postId]/is-saved,GET,"Verifica se post è salvato dall'utente",Yes,No,Yes,No
 /api/posts/[postId]/is-liked,GET,"Verifica se utente ha messo like al post",Yes,No,Yes,No
 /api/posts/[postId]/comment,POST,"Aggiunge commento; incrementa counter; crea notifica",Yes,No,Yes,Yes
 /api/media/[...path],GET,"Serve file multimediali con controllo accessi (posts/stories/profiles/messages)",Yes,Yes,Yes,No
-/api/feed/save,POST,"Toggle salvataggio da feed (save/unsave)",Yes,No,Yes,Yes
+/api/feed/save,POST,"MIGRATED to Spring: POST /api/priv/posts/{postId}/save-toggle - feed usa action frontend su endpoint Spring",No,No,Yes,No
 /api/feed,GET,"Feed principale: post seguiti + explore, paginazione",Yes,No,Yes,Yes
 /api/feed/like,POST,"MIGRATED to Spring: POST /api/priv/likes/{post}/{id} - toggle like from feed (handled by Spring)",Yes,No,Yes,Yes
 /api/feed/comments,GET|POST,"GET: lista commenti di un post; POST: crea commento e notifica",Yes,No,Yes,Yes
