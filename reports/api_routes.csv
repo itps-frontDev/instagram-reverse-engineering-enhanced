@@ -4,7 +4,7 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/stories/[id]/viewers,GET,"Lista visualizzatori di una storia (solo proprietario)",Yes,No,Yes,No
 /api/stories/[id]/view,POST,"MIGRATED to Spring: /api/priv/stories/{storyId}/view - endpoint legacy rimosso",No,No,Yes,No
 /api/stories/[id]/public,GET,"Recupera storie pubbliche di un profilo (senza auth ma codice usa currentProfile)",Yes,No,Hybrid,No
-/api/stories/[id]/like,POST,"Toggle like su una storia; crea/elimina notifica",Yes,No,Yes,No
+/api/stories/[id]/like,POST,"MIGRATED to Spring: POST /api/priv/likes/{story}/{id} - toggle like (replaced by Spring likes service)",Yes,No,Yes,No
 /api/search,GET,"MIGRATED to Spring: /api/priv/search - ricerca profili per username o nome",Yes,No,Yes,No
 /api/reels,GET,"Reels feed (video posts) con paginazione",Yes,No,Yes,Yes
 /api/profiles/upload-image,POST,"MIGRATED to Spring: /api/priv/profiles/me/picture - PUT - upload foto profilo",Yes,Yes,Yes,No
@@ -32,20 +32,20 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/profiles/[username]/can-view,GET,"MIGRATED to Spring: /api/priv/profiles/{username}/can-view - verifica se user può vedere contenuti del profilo (privacy)",Yes,No,Yes,No
 /api/posts/create,POST,"Crea post: salva immagini, crea post_media in transazione",Yes,Yes,Yes,Yes
 /api/posts/[postId]/unsave,POST,"Rimuove post dai salvati (soft delete)",Yes,No,Yes,Yes
-/api/posts/[postId]/unlike,POST,"Rimuove like da un post e elimina notifica",Yes,No,Yes,Yes
+/api/posts/[postId]/unlike,POST,"MIGRATED to Spring: POST /api/priv/likes/{post}/{id} - unlike handled via Spring likes toggle (legacy endpoint replaced)",Yes,No,Yes,Yes
 /api/posts/[postId]/tags,GET,"Restituisce tag di un post",Yes,No,No,No
 /api/posts/[postId]/save,POST,"Salva post per l'utente (idempotente)",Yes,No,Yes,Yes
 /api/posts/[postId],GET|DELETE|PATCH,"GET: recupera post+media; DELETE: soft-delete; PATCH: modifica caption",Yes,Yes,Yes,Yes
-/api/posts/[postId]/like,POST,"Toggle like su post; crea/elimina notifica",Yes,No,Yes,Yes
+/api/posts/[postId]/like,POST,"MIGRATED to Spring: POST /api/priv/likes/{post}/{id} - toggle like (replaced by Spring likes service)",Yes,No,Yes,Yes
 /api/posts/[postId]/is-saved,GET,"Verifica se post è salvato dall'utente",Yes,No,Yes,No
 /api/posts/[postId]/is-liked,GET,"Verifica se utente ha messo like al post",Yes,No,Yes,No
 /api/posts/[postId]/comment,POST,"Aggiunge commento; incrementa counter; crea notifica",Yes,No,Yes,Yes
 /api/media/[...path],GET,"Serve file multimediali con controllo accessi (posts/stories/profiles/messages)",Yes,Yes,Yes,No
 /api/feed/save,POST,"Toggle salvataggio da feed (save/unsave)",Yes,No,Yes,Yes
 /api/feed,GET,"Feed principale: post seguiti + explore, paginazione",Yes,No,Yes,Yes
-/api/feed/like,POST,"Toggle like su post dal feed",Yes,No,Yes,Yes
+/api/feed/like,POST,"MIGRATED to Spring: POST /api/priv/likes/{post}/{id} - toggle like from feed (handled by Spring)",Yes,No,Yes,Yes
 /api/feed/comments,GET|POST,"GET: lista commenti di un post; POST: crea commento e notifica",Yes,No,Yes,Yes
-/api/feed/comments/like,POST,"Toggle like su commento; crea/elimina notifica",Yes,No,Yes,Yes
+/api/feed/comments/like,POST,"MIGRATED to Spring: POST /api/priv/likes/{comment}/{id} - toggle like on comment (handled by Spring)",Yes,No,Yes,Yes
 /api/feed/comments/[id],DELETE,"Elimina singolo commento (owner commento o owner post)",Yes,No,Yes,Yes
 /api/explore,GET,"Explore: post popolari da profili pubblici",Yes,No,Yes,Yes
 /api/direct/send,POST,"Invia messaggio in chat (verifica partecipazione)",Yes,No,Yes,No
