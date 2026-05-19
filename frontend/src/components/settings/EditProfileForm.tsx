@@ -26,6 +26,7 @@ import { PageHeader, SuccessMessage, SubmitButton } from '@/components/ui';
 import { ButtonSpinner } from '@/components/common';
 import { uploadPfpAction, deletePfpAction } from '@/features/profile/picture/actions';
 import { editProfileAction } from '@/features/profile';
+import { getMediaUrl } from '@/lib/media';
 
 interface EditProfileFormProps {
   profile: {
@@ -50,7 +51,7 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
     customGender: profile.custom_gender || '',
   });
 
-  const [profileImage, setProfileImage] = useState(profile.profile_image_url);
+  const [profileImage, setProfileImage] = useState(getMediaUrl(profile.profile_image_url));
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -87,7 +88,7 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
         return;
       }
 
-      setProfileImage(`/api/media/${result.data.profileImageUrl}`);
+      setProfileImage(getMediaUrl(result.data.profileImageUrl));
       setSuccessMessage('Foto del profilo aggiornata!');
       setTimeout(() => setSuccessMessage(''), 3000);
       await refreshProfile();
@@ -267,7 +268,7 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
           className="w-full px-3 py-2.5 rounded-lg bg-[rgb(243,245,247)] dark:bg-[rgb(38,38,38)] focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 text-base cursor-not-allowed"
         />
         <p className="text-xs text-[rgb(115,115,115)] dark:text-[rgb(168,168,168)] mt-2 leading-4">
-          La modifica dei link è disponibile solo su mobile. Visita l'app di Instagram e modifica il tuo profilo per cambiare i siti web nella tua biografia.
+          La modifica dei link è disponibile solo su mobile. Visita l&apos;app di Instagram e modifica il tuo profilo per cambiare i siti web nella tua biografia.
         </p>
       </div>
 

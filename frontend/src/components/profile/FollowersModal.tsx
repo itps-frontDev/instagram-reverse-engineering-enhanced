@@ -22,6 +22,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getProfileFollowersAction, getProfileFollowingAction, getProfileSuggestionsAction } from '@/features/profile';
+import { getMediaUrl } from '@/lib/media';
 
 interface FollowersModalProps {
   isOpen: boolean;
@@ -121,8 +122,8 @@ export default function FollowersModal({
         profile_image_url: user.profileImageUrl ?? null,
         is_verified: false,
         followers_count: user.followersCount,
-        is_following: (user as any).is_following ?? (user as any).isFollowing ?? false,
-        isPending: (user as any).isPending ?? false,
+        is_following: false,
+        isPending: false,
       }));
       setSuggestedUsers(suggestions);
     } catch (error) {
@@ -475,7 +476,7 @@ export default function FollowersModal({
                           }}
                         >
                           <Image
-                            src={user.profile_image_url || '/images/default-pfp.jpg'}
+                            src={getMediaUrl(user.profile_image_url) || '/images/default-pfp.jpg'}
                             alt={user.username}
                             width={44}
                             height={44}
@@ -576,7 +577,7 @@ export default function FollowersModal({
                             }}
                           >
                             <Image
-                              src={user.profile_image_url || '/images/default-pfp.jpg'}
+                              src={getMediaUrl(user.profile_image_url) || '/images/default-pfp.jpg'}
                               alt={user.username}
                               width={44}
                               height={44}
