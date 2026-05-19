@@ -1,6 +1,6 @@
 package it.evodev.instagram.profile.repository;
 
-import it.evodev.instagram.profile.model.ProfileVisibilityFollow;
+import it.evodev.instagram.profile.models.ProfileVisibilityFollow;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

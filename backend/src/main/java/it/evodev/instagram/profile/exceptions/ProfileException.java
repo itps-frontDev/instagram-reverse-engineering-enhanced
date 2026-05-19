@@ -1,4 +1,4 @@
-package it.evodev.instagram.profile.exception;
+package it.evodev.instagram.profile.exceptions;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;

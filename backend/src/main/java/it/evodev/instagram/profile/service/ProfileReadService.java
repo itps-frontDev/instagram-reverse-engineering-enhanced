@@ -18,7 +18,7 @@ public interface ProfileReadService {
      * @param currentUserId UUID of the authenticated user making the request
      * @param targetUsername username of the profile to fetch (case-insensitive)
      * @return ProfileByUsernameDataDTO with full profile data and visibility context
-     * @throws it.evodev.instagram.profile.exception.ProfileNotFoundException if profile not found or soft-deleted
+     * @throws it.evodev.instagram.profile.exceptions.ProfileNotFoundException if profile not found or soft-deleted
      */
     ProfileByUsernameDataDTO getProfileByUsername(UUID currentUserId, String targetUsername);
 
@@ -30,7 +30,7 @@ public interface ProfileReadService {
      * @param currentUserId UUID of the authenticated user making the request
      * @param targetUsername username of the profile to preview (case-insensitive)
      * @return ProfilePreviewDataDTO with minimal profile data and recent posts
-     * @throws it.evodev.instagram.profile.exception.ProfileNotFoundException if profile not found or soft-deleted
+     * @throws it.evodev.instagram.profile.exceptions.ProfileNotFoundException if profile not found or soft-deleted
      */
     ProfilePreviewDataDTO getProfilePreviewByUsername(UUID currentUserId, String targetUsername);
 
@@ -39,7 +39,7 @@ public interface ProfileReadService {
      * 
      * @param currentUserId UUID of the authenticated user
      * @return BirthdayDataDTO with birthday in LocalDate format
-     * @throws it.evodev.instagram.profile.exception.ProfileNotFoundException if profile not found
+     * @throws it.evodev.instagram.profile.exceptions.ProfileNotFoundException if profile not found
      */
     BirthdayDataDTO getBirthday(UUID currentUserId);
 }

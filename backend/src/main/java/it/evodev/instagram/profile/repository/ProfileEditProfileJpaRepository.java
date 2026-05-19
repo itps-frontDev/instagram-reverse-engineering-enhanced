@@ -1,6 +1,6 @@
 package it.evodev.instagram.profile.repository;
 
-import it.evodev.instagram.profile.model.ProfileEditProfile;
+import it.evodev.instagram.profile.models.ProfileEditProfile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

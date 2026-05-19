@@ -1,0 +1,15 @@
+$kind: http-request
+name: Upload Profile Picture
+description: "Carica o sostituisce la foto profilo dell'utente autenticato. Error case: 400 se file > 5MB o MIME non ammesso; 413 se supera il limite multipart del framework; 404 se profilo non trovato; 401 se token mancante."
+method: PUT
+url: "{{baseUrl}}/api/priv/profiles/me/picture"
+headers:
+  Authorization: Bearer {{accessToken}}
+body:
+  type: formdata
+  content:
+    - type: file
+      key: image
+      src: []
+      disabled: false
+order: 1000

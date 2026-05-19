@@ -7,10 +7,10 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/stories/[id]/like,POST,"Toggle like su una storia; crea/elimina notifica",Yes,No,Yes,No
 /api/search,GET,"MIGRATED to Spring: /api/priv/search - ricerca profili per username o nome",Yes,No,Yes,No
 /api/reels,GET,"Reels feed (video posts) con paginazione",Yes,No,Yes,Yes
-/api/profiles/upload-image,POST,"Carica immagine profilo (form-data) con validazioni",Yes,Yes,Yes,No
+/api/profiles/upload-image,POST,"MIGRATED to Spring: /api/priv/profiles/me/picture - PUT - upload foto profilo",Yes,Yes,Yes,No
 /api/profiles/suggestions,GET,"MIGRATED to Spring: /api/priv/profiles/suggestions - suggerimenti profili da seguire (top-20 pubblici non seguiti, shuffled per varietà)",No,No,Yes,No
 /api/profiles/security,PUT,"MIGRATED to Spring: /api/priv/profiles/security - Aggiorna email/telefono/password (bcrypt)",Yes,No,Yes,No
-/api/profiles/remove-image,DELETE,"Rimuove immagine profilo (DB + deleteFile)",Yes,Yes,Yes,No
+/api/profiles/remove-image,DELETE,"MIGRATED to Spring: /api/priv/profiles/me/picture - DELETE - rimozione foto profilo",Yes,Yes,Yes,No
 /api/profiles/privacy,PUT,"MIGRATED to Spring: /api/priv/profiles/privacy - aggiorna privacy profilo e promuove in bulk le richieste follow pending",No,No,Yes,No
 /api/profiles/personal,PUT,"MIGRATED to Spring: /api/priv/profiles/personal - aggiorna username e nome completo con verifica unicità",No,No,Yes,No
 /api/profiles/me/followers,GET,"DEPRECATED: endpoint legacy rimosso; usare GET /api/priv/profiles/{username}/followers (username da auth/me o route profile)",No,No,Yes,No
@@ -21,10 +21,10 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/profiles/actions/unfollow,POST,"Smettere di seguire (soft delete) e aggiornare contatori",Yes,No,Yes,No
 /api/profiles/actions/remove-follower,POST,"Rimuove un follower (soft delete) e aggiornamento contatori",Yes,No,Yes,No
 /api/profiles/actions/follow,POST,"Segui un utente (accepted o pending) e crea notifica",Yes,No,Yes,No
-/api/profiles/[username]/upload-image,POST,"Carica immagine profilo per username (owner only)",Yes,Yes,Yes,No
+/api/profiles/[username]/upload-image,POST,"MIGRATED to Spring: /api/priv/profiles/me/picture - PUT - upload foto profilo (owner only)",Yes,Yes,Yes,No
 /api/profiles/[username],GET,"MIGRATED to Spring: /api/priv/profiles/{username} - profilo centrale con flag contestuali e payload full/partial per privacy",Yes,No,Yes,No
 /api/profiles/[username]/preview,GET,"MIGRATED to Spring: /api/priv/profiles/{username}/preview - anteprima profilo con post recenti per card hover",Yes,No,Yes,No
-/api/profiles/[username]/remove-image,POST,"Rimuove immagine profilo (owner only)",Yes,No,Yes,No
+/api/profiles/[username]/remove-image,POST,"MIGRATED to Spring: /api/priv/profiles/me/picture - DELETE - rimozione foto profilo (owner only)",Yes,No,Yes,No
 /api/profiles/[username]/posts,GET,"Lista post di un profilo (tabs: posts,reels,saved,tagged)",Yes,No,Yes,No
 /api/profiles/[username]/following,GET,"MIGRATED to Spring: /api/priv/profiles/{username}/following - lista dei profili seguiti con privacy check + followStatus per ogni item",No,No,Yes,No
 /api/profiles/[username]/followers,GET,"MIGRATED to Spring: /api/priv/profiles/{username}/followers - lista follower con privacy check + followStatus per ogni item",No,No,Yes,No
@@ -53,3 +53,4 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/direct/get-or-create,POST,"Ottieni o crea chat 1-to-1",Yes,No,Yes,No
 /api/direct/chats,GET,"Lista chat dell'utente con dettagli + contatti potenziali",Yes,No,Yes,No
 /api/auth/register,POST,"MIGRATED to Spring: /api/public/auth/register - Registrazione utente (user + profile in transaction)",Yes,No,No,Yes
+/api/priv/profiles/me/picture,PUT|DELETE,"Carica o rimuove la foto profilo dell'utente autenticato; validazione magic bytes + limite 5 MB",Yes,No,Yes,No

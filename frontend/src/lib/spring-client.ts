@@ -62,6 +62,7 @@ export async function springFetch(
     ...options,
     cache: "no-store",
     headers: {
+      Accept: "application/json",
       ...options.headers,
       Authorization: `Bearer ${token}`,
     },

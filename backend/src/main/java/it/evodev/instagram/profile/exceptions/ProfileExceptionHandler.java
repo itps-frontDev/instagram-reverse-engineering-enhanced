@@ -1,4 +1,4 @@
-package it.evodev.instagram.profile.exception;
+package it.evodev.instagram.profile.exceptions;
 
 import it.evodev.instagram.profile.dto.response.ProfileApiResponse;
 import org.slf4j.Logger;

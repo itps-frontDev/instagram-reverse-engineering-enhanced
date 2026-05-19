@@ -1,4 +1,4 @@
-package it.evodev.instagram.profile.controller;
+package it.evodev.instagram.profile.controllers;
 
 import it.evodev.instagram.profile.dto.request.ProfileEditRequestDTO;
 import it.evodev.instagram.profile.dto.request.ProfilePrivacyRequestDTO;

@@ -17,7 +17,7 @@ public interface FollowService {
      * @param currentUserId UUID of the authenticated user
      * @param targetUsername username of the profile to check against (case-insensitive)
      * @return FollowStatusDataDTO with status: "self" | "none" | "pending" | "accepted"
-     * @throws it.evodev.instagram.profile.exception.ProfileNotFoundException if target profile not found
+     * @throws it.evodev.instagram.profile.exceptions.ProfileNotFoundException if target profile not found
      */
     FollowStatusDataDTO getFollowStatus(UUID currentUserId, String targetUsername);
 
@@ -29,8 +29,8 @@ public interface FollowService {
      * @param currentUserId UUID of the authenticated user making the request
      * @param targetUsername username of the profile whose followers are requested
      * @return List of ProfileFollowerDataDTO with follow status relative to current user
-     * @throws it.evodev.instagram.profile.exception.ProfileNotFoundException if profiles not found
-     * @throws it.evodev.instagram.profile.exception.ProfileForbiddenException if access denied
+     * @throws it.evodev.instagram.profile.exceptions.ProfileNotFoundException if profiles not found
+     * @throws it.evodev.instagram.profile.exceptions.ProfileForbiddenException if access denied
      */
     List<ProfileFollowerDataDTO> getFollowers(UUID currentUserId, String targetUsername);
 
@@ -42,8 +42,8 @@ public interface FollowService {
      * @param currentUserId UUID of the authenticated user making the request
      * @param targetUsername username of the profile whose following list is requested
      * @return List of ProfileFollowerDataDTO with follow status relative to current user
-     * @throws it.evodev.instagram.profile.exception.ProfileNotFoundException if profiles not found
-     * @throws it.evodev.instagram.profile.exception.ProfileForbiddenException if access denied
+     * @throws it.evodev.instagram.profile.exceptions.ProfileNotFoundException if profiles not found
+     * @throws it.evodev.instagram.profile.exceptions.ProfileForbiddenException if access denied
      */
     List<ProfileFollowerDataDTO> getFollowing(UUID currentUserId, String targetUsername);
 

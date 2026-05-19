@@ -1,7 +1,7 @@
-package it.evodev.instagram.media.controller;
+package it.evodev.instagram.media.controllers;
 
 import it.evodev.instagram.media.dto.StreamableMedia;
-import it.evodev.instagram.media.service.MediaService;
+import it.evodev.instagram.media.services.MediaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;

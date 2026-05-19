@@ -16,3 +16,5 @@ export * from './birthday/actions';
 export * from './privacy/actions';
 export * from './security/schema';
 export * from './security/actions';
+export * from './picture/schema';
+export * from './picture/actions';

@@ -1,9 +1,9 @@
-package it.evodev.instagram.media.service.impl;
+package it.evodev.instagram.media.services.impl;
 
 import com.azure.storage.blob.BlobContainerClient;
 import it.evodev.instagram.media.dto.BlobUploadResult;
 import it.evodev.instagram.media.exceptions.BlobStorageException;
-import it.evodev.instagram.media.service.BlobStorageService;
+import it.evodev.instagram.media.services.BlobStorageService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

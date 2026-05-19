@@ -1,8 +1,0 @@
-$kind: http-request
-name: Delete Profile Image
-description: "Rimuove l'immagine profilo dell'utente autenticato. Error case: 404 se non esiste nessuna immagine profilo; 401 se token mancante."
-method: DELETE
-url: "{{baseUrl}}/api/priv/profiles/me/image"
-headers:
-  Authorization: Bearer {{accessToken}}
-order: 3000

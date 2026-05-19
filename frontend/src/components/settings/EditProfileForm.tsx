@@ -18,12 +18,13 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import ProfileImageModal from '@/components/profile/ProfileImageModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { PageHeader, SuccessMessage, SubmitButton } from '@/components/ui';
 import { ButtonSpinner } from '@/components/common';
-import { uploadPfpAction, deletePfpAction } from '@/features/profiles/pfp/actions';
+import { uploadPfpAction, deletePfpAction } from '@/features/profile/picture/actions';
 import { editProfileAction } from '@/features/profile';
 
 interface EditProfileFormProps {
@@ -41,6 +42,7 @@ interface EditProfileFormProps {
 
 export default function EditProfileForm({ profile }: EditProfileFormProps) {
   const { refreshProfile } = useAuth();
+  const router = useRouter();
   const [formData, setFormData] = useState({
     websiteUrl: profile.website_url || '',
     bio: profile.bio || '',
@@ -80,6 +82,7 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
       const result = await uploadPfpAction(formData);
 
       if (!result.success) {
+        if ('requiresLogin' in result) { router.push('/login'); return; }
         alert(result.error);
         return;
       }
@@ -103,6 +106,7 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
       const result = await deletePfpAction();
 
       if (!result.success) {
+        if ('requiresLogin' in result) { router.push('/login'); return; }
         alert(result.error);
         return;
       }

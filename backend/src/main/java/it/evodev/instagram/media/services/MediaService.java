@@ -1,4 +1,4 @@
-package it.evodev.instagram.media.service;
+package it.evodev.instagram.media.services;
 
 import it.evodev.instagram.auth.models.Profile;
 import it.evodev.instagram.auth.repositories.ProfileRepository;

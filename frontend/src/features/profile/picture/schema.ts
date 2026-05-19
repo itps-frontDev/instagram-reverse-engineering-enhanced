@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-export type PfpActionResult<T> = { success: true; data: T } | { success: false; error: string };
+export type PfpActionResult<T> =
+  | { success: true; data: T }
+  | { success: false; error: string }
+  | { success: false; requiresLogin: true };
 
 export type PfpUploadData = {
   profileImageUrl: string;

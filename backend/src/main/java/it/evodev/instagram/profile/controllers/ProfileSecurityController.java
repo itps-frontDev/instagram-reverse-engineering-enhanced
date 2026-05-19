@@ -1,4 +1,4 @@
-package it.evodev.instagram.profile.controller;
+package it.evodev.instagram.profile.controllers;
 
 import it.evodev.instagram.profile.dto.request.ProfileSecurityUpdateRequestDTO;
 import it.evodev.instagram.profile.dto.response.ProfileApiResponse;

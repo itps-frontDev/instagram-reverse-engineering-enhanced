@@ -1,10 +1,8 @@
 "use server";
 
-import { redirect } from "next/navigation";
-
 import { springFetch } from "@/lib/spring-client";
 import { SpringAuthError } from "@/lib/spring-error";
-import type { PfpActionResult, PfpUploadData, PfpDeleteData } from "@/features/profiles/pfp/schema";
+import type { PfpActionResult, PfpUploadData, PfpDeleteData } from "@/features/profile/picture/schema";
 
 function mapPfpError(status: number): string {
   if (status === 400) return "Invalid file. Check format (JPEG, PNG, GIF, WebP) and size (max 5 MB).";
@@ -19,20 +17,15 @@ export async function uploadPfpAction(
 ): Promise<PfpActionResult<PfpUploadData>> {
   let response: Response | null = null;
   try {
-    response = await springFetch("/api/priv/profiles/me/image", {
+    response = await springFetch("/api/priv/profiles/me/picture", {
       method: "PUT",
       body: formData,
     });
   } catch (error) {
     if (error instanceof SpringAuthError) {
-      response = null;
-    } else {
-      return { success: false, error: "Profile image service is unreachable." };
+      return { success: false, requiresLogin: true };
     }
-  }
-
-  if (response === null) {
-    redirect("/login");
+    return { success: false, error: "Profile image service is unreachable." };
   }
 
   if (!response.ok) {
@@ -55,19 +48,14 @@ export async function uploadPfpAction(
 export async function deletePfpAction(): Promise<PfpActionResult<PfpDeleteData>> {
   let response: Response | null = null;
   try {
-    response = await springFetch("/api/priv/profiles/me/image", {
+    response = await springFetch("/api/priv/profiles/me/picture", {
       method: "DELETE",
     });
   } catch (error) {
     if (error instanceof SpringAuthError) {
-      response = null;
-    } else {
-      return { success: false, error: "Profile image service is unreachable." };
+      return { success: false, requiresLogin: true };
     }
-  }
-
-  if (response === null) {
-    redirect("/login");
+    return { success: false, error: "Profile image service is unreachable." };
   }
 
   if (!response.ok) {

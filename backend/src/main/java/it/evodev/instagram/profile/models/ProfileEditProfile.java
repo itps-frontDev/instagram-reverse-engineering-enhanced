@@ -1,4 +1,4 @@
-package it.evodev.instagram.profile.model;
+package it.evodev.instagram.profile.models;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
