@@ -53,4 +53,3 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/direct/get-or-create,POST,"Ottieni o crea chat 1-to-1",Yes,No,Yes,No
 /api/direct/chats,GET,"Lista chat dell'utente con dettagli + contatti potenziali",Yes,No,Yes,No
 /api/auth/register,POST,"MIGRATED to Spring: /api/public/auth/register - Registrazione utente (user + profile in transaction)",Yes,No,No,Yes
-/api/priv/profiles/me/picture,PUT|DELETE,"Carica o rimuove la foto profilo dell'utente autenticato; validazione magic bytes + limite 5 MB",Yes,No,Yes,No
