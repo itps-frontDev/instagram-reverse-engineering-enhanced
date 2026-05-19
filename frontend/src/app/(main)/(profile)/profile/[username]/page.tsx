@@ -37,6 +37,8 @@ import {
 } from '@/types/profile';
 import type { FeedPost } from '@/types/feed';
 import { getProfileByUsernameAction } from '@/features/profile';
+import { uploadPfpAction, deletePfpAction } from '@/features/profile/picture/actions';
+import { getMediaUrl } from '@/lib/media';
 import { toggleLikeAction } from '@/features/likes';
 
 // ============================================================================
@@ -462,22 +464,14 @@ export default function ProfilePage({
       const formData = new FormData();
       formData.append('image', file);
 
-      const res = await fetch(`/api/profiles/${username}/upload-image`, {
-        method: 'POST',
-        body: formData,
-      });
+      const result = await uploadPfpAction(formData);
 
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Upload fallito');
+      if (!result.success) {
+        if ('requiresLogin' in result) { router.push('/login'); return; }
+        throw new Error(result.error);
       }
 
-      const data = await res.json();
-
-      // Aggiorna lo stato del profilo con la nuova immagine
-      setProfile(prev => prev ? { ...prev, profile_image_url: data.profileImageUrl } : null);
-      
-      // Aggiorna il profilo nell'AuthContext per aggiornare la sidebar
+      setProfile(prev => prev ? { ...prev, profile_image_url: getMediaUrl(result.data.profileImageUrl) } : null);
       await refreshProfile();
 
     } catch (error) {
@@ -495,19 +489,14 @@ export default function ProfilePage({
     setIsUploadingImage(true);
 
     try {
-      const res = await fetch(`/api/profiles/${username}/remove-image`, {
-        method: 'POST',
-      });
+      const result = await deletePfpAction();
 
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Rimozione fallita');
+      if (!result.success) {
+        if ('requiresLogin' in result) { router.push('/login'); return; }
+        throw new Error(result.error);
       }
 
-      // Aggiorna lo stato del profilo rimuovendo l'immagine
       setProfile(prev => prev ? { ...prev, profile_image_url: null } : null);
-      
-      // Aggiorna il profilo nell'AuthContext per aggiornare la sidebar
       await refreshProfile();
 
     } catch (error) {
