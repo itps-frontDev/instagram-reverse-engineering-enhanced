@@ -1,0 +1,11 @@
+$kind: http-request
+name: Get Post Tags
+description: >
+  Ottiene tutti i tag (profili taggati) di un post.
+  Success: { "success": true, "data": [ { "taggedUsername": "...", "xPosition": 0.5, "yPosition": 0.3, "createdAt": "2026-05-20T10:00:00Z" } ], "message": "Tags retrieved successfully" }.
+  Empty: { "success": true, "data": [], "message": "Tags retrieved successfully" }.
+method: GET
+url: "{{baseUrl}}/api/priv/posts/{{postId}}/tags"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 120

@@ -54,7 +54,7 @@ public class ProfileVisibilityServiceImpl implements ProfileVisibilityService {
 
         // Decision: public profile always viewable
         if (!targetProfile.getIsPrivate()) {
-            logger.info("Profile visibility: target is public. Returning true");
+            logger.info("Profile visibility: target is public, no follow check needed. Returning true");
             return new ProfileVisibilityDataDTO(true);
         }
 
@@ -62,14 +62,17 @@ public class ProfileVisibilityServiceImpl implements ProfileVisibilityService {
         Optional<ProfileVisibilityFollow> followOpt = followRepository
                 .findByFollowerProfileIdAndFollowingProfileIdAndDeletedAtIsNull(currentProfile.getId(), targetProfile.getId());
 
-        boolean canView = followOpt.isPresent() && "accepted".equalsIgnoreCase(followOpt.get().getStatus());
-
-        if (canView) {
-            logger.info("Profile visibility: target is private with accepted follow. Returning true");
-        } else {
-            logger.info("Profile visibility: target is private without accepted follow. Returning false");
+        if (followOpt.isEmpty()) {
+            logger.info("Profile visibility: target is private and no follow row exists. Returning false");
+            return new ProfileVisibilityDataDTO(false);
         }
 
-        return new ProfileVisibilityDataDTO(canView);
+        if ("accepted".equalsIgnoreCase(followOpt.get().getStatus())) {
+            logger.info("Profile visibility: target is private with accepted follow row. Returning true");
+            return new ProfileVisibilityDataDTO(true);
+        }
+
+        logger.info("Profile visibility: target is private but follow status is not accepted. Returning false");
+        return new ProfileVisibilityDataDTO(false);
     }
 }

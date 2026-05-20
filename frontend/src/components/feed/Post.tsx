@@ -40,6 +40,7 @@ import {
 import type { FeedPost } from '@/types/feed';
 import PostModal from './PostModal';
 import StoryViewer from './StoryViewer';
+import { fetchPostTagsAction } from '@/features/posts';
 
 interface PostProps {
   post: FeedPost;
@@ -61,7 +62,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [showStoryViewer, setShowStoryViewer] = useState(false);
   const [hasViewedAllStories, setHasViewedAllStories] = useState(post.profile_has_viewed_story);
-  const [tags, setTags] = useState<Array<{id: number; tagged_username: string; x_position: number; y_position: number}>>([]);
+  const [tags, setTags] = useState<Array<{taggedUsername: string; x_position: number; y_position: number}>>([]);
   const [tagsLoaded, setTagsLoaded] = useState(false);
   const [hoveredUsername, setHoveredUsername] = useState(false);
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -73,13 +74,28 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
   const [isDeletingPost, setIsDeletingPost] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/posts/${post.id}/tags`)
-      .then(res => res.json())
-      .then(data => {
-        setTags(data.tags || []);
+    const loadTags = async () => {
+      try {
+        const result = await fetchPostTagsAction(post.id);
+        if (result.success) {
+          // Trasforma PostTagDTO nel formato che il componente si aspetta
+          const transformedTags = result.data.map(tag => ({
+            taggedUsername: tag.taggedUsername,
+            x_position: tag.xPosition,
+            y_position: tag.yPosition,
+          }));
+          setTags(transformedTags);
+        } else {
+          console.error('Failed to load tags:', result.error);
+        }
         setTagsLoaded(true);
-      })
-      .catch(err => console.error('Failed to load tags:', err));
+      } catch (err) {
+        console.error('Failed to load tags:', err);
+        setTagsLoaded(true);
+      }
+    };
+
+    loadTags();
   }, [post.id]);
 
   const handleCommentSubmit = async () => {
@@ -373,9 +389,9 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
           )}
 
           {/* Overlay Tag */}
-          {showTags && tags.map((tag) => (
+          {showTags && tags.map((tag, index) => (
             <div
-              key={tag.id}
+              key={index}
               className="absolute bg-black/80 text-white text-xs px-2 py-1 rounded-md pointer-events-none"
               style={{
                 left: `${tag.x_position * 100}%`,
@@ -383,7 +399,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
                 transform: 'translate(-50%, -50%)'
               }}
             >
-              {tag.tagged_username}
+              {tag.taggedUsername}
             </div>
           ))}
         </div>

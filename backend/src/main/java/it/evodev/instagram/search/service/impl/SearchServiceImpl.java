@@ -10,6 +10,7 @@ import it.evodev.instagram.search.model.SearchProfile;
 import it.evodev.instagram.search.repository.SearchAccountProjection;
 import it.evodev.instagram.search.repository.SearchProfileRepository;
 import it.evodev.instagram.search.service.SearchService;
+import it.evodev.instagram.auth.services.AuthSubjectService;
 import jakarta.persistence.PersistenceException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -29,12 +30,16 @@ public class SearchServiceImpl implements SearchService {
     private static final int MAX_LIMIT = 50;
 
     private final SearchProfileRepository searchProfileRepository;
+    private final AuthSubjectService authSubjectService;
 
     @Override
     public SearchDataDTO searchAccounts(String authSubject, SearchRequestDTO request) {
         logger.info("Search service started with type: {}, limit: {}", request.getType(), request.getLimit());
 
-        UUID userId = parseUserId(authSubject);
+        UUID userId = authSubjectService.parseUserId(
+                authSubject,
+                () -> new SearchUnauthorizedException("Authentication subject is invalid")
+        );
         SearchProfile currentProfile = searchProfileRepository.findByUserIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new SearchUnauthorizedException("Authenticated profile not found"));
 
@@ -67,15 +72,6 @@ public class SearchServiceImpl implements SearchService {
 
         logger.info("Search service completed with {} results", results.size());
         return new SearchDataDTO(results);
-    }
-
-    private UUID parseUserId(String authSubject) {
-        try {
-            return UUID.fromString(authSubject);
-        } catch (IllegalArgumentException exception) {
-            logger.warn("Invalid authentication subject format");
-            throw new SearchUnauthorizedException("Authentication subject is invalid");
-        }
     }
 
     private static String normalizeQuery(String query) {

@@ -33,7 +33,7 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/posts/create,POST,"Legacy Next create post: salva immagini e crea post_media in transazione; no Spring create endpoint yet",Yes,Yes,Yes,Yes
 /api/posts/[postId]/unsave,POST,"MIGRATED to Spring: POST /api/priv/posts/{postId}/save-toggle - unsave gestito come toggle (legacy endpoint removed)",No,No,Yes,No
 /api/posts/[postId]/unlike,POST,"MIGRATED to Spring: POST /api/priv/likes/{post}/{id} - unlike handled via Spring likes toggle (legacy endpoint replaced)",Yes,No,Yes,Yes
-/api/posts/[postId]/tags,GET,"Legacy Next fetch dei tag di un post; no Spring endpoint yet",Yes,No,No,No
+/api/posts/[postId]/tags,GET,"MIGRATED to Spring: GET /api/priv/posts/{postId}/tags - fetch dei tag di un post con username del tagged profile (endpoint legacy rimosso)",No,No,Yes,No
 /api/posts/[postId]/save,POST,"MIGRATED to Spring: POST /api/priv/posts/{postId}/save-toggle - save/unsave unificati con risposta {success,data.saved}",No,No,Yes,No
 /api/posts/[postId],GET|DELETE|PATCH,"Legacy Next single-post endpoint (GET post+media, DELETE soft-delete, PATCH caption); no Spring equivalent yet",Yes,Yes,Yes,Yes
 /api/posts/[postId]/like,POST,"MIGRATED to Spring: POST /api/priv/likes/{post}/{id} - toggle like (replaced by Spring likes service)",Yes,No,Yes,Yes

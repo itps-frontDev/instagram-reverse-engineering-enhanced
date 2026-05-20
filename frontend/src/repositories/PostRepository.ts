@@ -538,28 +538,6 @@ export const postRepository = {
   },
 
   /**
-   * Ottiene i tag di persone in un post con username del profilo taggato.
-   *
-   * @param postId - ID del post
-   * @returns Array di tag con posizione (x, y) e username
-   */
-  async getPostTags(postId: number): Promise<{
-    id: number; post_id: number; post_media_id: number | null;
-    tagged_profile_id: number; tagged_username: string;
-    x_position: number; y_position: number; created_at: string;
-  }[]> {
-    return queryAll(
-      `SELECT pt.id, pt.post_id, pt.post_media_id, pt.tagged_profile_id,
-        p.username as tagged_username, pt.x_position, pt.y_position, pt.created_at
-       FROM post_tags pt
-       JOIN profiles p ON pt.tagged_profile_id = p.id
-       WHERE pt.post_id = ?
-       ORDER BY pt.created_at ASC`,
-      [postId]
-    );
-  },
-
-  /**
    * Ottiene post per la pagina Esplora.
    * Restituisce post pubblici di profili non seguiti, ordinati casualmente.
    * Include is_liked, is_saved, is_following_author del viewer.

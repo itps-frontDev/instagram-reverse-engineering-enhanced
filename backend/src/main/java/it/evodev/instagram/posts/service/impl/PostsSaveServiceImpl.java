@@ -1,6 +1,7 @@
 package it.evodev.instagram.posts.service.impl;
 
 import it.evodev.instagram.auth.repositories.ProfileRepository;
+import it.evodev.instagram.auth.services.AuthSubjectService;
 import it.evodev.instagram.posts.dto.response.PostSaveDataDTO;
 import it.evodev.instagram.posts.exception.PostSaveNotFoundException;
 import it.evodev.instagram.posts.exception.PostSaveUnauthorizedException;
@@ -26,6 +27,7 @@ public class PostsSaveServiceImpl implements PostsSaveService {
     private final ProfileRepository profileRepository;
     private final PostSavePostRepository postSavePostRepository;
     private final PostSaveSavedPostRepository postSaveSavedPostRepository;
+    private final AuthSubjectService authSubjectService;
 
     @Override
     @Transactional
@@ -34,7 +36,10 @@ public class PostsSaveServiceImpl implements PostsSaveService {
             throw new PostSaveValidationException("Post id must be a positive number");
         }
 
-        UUID authSubjectUuid = parseAuthSubject(authSubject);
+        UUID authSubjectUuid = authSubjectService.parseUserId(
+                authSubject,
+                () -> new PostSaveUnauthorizedException("Authentication subject is invalid")
+        );
         Long profileId = profileRepository.findIdByUserIdAndDeletedAtIsNull(authSubjectUuid)
                 .orElseThrow(() -> new PostSaveUnauthorizedException("Authenticated profile not found"));
 
@@ -62,12 +67,4 @@ public class PostsSaveServiceImpl implements PostsSaveService {
         return new PostSaveDataDTO(saved);
     }
 
-    private UUID parseAuthSubject(String authSubject) {
-        try {
-            return UUID.fromString(authSubject);
-        } catch (IllegalArgumentException exception) {
-            logger.warn("Invalid authentication subject format");
-            throw new PostSaveUnauthorizedException("Authentication subject is invalid");
-        }
-    }
 }

@@ -1,6 +1,6 @@
 package it.evodev.instagram.posts.controller;
 
-import it.evodev.instagram.posts.dto.response.PostSaveApiResponse;
+import it.evodev.instagram.posts.dto.response.PostApiResponse;
 import it.evodev.instagram.posts.dto.response.PostSaveDataDTO;
 import it.evodev.instagram.posts.service.PostsSaveService;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ public class PostsSaveController {
      * Usiamo POST su /save-toggle perché l'operazione modifica lo stato di persistenza del salvataggio.
      */
     @PostMapping("/{postId}/save-toggle")
-    public ResponseEntity<PostSaveApiResponse<PostSaveDataDTO>> toggleSave(
+    public ResponseEntity<PostApiResponse<PostSaveDataDTO>> toggleSave(
             @PathVariable Long postId,
             Authentication authentication
     ) {
@@ -34,6 +34,6 @@ public class PostsSaveController {
         PostSaveDataDTO data = postsSaveService.toggleSave(authentication.getName(), postId);
         logger.info("POST /api/priv/posts/{}/save-toggle - completed with saved={}", postId, data.saved());
 
-        return ResponseEntity.ok(PostSaveApiResponse.success(data, "Post save status updated"));
+        return ResponseEntity.ok(PostApiResponse.success(data, "Post save status updated"));
     }
 }

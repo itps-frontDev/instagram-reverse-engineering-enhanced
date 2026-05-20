@@ -43,6 +43,7 @@ import {
 } from 'lucide-react';
 import type { FeedPost, Comment, GetCommentsResponse } from '@/types/feed';
 import { toggleLikeAction } from '@/features/likes';
+import { fetchPostTagsAction } from '@/features/posts';
 
 interface PostModalProps {
   post: FeedPost;
@@ -88,7 +89,7 @@ export default function PostModal({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState<Comment | null>(null);
   const [hoveredCommentId, setHoveredCommentId] = useState<number | null>(null);
-  const [tags, setTags] = useState<Array<{id: number; tagged_username: string; x_position: number; y_position: number}>>([]);
+  const [tags, setTags] = useState<Array<{taggedUsername: string; x_position: number; y_position: number}>>([]);
   const [tagsLoaded, setTagsLoaded] = useState(false);
   const [showStoryViewer, setShowStoryViewer] = useState(false);
   const [storyViewerUsername, setStoryViewerUsername] = useState<string | null>(null);
@@ -130,13 +131,28 @@ export default function PostModal({
 
   useEffect(() => {
     if (isOpen) {
-      fetch(`/api/posts/${post.id}/tags`)
-        .then(res => res.json())
-        .then(data => {
-          setTags(data.tags || []);
+      const loadTags = async () => {
+        try {
+          const result = await fetchPostTagsAction(post.id);
+          if (result.success) {
+            // Trasforma PostTagDTO nel formato che il componente si aspetta
+            const transformedTags = result.data.map(tag => ({
+              taggedUsername: tag.taggedUsername,
+              x_position: tag.xPosition,
+              y_position: tag.yPosition,
+            }));
+            setTags(transformedTags);
+          } else {
+            console.error('Failed to load tags:', result.error);
+          }
           setTagsLoaded(true);
-        })
-        .catch(err => console.error('Failed to load tags:', err));
+        } catch (err) {
+          console.error('Failed to load tags:', err);
+          setTagsLoaded(true);
+        }
+      };
+
+      loadTags();
     }
   }, [isOpen, post.id]);
 
@@ -565,9 +581,9 @@ export default function PostModal({
               )}
 
               {/* Tags Overlay */}
-              {showTags && tags.map((tag) => (
+              {showTags && tags.map((tag, index) => (
                 <div
-                  key={tag.id}
+                  key={index}
                   className="absolute bg-black/80 text-white text-sm px-3 py-1.5 rounded-md pointer-events-none z-10"
                   style={{
                     left: `${tag.x_position * 100}%`,
@@ -575,7 +591,7 @@ export default function PostModal({
                     transform: 'translate(-50%, -50%)'
                   }}
                 >
-                  {tag.tagged_username}
+                  {tag.taggedUsername}
                 </div>
               ))}
             </>
