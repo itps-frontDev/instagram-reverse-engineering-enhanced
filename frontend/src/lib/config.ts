@@ -242,7 +242,6 @@ export const config = {
  * Questo è un pattern comune per avere type safety senza duplicare definizioni.
  */
 export type Config = typeof config;
-export type JwtConfig = typeof config.jwt;
 export type StorageConfig = typeof config.storage;
 export type PaginationConfig = typeof config.pagination;
 
