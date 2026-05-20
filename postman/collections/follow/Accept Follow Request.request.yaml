@@ -1,0 +1,12 @@
+$kind: http-request
+name: Accept Follow Request
+description: >
+  Accetta una richiesta di follow in stato pending. Solo il proprietario del profilo può accettare.
+  Aggiorna lo stato da pending ad accepted e incrementa i contatori follower/following.
+  Response: { "success": true, "data": { "profileId": 42 } }.
+  Variabile {{profileId}}: ID numerico del profilo richiedente.
+method: POST
+url: "{{baseUrl}}/api/priv/follows/requests/{{profileId}}/accept"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 200

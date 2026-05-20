@@ -97,23 +97,6 @@ export interface PreviewPost {
   media_type: string | null;
 }
 
-/**
- * Relazione di follow tra due profili.
- * 
- * @interface FollowRelationship
- */
-export interface FollowRelationship {
-  /** ID della relazione */
-  id: number;
-  /** ID del profilo che segue */
-  follower_profile_id: number;
-  /** ID del profilo seguito */
-  following_profile_id: number;
-  /** Stato della richiesta */
-  status: 'pending' | 'accepted' | 'rejected';
-  /** Data creazione */
-  created_at: string;
-}
 
 /**
  * Stato del follow per rendering UI.

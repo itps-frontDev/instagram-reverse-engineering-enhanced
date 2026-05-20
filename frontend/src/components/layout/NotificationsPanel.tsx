@@ -26,6 +26,7 @@ import Link from 'next/link';
 import {NotificationsSkeleton} from '@/components/common/skeletons';
 import {UnfollowModal} from '@/components/profile';
 import { getNotificationsAction, markAllNotificationsReadAction } from '@/features/notifications/actions';
+import { toggleFollowAction, acceptFollowRequestAction, rejectFollowRequestAction } from '@/features/follow';
 
 interface Notification {
   id: string;
@@ -237,14 +238,8 @@ export default function NotificationsPanel({ isOpen, onClose, onMarkAllAsRead }:
     if (!selectedUnfollowUser) return;
 
     try {
-      const response = await fetch('/api/profiles/actions/unfollow', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetProfileId: selectedUnfollowUser.profileId }),
-      });
-
-      if (response.ok) {
-        // Aggiorna lo stato locale
+      const result = await toggleFollowAction({ targetProfileId: selectedUnfollowUser.profileId });
+      if (result.success && result.data?.action === 'removed') {
         setFollowStates(prev => ({
           ...prev,
           [selectedUnfollowUser.profileId]: {
@@ -434,69 +429,27 @@ export default function NotificationsPanel({ isOpen, onClose, onMarkAllAsRead }:
                                   }));
 
                                   try {
-                                    const response = await fetch('/api/profiles/follow/accept', {
-                                      method: 'POST',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({ followerId: notification.sender_profile_id }),
-                                    });
-
-                                    console.log('Accept response status:', response.status, 'OK:', response.ok);
-
-                                    if (response.ok) {
-                                      const data = await response.json();
-                                      console.log('Accept response data:', data);
-
-                                      // Aggiorna la notifica localmente da follow_request a follow
-                                      setNotifications(prev => {
-                                        const updated = prev.map(n =>
-                                          n.id === notification.id
-                                            ? { ...n, type: 'follow' }
-                                            : n
-                                        );
-                                        console.log('Updated notifications, changed notification from follow_request to follow:', notification.id);
-                                        return updated;
-                                      });
-
-                                      // Carica lo stato di follow reale per mostrare il pulsante corretto
-                                      console.log('Loading follow state for:', notification.sender_username);
+                                    const result = await acceptFollowRequestAction({ profileId: notification.sender_profile_id });
+                                    if (result.success) {
+                                      setNotifications(prev =>
+                                        prev.map(n => n.id === notification.id ? { ...n, type: 'follow' } : n)
+                                      );
                                       await loadFollowState(notification.sender_username, notification.sender_profile_id);
-                                    } else if (response.status === 409) {
-                                      // 409 = già accettato. Questo è un caso di dati non sincronizzati
-                                      // Trattiamo come successo e aggiorniamo la UI di conseguenza
-                                      console.log('Follow already accepted (409), updating UI anyway');
-
-                                      // Aggiorna la notifica localmente da follow_request a follow
-                                      setNotifications(prev => {
-                                        const updated = prev.map(n =>
-                                          n.id === notification.id
-                                            ? { ...n, type: 'follow' }
-                                            : n
-                                        );
-                                        console.log('Updated notifications (409 case), changed notification from follow_request to follow:', notification.id);
-                                        return updated;
-                                      });
-
-                                      // Carica lo stato di follow reale per mostrare il pulsante corretto
-                                      console.log('Loading follow state for (409 case):', notification.sender_username);
-                                      await loadFollowState(notification.sender_username, notification.sender_profile_id);
-                                    } else if (response.status === 404) {
-                                      // 404 = follow request non trovato. Dati non sincronizzati.
-                                      // Rimuovi la notifica dalla lista perché non è più valida
-                                      console.log('Follow request not found (404), removing notification');
-                                      setNotifications(prev => prev.filter(n => n.id !== notification.id));
                                     } else {
-                                      const errorData = await response.json().catch(() => ({}));
-                                      console.error('Failed to accept follow request:', response.status, errorData);
-                                      // In caso di errore, rimuovi il loading state
-                                      setFollowStates(prev => {
-                                        const newStates = { ...prev };
-                                        delete newStates[notification.sender_profile_id!];
-                                        return newStates;
-                                      });
+                                      // 404 equivalente: la richiesta non esiste più
+                                      if (result.error?.includes('not found') || result.error?.includes('NOT_FOUND')) {
+                                        setNotifications(prev => prev.filter(n => n.id !== notification.id));
+                                      } else {
+                                        console.error('Failed to accept follow request:', result.error);
+                                        setFollowStates(prev => {
+                                          const newStates = { ...prev };
+                                          delete newStates[notification.sender_profile_id!];
+                                          return newStates;
+                                        });
+                                      }
                                     }
                                   } catch (error) {
                                     console.error('Error accepting follow request:', error);
-                                    // In caso di errore, rimuovi il loading state
                                     setFollowStates(prev => {
                                       const newStates = { ...prev };
                                       delete newStates[notification.sender_profile_id!];
@@ -516,15 +469,11 @@ export default function NotificationsPanel({ isOpen, onClose, onMarkAllAsRead }:
                                   if (!notification.sender_profile_id) return;
 
                                   try {
-                                    const response = await fetch('/api/profiles/follow/reject', {
-                                      method: 'POST',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({ followerId: notification.sender_profile_id }),
-                                    });
-
-                                    if (response.ok) {
-                                      // Rimuovi la notifica dalla lista locale
+                                    const result = await rejectFollowRequestAction({ profileId: notification.sender_profile_id });
+                                    if (result.success) {
                                       setNotifications(prev => prev.filter(n => n.id !== notification.id));
+                                    } else {
+                                      console.error('Error rejecting follow request:', result.error);
                                     }
                                   } catch (error) {
                                     console.error('Error rejecting follow request:', error);
@@ -603,22 +552,15 @@ export default function NotificationsPanel({ isOpen, onClose, onMarkAllAsRead }:
                               }));
                               
                               try {
-                                const response = await fetch('/api/profiles/actions/follow', {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ targetProfileId: notification.sender_profile_id }),
-                                });
-                                if (response.ok) {
-                                  const data = await response.json();
-                                  setFollowStates(prev => ({
-                                    ...prev,
-                                    [notification.sender_profile_id!]: {
-                                      isFollowing: data.status === 'accepted',
-                                      isPending: data.status === 'pending',
-                                      isLoading: false
-                                    }
-                                  }));
-                                }
+                                const result = await toggleFollowAction({ targetProfileId: notification.sender_profile_id });
+                                setFollowStates(prev => ({
+                                  ...prev,
+                                  [notification.sender_profile_id!]: {
+                                    isFollowing: result.data?.status === 'accepted',
+                                    isPending: result.data?.status === 'pending',
+                                    isLoading: false
+                                  }
+                                }));
                               } catch (error) {
                                 console.error('Error following user:', error);
                                 setFollowStates(prev => ({
@@ -710,23 +652,15 @@ export default function NotificationsPanel({ isOpen, onClose, onMarkAllAsRead }:
                               }));
                               
                               try {
-                                const response = await fetch('/api/profiles/actions/follow', {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ targetProfileId: notification.sender_profile_id }),
-                                });
-                                if (response.ok) {
-                                  const data = await response.json();
-                                  // Aggiorna lo stato locale
-                                  setFollowStates(prev => ({
-                                    ...prev,
-                                    [notification.sender_profile_id!]: {
-                                      isFollowing: data.status === 'accepted',
-                                      isPending: data.status === 'pending',
-                                      isLoading: false
-                                    }
-                                  }));
-                                }
+                                const result = await toggleFollowAction({ targetProfileId: notification.sender_profile_id });
+                                setFollowStates(prev => ({
+                                  ...prev,
+                                  [notification.sender_profile_id!]: {
+                                    isFollowing: result.data?.status === 'accepted',
+                                    isPending: result.data?.status === 'pending',
+                                    isLoading: false
+                                  }
+                                }));
                               } catch (error) {
                                 console.error('Error following user:', error);
                                 setFollowStates(prev => ({

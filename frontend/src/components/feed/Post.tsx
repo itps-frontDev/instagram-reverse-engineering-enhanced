@@ -28,6 +28,7 @@ import { formatTimeAgo } from '@/lib/date-utils';
 import { getMediaUrl } from '@/lib/media';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { toggleFollowAction } from '@/features/follow';
 import {
   Heart,
   MessageCircle,
@@ -119,18 +120,11 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
 
     setIsFollowLoading(true);
     try {
-      const response = await fetch('/api/profiles/actions/follow', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ targetProfileId: post.profile_id }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.status === 'pending') {
+      const result = await toggleFollowAction({ targetProfileId: post.profile_id });
+      if (result.success && result.data) {
+        if (result.data.status === 'pending') {
           setIsPending(true);
-        } else {
+        } else if (result.data.action === 'created') {
           setIsFollowing(true);
         }
       }
@@ -151,14 +145,8 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
     setIsFollowLoading(true);
     setShowUnfollowModal(false);
     try {
-      const response = await fetch('/api/profiles/actions/unfollow', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ targetProfileId: post.profile_id }),
-      });
-
-      if (response.ok) {
+      const result = await toggleFollowAction({ targetProfileId: post.profile_id });
+      if (result.success && result.data?.action === 'removed') {
         setIsFollowing(false);
         setIsPending(false);
       }
