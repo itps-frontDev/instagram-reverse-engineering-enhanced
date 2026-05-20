@@ -1,6 +1,6 @@
-package it.evodev.instagram.profile.repository;
+package it.evodev.instagram.follow.repositories;
 
-public interface ProfileFollowerProjection {
+public interface FollowerProjection {
     Long getId();
     String getUsername();
     String getFullName();

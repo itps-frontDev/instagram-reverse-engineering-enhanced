@@ -1,6 +1,6 @@
-package it.evodev.instagram.profile.repository;
+package it.evodev.instagram.follow.repositories;
 
-import it.evodev.instagram.profile.models.ProfileVisibilityFollow;
+import it.evodev.instagram.follow.models.Follow;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -8,8 +8,16 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-public interface ProfileVisibilityFollowJpaRepository extends JpaRepository<ProfileVisibilityFollow, Long> {
-    Optional<ProfileVisibilityFollow> findByFollowerProfileIdAndFollowingProfileIdAndDeletedAtIsNull(Long followerProfileId, Long followingProfileId);
+public interface FollowJpaRepository extends JpaRepository<Follow, Long> {
+
+    Optional<Follow> findByFollowerProfileIdAndFollowingProfileIdAndDeletedAtIsNull(
+            Long followerProfileId, Long followingProfileId);
+
+    Optional<Follow> findByFollowerProfileIdAndFollowingProfileId(
+            Long followerProfileId, Long followingProfileId);
+
+    Optional<Follow> findByFollowerProfileIdAndFollowingProfileIdAndStatusAndDeletedAtIsNull(
+            Long followerProfileId, Long followingProfileId, String status);
 
     @Query(value = """
             SELECT
@@ -34,10 +42,9 @@ public interface ProfileVisibilityFollowJpaRepository extends JpaRepository<Prof
               AND p.deleted_at IS NULL
             ORDER BY f.created_at DESC
             """, nativeQuery = true)
-    List<ProfileFollowerProjection> findFollowersWithViewerStatus(
+    List<FollowerProjection> findFollowersWithViewerStatus(
             @Param("targetProfileId") Long targetProfileId,
-            @Param("viewerProfileId") Long viewerProfileId
-    );
+            @Param("viewerProfileId") Long viewerProfileId);
 
     @Query(value = """
             SELECT
@@ -62,27 +69,10 @@ public interface ProfileVisibilityFollowJpaRepository extends JpaRepository<Prof
               AND p.deleted_at IS NULL
             ORDER BY f.created_at DESC
             """, nativeQuery = true)
-    List<ProfileFollowerProjection> findFollowingWithViewerStatus(
+    List<FollowerProjection> findFollowingWithViewerStatus(
             @Param("targetProfileId") Long targetProfileId,
-            @Param("viewerProfileId") Long viewerProfileId
-    );
+            @Param("viewerProfileId") Long viewerProfileId);
 
-    /**
-     * Fetch top-20 public profiles that the current user hasn't followed yet.
-     * Used for discovery/suggestions feature.
-     * 
-     * Excludes:
-     * - Current user's own profile
-     * - Profiles already followed (accepted status)
-     * - Profiles with pending follow request
-     * - Soft-deleted profiles
-     * - Private profiles
-     * 
-     * Ordered by followers count (popularity) DESC, then creation date DESC.
-     * 
-     * @param currentProfileId ID of current user's profile
-     * @return List of top-20 public profiles ordered by popularity
-     */
     @Query(value = """
             SELECT
                 p.id AS id,
@@ -104,7 +94,6 @@ public interface ProfileVisibilityFollowJpaRepository extends JpaRepository<Prof
             ORDER BY p.followers_count DESC, p.created_at DESC
             LIMIT 20
             """, nativeQuery = true)
-    List<ProfileSuggestionProjection> findSuggestionsForCurrentUser(
-            @Param("currentProfileId") Long currentProfileId
-    );
+    List<SuggestionProjection> findSuggestionsForCurrentUser(
+            @Param("currentProfileId") Long currentProfileId);
 }

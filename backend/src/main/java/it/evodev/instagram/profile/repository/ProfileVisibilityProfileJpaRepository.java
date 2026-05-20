@@ -1,5 +1,6 @@
 package it.evodev.instagram.profile.repository;
 
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import it.evodev.instagram.profile.models.ProfileVisibilityProfile;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -100,4 +101,20 @@ public interface ProfileVisibilityProfileJpaRepository extends JpaRepository<Pro
             @Param("username") String username,
             @Param("viewerProfileId") Long viewerProfileId
     );
+
+    @Modifying
+    @Query(value = "UPDATE profiles SET followers_count = followers_count + 1 WHERE id = :profileId", nativeQuery = true)
+    void incrementFollowersCount(@Param("profileId") Long profileId);
+
+    @Modifying
+    @Query(value = "UPDATE profiles SET followers_count = GREATEST(0, followers_count - 1) WHERE id = :profileId", nativeQuery = true)
+    void decrementFollowersCount(@Param("profileId") Long profileId);
+
+    @Modifying
+    @Query(value = "UPDATE profiles SET following_count = following_count + 1 WHERE id = :profileId", nativeQuery = true)
+    void incrementFollowingCount(@Param("profileId") Long profileId);
+
+    @Modifying
+    @Query(value = "UPDATE profiles SET following_count = GREATEST(0, following_count - 1) WHERE id = :profileId", nativeQuery = true)
+    void decrementFollowingCount(@Param("profileId") Long profileId);
 }
