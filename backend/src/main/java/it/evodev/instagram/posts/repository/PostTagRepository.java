@@ -24,7 +24,7 @@ public interface PostTagRepository extends JpaRepository<PostTag, Long> {
      */
     @Query(value = """
         SELECT
-            p.username AS taggedUsername,
+            p.username::text AS taggedUsername,
             pt.x_position AS xPosition,
             pt.y_position AS yPosition,
             pt.created_at AS createdAt

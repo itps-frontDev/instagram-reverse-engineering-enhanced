@@ -5,6 +5,14 @@ import { getAccessTokenCookieName } from '@/lib/auth/backend';
 import { getPostTagsResponseSchema } from './schema';
 import type { PostTag } from './schema';
 
+function truncateLog(value: string, maxLength = 500): string {
+  if (value.length <= maxLength) {
+    return value;
+  }
+
+  return `${value.slice(0, maxLength)}...<truncated>`;
+}
+
 /**
  * Server Action per fetch dei tag di un post.
  * 
@@ -33,6 +41,7 @@ export async function fetchPostTagsAction(
     }
 
     const url = `${apiUrl}/api/priv/posts/${postId}/tags`;
+    console.info(`[PostTags] Fetch started - postId: ${postId}, url: ${url}`);
 
     const response = await fetch(url, {
       method: 'GET',
@@ -44,7 +53,10 @@ export async function fetchPostTagsAction(
     } as any);
 
     if (!response.ok) {
-      console.error(`[PostTags] API error: ${response.status}`, response.statusText);
+      const errorBody = await response.text();
+      console.error(
+        `[PostTags] API error - postId: ${postId}, status: ${response.status}, statusText: ${response.statusText}, body: ${truncateLog(errorBody)}`
+      );
       return {
         success: false,
         data: [],
@@ -52,12 +64,17 @@ export async function fetchPostTagsAction(
       };
     }
 
-    const jsonData = await response.json();
+    const rawBody = await response.text();
+    console.info(`[PostTags] API response received - postId: ${postId}, body: ${truncateLog(rawBody)}`);
+
+    const jsonData = JSON.parse(rawBody);
 
     // Valida la risposta con Zod
     const validationResult = getPostTagsResponseSchema.safeParse(jsonData);
     if (!validationResult.success) {
-      console.error('[PostTags] Validation error:', validationResult.error.errors);
+      console.error(
+        `[PostTags] Validation error - postId: ${postId}, issues: ${JSON.stringify(validationResult.error.issues)}, payload: ${truncateLog(rawBody)}`
+      );
       return {
         success: false,
         data: [],
@@ -65,12 +82,16 @@ export async function fetchPostTagsAction(
       };
     }
 
+    console.info(
+      `[PostTags] Fetch completed - postId: ${postId}, tags: ${validationResult.data.data?.length ?? 0}`
+    );
+
     return {
       success: true,
       data: validationResult.data.data || [],
     };
   } catch (error) {
-    console.error('[PostTags] Unexpected error:', error);
+    console.error(`[PostTags] Unexpected error - postId: ${postId}:`, error);
     return {
       success: false,
       data: [],

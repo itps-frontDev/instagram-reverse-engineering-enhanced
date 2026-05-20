@@ -1,6 +1,6 @@
 package it.evodev.instagram.posts.repository;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 /**
  * Projection per i tag di un post.
@@ -8,7 +8,7 @@ import java.time.OffsetDateTime;
  */
 public interface PostTagProjection {
     String getTaggedUsername();
-    Integer getXPosition();
-    Integer getYPosition();
-    OffsetDateTime getCreatedAt();
+    Double getXPosition();
+    Double getYPosition();
+    Instant getCreatedAt();
 }

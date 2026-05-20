@@ -12,8 +12,8 @@ package it.evodev.instagram.posts.dto.response;
  */
 public record PostTagDTO(
         String taggedUsername,
-        Integer xPosition,
-        Integer yPosition,
+        Double xPosition,
+        Double yPosition,
         String createdAt
 ) {
 }

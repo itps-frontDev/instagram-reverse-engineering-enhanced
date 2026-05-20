@@ -47,14 +47,11 @@ public class PostTag {
     private Long taggedProfileId;
 
     @Column(name = "x_position", nullable = false)
-    private Integer xPosition;
+    private Double xPosition;
 
     @Column(name = "y_position", nullable = false)
-    private Integer yPosition;
+    private Double yPosition;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private OffsetDateTime updatedAt;
 }
