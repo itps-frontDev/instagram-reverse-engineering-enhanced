@@ -22,6 +22,7 @@ import {FeedPostSkeleton} from '@/components/common/skeletons';
 import { LoadingSpinner } from '@/components/common';
 import type { FeedPost } from '@/types/feed';
 import { createCommentAction } from '@/features/comments';
+import { fetchFeedAction } from '@/features/feed';
 import { toggleLikeAction } from '@/features/likes';
 import { togglePostSaveAction } from '@/features/posts';
 
@@ -36,15 +37,11 @@ export default function FeedContainer() {
   const fetchPosts = async (currentOffset: number = 0) => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `/api/feed?limit=20&offset=${currentOffset}`
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch feed');
+      const result = await fetchFeedAction({ limit: 20, offset: currentOffset });
+      if (!result.success) {
+        throw new Error(result.error);
       }
-
-      const data = await response.json();
+      const data = result.data;
 
       if (currentOffset === 0) {
         setPosts(data.posts);

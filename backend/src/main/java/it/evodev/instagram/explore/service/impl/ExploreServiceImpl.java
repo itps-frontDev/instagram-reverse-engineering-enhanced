@@ -14,22 +14,21 @@ import it.evodev.instagram.explore.repository.ExploreMediaProjection;
 import it.evodev.instagram.explore.repository.ExplorePostProjection;
 import it.evodev.instagram.explore.repository.ExploreRepository;
 import it.evodev.instagram.explore.service.ExploreService;
-import jakarta.persistence.PersistenceException;
+import it.evodev.instagram.common.service.AbstractPostFeedService;
+import it.evodev.instagram.common.util.PaginationParamNormalizer;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class ExploreServiceImpl implements ExploreService {
+public class ExploreServiceImpl extends AbstractPostFeedService implements ExploreService {
 
     private static final Logger logger = LoggerFactory.getLogger(ExploreServiceImpl.class);
     private static final int DEFAULT_LIMIT = 30;
@@ -43,65 +42,65 @@ public class ExploreServiceImpl implements ExploreService {
     public ExploreFeedDataDTO getExplore(String authSubject, ExploreRequestDTO request) {
         logger.info("Explore service started");
 
-        UUID userId = authSubjectService.parseUserId(
+        UUID userId = parseUserId(
+                authSubjectService,
                 authSubject,
                 () -> new ExploreUnauthorizedException("Authentication subject is invalid")
         );
-        Profile currentProfile = profileRepository.findByUserIdAndDeletedAtIsNull(userId)
-                .orElseThrow(() -> new ExploreUnauthorizedException("Authenticated profile not found"));
+        Profile currentProfile = resolveCurrentProfile(
+                profileRepository,
+                userId,
+                () -> new ExploreUnauthorizedException("Authenticated profile not found")
+        );
 
-        int limit = normalizeLimit(request.getLimit());
-        int offset = normalizeOffset(request.getOffset());
+        int limit = PaginationParamNormalizer.normalizeLimit(
+                request.getLimit(),
+                DEFAULT_LIMIT,
+                MAX_LIMIT,
+                () -> new ExploreValidationException("Query parameter limit must be between 1 and 60")
+        );
+        int offset = PaginationParamNormalizer.normalizeOffset(
+                request.getOffset(),
+                () -> new ExploreValidationException("Query parameter offset must be >= 0")
+        );
 
-        List<ExplorePostProjection> rawPosts;
-        try {
-            // Carichiamo limit+1 record per capire se esiste una pagina successiva senza query COUNT costose.
-            rawPosts = exploreRepository.findExplorePosts(currentProfile.getId(), limit + 1, offset);
-        } catch (PersistenceException exception) {
-            logger.error("Explore posts query failed. Error: {}", exception.getMessage());
-            throw new ExploreException("EXPLORE_INTERNAL_ERROR", "Explore temporarily unavailable", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        // Carichiamo limit+1 record per capire se esiste una pagina successiva senza query COUNT costose.
+        List<ExplorePostProjection> rawPosts = fetchWithPersistenceGuard(
+                () -> exploreRepository.findExplorePosts(currentProfile.getId(), limit + 1, offset),
+                () -> new ExploreException("EXPLORE_INTERNAL_ERROR", "Explore temporarily unavailable", HttpStatus.INTERNAL_SERVER_ERROR),
+                logger,
+                "Explore posts query failed."
+        );
 
-        boolean hasMore = rawPosts.size() > limit;
-        List<ExplorePostProjection> pagePosts = hasMore ? rawPosts.subList(0, limit) : rawPosts;
-        List<Long> postIds = pagePosts.stream().map(ExplorePostProjection::getId).toList();
+        PageSlice<ExplorePostProjection> page = slicePage(rawPosts, limit, offset);
+        List<Long> postIds = page.items().stream().map(ExplorePostProjection::getId).toList();
 
         Map<Long, List<ExploreMediaDTO>> mediaByPostId = loadMedia(postIds);
-        List<ExplorePostDTO> posts = pagePosts.stream()
+        List<ExplorePostDTO> posts = page.items().stream()
                 .map(post -> toPostDto(post, mediaByPostId.getOrDefault(post.getId(), List.of())))
                 .toList();
 
-        String nextCursor = hasMore ? String.valueOf(offset + posts.size()) : null;
-        logger.info("Explore service completed with posts: {}, hasMore: {}", posts.size(), hasMore);
-        return new ExploreFeedDataDTO(posts, nextCursor, hasMore);
+        logger.info("Explore service completed with posts: {}, hasMore: {}", posts.size(), page.hasMore());
+        return new ExploreFeedDataDTO(posts, page.nextCursor(), page.hasMore());
     }
 
     private Map<Long, List<ExploreMediaDTO>> loadMedia(List<Long> postIds) {
-        if (postIds.isEmpty()) {
-            return Map.of();
-        }
-
-        List<ExploreMediaProjection> mediaRows;
-        try {
-            mediaRows = exploreRepository.findMediaByPostIds(postIds);
-        } catch (PersistenceException exception) {
-            logger.error("Explore media query failed. Error: {}", exception.getMessage());
-            throw new ExploreException("EXPLORE_INTERNAL_ERROR", "Explore temporarily unavailable", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        Map<Long, List<ExploreMediaDTO>> mediaByPostId = new HashMap<>();
-        for (ExploreMediaProjection row : mediaRows) {
-            ExploreMediaDTO dto = new ExploreMediaDTO(
-                    row.getId(),
-                    row.getPostId(),
-                    row.getMediaUrl(),
-                    row.getMediaType(),
-                    row.getDurationSeconds(),
-                    row.getPosition() != null ? row.getPosition() : 0
-            );
-            mediaByPostId.computeIfAbsent(row.getPostId(), ignored -> new ArrayList<>()).add(dto);
-        }
-        return mediaByPostId;
+        return loadMediaMap(
+                postIds,
+                () -> exploreRepository.findMediaByPostIds(postIds),
+                ExploreMediaProjection::getPostId,
+                row -> new ExploreMediaDTO(
+                        row.getId(),
+                        row.getPostId(),
+                        row.getMediaUrl(),
+                        row.getMediaType(),
+                        row.getDurationSeconds(),
+                        row.getPosition() != null ? row.getPosition() : 0
+                ),
+                () -> new ExploreException("EXPLORE_INTERNAL_ERROR", "Explore temporarily unavailable", HttpStatus.INTERNAL_SERVER_ERROR),
+                logger,
+                "Explore media query failed."
+        );
     }
 
     private ExplorePostDTO toPostDto(ExplorePostProjection row, List<ExploreMediaDTO> media) {
@@ -130,23 +129,4 @@ public class ExploreServiceImpl implements ExploreService {
         );
     }
 
-    private static int normalizeLimit(Integer limit) {
-        if (limit == null) {
-            return DEFAULT_LIMIT;
-        }
-        if (limit < 1 || limit > MAX_LIMIT) {
-            throw new ExploreValidationException("Query parameter limit must be between 1 and 60");
-        }
-        return limit;
-    }
-
-    private static int normalizeOffset(Integer offset) {
-        if (offset == null) {
-            return 0;
-        }
-        if (offset < 0) {
-            throw new ExploreValidationException("Query parameter offset must be >= 0");
-        }
-        return offset;
-    }
 }

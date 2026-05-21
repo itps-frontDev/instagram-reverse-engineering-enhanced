@@ -1,11 +1,11 @@
-package it.evodev.instagram.explore.dto.response;
+package it.evodev.instagram.feed.dto.response;
 
 import it.evodev.instagram.common.dto.response.BasePostDTO;
 
 import java.util.List;
 
-public class ExplorePostDTO extends BasePostDTO<ExploreMediaDTO> {
-    public ExplorePostDTO(
+public class FeedPostDTO extends BasePostDTO<FeedMediaDTO> {
+    public FeedPostDTO(
             long id,
             long profile_id,
             String caption,
@@ -22,7 +22,7 @@ public class ExplorePostDTO extends BasePostDTO<ExploreMediaDTO> {
             boolean profile_has_active_story,
             boolean profile_has_viewed_story,
             boolean profile_is_private,
-            List<ExploreMediaDTO> media,
+            List<FeedMediaDTO> media,
             boolean is_liked_by_current_user,
             boolean is_saved_by_current_user,
             boolean is_following_author,

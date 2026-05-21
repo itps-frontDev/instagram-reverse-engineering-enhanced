@@ -31,7 +31,7 @@
  * const profile = await profileRepository.findByUsername('johndoe');
  * 
  * // Operazioni post
- * const feed = await postRepository.getFeed(profileId, 20, 0);
+ * const posts = await postRepository.getByProfileId(profileId, 20, 0);
  * 
  */
 
@@ -60,8 +60,6 @@ export {
   type CreatePostData,
   type UpdatePostData,
   type AddMediaData,
-  type FeedPostWithDetails,
-  type FeedPostForAPI,
   type ReelWithDetails,
   type PostForView,
 } from './PostRepository';

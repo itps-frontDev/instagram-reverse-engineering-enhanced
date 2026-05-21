@@ -1,0 +1,11 @@
+$kind: http-request
+name: Get Home Feed
+description: >
+  Feed home autenticato con: ultimo post del viewer, post dei profili seguiti
+  e post pubblici explore. Paginazione offset-based con limit+1 server-side per hasMore.
+  Success: { "success": true, "data": { "posts": [...], "nextCursor": "20"|null, "hasMore": true|false }, "message": "Home feed fetched" }.
+method: GET
+url: "{{baseUrl}}/api/priv/feed?limit=20&offset=0"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 121
