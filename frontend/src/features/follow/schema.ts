@@ -116,7 +116,7 @@ export const getFollowingResultSchema = z.object({
 // ─── toggleFollow ─────────────────────────────────────────────────────────────
 
 export const toggleFollowInputSchema = z.object({
-  targetProfileId: z.number().int().positive(),
+  targetProfileId: z.coerce.number().int().positive(),
 });
 
 export const toggleFollowDataSchema = z.object({
@@ -143,7 +143,7 @@ export const toggleFollowResultSchema = z.object({
 // ─── acceptFollowRequest / rejectFollowRequest / removeFollower ───────────────
 
 export const followMutationInputSchema = z.object({
-  profileId: z.number().int().positive(),
+  profileId: z.coerce.number().int().positive(),
 });
 
 export const followMutationDataSchema = z.object({

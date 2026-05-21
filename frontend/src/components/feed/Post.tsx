@@ -122,11 +122,19 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
     try {
       const result = await toggleFollowAction({ targetProfileId: post.profile_id });
       if (result.success && result.data) {
-        if (result.data.status === 'pending') {
+        if (result.data.action === 'requested') {
           setIsPending(true);
+          setIsFollowing(false);
         } else if (result.data.action === 'created') {
           setIsFollowing(true);
+          setIsPending(false);
+        } else if (result.data.action === 'removed') {
+          // Annullamento richiesta pendente
+          setIsPending(false);
+          setIsFollowing(false);
         }
+      } else if (!result.success) {
+        console.error('[Post] toggleFollow failed:', result.error);
       }
     } catch (error) {
       console.error('Failed to follow:', error);
@@ -149,6 +157,8 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
       if (result.success && result.data?.action === 'removed') {
         setIsFollowing(false);
         setIsPending(false);
+      } else if (!result.success) {
+        console.error('[Post] toggleUnfollow failed:', result.error);
       }
     } catch (error) {
       console.error('Failed to unfollow:', error);
@@ -255,7 +265,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
               disabled={isFollowLoading}
               className={`text-sm font-semibold text-follow hover:underline disabled:opacity-50`}
             >
-              {isFollowLoading ? '...' : isFollowing ? 'Segui già' : 'Segui'}
+              {isFollowLoading ? '...' : isFollowing ? 'Segui già' : isPending ? 'Richiesta inviata' : 'Segui'}
             </button>
           )}
           <button 

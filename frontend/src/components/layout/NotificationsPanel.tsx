@@ -26,7 +26,8 @@ import Link from 'next/link';
 import {NotificationsSkeleton} from '@/components/common/skeletons';
 import {UnfollowModal} from '@/components/profile';
 import { getNotificationsAction, markAllNotificationsReadAction } from '@/features/notifications/actions';
-import { toggleFollowAction, acceptFollowRequestAction, rejectFollowRequestAction } from '@/features/follow';
+import { toggleFollowAction, acceptFollowRequestAction, rejectFollowRequestAction, getFollowStatusAction } from '@/features/follow';
+import { getMediaUrl } from '@/lib/media';
 
 interface Notification {
   id: string;
@@ -119,22 +120,17 @@ export default function NotificationsPanel({ isOpen, onClose, onMarkAllAsRead }:
 
   const loadFollowState = async (username: string, profileId: number) => {
     try {
-      console.log('loadFollowState called for:', username, profileId);
-      const response = await fetch(`/api/profiles/${username}/follow-status`);
-      console.log('Follow status response:', response.status, response.ok);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Follow status data:', data);
+      const result = await getFollowStatusAction({ username });
+      if (result.success && result.data) {
         setFollowStates(prev => ({
           ...prev,
           [profileId]: {
-            isFollowing: data.isFollowing,
-            isPending: data.isPending,
+            isFollowing: result.data!.status === 'accepted',
+            isPending: result.data!.status === 'pending',
             isLoading: false
           }
         }));
       } else {
-        console.error('Failed to load follow status:', response.status);
         // Rimuovi il loading state se fallisce
         setFollowStates(prev => {
           const newStates = { ...prev };
@@ -388,13 +384,13 @@ export default function NotificationsPanel({ isOpen, onClose, onMarkAllAsRead }:
                           <div className="w-11 h-11 flex-shrink-0 relative">
                             {notification.reference_media_type === 'video' ? (
                               <video
-                                src={notification.reference_image_url}
+                                src={getMediaUrl(notification.reference_image_url) ?? undefined}
                                 className="w-full h-full object-cover rounded"
                                 muted
                               />
                             ) : (
                               <Image
-                                src={notification.reference_image_url}
+                                src={getMediaUrl(notification.reference_image_url)!}
                                 alt="Post preview"
                                 fill
                                 className="object-cover rounded"
@@ -405,178 +401,86 @@ export default function NotificationsPanel({ isOpen, onClose, onMarkAllAsRead }:
                         )}
                       </Link>
                       {notification.type === 'follow_request' && notification.sender_profile_id && (() => {
-                        const followState = followStates[notification.sender_profile_id];
-                        console.log('Rendering follow_request notification:', notification.id, 'followState:', followState);
+                        const isConfirming = followStates[notification.sender_profile_id]?.isLoading ?? false;
 
-                        // Se non abbiamo ancora lo stato, mostra i pulsanti Conferma/Elimina
-                        if (!followState) {
-                          return (
-                            <div className="flex gap-2 ml-2 flex-shrink-0">
-                              <button
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-                                  e.preventDefault();
-                                  if (!notification.sender_profile_id || !notification.sender_username) return;
+                        // Mostra sempre Conferma/Elimina per le richieste di follow in attesa.
+                        // Dopo l'accettazione il tipo della notifica viene convertito a 'follow',
+                        // quindi il blocco follow sottostante gestirà il follow-back.
+                        return (
+                          <div className="flex gap-2 ml-2 flex-shrink-0">
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                if (!notification.sender_profile_id || !notification.sender_username) return;
 
-                                  // Imposta loading state immediato
-                                  setFollowStates(prev => ({
-                                    ...prev,
-                                    [notification.sender_profile_id!]: {
-                                      isFollowing: false,
-                                      isPending: false,
-                                      isLoading: true
-                                    }
-                                  }));
-
-                                  try {
-                                    const result = await acceptFollowRequestAction({ profileId: notification.sender_profile_id });
-                                    if (result.success) {
-                                      setNotifications(prev =>
-                                        prev.map(n => n.id === notification.id ? { ...n, type: 'follow' } : n)
-                                      );
-                                      await loadFollowState(notification.sender_username, notification.sender_profile_id);
-                                    } else {
-                                      // 404 equivalente: la richiesta non esiste più
-                                      if (result.error?.includes('not found') || result.error?.includes('NOT_FOUND')) {
-                                        setNotifications(prev => prev.filter(n => n.id !== notification.id));
-                                      } else {
-                                        console.error('Failed to accept follow request:', result.error);
-                                        setFollowStates(prev => {
-                                          const newStates = { ...prev };
-                                          delete newStates[notification.sender_profile_id!];
-                                          return newStates;
-                                        });
-                                      }
-                                    }
-                                  } catch (error) {
-                                    console.error('Error accepting follow request:', error);
-                                    setFollowStates(prev => {
-                                      const newStates = { ...prev };
-                                      delete newStates[notification.sender_profile_id!];
-                                      return newStates;
-                                    });
+                                // Imposta loading state immediato
+                                setFollowStates(prev => ({
+                                  ...prev,
+                                  [notification.sender_profile_id!]: {
+                                    isFollowing: false,
+                                    isPending: false,
+                                    isLoading: true
                                   }
-                                }}
-                                className="px-4 py-1.5 bg-[#4A5DF9] hover:bg-[#3D4FD9] text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50"
-                                disabled={followStates[notification.sender_profile_id]?.isLoading}
-                              >
-                                {followStates[notification.sender_profile_id]?.isLoading ? 'Conferma...' : 'Conferma'}
-                              </button>
-                              <button
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-                                  e.preventDefault();
-                                  if (!notification.sender_profile_id) return;
+                                }));
 
-                                  try {
-                                    const result = await rejectFollowRequestAction({ profileId: notification.sender_profile_id });
-                                    if (result.success) {
+                                try {
+                                  const result = await acceptFollowRequestAction({ profileId: notification.sender_profile_id });
+                                  if (result.success) {
+                                    setNotifications(prev =>
+                                      prev.map(n => n.id === notification.id ? { ...n, type: 'follow' } : n)
+                                    );
+                                    await loadFollowState(notification.sender_username, notification.sender_profile_id);
+                                  } else {
+                                    // 404 equivalente: la richiesta non esiste più
+                                    if (result.error?.includes('not found') || result.error?.includes('NOT_FOUND')) {
                                       setNotifications(prev => prev.filter(n => n.id !== notification.id));
                                     } else {
-                                      console.error('Error rejecting follow request:', result.error);
+                                      console.error('Failed to accept follow request:', result.error);
+                                      setFollowStates(prev => {
+                                        const newStates = { ...prev };
+                                        delete newStates[notification.sender_profile_id!];
+                                        return newStates;
+                                      });
                                     }
-                                  } catch (error) {
-                                    console.error('Error rejecting follow request:', error);
                                   }
-                                }}
-                                className="px-4 py-1.5 bg-[#EFEFEF] dark:bg-[#363636] text-[#262626] dark:text-white text-sm font-semibold rounded-lg hover:bg-[#DBDBDB] dark:hover:bg-[#262626] transition-colors"
-                              >
-                                Elimina
-                              </button>
-                            </div>
-                          );
-                        }
-                        
-                        // Dopo aver confermato, mostra il pulsante "Segui anche tu" o "Segui già"
-                        if (followState.isLoading) {
-                          return (
-                            <button
-                              className="ml-2 px-4 py-1.5 bg-[#EFEFEF] dark:bg-[#363636] text-[#262626] dark:text-white text-sm font-semibold rounded-lg flex-shrink-0 opacity-50 cursor-not-allowed"
-                              disabled
-                            >
-                              Caricamento...
-                            </button>
-                          );
-                        }
-
-                        if (followState.isFollowing) {
-                          return (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedUnfollowUser({
-                                  profileId: notification.sender_profile_id!,
-                                  username: notification.sender_username || '',
-                                  profileImage: notification.sender_profile_image_url ?? undefined
-                                });
-                                setShowUnfollowModal(true);
-                              }}
-                              className="ml-2 px-4 py-1.5 bg-[#EFEFEF] dark:bg-[#363636] text-[#262626] dark:text-white text-sm font-semibold rounded-lg hover:bg-[#DBDBDB] dark:hover:bg-[#262626] transition-colors flex-shrink-0"
-                            >
-                              Segui già
-                            </button>
-                          );
-                        }
-                        
-                        if (followState.isPending) {
-                          return (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedUnfollowUser({
-                                  profileId: notification.sender_profile_id!,
-                                  username: notification.sender_username || '',
-                                  profileImage: notification.sender_profile_image_url ?? undefined
-                                });
-                                setShowUnfollowModal(true);
-                              }}
-                              className="ml-2 px-4 py-1.5 bg-[#EFEFEF] dark:bg-[#363636] text-[#262626] dark:text-white text-sm font-semibold rounded-lg hover:bg-[#DBDBDB] dark:hover:bg-[#262626] transition-colors flex-shrink-0"
-                            >
-                              Richiesta effettuata
-                            </button>
-                          );
-                        }
-                        
-                        return (
-                          <button
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              if (!notification.sender_profile_id) return;
-                              
-                              setFollowStates(prev => ({
-                                ...prev,
-                                [notification.sender_profile_id!]: {
-                                  ...prev[notification.sender_profile_id!],
-                                  isLoading: true
+                                } catch (error) {
+                                  console.error('Error accepting follow request:', error);
+                                  setFollowStates(prev => {
+                                    const newStates = { ...prev };
+                                    delete newStates[notification.sender_profile_id!];
+                                    return newStates;
+                                  });
                                 }
-                              }));
-                              
-                              try {
-                                const result = await toggleFollowAction({ targetProfileId: notification.sender_profile_id });
-                                setFollowStates(prev => ({
-                                  ...prev,
-                                  [notification.sender_profile_id!]: {
-                                    isFollowing: result.data?.status === 'accepted',
-                                    isPending: result.data?.status === 'pending',
-                                    isLoading: false
+                              }}
+                              className="px-4 py-1.5 bg-[#4A5DF9] hover:bg-[#3D4FD9] text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50"
+                              disabled={isConfirming}
+                            >
+                              {isConfirming ? 'Conferma...' : 'Conferma'}
+                            </button>
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                if (!notification.sender_profile_id) return;
+
+                                try {
+                                  const result = await rejectFollowRequestAction({ profileId: notification.sender_profile_id });
+                                  if (result.success) {
+                                    setNotifications(prev => prev.filter(n => n.id !== notification.id));
+                                  } else {
+                                    console.error('Error rejecting follow request:', result.error);
                                   }
-                                }));
-                              } catch (error) {
-                                console.error('Error following user:', error);
-                                setFollowStates(prev => ({
-                                  ...prev,
-                                  [notification.sender_profile_id!]: {
-                                    ...prev[notification.sender_profile_id!],
-                                    isLoading: false
-                                  }
-                                }));
-                              }
-                            }}
-                            className="ml-2 px-4 py-1.5 bg-[#4A5DF9] hover:bg-[#3D4FD9] text-white text-sm font-semibold rounded-lg transition-colors flex-shrink-0"
-                            disabled={followState.isLoading}
-                          >
-                            {followState.isLoading ? 'Caricamento...' : 'Segui anche tu'}
-                          </button>
+                                } catch (error) {
+                                  console.error('Error rejecting follow request:', error);
+                                }
+                              }}
+                              className="px-4 py-1.5 bg-[#EFEFEF] dark:bg-[#363636] text-[#262626] dark:text-white text-sm font-semibold rounded-lg hover:bg-[#DBDBDB] dark:hover:bg-[#262626] transition-colors"
+                              disabled={isConfirming}
+                            >
+                              Elimina
+                            </button>
+                          </div>
                         );
                       })()}
                       {notification.type === 'follow' && notification.sender_profile_id && (() => {
