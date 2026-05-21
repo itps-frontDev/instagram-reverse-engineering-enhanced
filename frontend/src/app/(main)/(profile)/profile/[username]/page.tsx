@@ -42,6 +42,7 @@ import { uploadPfpAction, deletePfpAction } from '@/features/profile/picture/act
 import { getMediaUrl } from '@/lib/media';
 import { toggleLikeAction } from '@/features/likes';
 import { togglePostSaveAction } from '@/features/posts';
+import { toggleFollowAction } from '@/features/follow';
 
 // ============================================================================
 // COMPONENTE PRINCIPALE
@@ -297,24 +298,19 @@ export default function ProfilePage({
     }));
 
     try {
-      const res = await fetch('/api/profiles/actions/follow', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetProfileId: profile.id }),
-      });
+      const result = await toggleFollowAction({ targetProfileId: profile.id });
 
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ error: 'Errore nel follow' }));
-        throw new Error(errorData.message || errorData.error || 'Errore nel follow');
+      if (!result.success) {
+        throw new Error(result.error || 'Errore nel follow');
       }
 
-      const data = await res.json();
+      const status = result.data?.status;
 
       // Aggiorna stato in base alla risposta
       setFollowStatus((prev) => ({
         ...prev,
-        isFollowing: data.status === 'accepted',
-        isPending: data.status === 'pending',
+        isFollowing: status === 'accepted',
+        isPending: status === 'pending',
       }));
 
       // Aggiorna contatore follower
@@ -323,7 +319,7 @@ export default function ProfilePage({
           ? {
               ...prev,
               followers_count:
-                data.status === 'accepted'
+                status === 'accepted'
                   ? prev.followers_count + 1
                   : prev.followers_count,
             }
@@ -360,19 +356,10 @@ export default function ProfilePage({
     }));
 
     try {
-      const res = await fetch('/api/profiles/actions/unfollow', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ targetProfileId: Number(profile.id) }),
-      });
+      const result = await toggleFollowAction({ targetProfileId: Number(profile.id) });
 
-      console.log('Unfollow response status:', res.status);
-      const responseData = await res.json();
-      console.log('Unfollow response data:', responseData);
-
-      if (!res.ok) {
-        throw new Error(`Errore nell'unfollow: ${res.status} - ${responseData.error}`);
+      if (!result.success) {
+        throw new Error(result.error || "Errore nell'unfollow");
       }
 
       // Aggiorna contatore follower

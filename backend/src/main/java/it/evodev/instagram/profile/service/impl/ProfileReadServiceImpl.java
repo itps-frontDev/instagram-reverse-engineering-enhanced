@@ -1,7 +1,8 @@
 package it.evodev.instagram.profile.service.impl;
 
 import it.evodev.instagram.profile.dto.response.BirthdayDataDTO;
-import it.evodev.instagram.profile.dto.response.FollowStatusDataDTO;
+import it.evodev.instagram.follow.dto.responses.FollowStatusDataDTO;
+import it.evodev.instagram.follow.services.FollowService;
 import it.evodev.instagram.profile.dto.response.ProfileByUsernameDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfilePreviewDataDTO;
 import it.evodev.instagram.profile.dto.response.RecentPostPreviewDTO;
@@ -11,7 +12,6 @@ import it.evodev.instagram.profile.models.ProfileVisibilityProfile;
 import it.evodev.instagram.profile.repository.ProfileByUsernameProjection;
 import it.evodev.instagram.profile.repository.ProfilePreviewProjection;
 import it.evodev.instagram.profile.repository.ProfileVisibilityProfileJpaRepository;
-import it.evodev.instagram.profile.service.FollowService;
 import it.evodev.instagram.profile.service.ProfileReadService;
 import it.evodev.instagram.profile.service.ProfileVisibilityService;
 import it.evodev.instagram.auth.repositories.UserRepository;

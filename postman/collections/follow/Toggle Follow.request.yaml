@@ -1,0 +1,13 @@
+$kind: http-request
+name: Toggle Follow
+description: >
+  Endpoint unificato per follow/unfollow/cancel-request su un profilo target.
+  Comportamento: se la relazione non esiste la crea (accepted per pubblici, pending per privati);
+  se esiste e is accepted/pending la elimina (soft delete).
+  Response: { "success": true, "data": { "action": "created"|"requested"|"removed", "status": "none"|"pending"|"accepted" } }.
+  Variabile {{targetProfileId}}: ID numerico del profilo target.
+method: POST
+url: "{{baseUrl}}/api/priv/follows/{{targetProfileId}}"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 100

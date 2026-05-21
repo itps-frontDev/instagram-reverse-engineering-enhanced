@@ -21,7 +21,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getProfileFollowersAction, getProfileFollowingAction, getProfileSuggestionsAction } from '@/features/profile';
+import { getFollowersAction, getFollowingAction, toggleFollowAction, removeFollowerAction, getSuggestionsAction } from '@/features/follow';
 import { getMediaUrl } from '@/lib/media';
 
 interface FollowersModalProps {
@@ -76,13 +76,13 @@ export default function FollowersModal({
     setIsLoading(true);
     try {
       if (type === 'followers') {
-        const actionResult = await getProfileFollowersAction({ username });
+        const actionResult = await getFollowersAction({ username });
         if (!actionResult.success || !actionResult.data) {
           throw new Error(actionResult.error || 'Failed to fetch followers');
         }
         setUsers(actionResult.data.followers);
       } else {
-        const actionResult = await getProfileFollowingAction({ username });
+        const actionResult = await getFollowingAction({ username });
         if (!actionResult.success || !actionResult.data) {
           throw new Error(actionResult.error || 'Failed to fetch following');
         }
@@ -110,7 +110,7 @@ export default function FollowersModal({
   // Funzione per caricare utenti suggeriti
   const fetchSuggestedUsers = useCallback(async () => {
     try {
-      const result = await getProfileSuggestionsAction();
+      const result = await getSuggestionsAction();
       if (!result.success || !result.data) {
         throw new Error(result.error || 'Failed to fetch suggestions');
       }
@@ -150,24 +150,20 @@ export default function FollowersModal({
   // Funzione per seguire un utente
   async function handleFollow(targetProfileId: number) {
     try {
-      const res = await fetch('/api/profiles/actions/follow', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetProfileId }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
+      const result = await toggleFollowAction({ targetProfileId });
+      if (result.success && result.data) {
+        const isFollowing = result.data.status === 'accepted';
+        const isPending = result.data.status === 'pending';
         // Aggiorna stato con nuovo follow status
         setUsers(prev => prev.map(u =>
           u.id === targetProfileId
-            ? { ...u, is_following: data.status === 'accepted', isPending: data.status === 'pending' }
+            ? { ...u, is_following: isFollowing, isPending }
             : u
         ));
         // Aggiorna stato utenti suggeriti
         setSuggestedUsers(prev => prev.map(u =>
           u.id === targetProfileId
-            ? { ...u, is_following: data.status === 'accepted', isPending: data.status === 'pending' }
+            ? { ...u, is_following: isFollowing, isPending }
             : u
         ));
       }
@@ -188,26 +184,21 @@ export default function FollowersModal({
         });
       }
       
-      // Scegli l'endpoint giusto in base al contesto
-      // I suggested users devono SEMPRE usare unfollow, non remove-follower
-      const endpoint = (isOwnProfile && type === 'followers' && !isSuggested)
-        ? '/api/profiles/actions/remove-follower'
-        : '/api/profiles/actions/unfollow';
-      
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetProfileId }),
-      });
+      // Scegli l'azione giusta in base al contesto
+      // I suggested users devono SEMPRE usare toggle (unfollow), non remove-follower
+      const isRemoveFollower = isOwnProfile && type === 'followers' && !isSuggested;
+      const result = isRemoveFollower
+        ? await removeFollowerAction({ profileId: targetProfileId })
+        : await toggleFollowAction({ targetProfileId });
 
-      if (res.ok) {
+      if (result.success) {
         // Aggiorna follow status (non rimuove dalla lista immediatamente)
         setUsers(prev => prev.map(u =>
           u.id === targetProfileId
             ? { ...u, is_following: false, isPending: false }
             : u
         ));
-        
+
         // Aggiorna stato utenti suggeriti
         setSuggestedUsers(prev => prev.map(u =>
           u.id === targetProfileId

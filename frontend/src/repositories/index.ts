@@ -42,13 +42,11 @@
 // User Repository - operazioni sulla tabella users
 export { userRepository, type CreateUserData, type UpdateUserData } from './UserRepository';
 
-// Profile Repository - operazioni su profiles e follows
+// Profile Repository - operazioni sulla tabella profiles
 export {
   profileRepository,
   type CreateProfileData,
   type UpdateProfileData,
-  type ProfileWithFollowStatus,
-  type FollowerWithStatus,
 } from './ProfileRepository';
 
 // Post Repository - operazioni su posts, media, like, salvataggi

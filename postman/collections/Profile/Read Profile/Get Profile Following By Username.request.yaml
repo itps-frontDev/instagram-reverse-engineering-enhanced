@@ -2,7 +2,7 @@ $kind: http-request
 name: Get Profile Following By Username
 description: Returns the list of profiles that the specified user is following. The endpoint applies privacy rules for private profiles and provides item-level followStatus for UI actions.
 method: GET
-url: "{{baseUrl}}/api/priv/profiles/{{profileUsername}}/following"
+url: "{{baseUrl}}/api/priv/follows/{{profileUsername}}/following"
 headers:
   Authorization: Bearer {{accessToken}}
 order: 1050

@@ -2,7 +2,7 @@ $kind: http-request
 name: Get Follow Status
 description: Determines the follow status between the authenticated user and a target profile. Change {{followStatusUsername}} to test different scenarios (self, none, pending, accepted, not-found).
 method: GET
-url: "{{baseUrl}}/api/priv/profiles/{{followStatusUsername}}/follow-status"
+url: "{{baseUrl}}/api/priv/follows/{{followStatusUsername}}/status"
 headers:
   Authorization: Bearer {{accessToken}}
 order: 1000

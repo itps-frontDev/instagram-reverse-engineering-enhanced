@@ -1,0 +1,3 @@
+$kind: collection
+name: Follow
+description: Endpoint privati per la gestione delle relazioni follower/following (toggle, accept, reject, remove).

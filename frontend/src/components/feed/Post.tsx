@@ -28,6 +28,7 @@ import { formatTimeAgo } from '@/lib/date-utils';
 import { getMediaUrl } from '@/lib/media';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { toggleFollowAction } from '@/features/follow';
 import {
   Heart,
   MessageCircle,
@@ -145,20 +146,21 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
 
     setIsFollowLoading(true);
     try {
-      const response = await fetch('/api/profiles/actions/follow', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ targetProfileId: post.profile_id }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.status === 'pending') {
+      const result = await toggleFollowAction({ targetProfileId: post.profile_id });
+      if (result.success && result.data) {
+        if (result.data.action === 'requested') {
           setIsPending(true);
-        } else {
+          setIsFollowing(false);
+        } else if (result.data.action === 'created') {
           setIsFollowing(true);
+          setIsPending(false);
+        } else if (result.data.action === 'removed') {
+          // Annullamento richiesta pendente
+          setIsPending(false);
+          setIsFollowing(false);
         }
+      } else if (!result.success) {
+        console.error('[Post] toggleFollow failed:', result.error);
       }
     } catch (error) {
       console.error('Failed to follow:', error);
@@ -177,16 +179,12 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
     setIsFollowLoading(true);
     setShowUnfollowModal(false);
     try {
-      const response = await fetch('/api/profiles/actions/unfollow', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ targetProfileId: post.profile_id }),
-      });
-
-      if (response.ok) {
+      const result = await toggleFollowAction({ targetProfileId: post.profile_id });
+      if (result.success && result.data?.action === 'removed') {
         setIsFollowing(false);
         setIsPending(false);
+      } else if (!result.success) {
+        console.error('[Post] toggleUnfollow failed:', result.error);
       }
     } catch (error) {
       console.error('Failed to unfollow:', error);
@@ -293,7 +291,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
               disabled={isFollowLoading}
               className={`text-sm font-semibold text-follow hover:underline disabled:opacity-50`}
             >
-              {isFollowLoading ? '...' : isFollowing ? 'Segui già' : 'Segui'}
+              {isFollowLoading ? '...' : isFollowing ? 'Segui già' : isPending ? 'Richiesta inviata' : 'Segui'}
             </button>
           )}
           <button 

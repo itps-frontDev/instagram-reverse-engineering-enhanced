@@ -1,0 +1,12 @@
+$kind: http-request
+name: Reject Follow Request
+description: >
+  Rifiuta una richiesta di follow in stato pending. Solo il proprietario del profilo può rifiutare.
+  Imposta status=rejected e deleted_at=now() (soft delete) per preservare lo storico.
+  Response: { "success": true, "data": { "profileId": 42 } }.
+  Variabile {{profileId}}: ID numerico del profilo richiedente.
+method: POST
+url: "{{baseUrl}}/api/priv/follows/requests/{{profileId}}/reject"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 300
