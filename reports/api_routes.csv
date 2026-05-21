@@ -44,9 +44,11 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/feed/save,POST,"MIGRATED to Spring: POST /api/priv/posts/{postId}/save-toggle - feed usa action frontend su endpoint Spring",No,No,Yes,No
 /api/feed,GET,"Legacy Next home feed: post seguiti + explore, paginazione; no Spring feed controller yet",Yes,No,Yes,Yes
 /api/feed/like,POST,"MIGRATED to Spring: POST /api/priv/likes/{post}/{id} - toggle like from feed (handled by Spring)",Yes,No,Yes,Yes
-/api/feed/comments,GET|POST,"Legacy Next comments API (GET lista, POST crea commento e notifica); no Spring comment endpoint yet",Yes,No,Yes,Yes
+/api/feed/comments,GET|POST,"MIGRATED to Spring: /api/priv/comments - Legacy Next comments API (GET lista, POST crea commento e notifica)",Yes,No,Yes,Yes
 /api/feed/comments/like,POST,"MIGRATED to Spring: POST /api/priv/likes/{comment}/{id} - toggle like on comment (handled by Spring)",Yes,No,Yes,Yes
-/api/feed/comments/[id],DELETE,"Legacy Next delete comment endpoint (owner commento o owner post); no Spring comment delete yet",Yes,No,Yes,Yes
+/api/feed/comments/[id],DELETE,"MIGRATED to Spring: /api/priv/comments/{commentId} - Legacy Next delete comment endpoint (owner commento o owner post)",Yes,No,Yes,Yes
+/api/priv/comments,GET|POST,"MIGRATED to Spring: Spring Boot comments module - list/create comments with private-post access control",Yes,No,Yes,No
+/api/priv/comments/{commentId},DELETE,"MIGRATED to Spring: Spring Boot comments module - soft delete comment with author/post-owner authorization",Yes,No,Yes,No
 /api/explore,GET,"Legacy Next explore feed: post popolari da profili pubblici; no Spring endpoint yet",Yes,No,Yes,Yes
 /api/direct/send,POST,"Invia messaggio in chat (verifica partecipazione)",Yes,No,Yes,No
 /api/direct/messages,GET,"Recupera messaggi di una chat (chatId query param)",Yes,No,Yes,No

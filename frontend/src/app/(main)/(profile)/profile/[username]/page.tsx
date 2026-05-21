@@ -37,6 +37,7 @@ import {
 } from '@/types/profile';
 import type { FeedPost } from '@/types/feed';
 import { getProfileByUsernameAction } from '@/features/profile';
+import { createCommentAction } from '@/features/comments';
 import { uploadPfpAction, deletePfpAction } from '@/features/profile/picture/actions';
 import { getMediaUrl } from '@/lib/media';
 import { toggleLikeAction } from '@/features/likes';
@@ -625,13 +626,8 @@ export default function ProfilePage({
     if (!selectedPost) return;
 
     try {
-      const res = await fetch(`/api/posts/${postId}/comment`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
-      });
-
-      if (!res.ok) throw new Error('Errore invio commento');
+      const result = await createCommentAction({ postId, text });
+      if (!result.success) throw new Error(result.error);
 
       // Aggiorna contatore commenti
       setSelectedPost({

@@ -41,7 +41,8 @@ import {
   VolumeX,
   Play,
 } from 'lucide-react';
-import type { FeedPost, Comment, GetCommentsResponse } from '@/types/feed';
+import type { FeedPost, Comment } from '@/types/feed';
+import { createCommentAction, deleteCommentAction, listCommentsAction } from '@/features/comments';
 import { toggleLikeAction } from '@/features/likes';
 import { fetchPostTagsAction } from '@/features/posts';
 
@@ -209,12 +210,10 @@ export default function PostModal({
   const fetchComments = async () => {
     try {
       setIsLoadingComments(true);
-      const response = await fetch(`/api/feed/comments?postId=${post.id}&limit=50`);
+      const result = await listCommentsAction({ postId: post.id, limit: 50, offset: 0 });
+      if (!result.success) throw new Error(result.error);
       
-      if (!response.ok) throw new Error('Failed to fetch comments');
-      
-      const data: GetCommentsResponse = await response.json();
-      setComments(data.comments);
+      setComments(result.data.comments);
     } catch (error) {
       console.error('Error fetching comments:', error);
     } finally {
@@ -237,19 +236,12 @@ export default function PostModal({
         body.parentId = replyingTo.id;
       }
 
-      const response = await fetch('/api/feed/comments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      if (!response.ok) throw new Error('Failed to comment');
-
-      const data = await response.json();
+      const result = await createCommentAction(body);
+      if (!result.success) throw new Error(result.error);
       
       // Aggiungere il nuovo commento in testa alla lista (solo commenti top-level)
       if (!replyingTo) {
-        setComments([data.comment, ...comments]);
+        setComments([result.data, ...comments]);
       } else {
         // Per le risposte, ricaricare i commenti per mostrare l'update
         fetchComments();
@@ -361,19 +353,14 @@ export default function PostModal({
 
     setIsDeletingComment(true);
     try {
-      const response = await fetch(`/api/feed/comments/${commentToDelete.id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      if (!response.ok) throw new Error('Failed to delete comment');
+      const result = await deleteCommentAction({ commentId: commentToDelete.id });
+      if (!result.success) throw new Error(result.error);
 
       // Rimuovi il commento dalla lista
       setComments(comments.filter(c => c.id !== commentToDelete.id && c.parent_id !== commentToDelete.id));
       
       // Chiudi i modali
-      setShowDeleteCommentModal(false);
-      setShowCommentOptionsModal(null);
+      setShowDeleteModal(false);
       setCommentToDelete(null);
     } catch (error) {
       console.error('Error deleting comment:', error);
@@ -847,19 +834,22 @@ export default function PostModal({
                               Rispondi
                             </button>
                             {/* Bottone 3 puntini per il proprietario del post o del commento, visibile solo su hover */}
-                            {(isOwnPost || currentProfile?.id === comment.profile_id) && (
-                              <button
-                                className="ml-1 p-2 rounded-full transition-all hover:scale-110"
-                                onClick={() => { setCommentToDelete(comment); setShowDeleteModal(true); }}
-                                aria-label="Opzioni commento"
-                                style={{
-                                  opacity: hoveredCommentId === comment.id ? 1 : 0,
-                                  visibility: hoveredCommentId === comment.id ? 'visible' : 'hidden'
-                                }}
-                              >
-                                <MoreHorizontal className="w-3.5 h-3.5 text-[#8E8E8E] dark:text-[#A8A8A8]" />
-                              </button>
-                            )}
+                            {(() => {
+                              const canDelete = isOwnPost || Number(currentProfile?.id) === comment.profile_id;
+                              return canDelete ? (
+                                <button
+                                  className="ml-1 p-2 rounded-full transition-all hover:scale-110"
+                                  onClick={() => { setCommentToDelete(comment); setShowDeleteModal(true); }}
+                                  aria-label="Opzioni commento"
+                                  style={{
+                                    opacity: hoveredCommentId === comment.id ? 1 : 0,
+                                    visibility: hoveredCommentId === comment.id ? 'visible' : 'hidden'
+                                  }}
+                                >
+                                  <MoreHorizontal className="w-3.5 h-3.5 text-[#8E8E8E] dark:text-[#A8A8A8]" />
+                                </button>
+                              ) : null;
+                            })()}
                           </div>
                         </div>
                         <button 
@@ -951,19 +941,23 @@ export default function PostModal({
                               Rispondi
                             </button>
                             {/* Bottone 3 puntini per il proprietario del post o della risposta, visibile solo su hover */}
-                            {(isOwnPost || currentProfile?.id === reply.profile_id) && (
-                              <button
-                                className="ml-1 p-2 rounded-full transition-all hover:scale-110"
-                                onClick={() => { setCommentToDelete(reply); setShowDeleteModal(true); }}
-                                aria-label="Opzioni risposta"
-                                style={{
-                                  opacity: hoveredCommentId === reply.id ? 1 : 0,
-                                  visibility: hoveredCommentId === reply.id ? 'visible' : 'hidden'
-                                }}
-                              >
-                                <MoreHorizontal className="w-3.5 h-3.5 text-[#8E8E8E] dark:text-[#A8A8A8]" />
-                              </button>
-                            )}
+                            {(() => {
+                              const canDelete = isOwnPost || Number(currentProfile?.id) === reply.profile_id;
+                              return canDelete ? (
+                                <button
+                                  className="ml-1 p-2 rounded-full transition-all hover:scale-110"
+                                  onClick={() => { setCommentToDelete(reply); setShowDeleteModal(true); }}
+                                  aria-label="Opzioni risposta"
+                                  style={{
+                                    opacity: hoveredCommentId === reply.id ? 1 : 0,
+                                    visibility: hoveredCommentId === reply.id ? 'visible' : 'hidden'
+                                  }}
+                                >
+                                  <MoreHorizontal className="w-3.5 h-3.5 text-[#8E8E8E] dark:text-[#A8A8A8]" />
+                                </button>
+                              ) : null;
+                            })()}
+
                           </div>
                         </div>
                         <button 
@@ -1137,27 +1131,10 @@ export default function PostModal({
         <button
           className="w-full h-14 border-b border-gray-300 dark:border-[#363636] text-[#ed4956] font-bold text-base hover:bg-gray-50 dark:hover:bg-[#23272b] transition-colors"
           style={{ fontSize: '1rem' }}
-          onClick={async () => {
-            if (!commentToDelete) return;
-            try {
-              const res = await fetch(`/api/feed/comments/${commentToDelete.id}`, {
-                method: 'DELETE',
-              });
-              if (res.ok) {
-                // Ricarica i commenti per assicurarsi che siano sincronizzati
-                await fetchComments();
-              } else {
-                alert('Impossibile eliminare il commento');
-              }
-            } catch (e) {
-              console.error('Errore durante l\'eliminazione:', e);
-              alert('Impossibile eliminare il commento');
-            }
-            setShowDeleteModal(false);
-            setCommentToDelete(null);
-          }}
+          onClick={handleDeleteComment}
+          disabled={isDeletingComment}
         >
-          Elimina
+          {isDeletingComment ? 'Eliminazione...' : 'Elimina'}
         </button>
         <button
           className="w-full h-14 text-[#262626] dark:text-[#f8f9f9] text-base hover:bg-gray-50 dark:hover:bg-[#23272b] transition-colors rounded-b-xl"

@@ -21,6 +21,7 @@ import Post from './Post';
 import {FeedPostSkeleton} from '@/components/common/skeletons';
 import { LoadingSpinner } from '@/components/common';
 import type { FeedPost } from '@/types/feed';
+import { createCommentAction } from '@/features/comments';
 import { toggleLikeAction } from '@/features/likes';
 import { togglePostSaveAction } from '@/features/posts';
 
@@ -116,14 +117,9 @@ export default function FeedContainer() {
 
   const handleComment = async (postId: number, text: string) => {
     try {
-      const response = await fetch('/api/feed/comments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postId, text }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to post comment');
+      const result = await createCommentAction({ postId, text });
+      if (!result.success) {
+        throw new Error(result.error);
       }
 
       // Aggiorna conteggio commenti

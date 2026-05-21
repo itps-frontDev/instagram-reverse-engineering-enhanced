@@ -19,6 +19,7 @@ import { useRouter } from 'next/navigation';
 import Post from '@/components/feed/Post';
 import { LoadingSpinner } from '@/components/common';
 import type { FeedPost } from '@/types/feed';
+import { createCommentAction } from '@/features/comments';
 import { toggleLikeAction } from '@/features/likes';
 import { togglePostSaveAction } from '@/features/posts';
 
@@ -190,17 +191,12 @@ export default function PostPage({ params }: PostPageProps) {
    */
   const handleComment = async (postId: number, text: string) => {
     try {
-      const response = await fetch(`/api/feed/comments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ postId, text }),
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setPost(data.post);
-      }
+      const result = await createCommentAction({ postId, text });
+      if (!result.success) throw new Error(result.error);
+      setPost(prev => prev
+        ? { ...prev, comments_count: prev.comments_count + 1 }
+        : prev
+      );
     } catch (error) {
       console.error('Errore invio commento:', error);
     }

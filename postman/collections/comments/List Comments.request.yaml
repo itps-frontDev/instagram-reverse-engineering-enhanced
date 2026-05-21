@@ -1,0 +1,20 @@
+$kind: http-request
+name: List Comments
+description: >
+  Recupera la lista di commenti per un post specifico con paginazione e stato like per l'utente autenticato.
+  
+  Parametri query:
+  - postId (required): ID numerico del post
+  - limit (optional): numero di commenti per pagina, default 20, max 100
+  - offset (optional): offset per paginazione, default 0
+  
+  Risposta successo: { "success": true, "data": { "comments": [...], "total": 42, "hasMore": true }, "message": "Comments retrieved successfully" }
+  
+  Errore 400: { "success": false, "error": "COMMENT_VALIDATION_ERROR", "message": "Post id must be a positive number" }
+  Errore 403: { "success": false, "error": "COMMENT_FORBIDDEN", "message": "You cannot comment on this post" }
+  Errore 404: { "success": false, "error": "COMMENT_NOT_FOUND", "message": "Post not found" }
+method: GET
+url: "{{baseUrl}}/api/priv/comments?postId={{postId}}&limit={{commentLimit}}&offset={{commentOffset}}"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 200

@@ -26,6 +26,7 @@ import {MobileSearchBar} from '@/components/feed';
 import { LoadingSpinner } from '@/components/common';
 import {ExploreSkeleton} from '@/components/common/skeletons';
 import type { FeedPost, GetFeedResponse } from '@/types/feed';
+import { createCommentAction } from '@/features/comments';
 import { toggleLikeAction } from '@/features/likes';
 import { togglePostSaveAction } from '@/features/posts';
 
@@ -201,13 +202,8 @@ export default function ExplorePage() {
    */
   const handleComment = async (postId: number, text: string) => {
     try {
-      const response = await fetch('/api/feed/comments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postId, text }),
-      });
-
-      if (!response.ok) throw new Error('Errore commento');
+      const result = await createCommentAction({ postId, text });
+      if (!result.success) throw new Error(result.error);
 
       // Aggiorna il contatore commenti
       setPosts((prevPosts) =>

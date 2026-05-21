@@ -1,0 +1,3 @@
+$kind: collection
+name: Comments
+description: Endpoint privati per la gestione completa dei commenti su Spring Boot (read, create, delete con autorizzazione e notifiche).

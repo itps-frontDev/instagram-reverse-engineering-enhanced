@@ -1,0 +1,27 @@
+$kind: http-request
+name: Delete Comment
+description: >
+  Soft-delete di un commento.
+  
+  Autorizzazione (solo uno dei due richiesto):
+  - L'utente autenticato è autore del commento
+  - L'utente autenticato è proprietario del post
+  
+  Logica counter:
+  - Se il commento cancellato è top-level (parentId IS NULL): decrementa posts.comments_count
+  - Se è una reply (parentId NOT NULL): non modifica counter, rimane nidificato
+  
+  Soft-delete semantica:
+  - Commento marcato deleted_at = NOW()
+  - Non hard-delete, rimane nel DB con deleted_at valorizzato
+  - Le query scartano commenti con deleted_at IS NOT NULL
+  
+  Risposta successo: { "success": true, "data": null, "message": "Comment deleted successfully" }
+  
+  Errore 403: { "success": false, "error": "COMMENT_FORBIDDEN", "message": "You cannot delete this comment" }
+  Errore 404: { "success": false, "error": "COMMENT_NOT_FOUND", "message": "Comment not found" }
+method: DELETE
+url: "{{baseUrl}}/api/priv/comments/{{commentId}}"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 220

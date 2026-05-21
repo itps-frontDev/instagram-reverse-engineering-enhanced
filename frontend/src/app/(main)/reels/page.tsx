@@ -33,6 +33,7 @@ import {ReelsSkeleton} from '@/components/common/skeletons';
 import { VerifiedBadge, ShareIcon } from '@/components/common';;
 import { formatTimeAgo } from '@/lib/date-utils';
 import { getMediaUrl } from '@/lib/media';
+import { createCommentAction, listCommentsAction } from '@/features/comments';
 import { toggleLikeAction } from '@/features/likes';
 import { togglePostSaveAction } from '@/features/posts';
 
@@ -84,7 +85,7 @@ interface Comment {
   /** Username dell'autore del commento */
   profile_username: string;
   /** URL immagine profilo */
-  profile_image_url: string;
+  profile_image_url: string | null;
   /** Flag verifica account */
   profile_is_verified: boolean;
   /** Numero di like al commento */
@@ -323,11 +324,9 @@ export default function ReelsPage() {
   const fetchComments = async (reelId: number) => {
     setIsLoadingComments(true);
     try {
-      const response = await fetch(`/api/feed/comments?postId=${reelId}`);
-      if (!response.ok) throw new Error('Failed to fetch comments');
-      
-      const data = await response.json();
-      setComments(data.comments || []);
+      const result = await listCommentsAction({ postId: reelId, limit: 50, offset: 0 });
+      if (!result.success) throw new Error(result.error);
+      setComments(result.data.comments || []);
     } catch (error) {
       console.error('Errore nel caricamento commenti:', error);
       setComments([]);
@@ -575,18 +574,11 @@ export default function ReelsPage() {
 
     setIsSubmittingComment(true);
     try {
-      const response = await fetch('/api/feed/comments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postId: currentReel.id, text: commentText }),
-      });
-
-      if (!response.ok) throw new Error('Errore invio commento');
-      
-      const data = await response.json();
+      const result = await createCommentAction({ postId: currentReel.id, text: commentText });
+      if (!result.success) throw new Error(result.error);
       
       // Aggiungi il nuovo commento in cima alla lista
-      setComments(prev => [data.comment, ...prev]);
+      setComments(prev => [result.data, ...prev]);
       setCommentText('');
 
       // Aggiorna il conteggio commenti del reel

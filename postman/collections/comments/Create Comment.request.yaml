@@ -1,0 +1,45 @@
+$kind: http-request
+name: Create Comment
+description: >
+  Crea un nuovo commento o una risposta (reply) a un commento esistente.
+  
+  Body JSON:
+  {
+    "postId": 123,
+    "text": "Great post!",
+    "parentId": null  (optional, usare per reply a un commento)
+  }
+  
+  Validazioni:
+  - postId: numero positivo, post deve esistere e comments non disabilitati
+  - text: 1-2200 caratteri, non vuoto
+  - parentId: (opzionale) numero positivo, commento padre deve esistere nello stesso post
+  
+  Logica counter:
+  - Se parentId è null (top-level): incrementa posts.comments_count
+  - Se parentId non è null (reply): non incrementa counter, nidifica la reply
+  
+  Notifiche:
+  - Top-level: invia notifica "comment" al post owner
+  - Reply: invia notifica "comment_reply" all'autore del commento padre
+  - Non invia notifica a se stesso
+  
+  Risposta successo: { "success": true, "data": { "id": 456, "postId": 123, "profileId": 789, "text": "Great post!", "createdAt": "2026-05-21T15:49:28", ... }, "message": "Comment created successfully" }
+  
+  Errore 400: { "success": false, "error": "COMMENT_VALIDATION_ERROR", "message": "Comment text is required" }
+  Errore 403: { "success": false, "error": "COMMENT_FORBIDDEN", "message": "Comments are disabled for this post" }
+  Errore 404: { "success": false, "error": "COMMENT_NOT_FOUND", "message": "Post not found" }
+method: POST
+url: "{{baseUrl}}/api/priv/comments"
+headers:
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+body:
+  mode: raw
+  raw: |
+    {
+      "postId": {{postId}},
+      "text": "Great post!",
+      "parentId": null
+    }
+order: 210
