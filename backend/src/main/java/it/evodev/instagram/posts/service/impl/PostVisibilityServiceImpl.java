@@ -3,7 +3,7 @@ package it.evodev.instagram.posts.service.impl;
 import it.evodev.instagram.auth.models.Profile;
 import it.evodev.instagram.auth.repositories.ProfileRepository;
 import it.evodev.instagram.posts.service.PostVisibilityService;
-import it.evodev.instagram.profile.repository.ProfileVisibilityFollowJpaRepository;
+import it.evodev.instagram.follow.repositories.FollowJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +23,7 @@ public class PostVisibilityServiceImpl implements PostVisibilityService {
     private static final Logger logger = LoggerFactory.getLogger(PostVisibilityServiceImpl.class);
 
     private final ProfileRepository profileRepository;
-    private final ProfileVisibilityFollowJpaRepository followRepository;
+    private final FollowJpaRepository followRepository;
 
     @Override
     public boolean canViewPost(UUID currentUserId, Long postOwnerProfileId) {
@@ -61,9 +61,10 @@ public class PostVisibilityServiceImpl implements PostVisibilityService {
 
         // Decision: private profile - check follow status
         boolean isFollowing = followRepository
-                .findByFollowerProfileIdAndFollowingProfileIdAndDeletedAtIsNull(
+                .findByFollowerProfileIdAndFollowingProfileIdAndStatusAndDeletedAtIsNull(
                         currentProfile.getId(),
-                        postOwnerProfileId
+                        postOwnerProfileId,
+                        "accepted"
                 )
                 .isPresent();
 
