@@ -1,0 +1,12 @@
+$kind: http-request
+name: Remove Follower
+description: >
+  Rimuove un follower dal proprio profilo. Solo il proprietario del profilo può rimuovere.
+  Soft delete della relazione e decremento contatori follower/following.
+  Response: { "success": true, "data": { "profileId": 42 } }.
+  Variabile {{profileId}}: ID numerico del profilo da rimuovere dai propri follower.
+method: DELETE
+url: "{{baseUrl}}/api/priv/follows/followers/{{profileId}}"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 400

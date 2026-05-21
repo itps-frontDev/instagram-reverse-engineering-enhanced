@@ -1,21 +1,11 @@
-### Get Profile Suggestions
-GET {{baseUrl}}/api/priv/profiles/suggestions HTTP/1.1
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-###
-
-### Expected Response (200 OK)
-# {
-#   "success": true,
-#   "data": [
-#     {
-#       "id": 42,
-#       "username": "johnsmith",
-#       "fullName": "John Smith",
-#       "profileImageUrl": "https://...",
-#       "followersCount": 1200
-#     }
-#   ],
-#   "message": "Suggestions fetched successfully"
-# }
+$kind: http-request
+name: Get Profile Suggestions
+description: >
+  Restituisce fino a 5 profili pubblici suggeriti all'utente autenticato, non ancora seguiti.
+  Ordinati per popolarità con randomizzazione sui top 20.
+  Response: { "success": true, "data": [{ "id", "username", "fullName", "profileImageUrl", "followersCount" }] }.
+method: GET
+url: "{{baseUrl}}/api/priv/follows/suggestions"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 1000

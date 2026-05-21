@@ -8,19 +8,19 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/search,GET,"MIGRATED to Spring: /api/priv/search - ricerca profili per username o nome",Yes,No,Yes,No
 /api/reels,GET,"Legacy Next reels feed (video posts) con paginazione; no Spring controller yet",Yes,No,Yes,Yes
 /api/profiles/upload-image,POST,"MIGRATED to Spring: /api/priv/profiles/me/picture - PUT - upload foto profilo",Yes,Yes,Yes,No
-/api/profiles/suggestions,GET,"MIGRATED to Spring: /api/priv/profiles/suggestions - suggerimenti profili da seguire (top-20 pubblici non seguiti, shuffled per varietà)",No,No,Yes,No
+/api/profiles/suggestions,GET,"MIGRATED to Spring: /api/priv/follows/suggestions - suggerimenti profili da seguire (top-20 pubblici non seguiti, shuffled per varietà)",No,No,Yes,No
 /api/profiles/security,PUT,"MIGRATED to Spring: /api/priv/profiles/security - Aggiorna email/telefono/password (bcrypt)",Yes,No,Yes,No
 /api/profiles/remove-image,DELETE,"MIGRATED to Spring: /api/priv/profiles/me/picture - DELETE - rimozione foto profilo",Yes,Yes,Yes,No
 /api/profiles/privacy,PUT,"MIGRATED to Spring: /api/priv/profiles/privacy - aggiorna privacy profilo e promuove in bulk le richieste follow pending",No,No,Yes,No
 /api/profiles/personal,PUT,"MIGRATED to Spring: /api/priv/profiles/personal - aggiorna username e nome completo con verifica unicità",No,No,Yes,No
 /api/profiles/me/followers,GET,"DEPRECATED: endpoint legacy rimosso; usare GET /api/priv/profiles/{username}/followers (username da auth/me o route profile)",No,No,Yes,No
-/api/profiles/follow/reject,POST,"Rifiuta/elimina richiesta di follow (soft delete)",Yes,No,Yes,No
-/api/profiles/follow/accept,POST,"Accetta richiesta di follow; aggiorna contatori e notifiche",Yes,No,Yes,No
+/api/profiles/follow/reject,POST,"MIGRATED to Spring: /api/priv/follows/requests/{id}/reject - rifiuta richiesta di follow (status=rejected + soft delete); pubblica notifica",No,No,Yes,No
+/api/profiles/follow/accept,POST,"MIGRATED to Spring: /api/priv/follows/requests/{id}/accept - accetta richiesta di follow; aggiorna contatori e pubblica notifica",No,No,Yes,No
 /api/profiles/edit,PUT,"MIGRATED to Spring: /api/priv/profiles/edit - aggiorna bio, website e genere del profilo autenticato",No,No,Yes,No
 /api/profiles/birthday,GET|PUT,"MIGRATED to Spring: /api/priv/profiles/birthday - GET: recupera data di nascita; PUT: aggiorna data di nascita con validazione età minima (13 anni)",No,No,Yes,No
-/api/profiles/actions/unfollow,POST,"Smettere di seguire (soft delete) e aggiornare contatori",Yes,No,Yes,No
-/api/profiles/actions/remove-follower,POST,"Rimuove un follower (soft delete) e aggiornamento contatori",Yes,No,Yes,No
-/api/profiles/actions/follow,POST,"Segui un utente (accepted o pending) e crea notifica",Yes,No,Yes,No
+/api/profiles/actions/unfollow,POST,"MIGRATED to Spring: /api/priv/follows/{targetProfileId} - unfollow gestito come toggle (stesso endpoint del follow)",No,No,Yes,No
+/api/profiles/actions/remove-follower,POST,"MIGRATED to Spring: /api/priv/follows/followers/{id} - rimuove un follower dal proprio profilo; aggiorna contatori e soft delete",No,No,Yes,No
+/api/profiles/actions/follow,POST,"MIGRATED to Spring: /api/priv/follows/{targetProfileId} - toggle follow/unfollow/cancel con restore-before-insert e notifiche",No,No,Yes,No
 /api/profiles/[username]/upload-image,POST,"MIGRATED to Spring: /api/priv/profiles/me/picture - PUT - upload foto profilo (owner only)",Yes,Yes,Yes,No
 /api/profiles/[username],GET,"MIGRATED to Spring: /api/priv/profiles/{username} - profilo centrale con flag contestuali e payload full/partial per privacy",Yes,No,Yes,No
 /api/profiles/[username]/preview,GET,"MIGRATED to Spring: /api/priv/profiles/{username}/preview - anteprima profilo con post recenti per card hover",Yes,No,Yes,No
@@ -28,7 +28,7 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/profiles/[username]/posts,GET,"Legacy Next lista post di un profilo (tabs: posts,reels,saved,tagged); Spring preview exists but this tab fetch is still Next-side",Yes,No,Yes,No
 /api/profiles/[username]/following,GET,"MIGRATED to Spring: /api/priv/profiles/{username}/following - lista dei profili seguiti con privacy check + followStatus per ogni item",No,No,Yes,No
 /api/profiles/[username]/followers,GET,"MIGRATED to Spring: /api/priv/profiles/{username}/followers - lista follower con privacy check + followStatus per ogni item",No,No,Yes,No
-/api/profiles/[username]/follow-status,GET,"MIGRATED to Spring: /api/priv/profiles/{username}/follow-status - stato della relazione follow tra utente corrente e profilo target",Yes,No,Yes,No
+/api/profiles/[username]/follow-status,GET,"MIGRATED to Spring: /api/priv/follows/{username}/status - stato della relazione follow tra utente corrente e profilo target",No,No,Yes,No
 /api/profiles/[username]/can-view,GET,"MIGRATED to Spring: /api/priv/profiles/{username}/can-view - verifica se user può vedere contenuti del profilo (privacy)",Yes,No,Yes,No
 /api/posts/create,POST,"Legacy Next create post: salva immagini e crea post_media in transazione; no Spring create endpoint yet",Yes,Yes,Yes,Yes
 /api/posts/[postId]/unsave,POST,"MIGRATED to Spring: POST /api/priv/posts/{postId}/save-toggle - unsave gestito come toggle (legacy endpoint removed)",No,No,Yes,No

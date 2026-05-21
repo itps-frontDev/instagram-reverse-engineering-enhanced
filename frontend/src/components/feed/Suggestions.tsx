@@ -21,7 +21,7 @@ import Link from 'next/link';
 import { VerifiedBadge } from '@/components/common';
 import {ProfilePicture} from '@/components';
 import {ProfilePreviewCard} from '@/components/profile';
-import { getProfileSuggestionsAction } from '@/features/profile';
+import { toggleFollowAction, getSuggestionsAction } from '@/features/follow';
 
 interface SuggestedUser {
   id: number;
@@ -45,7 +45,7 @@ export default function Suggestions() {
   useEffect(() => {
     async function fetchSuggestions() {
       try {
-        const result = await getProfileSuggestionsAction();
+        const result = await getSuggestionsAction();
         if (result.success && result.data) {
           // Map response to SuggestedUser interface
           const mapped: SuggestedUser[] = result.data.map(item => ({
@@ -76,22 +76,15 @@ export default function Suggestions() {
     setLoadingFollowIds(prev => new Set(prev).add(userId));
 
     try {
-      const response = await fetch('/api/profiles/actions/follow', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetProfileId: userId }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.status === 'pending') {
+      const result = await toggleFollowAction({ targetProfileId: userId });
+      if (result.success && result.data) {
+        if (result.data.status === 'pending') {
           setPendingIds(prev => new Set(prev).add(userId));
-        } else if (data.status === 'accepted') {
+        } else if (result.data.status === 'accepted') {
           setFollowingIds(prev => new Set(prev).add(userId));
         }
-      } else {
-        const errorData = await response.json();
-        console.error('Failed to follow user:', errorData);
+      } else if (!result.success) {
+        console.error('Failed to follow user:', result.error);
       }
     } catch (error) {
       console.error('Error following user:', error);
@@ -111,13 +104,8 @@ export default function Suggestions() {
     setLoadingFollowIds(prev => new Set(prev).add(userId));
 
     try {
-      const response = await fetch('/api/profiles/actions/unfollow', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetProfileId: userId }),
-      });
-
-      if (response.ok) {
+      const result = await toggleFollowAction({ targetProfileId: userId });
+      if (result.success && result.data?.action === 'removed') {
         setFollowingIds(prev => {
           const newSet = new Set(prev);
           newSet.delete(userId);
@@ -128,8 +116,8 @@ export default function Suggestions() {
           newSet.delete(userId);
           return newSet;
         });
-      } else {
-        console.error('Failed to unfollow user');
+      } else if (!result.success) {
+        console.error('Failed to unfollow user:', result.error);
       }
     } catch (error) {
       console.error('Error unfollowing user:', error);

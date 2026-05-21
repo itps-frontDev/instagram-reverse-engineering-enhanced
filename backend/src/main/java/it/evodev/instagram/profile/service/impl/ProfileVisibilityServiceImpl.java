@@ -1,10 +1,10 @@
 package it.evodev.instagram.profile.service.impl;
 
+import it.evodev.instagram.follow.models.Follow;
+import it.evodev.instagram.follow.repositories.FollowJpaRepository;
 import it.evodev.instagram.profile.dto.response.ProfileVisibilityDataDTO;
 import it.evodev.instagram.profile.exceptions.ProfileNotFoundException;
-import it.evodev.instagram.profile.models.ProfileVisibilityFollow;
 import it.evodev.instagram.profile.models.ProfileVisibilityProfile;
-import it.evodev.instagram.profile.repository.ProfileVisibilityFollowJpaRepository;
 import it.evodev.instagram.profile.repository.ProfileVisibilityProfileJpaRepository;
 import it.evodev.instagram.profile.service.ProfileVisibilityService;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ public class ProfileVisibilityServiceImpl implements ProfileVisibilityService {
     private static final Logger logger = LoggerFactory.getLogger(ProfileVisibilityServiceImpl.class);
 
     private final ProfileVisibilityProfileJpaRepository profileRepository;
-    private final ProfileVisibilityFollowJpaRepository followRepository;
+    private final FollowJpaRepository followRepository;
 
     @Override
     public ProfileVisibilityDataDTO canViewProfile(UUID currentUserId, String targetUsername) {
@@ -59,7 +59,7 @@ public class ProfileVisibilityServiceImpl implements ProfileVisibilityService {
         }
 
         // Decision: private profile - check follow status
-        Optional<ProfileVisibilityFollow> followOpt = followRepository
+        Optional<Follow> followOpt = followRepository
                 .findByFollowerProfileIdAndFollowingProfileIdAndDeletedAtIsNull(currentProfile.getId(), targetProfile.getId());
 
         if (followOpt.isEmpty()) {

@@ -23,7 +23,7 @@
 // EXPORT DEI TIPI PER DOMINIO
 // ============================================================================
 
-// Tipi relativi ai profili utente (Profile, FollowRelationship, etc.)
+// Tipi relativi ai profili utente
 export * from './profile';
 
 // Tipi relativi al feed e ai post (FeedPost, PostMedia, Comment, etc.)
