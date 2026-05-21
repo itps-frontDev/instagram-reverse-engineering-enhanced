@@ -18,7 +18,7 @@
  * @module components/feed/Post
  */
 
-import { useState, type MouseEvent } from 'react';
+import { useCallback, useState, type MouseEvent } from 'react';
 import Image from 'next/image';
 import ProfilePicture from '@/components/ProfilePicture';
 import { VerifiedBadge, MoreOptionsIcon, ShareIcon, TagIcon } from '@/components/common';
@@ -75,6 +75,31 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
   const [showDeletePostModal, setShowDeletePostModal] = useState(false);
   const [isDeletingPost, setIsDeletingPost] = useState(false);
 
+  const loadTagsIfNeeded = useCallback(async () => {
+    if (tagsLoaded || isLoadingTags) return;
+
+    setIsLoadingTags(true);
+    try {
+      const result = await fetchPostTagsAction(post.id);
+      if (result.success) {
+        // Manteniamo un'unica cache locale dei tag, condivisa tra card e modal.
+        const transformedTags = result.data.map(tag => ({
+          taggedUsername: tag.taggedUsername,
+          x_position: tag.xPosition,
+          y_position: tag.yPosition,
+        }));
+        setTags(transformedTags);
+        setTagsLoaded(true);
+      } else {
+        console.error('Failed to load tags:', result.error);
+      }
+    } catch (err) {
+      console.error('Failed to load tags:', err);
+    } finally {
+      setIsLoadingTags(false);
+    }
+  }, [isLoadingTags, post.id, tagsLoaded]);
+
   const handleToggleTags = async (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
 
@@ -83,30 +108,14 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
       return;
     }
 
-    if (!tagsLoaded && !isLoadingTags) {
-      setIsLoadingTags(true);
-      try {
-        const result = await fetchPostTagsAction(post.id);
-        if (result.success) {
-          // Carichiamo i tag solo on-demand per evitare raffiche di richieste nel feed.
-          const transformedTags = result.data.map(tag => ({
-            taggedUsername: tag.taggedUsername,
-            x_position: tag.xPosition,
-            y_position: tag.yPosition,
-          }));
-          setTags(transformedTags);
-          setTagsLoaded(true);
-        } else {
-          console.error('Failed to load tags:', result.error);
-        }
-      } catch (err) {
-        console.error('Failed to load tags:', err);
-      } finally {
-        setIsLoadingTags(false);
-      }
-    }
+    await loadTagsIfNeeded();
 
     setShowTags(true);
+  };
+
+  const handleOpenModal = async () => {
+    await loadTagsIfNeeded();
+    setIsModalOpen(true);
   };
 
   const handleCommentSubmit = async () => {
@@ -427,7 +436,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
               )}
             </button>
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={handleOpenModal}
               className="flex items-center gap-1"
             >
               <MessageCircle className="w-6 h-6 text-[#262626] dark:text-[#FAFAFA] icon-mirrored" />
@@ -477,6 +486,8 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
       {/* Post Modal */}
       <PostModal
         post={post}
+        postTags={tags}
+        onRequestPostTags={loadTagsIfNeeded}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onLike={onLike}

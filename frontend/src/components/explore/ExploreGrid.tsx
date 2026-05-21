@@ -29,6 +29,7 @@ import type { FeedPost } from '@/types/feed';
 import { PostModal } from '@/components/feed';
 import { CarouselIcon, PostHoverOverlay } from '@/components/common';
 import { getMediaUrl } from '@/lib/media';
+import { fetchPostTagsAction } from '@/features/posts';
 
 // ============================================================================
 // INTERFACCE
@@ -70,15 +71,41 @@ export default function ExploreGrid({
   onComment,
 }: ExploreGridProps) {
   const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
+  const [postTagsByPostId, setPostTagsByPostId] = useState<
+    Record<number, Array<{taggedUsername: string; x_position: number; y_position: number}>>
+  >({});
 
   const selectedPost = selectedPostIndex !== null ? posts[selectedPostIndex] : null;
+
+  const openPostByIndex = async (index: number) => {
+    const nextPost = posts[index];
+    if (!nextPost) return;
+
+    setSelectedPostIndex(index);
+
+    if (postTagsByPostId[nextPost.id]) return;
+
+    const result = await fetchPostTagsAction(nextPost.id);
+    if (!result.success) return;
+
+    const transformedTags = result.data.map(tag => ({
+      taggedUsername: tag.taggedUsername,
+      x_position: tag.xPosition,
+      y_position: tag.yPosition,
+    }));
+
+    setPostTagsByPostId(prev => ({
+      ...prev,
+      [nextPost.id]: transformedTags,
+    }));
+  };
 
   /**
    * Naviga al post successivo nella griglia.
    */
   const handleNext = () => {
     if (selectedPostIndex !== null && selectedPostIndex < posts.length - 1) {
-      setSelectedPostIndex(selectedPostIndex + 1);
+      void openPostByIndex(selectedPostIndex + 1);
     }
   };
 
@@ -87,7 +114,7 @@ export default function ExploreGrid({
    */
   const handlePrev = () => {
     if (selectedPostIndex !== null && selectedPostIndex > 0) {
-      setSelectedPostIndex(selectedPostIndex - 1);
+      void openPostByIndex(selectedPostIndex - 1);
     }
   };
 
@@ -103,7 +130,9 @@ export default function ExploreGrid({
           return (
             <button
               key={`explore-post-${post.id}-${index}`}
-              onClick={() => setSelectedPostIndex(index)}
+              onClick={() => {
+                void openPostByIndex(index);
+              }}
               className="group relative aspect-square bg-gray-100 overflow-hidden cursor-pointer"
             >
               {/* Image/Video */}
@@ -153,6 +182,12 @@ export default function ExploreGrid({
       {selectedPost && selectedPostIndex !== null && (
         <PostModal
           post={selectedPost}
+          postTags={postTagsByPostId[selectedPost.id] ?? []}
+          onRequestPostTags={async () => {
+            if (selectedPostIndex !== null) {
+              await openPostByIndex(selectedPostIndex);
+            }
+          }}
           isOpen={true}
           onClose={() => setSelectedPostIndex(null)}
           onLike={onLike}

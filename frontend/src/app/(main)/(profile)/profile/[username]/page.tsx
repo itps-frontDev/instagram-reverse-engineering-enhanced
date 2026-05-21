@@ -21,7 +21,7 @@
 
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import {ProfileHeader, ProfileTabs, ProfileGrid, ProfilePrivateLock, StoriesHighlights, ProfileImageModal }  from '@/components/profile';
@@ -41,7 +41,7 @@ import { createCommentAction } from '@/features/comments';
 import { uploadPfpAction, deletePfpAction } from '@/features/profile/picture/actions';
 import { getMediaUrl } from '@/lib/media';
 import { toggleLikeAction } from '@/features/likes';
-import { togglePostSaveAction } from '@/features/posts';
+import { fetchPostTagsAction, togglePostSaveAction } from '@/features/posts';
 import { toggleFollowAction } from '@/features/follow';
 
 // ============================================================================
@@ -140,9 +140,13 @@ export default function ProfilePage({
   
   /** Post selezionato per il modale */
   const [selectedPost, setSelectedPost] = useState<FeedPost | null>(null);
+  const [selectedPostTags, setSelectedPostTags] = useState<
+    Array<{taggedUsername: string; x_position: number; y_position: number}>
+  >([]);
   
   /** Flag: modale post aperto */
   const [showPostModal, setShowPostModal] = useState(false);
+  const postModalRequestIdRef = useRef(0);
   
   /** Flag: modale creazione post aperto */
   const [showCreatePostModal, setShowCreatePostModal] = useState(false);
@@ -528,6 +532,7 @@ export default function ProfilePage({
    * @param post - Post cliccato
    */
   async function handlePostClick(post: Post) {
+    const requestId = ++postModalRequestIdRef.current;
     try {
       // Carica i dati completi del post con tutti i media
       const res = await fetch(`/api/posts/${post.id}`);
@@ -536,12 +541,40 @@ export default function ProfilePage({
         throw new Error('Errore nel caricamento del post');
       }
       
-      const data = await res.json();
-      setSelectedPost(data.post);
-      setShowPostModal(true);
-    } catch (err) {
-      console.error('Errore fetch post:', err);
+        const data = await res.json();
+        setSelectedPost(data.post as FeedPost);
+        setSelectedPostTags([]);
+        setShowPostModal(true);
+
+        const tagsResult = await fetchPostTagsAction((data.post as FeedPost).id);
+        if (!tagsResult.success || requestId !== postModalRequestIdRef.current) return;
+
+        const transformedTags = tagsResult.data.map(tag => ({
+          taggedUsername: tag.taggedUsername,
+          x_position: tag.xPosition,
+          y_position: tag.yPosition,
+        }));
+
+        setSelectedPostTags(transformedTags);
+      } catch (err) {
+        console.error('Errore fetch post:', err);
+      }
     }
+
+  async function requestSelectedPostTags() {
+    if (!selectedPost) return;
+
+    const requestId = ++postModalRequestIdRef.current;
+    const tagsResult = await fetchPostTagsAction(selectedPost.id);
+    if (!tagsResult.success || requestId !== postModalRequestIdRef.current) return;
+
+    const transformedTags = tagsResult.data.map(tag => ({
+      taggedUsername: tag.taggedUsername,
+      x_position: tag.xPosition,
+      y_position: tag.yPosition,
+    }));
+
+    setSelectedPostTags(transformedTags);
   }
 
   // ==========================================================================
@@ -819,6 +852,8 @@ export default function ProfilePage({
       {selectedPost && (
         <PostModal
           post={selectedPost}
+          postTags={selectedPostTags}
+          onRequestPostTags={requestSelectedPostTags}
           isOpen={showPostModal}
           onClose={() => setShowPostModal(false)}
           onLike={handleLikePost}

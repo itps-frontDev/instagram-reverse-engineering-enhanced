@@ -45,10 +45,11 @@ import {
 import type { FeedPost, Comment } from '@/types/feed';
 import { createCommentAction, deleteCommentAction, listCommentsAction } from '@/features/comments';
 import { toggleLikeAction } from '@/features/likes';
-import { fetchPostTagsAction } from '@/features/posts';
 
 interface PostModalProps {
   post: FeedPost;
+  postTags?: Array<{taggedUsername: string; x_position: number; y_position: number}>;
+  onRequestPostTags?: () => Promise<void>;
   isOpen: boolean;
   onClose: () => void;
   onLike: (postId: number) => void;
@@ -63,6 +64,8 @@ interface PostModalProps {
 
 export default function PostModal({
   post,
+  postTags,
+  onRequestPostTags,
   isOpen,
   onClose,
   onLike,
@@ -91,8 +94,6 @@ export default function PostModal({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState<Comment | null>(null);
   const [hoveredCommentId, setHoveredCommentId] = useState<number | null>(null);
-  const [tags, setTags] = useState<Array<{taggedUsername: string; x_position: number; y_position: number}>>([]);
-  const [tagsLoaded, setTagsLoaded] = useState(false);
   const [showStoryViewer, setShowStoryViewer] = useState(false);
   const [storyViewerUsername, setStoryViewerUsername] = useState<string | null>(null);
   const [storyViewerProfileId, setStoryViewerProfileId] = useState<number | null>(null);
@@ -106,6 +107,7 @@ export default function PostModal({
   const [showDeleteCommentModal, setShowDeleteCommentModal] = useState(false);
   const [isDeletingComment, setIsDeletingComment] = useState(false);
   const [showEditPostModal, setShowEditPostModal] = useState(false);
+  const currentPostTags = postTags ?? [];
 
   // Inizializza lo stato con il profilo del post che ha già tutte le storie viste
   useEffect(() => {
@@ -131,32 +133,20 @@ export default function PostModal({
     }
   }, [comments.length]); // Usa solo la lunghezza per evitare problemi con l'array
 
-  useEffect(() => {
-    if (isOpen) {
-      const loadTags = async () => {
-        try {
-          const result = await fetchPostTagsAction(post.id);
-          if (result.success) {
-            // Trasforma PostTagDTO nel formato che il componente si aspetta
-            const transformedTags = result.data.map(tag => ({
-              taggedUsername: tag.taggedUsername,
-              x_position: tag.xPosition,
-              y_position: tag.yPosition,
-            }));
-            setTags(transformedTags);
-          } else {
-            console.error('Failed to load tags:', result.error);
-          }
-          setTagsLoaded(true);
-        } catch (err) {
-          console.error('Failed to load tags:', err);
-          setTagsLoaded(true);
-        }
-      };
+  const handleToggleTags = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
 
-      loadTags();
+    if (showTags) {
+      setShowTags(false);
+      return;
     }
-  }, [isOpen, post.id]);
+
+    if (currentPostTags.length === 0 && onRequestPostTags) {
+      await onRequestPostTags();
+    }
+
+    setShowTags(true);
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -558,36 +548,34 @@ export default function PostModal({
                 ))}
               </div>
               
-              {/* Tag Icon - Bottom Left - Only show if there are tags */}
-              {tagsLoaded && tags.length > 0 && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowTags(!showTags);
-                  }}
-                  className="absolute bottom-4 left-4 w-7 h-7 flex items-center justify-center bg-black/60 rounded-full z-10"
-                  aria-label="Mostra tag"
-                >
-                  <TagIcon size={12} className="text-white" />
-                </button>
-              )}
-
-              {/* Tags Overlay */}
-              {showTags && tags.map((tag, index) => (
-                <div
-                  key={index}
-                  className="absolute bg-black/80 text-white text-sm px-3 py-1.5 rounded-md pointer-events-none z-10"
-                  style={{
-                    left: `${tag.x_position * 100}%`,
-                    top: `${tag.y_position * 100}%`,
-                    transform: 'translate(-50%, -50%)'
-                  }}
-                >
-                  {tag.taggedUsername}
-                </div>
-              ))}
             </>
           )}
+
+          {/* Icona tag: disponibile anche per post con un solo media */}
+          {(post.has_tags === true || currentPostTags.length > 0) && (
+            <button
+              onClick={handleToggleTags}
+              className="absolute bottom-4 left-4 w-7 h-7 flex items-center justify-center bg-black/60 rounded-full z-10"
+              aria-label="Mostra tag"
+            >
+              <TagIcon size={12} className="text-white" />
+            </button>
+          )}
+
+          {/* Tags Overlay */}
+          {showTags && currentPostTags.map((tag, index) => (
+            <div
+              key={index}
+              className="absolute bg-black/80 text-white text-sm px-3 py-1.5 rounded-md pointer-events-none z-10"
+              style={{
+                left: `${tag.x_position * 100}%`,
+                top: `${tag.y_position * 100}%`,
+                transform: 'translate(-50%, -50%)'
+              }}
+            >
+              {tag.taggedUsername}
+            </div>
+          ))}
         </div>
 
         {/* Right Side - Comments */}
