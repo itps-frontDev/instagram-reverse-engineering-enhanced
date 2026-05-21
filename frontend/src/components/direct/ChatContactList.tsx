@@ -25,13 +25,14 @@ import {ProfilePicture} from "@/components";
  * @interface ChatContact
  */
 export interface ChatContact {
-  id: number; // ID univoco del contatto
+  id: number; // ID univoco del contatto (otherProfileId)
+  chatId?: string; // UUID della chat, null/undefined per contatti potenziali senza chat
   name: string;  // Nome visualizzato
   username?: string; // Username (opzionale)
   profile_image_url?: string; // URL immagine profilo
   last_message_text?: string; // Testo ultimo messaggio
   last_message_at?: string | number; // Timestamp ultimo messaggio
-  isFromMe?: boolean; // Se l'ultimo messaggio è stato inviato dall'utente corrente 
+  isFromMe?: boolean; // Se l'ultimo messaggio è stato inviato dall'utente corrente
   selected?: boolean; // Se il contatto è selezionato
   onClick?: () => void; // Handler click sul contatto
 }
