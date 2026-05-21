@@ -96,6 +96,7 @@ export interface FeedPostWithDetails {
   is_liked: number | null;
   is_saved: number | null;
   is_following: number | null;
+  has_tags: number | null;
 }
 
 export interface FeedPostForAPI {
@@ -119,6 +120,7 @@ export interface FeedPostForAPI {
   is_liked_by_current_user: boolean;
   is_saved_by_current_user: boolean;
   is_following_author: boolean;
+  has_tags: boolean;
 }
 
 export interface ReelWithDetails {
@@ -156,6 +158,7 @@ export interface PostForView {
   profile_is_private: boolean;
   is_liked: boolean;
   is_saved: boolean;
+  has_tags: boolean;
 }
 
 // ============================================================================
@@ -481,7 +484,8 @@ export const postRepository = {
         pr.is_verified as profile_is_verified,
         pr.is_private as profile_is_private,
         (SELECT 1 FROM likes WHERE likeable_type = 'post' AND likeable_id = p.id AND profile_id = ? AND deleted_at IS NULL) as is_liked,
-        (SELECT 1 FROM saved_posts WHERE post_id = p.id AND profile_id = ? AND deleted_at IS NULL) as is_saved
+        (SELECT 1 FROM saved_posts WHERE post_id = p.id AND profile_id = ? AND deleted_at IS NULL) as is_saved,
+        (SELECT 1 FROM post_tags WHERE post_id = p.id LIMIT 1) as has_tags
       FROM posts p
       INNER JOIN profiles pr ON pr.id = p.profile_id
       WHERE p.id = ? AND p.deleted_at IS NULL`,
@@ -505,6 +509,7 @@ export const postRepository = {
       profile_is_private: Boolean(post.profile_is_private),
       is_liked: Boolean(post.is_liked),
       is_saved: Boolean(post.is_saved),
+      has_tags: Boolean(post.has_tags),
     };
   },
 
@@ -535,65 +540,6 @@ export const postRepository = {
       `UPDATE post_media SET deleted_at = NOW() WHERE post_id = ?`,
       [postId]
     );
-  },
-
-  /**
-   * Ottiene post per la pagina Esplora.
-   * Restituisce post pubblici di profili non seguiti, ordinati casualmente.
-   * Include is_liked, is_saved, is_following_author del viewer.
-   *
-   * @param currentProfileId - ID del profilo corrente
-   * @param limit - Numero massimo di risultati
-   * @param offset - Offset per paginazione
-   * @returns Array di post con flag viewer
-   */
-  async getExplore(currentProfileId: number, limit = 30, offset = 0): Promise<{
-    id: number; profile_id: number; caption: string | null; location: string | null;
-    is_comments_disabled: boolean; is_likes_hidden: boolean;
-    likes_count: number; comments_count: number; created_at: string;
-    profile_username: string; profile_full_name: string | null;
-    profile_image_url: string | null; profile_is_verified: boolean;
-    profile_is_private: boolean; profile_has_active_story: boolean;
-    is_following_author: boolean; is_liked: boolean; is_saved: boolean;
-  }[]> {
-    const posts = await queryAll<any>(
-      `SELECT
-        p.id, p.profile_id, p.caption, p.location,
-        p.is_comments_disabled, p.is_likes_hidden,
-        p.likes_count, p.comments_count, p.created_at,
-        pr.username as profile_username,
-        pr.full_name as profile_full_name,
-        pr.profile_image_url,
-        pr.is_verified as profile_is_verified,
-        pr.is_private as profile_is_private,
-        EXISTS(
-          SELECT 1 FROM stories
-          WHERE profile_id = pr.id AND deleted_at IS NULL AND expires_at > NOW()
-        ) as profile_has_active_story,
-        (SELECT 1 FROM follows
-         WHERE follower_profile_id = ? AND following_profile_id = pr.id
-           AND status = 'accepted' AND deleted_at IS NULL) as is_following_author,
-        (SELECT 1 FROM likes WHERE likeable_type = 'post' AND likeable_id = p.id AND profile_id = ? AND deleted_at IS NULL) as is_liked,
-        (SELECT 1 FROM saved_posts WHERE post_id = p.id AND profile_id = ? AND deleted_at IS NULL) as is_saved
-      FROM posts p
-      INNER JOIN profiles pr ON p.profile_id = pr.id
-      WHERE p.deleted_at IS NULL AND pr.deleted_at IS NULL
-        AND NOT pr.is_private AND p.profile_id != ?
-      ORDER BY RANDOM()
-      LIMIT ? OFFSET ?`,
-      [currentProfileId, currentProfileId, currentProfileId, currentProfileId, limit, offset]
-    );
-    return posts.map((p: any) => ({
-      ...p,
-      is_comments_disabled: Boolean(p.is_comments_disabled),
-      is_likes_hidden: Boolean(p.is_likes_hidden),
-      profile_is_verified: Boolean(p.profile_is_verified),
-      profile_is_private: Boolean(p.profile_is_private),
-      profile_has_active_story: Boolean(p.profile_has_active_story),
-      is_following_author: Boolean(p.is_following_author),
-      is_liked: Boolean(p.is_liked),
-      is_saved: Boolean(p.is_saved),
-    }));
   },
 
   /**
@@ -862,7 +808,8 @@ export const postRepository = {
         (SELECT 1 FROM likes WHERE likeable_type = 'post' AND likeable_id = p.id AND profile_id = ? AND deleted_at IS NULL) as is_liked,
         (SELECT 1 FROM saved_posts WHERE post_id = p.id AND profile_id = ? AND deleted_at IS NULL) as is_saved,
         (SELECT 1 FROM follows WHERE follower_profile_id = ? AND following_profile_id = p.profile_id
-           AND status = 'accepted' AND deleted_at IS NULL) as is_following
+           AND status = 'accepted' AND deleted_at IS NULL) as is_following,
+        (SELECT 1 FROM post_tags WHERE post_id = p.id LIMIT 1) as has_tags
       FROM posts p
       INNER JOIN profiles pr ON p.profile_id = pr.id
       WHERE p.deleted_at IS NULL AND pr.deleted_at IS NULL
@@ -916,6 +863,7 @@ export const postRepository = {
       is_liked_by_current_user: Boolean(post.is_liked),
       is_saved_by_current_user: Boolean(post.is_saved),
       is_following_author: Boolean(post.is_following),
+      has_tags: Boolean(post.has_tags),
     };
   },
 
@@ -958,6 +906,7 @@ export const postRepository = {
       profile_has_active_story: false, profile_has_viewed_story: false, is_following_author: false,
       is_liked_by_current_user: post.is_liked,
       is_saved_by_current_user: post.is_saved,
+      has_tags: post.has_tags,
       media,
     };
   },

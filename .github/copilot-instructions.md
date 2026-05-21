@@ -78,5 +78,5 @@ Per dettagli completi richiamare in chat con `@file:`:
   logging, sicurezza, gestione errori, struttura multi-controller
 - `.github/instructions/frontend.instructions.md` → struttura features, fetch
   autenticato, gestione errori, convenzioni legacy, note pratiche Next.js
-- `.github/instructions/migration.instructions.md` → fasi Strangler Pattern,
+- `.github/instructions/copilot-instructions.md` → fasi Strangler Pattern,
   migrazione UUID, mappatura api_routes.csv, stato attuale

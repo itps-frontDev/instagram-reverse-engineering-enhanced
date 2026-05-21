@@ -1,0 +1,11 @@
+$kind: http-request
+name: Get Explore Feed
+description: >
+  Feed esplora autenticato con post pubblici (esclusi i post del viewer),
+  ordinamento deterministico per popolarità+recency e paginazione tramite limit/offset.
+  Success: { "success": true, "data": { "posts": [...], "nextCursor": "30"|null, "hasMore": true|false }, "message": "Explore feed fetched" }.
+method: GET
+url: "{{baseUrl}}/api/priv/explore?limit=30&offset=0"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 120

@@ -29,6 +29,7 @@ import type { FeedPost, GetFeedResponse } from '@/types/feed';
 import { createCommentAction } from '@/features/comments';
 import { toggleLikeAction } from '@/features/likes';
 import { togglePostSaveAction } from '@/features/posts';
+import { fetchExploreAction } from '@/features/explore';
 
 // ============================================================================
 // COMPONENTE PAGINA
@@ -128,13 +129,11 @@ export default function ExplorePage() {
         setIsLoadingMore(true);
       }
       
-      const response = await fetch(`/api/explore?limit=30&offset=${currentOffset}`);
-      
-      if (!response.ok) {
-        throw new Error('Errore nel caricamento dei post');
+      const result = await fetchExploreAction({ limit: 30, offset: currentOffset });
+      if (!result.success) {
+        throw new Error(result.error);
       }
-
-      const data: GetFeedResponse = await response.json();
+      const data: GetFeedResponse = result.data;
       
       if (isInitial) {
         setPosts(data.posts);

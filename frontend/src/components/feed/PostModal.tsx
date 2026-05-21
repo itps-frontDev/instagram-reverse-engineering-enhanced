@@ -158,38 +158,49 @@ export default function PostModal({
   }, [isOpen, post.id]);
 
   useEffect(() => {
-    if (isOpen) {
-      // Blocca lo scroll solo su mobile (sotto 1024px)
-      if (window.innerWidth < 1024) {
-        document.body.style.overflow = 'hidden';
-        document.body.style.position = 'fixed';
-        document.body.style.width = '100%';
-        document.body.style.top = `-${window.scrollY}px`;
-      } else {
-        document.body.style.overflow = 'hidden';
-      }
-      setCurrentMediaIndex(0);
-      setShowStoryViewer(false);
-      setStoryViewerUsername(null);
-      fetchComments();
-    } else {
-      // Ripristina lo scroll
-      if (window.innerWidth < 1024) {
-        const scrollY = document.body.style.top;
-        document.body.style.overflow = '';
-        document.body.style.position = '';
-        document.body.style.width = '';
-        document.body.style.top = '';
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
-      } else {
-        document.body.style.overflow = 'unset';
-      }
-    }
+    if (!isOpen) return;
+
+    setCurrentMediaIndex(0);
+    setShowStoryViewer(false);
+    setStoryViewerUsername(null);
+    fetchComments();
+  }, [isOpen, post.id]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const body = document.body;
+    const html = document.documentElement;
+    const scrollY = window.scrollY;
+
+    const previousBodyOverflow = body.style.overflow;
+    const previousBodyPosition = body.style.position;
+    const previousBodyWidth = body.style.width;
+    const previousBodyTop = body.style.top;
+    const previousBodyLeft = body.style.left;
+    const previousBodyRight = body.style.right;
+    const previousHtmlOverflow = html.style.overflow;
+
+    // Blocca lo scroll della pagina dietro il modal su tutti i viewport.
+    body.style.overflow = 'hidden';
+    body.style.position = 'fixed';
+    body.style.width = '100%';
+    body.style.top = `-${scrollY}px`;
+    body.style.left = '0';
+    body.style.right = '0';
+    html.style.overflow = 'hidden';
 
     return () => {
-      document.body.style.overflow = 'unset';
+      body.style.overflow = previousBodyOverflow;
+      body.style.position = previousBodyPosition;
+      body.style.width = previousBodyWidth;
+      body.style.top = previousBodyTop;
+      body.style.left = previousBodyLeft;
+      body.style.right = previousBodyRight;
+      html.style.overflow = previousHtmlOverflow;
+      window.scrollTo(0, scrollY);
     };
-  }, [isOpen, post.id]);
+  }, [isOpen]);
 
   // Keyboard navigation
   useEffect(() => {

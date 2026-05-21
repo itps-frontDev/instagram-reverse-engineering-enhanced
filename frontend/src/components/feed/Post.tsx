@@ -18,7 +18,7 @@
  * @module components/feed/Post
  */
 
-import { useState, useEffect } from 'react';
+import { useState, type MouseEvent } from 'react';
 import Image from 'next/image';
 import ProfilePicture from '@/components/ProfilePicture';
 import { VerifiedBadge, MoreOptionsIcon, ShareIcon, TagIcon } from '@/components/common';
@@ -64,6 +64,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
   const [hasViewedAllStories, setHasViewedAllStories] = useState(post.profile_has_viewed_story);
   const [tags, setTags] = useState<Array<{taggedUsername: string; x_position: number; y_position: number}>>([]);
   const [tagsLoaded, setTagsLoaded] = useState(false);
+  const [isLoadingTags, setIsLoadingTags] = useState(false);
   const [hoveredUsername, setHoveredUsername] = useState(false);
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
   const [isMuted, setIsMuted] = useState(true);
@@ -73,30 +74,39 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
   const [showDeletePostModal, setShowDeletePostModal] = useState(false);
   const [isDeletingPost, setIsDeletingPost] = useState(false);
 
-  useEffect(() => {
-    const loadTags = async () => {
+  const handleToggleTags = async (e: MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+
+    if (showTags) {
+      setShowTags(false);
+      return;
+    }
+
+    if (!tagsLoaded && !isLoadingTags) {
+      setIsLoadingTags(true);
       try {
         const result = await fetchPostTagsAction(post.id);
         if (result.success) {
-          // Trasforma PostTagDTO nel formato che il componente si aspetta
+          // Carichiamo i tag solo on-demand per evitare raffiche di richieste nel feed.
           const transformedTags = result.data.map(tag => ({
             taggedUsername: tag.taggedUsername,
             x_position: tag.xPosition,
             y_position: tag.yPosition,
           }));
           setTags(transformedTags);
+          setTagsLoaded(true);
         } else {
           console.error('Failed to load tags:', result.error);
         }
-        setTagsLoaded(true);
       } catch (err) {
         console.error('Failed to load tags:', err);
-        setTagsLoaded(true);
+      } finally {
+        setIsLoadingTags(false);
       }
-    };
+    }
 
-    loadTags();
-  }, [post.id]);
+    setShowTags(true);
+  };
 
   const handleCommentSubmit = async () => {
     if (!commentText.trim() || isSubmitting) return;
@@ -374,13 +384,10 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
             </div>
           )}
           
-          {/* Icona Tag - In basso a sinistra - Solo se ci sono tag */}
-          {tagsLoaded && tags.length > 0 && (
+          {/* Icona Tag: visibile se il backend segnala tag presenti, fallback lazy su payload legacy */}
+          {(post.has_tags ?? (!tagsLoaded || tags.length > 0)) && (
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowTags(!showTags);
-              }}
+              onClick={handleToggleTags}
               className="absolute bottom-3 left-3 w-7 h-7 flex items-center justify-center bg-black/60 rounded-full"
               aria-label="Mostra tag"
             >
@@ -551,4 +558,3 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
     </article>
   );
 }
-

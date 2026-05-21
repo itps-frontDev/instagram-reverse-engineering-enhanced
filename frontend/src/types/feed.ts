@@ -61,6 +61,8 @@ export interface FeedPost {
   is_saved_by_current_user: boolean;
   /** Se l'utente corrente segue l'autore */
   is_following_author: boolean;
+  /** Se il post contiene almeno un tag profilo */
+  has_tags?: boolean;
 }
 
 /**
