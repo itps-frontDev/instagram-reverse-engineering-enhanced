@@ -1,6 +1,7 @@
 package it.evodev.instagram.profile.controllers;
 
 import it.evodev.instagram.profile.dto.response.BirthdayDataDTO;
+import it.evodev.instagram.profile.dto.response.MeProfileResponseDTO;
 import it.evodev.instagram.profile.dto.response.ProfileApiResponse;
 import it.evodev.instagram.profile.dto.response.ProfileByUsernameDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfilePreviewDataDTO;
@@ -25,6 +26,21 @@ public class ProfileController {
     private static final Logger logger = LoggerFactory.getLogger(ProfileController.class);
 
     private final ProfileReadService profileReadService;
+
+    /**
+     * GET /api/priv/profiles/me
+     * Restituisce il profilo dell'utente autenticato senza subquery storie/reels.
+     * Usato dal frontend per l'auth context — leggero e veloce.
+     */
+    @GetMapping("/me")
+    public ResponseEntity<ProfileApiResponse<MeProfileResponseDTO>> getMyProfile(Authentication authentication) {
+        logger.info("GET /api/priv/profiles/me - User: {}", authentication.getName());
+
+        UUID currentUserId = UUID.fromString(authentication.getName());
+        MeProfileResponseDTO result = profileReadService.getMyProfile(currentUserId);
+
+        return ResponseEntity.ok(ProfileApiResponse.success(result, "Profile fetched successfully"));
+    }
 
     /**
      * GET /api/priv/profiles/{username}

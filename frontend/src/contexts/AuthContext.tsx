@@ -17,7 +17,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import type { Profile } from '@/types/profile';
+import type { MeProfile } from '@/features/profile';
 import { logoutAction, getMyProfileAction } from '@/features/auth/actions';
 
 // ============================================================================
@@ -31,7 +31,7 @@ import { logoutAction, getMyProfileAction } from '@/features/auth/actions';
  */
 interface AuthContextType {
   /** Profilo utente corrente (null se non autenticato) */
-  profile: Profile | null;
+  profile: MeProfile | null;
   /** Stato di caricamento iniziale */
   isLoading: boolean;
   /** Se l'utente è autenticato */
@@ -70,7 +70,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
  * ```
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<MeProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   /**

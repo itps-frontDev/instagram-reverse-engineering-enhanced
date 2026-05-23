@@ -1,6 +1,7 @@
 package it.evodev.instagram.profile.service;
 
 import it.evodev.instagram.profile.dto.response.BirthdayDataDTO;
+import it.evodev.instagram.profile.dto.response.MeProfileResponseDTO;
 import it.evodev.instagram.profile.dto.response.ProfileByUsernameDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfilePreviewDataDTO;
 
@@ -35,8 +36,18 @@ public interface ProfileReadService {
     ProfilePreviewDataDTO getProfilePreviewByUsername(UUID currentUserId, String targetUsername);
 
     /**
+     * Fetch lightweight profile data for the authenticated user.
+     * No story/reels subqueries — suitable for auth context polling.
+     *
+     * @param currentUserId UUID of the authenticated user
+     * @return MeProfileResponseDTO with profile data
+     * @throws it.evodev.instagram.profile.exceptions.ProfileNotFoundException if profile not found
+     */
+    MeProfileResponseDTO getMyProfile(UUID currentUserId);
+
+    /**
      * Fetch the birthday of the authenticated user.
-     * 
+     *
      * @param currentUserId UUID of the authenticated user
      * @return BirthdayDataDTO with birthday in LocalDate format
      * @throws it.evodev.instagram.profile.exceptions.ProfileNotFoundException if profile not found

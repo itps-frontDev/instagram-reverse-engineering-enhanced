@@ -2,8 +2,7 @@
 
 import { cookies } from "next/headers";
 
-import type { Profile } from "@/types/profile";
-import { getCurrentProfile } from "@/lib/auth";
+import { getMeProfileAction, type MeProfile } from "@/features/profile";
 import {
   AuthBackendError,
   getAccessTokenCookieName,
@@ -112,10 +111,11 @@ export async function refreshAction(): Promise<AuthActionResult<{ refreshed: boo
   }
 }
 
-export async function getMyProfileAction(): Promise<AuthActionResult<Profile | null>> {
+export async function getMyProfileAction(): Promise<AuthActionResult<MeProfile | null>> {
   try {
-    const profile = await getCurrentProfile();
-    return { success: true, data: profile };
+    const result = await getMeProfileAction();
+    if (!result.success) return { success: true, data: null };
+    return { success: true, data: result.data };
   } catch {
     return { success: false, error: "Profile fetch failed." };
   }

@@ -42,9 +42,12 @@ import {
   useDirectMessages,
 } from "@/features/directs";
 import type { MessageItem } from "@/features/directs";
+
+/** Estende MessageItem con un flag locale per i messaggi ottimistici */
+type LocalMessageItem = MessageItem & { isOptimistic?: boolean };
 import { Search, PenSquare, ChevronDown, Phone, Video, Info } from "lucide-react";
 
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:8080';
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:8080/ws';
 
 // ============================================================================
 // COMPONENTE PAGINA
@@ -79,8 +82,8 @@ export default function DirectPage() {
   /** Dati del contatto attualmente selezionato */
   const [selectedContactData, setSelectedContactData] = useState<ChatContact | undefined>(undefined);
 
-  /** Lista dei messaggi della chat corrente */
-  const [messages, setMessages] = useState<MessageItem[]>([]);
+  /** Lista dei messaggi della chat corrente (include messaggi ottimistici in attesa di conferma WS) */
+  const [messages, setMessages] = useState<LocalMessageItem[]>([]);
 
   // -------------------------------------------------------------------------
   // Stato UI
@@ -134,7 +137,20 @@ export default function DirectPage() {
    */
   const handleIncomingMessage = useCallback((message: MessageItem) => {
     if (message.chatId === selectedChatId) {
-      setMessages(prev => [message, ...prev]);
+      setMessages(prev => {
+        // Se il messaggio è del mittente corrente, sostituisce il corrispettivo
+        // messaggio ottimistico (aggiunto in handleSend) per evitare duplicati.
+        const optimisticIdx = message.senderProfileId === profile?.id
+          ? prev.findIndex(m => m.isOptimistic && m.chatId === message.chatId && m.text === message.text)
+          : -1;
+
+        if (optimisticIdx !== -1) {
+          const updated = [...prev];
+          updated[optimisticIdx] = message;
+          return updated;
+        }
+        return [message, ...prev];
+      });
     }
     // Aggiorna preview ultimo messaggio per tutte le chat
     setContacts(prev => prev.map(c =>
@@ -144,7 +160,7 @@ export default function DirectPage() {
     ));
   }, [selectedChatId, profile?.id]);
 
-  const { sendMessage } = useDirectMessages({
+  const { sendMessage, isConnected } = useDirectMessages({
     accessToken,
     onMessage: handleIncomingMessage,
     wsUrl: WS_URL,
@@ -299,8 +315,20 @@ export default function DirectPage() {
    * Il messaggio arriva al mittente (e agli altri partecipanti) via push.
    */
   const handleSend = async (text: string) => {
-    if (!selectedChatId) return;
+    if (!selectedChatId || !profile?.id) return;
     setSending(true);
+
+    // Aggiungi subito il messaggio in UI senza aspettare l'echo WS
+    const optimistic: LocalMessageItem = {
+      id: crypto.randomUUID(),
+      chatId: selectedChatId,
+      senderProfileId: profile.id,
+      text,
+      createdAt: new Date().toISOString(),
+      isOptimistic: true,
+    };
+    setMessages(prev => [optimistic, ...prev]);
+
     try {
       sendMessage(selectedChatId, text);
     } finally {

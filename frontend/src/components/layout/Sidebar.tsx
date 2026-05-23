@@ -106,29 +106,25 @@ export default function Sidebar() {
 
     // Carica il conteggio delle chat con messaggi non letti
     const fetchUnreadChats = async () => {
+      // Skip della fetch se l'utente è già sulla pagina dei messaggi
+      if (pathname.startsWith('/direct')) {
+        setUnreadChatsCount(0);
+        return;
+      }
       try {
         const result = await getChatsAction();
         if (!result.success) return;
         const chats = result.data;
-        // Conta le chat con messaggi non letti
-        // Non mostrare il badge se l'utente è già sulla pagina dei messaggi
-        if (!pathname.startsWith('/direct')) {
-          // Ottieni le chat lette da localStorage
-          const readChats = JSON.parse(localStorage.getItem('readChats') || '{}');
-          const unread = chats.filter((chat) => {
-            // Ignora chat senza messaggi
-            if (!chat.lastMessageText || !chat.lastMessageAt) return false;
-            // Ignora messaggi inviati da me
-            if (chat.isFromMe) return false;
-            const chatKey = `chat_${chat.chatId}`;
-            const lastReadTime = readChats[chatKey] || 0;
-            const lastMessageTime = new Date(chat.lastMessageAt).getTime();
-            return lastMessageTime > lastReadTime;
-          }).length;
-          setUnreadChatsCount(unread);
-        } else {
-          setUnreadChatsCount(0);
-        }
+        const readChats = JSON.parse(localStorage.getItem('readChats') || '{}');
+        const unread = chats.filter((chat) => {
+          if (!chat.lastMessageText || !chat.lastMessageAt) return false; // Ignora chat senza messaggi
+          if (chat.isFromMe) return false; // Ignora messaggi inviati da me
+          const chatKey = `chat_${chat.chatId}`;
+          const lastReadTime = readChats[chatKey] || 0;
+          const lastMessageTime = new Date(chat.lastMessageAt).getTime();
+          return lastMessageTime > lastReadTime;
+        }).length;
+        setUnreadChatsCount(unread);
       } catch (error) {
         // Silent fail on network errors
         if (error instanceof Error && error.message !== 'Failed to fetch') {
