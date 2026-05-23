@@ -1,0 +1,20 @@
+$kind: http-request
+name: Get Or Create Chat
+description: |
+  Trova o crea una chat 1-to-1 tra l'utente autenticato e un altro profilo.
+  Se la chat esiste già, restituisce l'ID esistente senza creare duplicati.
+  400 DIRECT_VALIDATION_ERROR se otherProfileId corrisponde all'utente stesso.
+  404 DIRECT_NOT_FOUND se otherProfileId non esiste.
+  Usa {{directOtherProfileId}} (numero intero, ID del profilo destinatario).
+method: POST
+url: "{{baseUrl}}/api/priv/direct/get-or-create"
+headers:
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |
+    {
+      "otherProfileId": {{directOtherProfileId}}
+    }
+order: 300

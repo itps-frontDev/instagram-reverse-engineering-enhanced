@@ -1,0 +1,13 @@
+$kind: http-request
+name: Get Chats
+description: >
+  Restituisce la lista delle chat dell'utente autenticato con preview dell'ultimo messaggio,
+  più i contatti reciproci (follower/following) che non hanno ancora una chat (chatId=null).
+  Response: { "success": true, "data": [{ "chatId": UUID|null, "otherProfileId": Long,
+  "otherUsername": string, "otherFullName": string, "otherProfileImageUrl": string,
+  "lastMessageText": string|null, "lastMessageAt": datetime|null, "isFromMe": boolean|null }] }.
+method: GET
+url: "{{baseUrl}}/api/priv/direct/chats"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 10

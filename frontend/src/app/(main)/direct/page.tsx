@@ -179,7 +179,7 @@ export default function DirectPage() {
     const result = await getChatsAction();
     if (!result.success) return;
     const mapped: ChatContact[] = result.data
-      .filter(c => c.lastMessageText)
+      .filter(c => c.chatId !== null)
       .map(c => ({
         id: c.otherProfileId,
         chatId: c.chatId ?? undefined,

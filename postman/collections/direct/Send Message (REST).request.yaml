@@ -13,8 +13,8 @@ headers:
   Authorization: Bearer {{accessToken}}
   Content-Type: application/json
 body:
-  mediaType: application/json
-  text: |
+  type: json
+  content: |
     {
       "chatId": "{{directChatId}}",
       "text": "Ciao dal test Postman"

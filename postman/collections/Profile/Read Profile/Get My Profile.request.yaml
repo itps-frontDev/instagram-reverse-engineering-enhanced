@@ -1,0 +1,8 @@
+$kind: http-request
+name: Get My Profile
+description: Returns the authenticated user's own profile (lightweight — no story/reels subqueries). Used by the frontend auth context.
+method: GET
+url: "{{baseUrl}}/api/priv/profiles/me"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 1005

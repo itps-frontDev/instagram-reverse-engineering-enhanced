@@ -10,6 +10,7 @@ body:
   content:
     - type: file
       key: image
-      src: []
+      src:
+        - /C:/Users/Cristian/Downloads/avatar.jpg
       disabled: false
 order: 1000
