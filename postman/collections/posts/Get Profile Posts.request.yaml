@@ -1,0 +1,32 @@
+$kind: http-request
+name: Get Profile Posts
+description: >
+  Recupera i post di un profilo con supporto per 4 tab: posts normali, reels (video), saved (solo owner), tagged.
+  
+  Tab supportati:
+  - posts: Post normali del profilo (default)
+  - reels: Video (media_type='video')
+  - saved: Post salvati (solo per il proprietario)
+  - tagged: Post in cui il profilo è taggato
+  
+  Success: { "success": true, "data": { "posts": [...], "hasMore": true|false, "total": 12 }, "message": "Profile posts fetched" }.
+  Error 401: { "success": false, "error": "Unauthorized", "message": "Invalid or missing authentication token" }.
+  Error 403: { "success": false, "error": "AccessDenied", "message": "Cannot view private profile" }.
+  Error 404: { "success": false, "error": "ProfileNotFound", "message": "Profile not found" }.
+
+method: GET
+url: "{{baseUrl}}/api/priv/profiles/{{profileUsername}}/posts?tab={{profileTab}}&page={{profilePage}}"
+headers:
+  Authorization: Bearer {{accessToken}}
+
+query:
+  - key: tab
+    value: posts
+    description: Tab da visualizzare (posts|reels|saved|tagged) - default posts
+    disabled: false
+  - key: page
+    value: "0"
+    description: Numero pagina 0-indexed - default 0
+    disabled: false
+
+order: 115

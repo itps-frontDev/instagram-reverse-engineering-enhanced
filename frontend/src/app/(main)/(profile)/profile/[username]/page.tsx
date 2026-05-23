@@ -41,7 +41,7 @@ import { createCommentAction } from '@/features/comments';
 import { uploadPfpAction, deletePfpAction } from '@/features/profile/picture/actions';
 import { getMediaUrl } from '@/lib/media';
 import { toggleLikeAction } from '@/features/likes';
-import { fetchPostTagsAction, togglePostSaveAction } from '@/features/posts';
+import { getProfilePostsAction, fetchPostTagsAction, togglePostSaveAction } from '@/features/posts';
 import { toggleFollowAction } from '@/features/follow';
 
 // ============================================================================
@@ -248,30 +248,29 @@ export default function ProfilePage({
     setIsLoadingPosts(true);
 
     try {
-      const res = await fetch(
-        `/api/profiles/${username}/posts?tab=${activeTab}&page=${pageNum}`
-      );
+      // Chiama la nuova Server Action per recuperare i post dal backend Spring Boot
+      const result = await getProfilePostsAction({
+        username,
+        tab: activeTab,
+        page: pageNum,
+      });
 
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ error: 'Errore sconosciuto' }));
-        console.error('Errore fetch post:', {
-          status: res.status,
-          error: errorData.error,
-          message: errorData.message,
-        });
-        throw new Error(errorData.error || 'Errore nel caricamento dei post');
+      if (!result.success || !result.data) {
+        const errorMessage = result.error || 'Errore nel caricamento dei post';
+        console.error('Errore fetch post:', { error: errorMessage });
+        throw new Error(errorMessage);
       }
 
-      const data = await res.json();
+      const { posts: newPosts, hasMore: more } = result.data;
 
       // Reset o append in base al numero di pagina
       if (pageNum === 0) {
-        setPosts(data.posts);
+        setPosts(newPosts);
       } else {
-        setPosts((prev) => [...prev, ...data.posts]);
+        setPosts((prev) => [...prev, ...newPosts]);
       }
 
-      setHasMore(data.hasMore);
+      setHasMore(more);
       setPage(pageNum);
     } catch (err) {
       console.error('Errore caricamento post:', err);

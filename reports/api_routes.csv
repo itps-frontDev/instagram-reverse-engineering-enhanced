@@ -25,7 +25,7 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/profiles/[username],GET,"MIGRATED to Spring: /api/priv/profiles/{username} - profilo centrale con flag contestuali e payload full/partial per privacy",Yes,No,Yes,No
 /api/profiles/[username]/preview,GET,"MIGRATED to Spring: /api/priv/profiles/{username}/preview - anteprima profilo con post recenti per card hover",Yes,No,Yes,No
 /api/profiles/[username]/remove-image,POST,"MIGRATED to Spring: /api/priv/profiles/me/picture - DELETE - rimozione foto profilo (owner only)",Yes,No,Yes,No
-/api/profiles/[username]/posts,GET,"Legacy Next lista post di un profilo (tabs: posts,reels,saved,tagged); Spring preview exists but this tab fetch is still Next-side",Yes,No,Yes,No
+/api/profiles/[username]/posts,GET,"MIGRATED to Spring: /api/priv/profiles/{username}/posts - tab posts/reels/saved/tagged con paginazione e privacy check",Yes,No,Yes,No
 /api/profiles/[username]/following,GET,"MIGRATED to Spring: /api/priv/profiles/{username}/following - lista dei profili seguiti con privacy check + followStatus per ogni item",No,No,Yes,No
 /api/profiles/[username]/followers,GET,"MIGRATED to Spring: /api/priv/profiles/{username}/followers - lista follower con privacy check + followStatus per ogni item",No,No,Yes,No
 /api/profiles/[username]/follow-status,GET,"MIGRATED to Spring: /api/priv/follows/{username}/status - stato della relazione follow tra utente corrente e profilo target",No,No,Yes,No

@@ -1,10 +1,13 @@
 package it.evodev.instagram.posts.repository;
 
 import it.evodev.instagram.posts.model.PostSavePost;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -31,4 +34,35 @@ public interface PostRepository extends JpaRepository<PostSavePost, Long> {
      */
     @Query("SELECT p.profileId FROM PostSavePost p WHERE p.id = :postId AND p.deletedAt IS NULL")
     Optional<Long> findProfileIdByPostId(@Param("postId") Long postId);
+
+    /**
+     * Recupera i post normali (non filtrati per tipo media) di un profilo, ordinati per data decrescente.
+     * 
+     * Include il primo media (position=0) come thumbnail e il conteggio totale dei media del post.
+     * 
+     * @param profileId ID del profilo proprietario dei post
+     * @param pageable Paginazione (size, offset)
+     * @return Lista di mappe con: id, caption, likesCount, commentsCount, createdAt, mediaUrl, mediaType, mediaCount
+     */
+    @Query("""
+        SELECT new map(
+            p.id AS id,
+            p.caption AS caption,
+            p.likesCount AS likesCount,
+            p.commentsCount AS commentsCount,
+            p.createdAt AS createdAt,
+            pm.mediaUrl AS mediaUrl,
+            pm.mediaType AS mediaType,
+            (SELECT COUNT(*) FROM PostMedia pm2 WHERE pm2.postId = p.id AND pm2.deletedAt IS NULL) AS mediaCount
+        )
+        FROM PostMedia pm
+        RIGHT JOIN PostSavePost p ON pm.postId = p.id AND pm.position = 0 AND pm.deletedAt IS NULL
+        WHERE p.profileId = :profileId 
+          AND p.deletedAt IS NULL
+        ORDER BY p.createdAt DESC
+        """)
+    List<Map<String, Object>> findProfilePosts(
+        @Param("profileId") Long profileId,
+        Pageable pageable
+    );
 }

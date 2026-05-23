@@ -24,6 +24,18 @@ public class PostSavePost {
     @Column(name = "profile_id", nullable = false)
     private Long profileId;
 
+    @Column(name = "caption")
+    private String caption;
+
+    @Column(name = "likes_count", nullable = false)
+    private Integer likesCount;
+
+    @Column(name = "comments_count", nullable = false)
+    private Integer commentsCount;
+
+    @Column(name = "created_at", nullable = false)
+    private OffsetDateTime createdAt;
+
     @Column(name = "deleted_at")
     private OffsetDateTime deletedAt;
 }

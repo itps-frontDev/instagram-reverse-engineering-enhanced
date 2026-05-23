@@ -1,3 +1,9 @@
 $kind: collection
 name: Posts
-description: Endpoint privato per il toggle save/unsave dei post.
+description: >
+  Endpoint privati per la gestione dei post:
+  - Get Profile Posts: Recupera i post di un profilo (posts, reels, saved, tagged)
+  - Get Home Feed: Feed home autenticato
+  - Get Explore Feed: Feed esplora pubblico
+  - Get Post Tags: Tag di un post
+  - Toggle Save Post: Toggle save/unsave di un post

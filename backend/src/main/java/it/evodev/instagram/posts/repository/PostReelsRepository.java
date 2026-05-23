@@ -1,25 +1,38 @@
 package it.evodev.instagram.posts.repository;
 
-import it.evodev.instagram.posts.model.PostSaveSavedPost;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
-public interface PostSaveSavedPostRepository extends JpaRepository<PostSaveSavedPost, Long> {
-    Optional<PostSaveSavedPost> findTopByProfileIdAndPostIdOrderByCreatedAtDesc(Long profileId, Long postId);
+import it.evodev.instagram.posts.model.PostSavePost;
+
+/**
+ * Repository specializzato per il recupero dei reels (video) di un profilo.
+ * 
+ * Reels = Post che contengono almeno un media di tipo 'video' nel position=0.
+ * 
+ * @repository PostReelsRepository
+ */
+@Repository
+public interface PostReelsRepository extends JpaRepository<PostSavePost, Long> {
 
     /**
-     * Recupera i post salvati dall'utente, ordinati per data salvataggio decrescente.
+     * Recupera i reels (video) di un profilo ordinati per data decrescente.
      * 
-     * Include il primo media (position=0) come thumbnail e il conteggio totale dei media del post.
-     * Solo per l'utente proprietario della collezione.
+     * QUERY LOGIC:
+     * - SELECT primo media (position=0) e conteggio totale media per ogni post
+     * - LEFT JOIN con post_media (position=0) per thumbnail
+     * - WHERE media_type='video' per filtrare solo video
+     * - Soft delete: deletedAt IS NULL su posts e media
+     * - ORDER BY createdAt DESC
+     * - LIMIT e OFFSET per paginazione
      * 
-     * @param profileId ID del profilo proprietario della collezione salvati
+     * @param profileId ID del profilo proprietario dei reels
      * @param pageable Paginazione (size, offset)
      * @return Lista di mappe con: id, caption, likesCount, commentsCount, createdAt, mediaUrl, mediaType, mediaCount
      */
@@ -36,13 +49,12 @@ public interface PostSaveSavedPostRepository extends JpaRepository<PostSaveSaved
         )
         FROM PostMedia pm
         RIGHT JOIN PostSavePost p ON pm.postId = p.id AND pm.position = 0 AND pm.deletedAt IS NULL
-        INNER JOIN PostSaveSavedPost sp ON sp.postId = p.id
-        WHERE sp.profileId = :profileId 
-          AND sp.deletedAt IS NULL 
-          AND p.deletedAt IS NULL
-        ORDER BY sp.createdAt DESC
+        WHERE p.profileId = :profileId 
+          AND p.deletedAt IS NULL 
+          AND pm.mediaType = 'video'
+        ORDER BY p.createdAt DESC
         """)
-    List<Map<String, Object>> findProfileSavedPosts(
+    List<Map<String, Object>> findProfileReels(
         @Param("profileId") Long profileId,
         Pageable pageable
     );
