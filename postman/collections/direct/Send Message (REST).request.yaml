@@ -1,0 +1,22 @@
+$kind: http-request
+name: Send Message (REST)
+description: >
+  Invia un messaggio in una chat via REST — usato da contesti fuori dalla DM page (es. StoryViewer)
+  che non hanno una connessione WebSocket STOMP attiva.
+  Persiste il messaggio, aggiorna chats.last_message_at e fa push WebSocket a tutti i partecipanti.
+  Body: { "chatId": UUID, "text": string (max 1000 chars) }.
+  Response: { "success": true, "data": { "id": UUID, "chatId": UUID, "senderProfileId": Long, "text": string, "createdAt": datetime } }.
+  Errori: 403 DIRECT_FORBIDDEN se non partecipante, 400 DIRECT_VALIDATION_ERROR se testo blank o >1000 chars.
+method: POST
+url: "{{baseUrl}}/api/priv/direct/send"
+headers:
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+body:
+  mediaType: application/json
+  text: |
+    {
+      "chatId": "{{directChatId}}",
+      "text": "Ciao dal test Postman"
+    }
+order: 400
