@@ -3,12 +3,14 @@ package it.evodev.instagram.profile.service.impl;
 import it.evodev.instagram.profile.dto.response.BirthdayDataDTO;
 import it.evodev.instagram.follow.dto.responses.FollowStatusDataDTO;
 import it.evodev.instagram.follow.services.FollowService;
+import it.evodev.instagram.profile.dto.response.MeProfileResponseDTO;
 import it.evodev.instagram.profile.dto.response.ProfileByUsernameDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfilePreviewDataDTO;
 import it.evodev.instagram.profile.dto.response.RecentPostPreviewDTO;
 import it.evodev.instagram.profile.dto.response.ProfileVisibilityDataDTO;
 import it.evodev.instagram.profile.exceptions.ProfileNotFoundException;
 import it.evodev.instagram.profile.models.ProfileVisibilityProfile;
+import it.evodev.instagram.profile.repository.MeProfileProjection;
 import it.evodev.instagram.profile.repository.ProfileByUsernameProjection;
 import it.evodev.instagram.profile.repository.ProfilePreviewProjection;
 import it.evodev.instagram.profile.repository.ProfileVisibilityProfileJpaRepository;
@@ -139,6 +141,32 @@ public class ProfileReadServiceImpl implements ProfileReadService {
                 .owner(isOwner)
                 .canView(canView)
                 .recentPosts(recentPosts)
+                .build();
+    }
+
+    @Override
+    public MeProfileResponseDTO getMyProfile(UUID currentUserId) {
+        logger.info("Fetching me profile for user: {}", currentUserId);
+
+        MeProfileProjection p = profileRepository.findMeProfileByUserId(currentUserId)
+                .orElseThrow(() -> {
+                    logger.warn("Profile not found for user: {}", currentUserId);
+                    return new ProfileNotFoundException("Profile not found");
+                });
+
+        return MeProfileResponseDTO.builder()
+                .id(p.getId())
+                .userId(p.getUserId())
+                .username(p.getUsername())
+                .fullName(p.getFullName())
+                .profileImageUrl(p.getProfileImageUrl())
+                .bio(p.getBio())
+                .websiteUrl(p.getWebsiteUrl())
+                .privateProfile(Boolean.TRUE.equals(p.getIsPrivate()))
+                .verified(Boolean.TRUE.equals(p.getIsVerified()))
+                .followersCount(defaultInt(p.getFollowersCount()))
+                .followingCount(defaultInt(p.getFollowingCount()))
+                .postsCount(defaultInt(p.getPostsCount()))
                 .build();
     }
 

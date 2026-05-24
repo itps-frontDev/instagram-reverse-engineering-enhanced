@@ -6,17 +6,63 @@ import {
   getProfileByUsernameResultSchema,
   getProfilePreviewInputSchema,
   getProfilePreviewResultSchema,
+  meProfileSchema,
+  meProfileSpringSuccessSchema,
   profileByUsernameResponseSchema,
   profilePreviewResponseSchema,
   type GetProfileByUsernameInput,
   type GetProfileByUsernameResult,
   type GetProfilePreviewInput,
   type GetProfilePreviewResult,
+  type MeProfile,
 } from './schema';
 import { getProfileAccessToken, parseJsonSafe } from '@/features/profile/shared';
 
 const GET_PROFILE_BY_USERNAME_TIMEOUT_MS = 5_000;
 const GET_PROFILE_PREVIEW_TIMEOUT_MS = 5_000;
+
+type GetMeProfileResult =
+  | { success: true; data: MeProfile }
+  | { success: false; error: string };
+
+export async function getMeProfileAction(): Promise<GetMeProfileResult> {
+  const accessToken = await getProfileAccessToken();
+  if (!accessToken) return { success: false, error: 'Authentication required.' };
+
+  let response: Response;
+  try {
+    response = await fetch(buildSpringAuthUrl('/api/priv/profiles/me'), {
+      method: 'GET',
+      cache: 'no-store',
+      headers: { Authorization: `Bearer ${accessToken}` },
+      signal: AbortSignal.timeout(5_000),
+    });
+  } catch {
+    return { success: false, error: 'Service unavailable.' };
+  }
+
+  const payload = await parseJsonSafe(response);
+  const parsed = meProfileSpringSuccessSchema.safeParse(payload);
+  if (!parsed.success) return { success: false, error: 'Invalid response payload.' };
+
+  const d = parsed.data.data;
+  const profile = meProfileSchema.parse({
+    id: d.id,
+    user_id: d.userId,
+    username: d.username,
+    full_name: d.fullName ?? null,
+    profile_image_url: d.profileImageUrl ?? null,
+    bio: d.bio ?? null,
+    website_url: d.websiteUrl ?? null,
+    is_private: d.isPrivate,
+    is_verified: d.isVerified,
+    followers_count: d.followersCount,
+    following_count: d.followingCount,
+    posts_count: d.postsCount,
+  });
+
+  return { success: true, data: profile };
+}
 
 export async function getProfileByUsernameAction(input: GetProfileByUsernameInput): Promise<GetProfileByUsernameResult> {
   const parsed = getProfileByUsernameInputSchema.safeParse(input);

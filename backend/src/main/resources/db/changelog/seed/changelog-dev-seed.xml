@@ -614,7 +614,7 @@ DECLARE
     profile_ids  BIGINT[];
     p1           BIGINT;
     p2           BIGINT;
-    chat_id      BIGINT;
+    chat_id      UUID;
     sender_id    BIGINT;
     num_messages INTEGER;
     i            INTEGER;

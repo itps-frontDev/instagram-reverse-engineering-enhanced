@@ -29,6 +29,7 @@ import {CreatePostModal} from '@/components/feed';
 import {SearchPanel, NotificationsPanel} from '@/components/layout';
 import { ShareIcon, InstagramLogo } from '@/components/common';
 import { getUnreadCountAction } from '@/features/notifications/actions';
+import { getChatsAction } from '@/features/directs';
 import {
   Heart,
   Menu,
@@ -105,51 +106,25 @@ export default function Sidebar() {
 
     // Carica il conteggio delle chat con messaggi non letti
     const fetchUnreadChats = async () => {
+      // Skip della fetch se l'utente è già sulla pagina dei messaggi
+      if (pathname.startsWith('/direct')) {
+        setUnreadChatsCount(0);
+        return;
+      }
       try {
-        const response = await fetch('/api/direct/chats');
-        if (!response.ok) {
-          // Silent fail - don't log on auth errors
-          if (response.status !== 401) {
-            console.error('Error fetching chats:', response.status);
-          }
-          return;
-        }
-        const data = await response.json();
-        const chats = data.chats || [];
-        // Conta le chat con messaggi non letti
-        // Non mostrare il badge se l'utente è già sulla pagina dei messaggi
-        if (!pathname.startsWith('/direct')) {
-          // Ottieni le chat lette da localStorage
-          const readChats = JSON.parse(localStorage.getItem('readChats') || '{}');
-          
-          const unread = chats.filter((chat: { id: number; last_message_text?: string; last_message_at?: string | number; isFromMe?: boolean }) => {
-            // Ignora chat senza messaggi
-            if (!chat.last_message_text || !chat.last_message_at) return false;
-            
-            // Ignora messaggi inviati da me
-            if (chat.isFromMe) return false;
-            
-            // Usa solo l'ID della chat come chiave
-            const chatKey = `chat_${chat.id}`;
-            const lastReadTime = readChats[chatKey] || 0;
-            
-            // Converti last_message_at in timestamp se è una stringa datetime
-            let lastMessageTime: number;
-            if (typeof chat.last_message_at === 'number') {
-              lastMessageTime = chat.last_message_at;
-            } else {
-              lastMessageTime = new Date(chat.last_message_at).getTime();
-            }
-            
-            console.log('[Sidebar] Chat:', chat.id, 'LastMsg:', lastMessageTime, 'LastRead:', lastReadTime, 'Unread:', lastMessageTime > lastReadTime);
-            
-            return lastMessageTime > lastReadTime;
-          }).length;
-          
-          setUnreadChatsCount(unread);
-        } else {
-          setUnreadChatsCount(0);
-        }
+        const result = await getChatsAction();
+        if (!result.success) return;
+        const chats = result.data;
+        const readChats = JSON.parse(localStorage.getItem('readChats') || '{}');
+        const unread = chats.filter((chat) => {
+          if (!chat.lastMessageText || !chat.lastMessageAt) return false; // Ignora chat senza messaggi
+          if (chat.isFromMe) return false; // Ignora messaggi inviati da me
+          const chatKey = `chat_${chat.chatId}`;
+          const lastReadTime = readChats[chatKey] || 0;
+          const lastMessageTime = new Date(chat.lastMessageAt).getTime();
+          return lastMessageTime > lastReadTime;
+        }).length;
+        setUnreadChatsCount(unread);
       } catch (error) {
         // Silent fail on network errors
         if (error instanceof Error && error.message !== 'Failed to fetch') {

@@ -41,7 +41,7 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="PROFILES;2026-05-11;copilot;02" author="copilot">
+    <changeSet id="PROFILES;2026-05-11;copilot;02" author="cbiallo">
         <sql splitStatements="false"><![CDATA[
 ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_user_fk;
 DROP INDEX IF EXISTS idx_profiles_user_id;

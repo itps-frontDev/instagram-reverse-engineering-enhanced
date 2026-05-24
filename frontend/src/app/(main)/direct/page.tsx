@@ -1,40 +1,54 @@
 /**
  * @fileoverview Pagina dei messaggi diretti (DM) di Instagram.
- * 
+ *
  * Implementa l'interfaccia di chat con lista contatti, messaggi e invio.
  * Layout a due colonne con sidebar contatti e area messaggi.
- * 
+ *
  * FUNZIONALITÀ:
  * - Lista contatti con ultime chat
  * - Ricerca contatti
- * - Visualizzazione messaggi in tempo reale (polling)
+ * - Visualizzazione messaggi in tempo reale via WebSocket STOMP
  * - Invio nuovi messaggi
  * - Supporto per apertura chat da URL (?username=...)
  * - Marcatura chat come lette
- * 
+ *
  * LAYOUT:
  * - Colonna sinistra: lista contatti (72px mobile, 400px desktop)
  * - Colonna destra: area messaggi con header contatto
- * 
- * POLLING:
- * - Lista chat: ogni 3 secondi
- * - Messaggi chat selezionata: ogni 2 secondi
- * 
+ *
+ * REAL-TIME:
+ * - WebSocket STOMP su /ws — connessione singola al mount
+ * - Nuovi messaggi arrivano via push; lista chat aggiornata senza polling
+ *
  * @module app/(main)/direct/page
  */
 
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { ChatContactList, MessageList, MessageInput } from "@/components/direct";
-import type { ChatContact, MessageItem } from "@/components";
+import type { ChatContact } from "@/components/direct";
 import { ShareIcon, ChatSkeleton } from "@/components/common";
 import ProfilePicture from "@/components/ProfilePicture";
 import { getProfileByUsernameAction } from "@/features/profile";
-import { Search, PenSquare, ChevronDown, ArrowLeft, Phone, Video, Info } from "lucide-react";
+import {
+  getChatsAction,
+  getMessagesAction,
+  getOrCreateChatAction,
+  getAccessTokenForWsAction,
+  refreshAndGetAccessTokenAction,
+  useDirectMessages,
+} from "@/features/directs";
+import type { MessageItem } from "@/features/directs";
+
+/** Estende MessageItem con un flag locale per i messaggi ottimistici */
+type LocalMessageItem = MessageItem & { isOptimistic?: boolean };
+import { Search, PenSquare, ChevronDown, Phone, Video, Info } from "lucide-react";
+
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:8080/ws';
 
 // ============================================================================
 // COMPONENTE PAGINA
@@ -42,78 +56,196 @@ import { Search, PenSquare, ChevronDown, ArrowLeft, Phone, Video, Info } from "l
 
 /**
  * Pagina principale dei messaggi diretti.
- * 
+ *
  * Gestisce lo stato delle chat, la selezione dei contatti e
- * l'invio/ricezione dei messaggi in tempo reale.
+ * l'invio/ricezione dei messaggi in tempo reale via WebSocket STOMP.
  */
+/** Ordina i contatti per last_message_at DESC (chat più recenti in cima) */
+function sortedByRecent(contacts: ChatContact[]): ChatContact[] {
+  return [...contacts].sort((a, b) => {
+    if (!a.last_message_at && !b.last_message_at) return 0;
+    if (!a.last_message_at) return 1;
+    if (!b.last_message_at) return -1;
+    return new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime();
+  });
+}
+
 export default function DirectPage() {
   // -------------------------------------------------------------------------
   // Hooks di contesto e navigazione
   // -------------------------------------------------------------------------
   const { profile } = useAuth();
   const searchParams = useSearchParams();
-  
+
   // -------------------------------------------------------------------------
   // Stato dei contatti e chat
   // -------------------------------------------------------------------------
-  
+
   /** Lista dei contatti con cui l'utente ha chattato */
   const [contacts, setContacts] = useState<ChatContact[]>([]);
-  
+
   /** ID del profilo selezionato (contatto) */
   const [selectedId, setSelectedId] = useState<number | undefined>(undefined);
-  
-  /** ID della chat vera e propria nel database */
-  const [selectedChatId, setSelectedChatId] = useState<number | undefined>(undefined);
-  
+
+  /** ID della chat vera e propria nel database (UUID) */
+  const [selectedChatId, setSelectedChatId] = useState<string | undefined>(undefined);
+  const selectedChatIdRef = useRef<string | undefined>(undefined);
+  const profileIdRef = useRef<number | undefined>(undefined);
+
   /** Dati del contatto attualmente selezionato */
   const [selectedContactData, setSelectedContactData] = useState<ChatContact | undefined>(undefined);
-  
-  /** Lista dei messaggi della chat corrente */
-  const [messages, setMessages] = useState<MessageItem[]>([]);
-  
+
+  /** Lista dei messaggi della chat corrente (include messaggi ottimistici in attesa di conferma WS) */
+  const [messages, setMessages] = useState<LocalMessageItem[]>([]);
+
   // -------------------------------------------------------------------------
   // Stato UI
   // -------------------------------------------------------------------------
-  
+
   /** Caricamento messaggi in corso */
   const [loadingMessages, setLoadingMessages] = useState(false);
-  
+
   /** Invio messaggio in corso */
   const [sending, setSending] = useState(false);
-  
+
   /** Query di ricerca contatti */
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   /** Focus sulla barra di ricerca */
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  
+
+  /** Access token letto una volta per la connessione WebSocket */
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+
   // -------------------------------------------------------------------------
   // Refs
   // -------------------------------------------------------------------------
-  
+
   /** Contenitore messaggi per scroll */
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  
-  /** Ref per selectedId senza causare re-render del polling */
-  const selectedIdRef = React.useRef<number | undefined>(undefined);
-  
+
   /** Ref per tracciare l'username già caricato e prevenire duplicati */
   const loadedUsernameRef = React.useRef<string | null>(null);
-  
+
+  /** Ref a fetchChats per poterlo chiamare da handleIncomingMessage (closure vuota) */
+  const fetchChatsRef = useRef<() => Promise<void>>(async () => {});
+
   // -------------------------------------------------------------------------
-  // Effetti: Sync selectedId con ref
+  // Effetti: Caricamento access token per WebSocket
   // -------------------------------------------------------------------------
-  
-  /** Aggiorna il ref quando selectedId cambia */
+
+  /**
+   * Legge il token dal cookie httpOnly una sola volta al mount
+   * e lo passa all'hook WebSocket per autenticare il CONNECT frame.
+   */
   useEffect(() => {
-    selectedIdRef.current = selectedId;
-  }, [selectedId]);
-  
+    getAccessTokenForWsAction().then(setAccessToken);
+  }, []);
+
+  // Ref sincronizzati per evitare stale closure in handleIncomingMessage.
+  // I messaggi WS possono arrivare nella finestra tra setSelectedChatId (async)
+  // e il successivo useEffect che aggiorna onMessageRef: i ref sono sempre correnti.
+  useEffect(() => { selectedChatIdRef.current = selectedChatId; }, [selectedChatId]);
+  useEffect(() => { profileIdRef.current = profile?.id; }, [profile?.id]);
+
+  // -------------------------------------------------------------------------
+  // WebSocket: ricezione messaggi in tempo reale
+  // -------------------------------------------------------------------------
+
+  /**
+   * Callback invocata ad ogni nuovo messaggio ricevuto via WebSocket.
+   * Aggiunge il messaggio alla lista se appartiene alla chat aperta,
+   * e aggiorna l'anteprima dell'ultima chat nella sidebar sinistra.
+   *
+   * Usa ref invece di closure per selectedChatId/profileId per evitare
+   * race condition tra setState e il useEffect che aggiorna onMessageRef.
+   */
+  const handleIncomingMessage = useCallback((message: MessageItem) => {
+    const currentChatId = selectedChatIdRef.current;
+    const currentProfileId = profileIdRef.current;
+
+    if (message.chatId === currentChatId) {
+      setMessages(prev => {
+        // Se il messaggio è del mittente corrente, sostituisce il corrispettivo
+        // messaggio ottimistico (aggiunto in handleSend) per evitare duplicati.
+        const optimisticIdx = message.senderProfileId === currentProfileId
+          ? prev.findIndex(m => m.isOptimistic && m.chatId === message.chatId && m.text === message.text)
+          : -1;
+
+        if (optimisticIdx !== -1) {
+          const updated = [...prev];
+          updated[optimisticIdx] = message;
+          return updated;
+        }
+        return [message, ...prev];
+      });
+    }
+    // Aggiorna preview e ri-ordina; se la chat non è ancora in lista (creata da
+    // un'altra pagina), ricarica tutta la lista per ottenerla col profilo completo.
+    setContacts(prev => {
+      const hasChat = prev.some(c => c.chatId === message.chatId);
+      if (!hasChat) {
+        setTimeout(() => fetchChatsRef.current(), 0);
+        return prev;
+      }
+      return sortedByRecent(prev.map(c =>
+        c.chatId === message.chatId
+          ? { ...c, last_message_text: message.text, last_message_at: message.createdAt, isFromMe: message.senderProfileId === currentProfileId }
+          : c
+      ));
+    });
+  }, []);
+
+  const handleTokenExpired = useCallback(async () => {
+    const newToken = await refreshAndGetAccessTokenAction();
+    if (newToken) setAccessToken(newToken);
+    return newToken;
+  }, []);
+
+  const { sendMessage, isConnected } = useDirectMessages({
+    accessToken,
+    onMessage: handleIncomingMessage,
+    wsUrl: WS_URL,
+    onTokenExpired: handleTokenExpired,
+  });
+
+  // -------------------------------------------------------------------------
+  // Funzioni: Fetch chat
+  // -------------------------------------------------------------------------
+
+  /**
+   * Carica la lista delle chat con l'ultimo messaggio.
+   * Chiamata una sola volta al mount; aggiornamenti successivi
+   * arrivano in tempo reale dall'hook WebSocket.
+   */
+  const fetchChats = useCallback(async () => {
+    const result = await getChatsAction();
+    if (!result.success) return;
+    const mapped: ChatContact[] = result.data
+      .filter(c => c.chatId !== null)
+      .map(c => ({
+        id: c.otherProfileId,
+        chatId: c.chatId ?? undefined,
+        name: c.otherFullName || c.otherUsername || 'Unknown',
+        username: c.otherUsername ?? undefined,
+        profile_image_url: c.otherProfileImageUrl ?? undefined,
+        last_message_text: c.lastMessageText ?? undefined,
+        last_message_at: c.lastMessageAt ?? undefined,
+        isFromMe: c.isFromMe ?? false,
+      }));
+    setContacts(mapped);
+  }, []);
+
+  /** Mantiene fetchChatsRef aggiornato senza toccare handleIncomingMessage */
+  useEffect(() => { fetchChatsRef.current = fetchChats; }, [fetchChats]);
+
+  /** Carica le chat esistenti al mount */
+  useEffect(() => { fetchChats(); }, [fetchChats]);
+
   // -------------------------------------------------------------------------
   // Effetti: Caricamento profilo da URL
   // -------------------------------------------------------------------------
-  
+
   /**
    * Se c'è un parametro username nell'URL, seleziona automaticamente quel profilo
    * e carica le informazioni se non è già nella lista dei contatti.
@@ -126,9 +258,7 @@ export default function DirectPage() {
       void (async () => {
         try {
           const result = await getProfileByUsernameAction({ username: usernameParam });
-          if (!result.success || !result.data) {
-            return;
-          }
+          if (!result.success || !result.data) return;
 
           const payload = result.data;
           const loadedProfile = payload.profile ?? payload;
@@ -167,7 +297,7 @@ export default function DirectPage() {
   // -------------------------------------------------------------------------
   // Effetti: Marcatura chat come letta
   // -------------------------------------------------------------------------
-  
+
   /** Marca una chat come letta quando viene selezionata */
   useEffect(() => {
     if (selectedChatId) {
@@ -175,81 +305,13 @@ export default function DirectPage() {
       const chatKey = `chat_${selectedChatId}`;
       readChats[chatKey] = Date.now();
       localStorage.setItem('readChats', JSON.stringify(readChats));
-      console.log('[DirectPage] Chat marcata come letta:', chatKey, Date.now());
     }
   }, [selectedChatId]);
 
   // -------------------------------------------------------------------------
-  // Funzioni: Fetch chat
-  // -------------------------------------------------------------------------
-  
-  /**
-   * Carica la lista delle chat con l'ultimo messaggio.
-   * Mappa le chat come contatti e filtra solo quelle con messaggi.
-   */
-  const fetchChats = React.useCallback(async () => {
-    try {
-      const res = await fetch(`/api/direct/chats?_t=${Date.now()}`, {
-        cache: 'no-store',
-        headers: { 'Cache-Control': 'no-cache' }
-      });
-      
-      if (!res.ok) {
-        if (res.status !== 401) {
-          console.error('[DirectPage] Errore fetch chat:', res.status);
-        }
-        return;
-      }
-      
-      const data = await res.json();
-      const chats = (data.chats || []) as Array<{
-        other_profile_id: number;
-        other_full_name?: string;
-        other_username?: string;
-        name?: string;
-        other_profile_image_url?: string;
-        last_message_text?: string;
-        last_message_at?: string;
-        isFromMe?: boolean;
-      }>;
-      
-      // Mappa le chat come contatti, mostra solo quelle con messaggi
-      const mapped: ChatContact[] = chats
-        .filter((chat) => chat.last_message_text)
-        .map((chat) => ({
-          id: chat.other_profile_id,
-          name: chat.other_full_name || chat.other_username || chat.name || 'Unknown',
-          username: chat.other_username,
-          profile_image_url: chat.other_profile_image_url,
-          last_message_text: chat.last_message_text,
-          last_message_at: chat.last_message_at,
-          isFromMe: chat.isFromMe,
-        }));
-      
-      setContacts(mapped);
-    } catch (e) {
-      // Fail silenzioso su errori di rete
-      if (e instanceof Error && e.message !== 'Failed to fetch') {
-        console.error('[DirectPage] Errore fetch chat:', e);
-      }
-    }
-  }, []);
-
-  // -------------------------------------------------------------------------
-  // Effetti: Polling lista chat
-  // -------------------------------------------------------------------------
-  
-  /** Carica le chat esistenti e imposta polling ogni 3 secondi */
-  useEffect(() => {
-    fetchChats();
-    const interval = setInterval(fetchChats, 3000);
-    return () => clearInterval(interval);
-  }, [fetchChats]);
-
-  // -------------------------------------------------------------------------
   // Effetti: Aggiornamento contatto selezionato
   // -------------------------------------------------------------------------
-  
+
   /** Aggiorna selectedContactData quando viene selezionato un contatto dalla lista */
   useEffect(() => {
     if (selectedId) {
@@ -265,113 +327,73 @@ export default function DirectPage() {
   // -------------------------------------------------------------------------
   // Effetti: Creazione/recupero chat
   // -------------------------------------------------------------------------
-  
+
   /** Quando viene selezionato un contatto, crea o ottiene la chat */
   useEffect(() => {
     if (!selectedId) return;
-    
-    (async () => {
-      try {
-        const res = await fetch("/api/direct/get-or-create", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ otherProfileId: selectedId }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setSelectedChatId(data.chatId);
-        }
-      } catch (e) {
-        console.error('[DirectPage] Errore creazione chat:', e);
-      }
+    void (async () => {
+      const result = await getOrCreateChatAction({ otherProfileId: selectedId });
+      if (result.success) setSelectedChatId(result.data.chatId);
     })();
   }, [selectedId]);
 
   // -------------------------------------------------------------------------
-  // Effetti: Polling messaggi
+  // Effetti: Caricamento messaggi
   // -------------------------------------------------------------------------
-  
-  /** Carica i messaggi della chat selezionata e imposta polling ogni 2 secondi */
+
+  /** Carica i messaggi della chat selezionata una volta al cambio chat */
   useEffect(() => {
     if (!selectedChatId) return;
-
-    const fetchMessages = async () => {
-      try {
-        const res = await fetch(`/api/direct/messages?chatId=${selectedChatId}&_t=${Date.now()}`);
-        if (res.ok) {
-          const data = await res.json();
-          setMessages(data.messages || []);
-        }
-      } catch (e) {
-        console.error('[DirectPage] Errore fetch messaggi:', e);
-      }
-    };
-
-    // Carica immediatamente con leggero ritardo per UX
     setLoadingMessages(true);
-    setTimeout(() => {
-      fetchMessages().finally(() => setLoadingMessages(false));
-    }, 100);
-
-    // Polling ogni 2 secondi
-    const interval = setInterval(fetchMessages, 2000);
-    return () => clearInterval(interval);
+    getMessagesAction({ chatId: selectedChatId })
+      .then(result => {
+        if (!result.success) return;
+        setMessages(result.data);
+        // result.data[0] è il più recente (backend DESC) = l'ultimo visibile dopo il reverse.
+        const latest = result.data[0];
+        if (latest) {
+          setContacts(prev => sortedByRecent(prev.map(c =>
+            c.chatId === selectedChatId
+              ? { ...c, last_message_text: latest.text, last_message_at: latest.createdAt, isFromMe: latest.senderProfileId === profileIdRef.current }
+              : c
+          )));
+        }
+      })
+      .finally(() => setLoadingMessages(false));
   }, [selectedChatId]);
 
   // -------------------------------------------------------------------------
   // Handlers
   // -------------------------------------------------------------------------
-  
+
   /**
-   * Gestisce l'invio di un nuovo messaggio.
-   * Dopo l'invio, ricarica i messaggi e la lista chat.
+   * Gestisce l'invio di un nuovo messaggio via WebSocket STOMP.
+   * Il messaggio arriva al mittente (e agli altri partecipanti) via push.
    */
   const handleSend = async (text: string) => {
-    if (!selectedChatId) return;
+    if (!selectedChatId || !profile?.id) return;
     setSending(true);
-    
+
+    // Aggiungi subito il messaggio in UI senza aspettare l'echo WS
+    const optimistic: LocalMessageItem = {
+      id: crypto.randomUUID(),
+      chatId: selectedChatId,
+      senderProfileId: profile.id,
+      text,
+      createdAt: new Date().toISOString(),
+      isOptimistic: true,
+    };
+    setMessages(prev => [optimistic, ...prev]);
+
+    // Aggiorna subito la preview e porta la chat in cima alla lista
+    setContacts(prev => sortedByRecent(prev.map(c =>
+      c.chatId === selectedChatId
+        ? { ...c, last_message_text: text, last_message_at: optimistic.createdAt, isFromMe: true }
+        : c
+    )));
+
     try {
-      const res = await fetch("/api/direct/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chatId: selectedChatId, text }),
-      });
-      
-      if (res.ok) {
-        // Ricarica i messaggi dopo l'invio
-        const data = await fetch(`/api/direct/messages?chatId=${selectedChatId}&_t=${Date.now()}`).then((r) => r.json());
-        setMessages(data.messages || []);
-        
-        // Aggiorna la lista chat per mostrare il nuovo ultimo messaggio
-        const chatsRes = await fetch(`/api/direct/chats?_t=${Date.now()}`);
-        if (chatsRes.ok) {
-          const chatsData = await chatsRes.json();
-          const chats = (chatsData.chats || []) as Array<{
-            other_profile_id: number;
-            other_full_name?: string;
-            other_username?: string;
-            name?: string;
-            other_profile_image_url?: string;
-            last_message_text?: string;
-            last_message_at?: string;
-            isFromMe?: boolean;
-          }>;
-          const mapped: ChatContact[] = chats
-            .filter((chat) => chat.last_message_text)
-            .map((chat) => ({
-              id: chat.other_profile_id,
-              name: chat.other_full_name || chat.other_username || chat.name || 'Unknown',
-              username: chat.other_username,
-              profile_image_url: chat.other_profile_image_url,
-              last_message_text: chat.last_message_text,
-              last_message_at: chat.last_message_at,
-              isFromMe: chat.isFromMe,
-            }));
-          setContacts(mapped);
-        }
-      }
-    } catch (e) {
-      console.error('[DirectPage] Errore invio messaggio:', e);
+      sendMessage(selectedChatId, text);
     } finally {
       setSending(false);
     }
@@ -380,7 +402,7 @@ export default function DirectPage() {
   // -------------------------------------------------------------------------
   // Dati derivati
   // -------------------------------------------------------------------------
-  
+
   /** Contatti filtrati in base alla ricerca */
   const filteredContacts = contacts.filter((c) =>
     c.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -398,7 +420,7 @@ export default function DirectPage() {
       {/* COLONNA SINISTRA: Lista contatti                                   */}
       {/* ================================================================== */}
       <div className="w-[72px] lg:w-[400px] border-r border-[var(--border-primary)] bg-[var(--bg-primary)] h-full flex flex-col overflow-hidden flex-shrink-0">
-        
+
         {/* Header colonna contatti */}
         <div className="px-2 lg:px-4 pt-4 pb-3 flex items-center justify-between">
           {/* Mobile: solo icona nuovo messaggio centrata */}
@@ -407,7 +429,7 @@ export default function DirectPage() {
               <PenSquare className="w-6 h-6 text-[var(--text-primary)] transition-transform group-hover:scale-110" />
             </button>
           </div>
-          
+
           {/* Desktop: username e icona */}
           <button className="hidden lg:flex items-center gap-1 cursor-pointer">
             <span className="text-base font-semibold text-[var(--text-primary)]">
@@ -485,7 +507,7 @@ export default function DirectPage() {
               </button>
             ))}
           </div>
-          
+
           {/* Desktop: lista completa con dettagli */}
           <div className="hidden lg:block">
             <ChatContactList contacts={filteredContacts} onSelect={setSelectedId} selectedId={selectedId} />
@@ -509,7 +531,7 @@ export default function DirectPage() {
                 />
               </Link>
               <div className="flex-1 min-w-0">
-                <Link 
+                <Link
                   href={`/profile/${selectedContact?.username}`}
                   className="font-semibold text-[var(--text-primary)] text-base truncate block"
                 >
@@ -537,7 +559,7 @@ export default function DirectPage() {
                 </button>
               </div>
             </div>
-            
+
             {/* Area messaggi */}
             <div className="flex-1 flex flex-col overflow-hidden" ref={messagesContainerRef}>
               {loadingMessages ? (
@@ -573,8 +595,8 @@ export default function DirectPage() {
                   </Link>
                 </div>
               ) : (
-                <MessageList 
-                  messages={messages} 
+                <MessageList
+                  messages={messages}
                   currentProfileId={profile?.id || 0}
                   contactProfileImage={selectedContact?.profile_image_url}
                   contactName={selectedContact?.name}
@@ -582,7 +604,7 @@ export default function DirectPage() {
                 />
               )}
             </div>
-            
+
             {/* Input messaggio */}
             <MessageInput onSend={handleSend} disabled={sending} />
           </>
@@ -599,7 +621,7 @@ export default function DirectPage() {
               <p className="text-sm text-[var(--text-secondary)]">Invia foto e messaggi privati a un amico o gruppo</p>
             </div>
             {/* Pulsante */}
-            <button 
+            <button
               className="px-4 btn-instagram-primary text-sm rounded-lg"
               onClick={() => {
                 // TODO: Apri modale nuovo messaggio

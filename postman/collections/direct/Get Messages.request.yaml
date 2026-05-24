@@ -1,0 +1,11 @@
+$kind: http-request
+name: Get Messages
+description: |
+  Restituisce i messaggi di una chat (max 100, ordine DESC — più recente primo). Richiede che l'utente autenticato sia un partecipante attivo della chat. Query param chatId: UUID della chat. Response: { "success": true, "data": [{ "id": UUID, "chatId": UUID, "senderProfileId": Long, "text": string, "createdAt": datetime }] }. Errori: 403 DIRECT_FORBIDDEN se non partecipante, 400 se chatId non UUID valido.
+method: GET
+url: "{{baseUrl}}/api/priv/direct/messages?chatId={{directChatId}}"
+headers:
+  Authorization: Bearer {{accessToken}}
+queryParams:
+  chatId: "{{directChatId}}"
+order: 20

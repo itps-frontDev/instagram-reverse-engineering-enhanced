@@ -15,6 +15,26 @@ public interface ProfileVisibilityProfileJpaRepository extends JpaRepository<Pro
 
     @Query(value = """
             SELECT
+                p.id AS id,
+                p.user_id AS userId,
+                CAST(p.username AS VARCHAR) AS username,
+                CAST(p.full_name AS VARCHAR) AS fullName,
+                CAST(p.profile_image_url AS VARCHAR) AS profileImageUrl,
+                CAST(p.bio AS VARCHAR) AS bio,
+                CAST(p.website_url AS VARCHAR) AS websiteUrl,
+                p.is_private AS isPrivate,
+                p.is_verified AS isVerified,
+                p.followers_count AS followersCount,
+                p.following_count AS followingCount,
+                p.posts_count AS postsCount
+            FROM profiles p
+            WHERE p.user_id = :userId
+              AND p.deleted_at IS NULL
+            """, nativeQuery = true)
+    Optional<MeProfileProjection> findMeProfileByUserId(@Param("userId") UUID userId);
+
+    @Query(value = """
+            SELECT
                 CAST(p.username AS VARCHAR) AS username,
                 CAST(p.full_name AS VARCHAR) AS fullName,
                 CAST(p.profile_image_url AS VARCHAR) AS profileImageUrl,

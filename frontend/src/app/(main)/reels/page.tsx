@@ -36,41 +36,7 @@ import { getMediaUrl } from '@/lib/media';
 import { createCommentAction, listCommentsAction } from '@/features/comments';
 import { toggleLikeAction } from '@/features/likes';
 import { togglePostSaveAction } from '@/features/posts';
-
-// ============================================================================
-// INTERFACCE E TIPI
-// ============================================================================
-
-/**
- * Struttura di un singolo reel video
- */
-interface Reel {
-  /** Identificativo univoco del reel */
-  id: number;
-  /** Testo didascalia del reel */
-  caption: string;
-  /** Data di creazione */
-  created_at: string;
-  /** Username dell'autore */
-  profile_username: string;
-  /** URL immagine profilo autore */
-  profile_image_url: string;
-  /** Flag verifica account autore */
-  profile_is_verified: boolean;
-  /** Array dei media (video) allegati */
-  media: Array<{
-    media_url: string;
-    media_type: string;
-  }>;
-  /** Numero totale di like */
-  likes_count: number;
-  /** Numero totale di commenti */
-  comments_count: number;
-  /** Flag: l'utente corrente ha messo like */
-  is_liked_by_current_user: boolean;
-  /** Flag: l'utente corrente ha salvato il reel */
-  is_saved_by_current_user: boolean;
-}
+import { getReelsAction, type ReelItem } from '@/features/reels';
 
 /**
  * Struttura di un commento
@@ -124,7 +90,7 @@ export default function ReelsPage() {
   // ==========================================================================
 
   /** Lista dei reels caricati */
-  const [reels, setReels] = useState<Reel[]>([]);
+  const [reels, setReels] = useState<ReelItem[]>([]);
   
   /** Indice del reel attualmente visualizzato */
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -134,9 +100,9 @@ export default function ReelsPage() {
   
   /** Flag: esistono altri reels da caricare */
   const [hasMore, setHasMore] = useState(true);
-  
-  /** Cursore per paginazione API */
-  const [cursor, setCursor] = useState<string | null>(null);
+
+  /** ID dei reels già ricevuti, per escluderli dalle fetch successive */
+  const [seenIds, setSeenIds] = useState<number[]>([]);
 
   // ==========================================================================
   // STATE - Riproduzione Video
@@ -217,7 +183,7 @@ export default function ReelsPage() {
    * Effect: Carica i reels iniziali al mount del componente
    */
   useEffect(() => {
-    fetchReels();
+    fetchReels([]);
   }, []);
 
   // ==========================================================================
@@ -291,29 +257,18 @@ export default function ReelsPage() {
    * Carica 5 reels per volta e aggiorna il cursore per la paginazione.
    * Gestisce anche il flag hasMore per sapere se ci sono altri contenuti.
    */
-  const fetchReels = async () => {
-    try {
-      // Costruisci URL con parametri di paginazione
-      const url = new URL('/api/reels', window.location.origin);
-      url.searchParams.set('limit', '5');
-      if (cursor) {
-        url.searchParams.set('cursor', cursor);
-      }
-
-      const response = await fetch(url.toString());
-      if (!response.ok) throw new Error('Failed to fetch reels');
-
-      const data = await response.json();
-      
-      // Aggiorna lo state con i nuovi reels
-      setReels(prev => cursor ? [...prev, ...data.reels] : data.reels);
-      setCursor(data.nextCursor);
-      setHasMore(data.hasMore);
-    } catch (error) {
-      console.error('Errore nel caricamento reels:', error);
-    } finally {
+  const fetchReels = async (currentSeenIds: number[] = []) => {
+    const result = await getReelsAction({ limit: 5, excludeIds: currentSeenIds });
+    if (!result.success) {
+      console.error('Errore nel caricamento reels:', result.error);
       setIsLoading(false);
+      return;
     }
+    const newReels = result.data.reels;
+    setReels(prev => currentSeenIds.length === 0 ? newReels : [...prev, ...newReels]);
+    setSeenIds(prev => [...prev, ...newReels.map(r => r.id)]);
+    setHasMore(result.data.hasMore);
+    setIsLoading(false);
   };
 
   /**
@@ -374,7 +329,7 @@ export default function ReelsPage() {
 
     // Pre-carica nuovi reels quando ci si avvicina alla fine
     if (direction === 'next' && newIndex >= reels.length - 2 && hasMore && !isLoading) {
-      fetchReels();
+      fetchReels(seenIds);
     }
   }, [currentIndex, reels.length, hasMore, isLoading, isTransitioning]);
 
@@ -516,7 +471,7 @@ export default function ReelsPage() {
     }
     setReels(prev => prev.map(r =>
       r.id === reelId
-        ? { ...r, is_liked_by_current_user: result.data.liked, likes_count: result.data.count }
+        ? { ...r, isLikedByCurrentUser: result.data.liked, likesCount: result.data.count }
         : r
     ));
   };
@@ -535,7 +490,7 @@ export default function ReelsPage() {
 
     setReels(prev => prev.map(r =>
       r.id === reelId
-        ? { ...r, is_saved_by_current_user: result.data.saved }
+        ? { ...r, isSavedByCurrentUser: result.data.saved }
         : r
     ));
   };
@@ -554,7 +509,7 @@ export default function ReelsPage() {
 
     // Metti like solo se non già presente
     const reel = reels.find(r => r.id === reelId);
-    if (reel && !reel.is_liked_by_current_user) {
+    if (reel && !reel.isLikedByCurrentUser) {
       setIsLikeAnimating(true);
       setTimeout(() => setIsLikeAnimating(false), 400);
       handleLike(reelId);
@@ -686,7 +641,7 @@ export default function ReelsPage() {
             const isCurrent = index === currentIndex;
             const isPrev = index === currentIndex - 1;
             const isNext = index === currentIndex + 1;
-            const reelVideo = reel.media.find((m) => m.media_type === 'video');
+            const reelVideo = reel.media.find((m) => m.mediaType === 'video');
             const reelPrimaryMedia = reelVideo ?? reel.media[0];
 
             // Determina transform e opacità per l'animazione
@@ -732,12 +687,12 @@ export default function ReelsPage() {
                     {/* Video Element */}
                     {reelPrimaryMedia && (
                       <>
-                        {reelPrimaryMedia.media_type === 'video' ? (
+                        {reelPrimaryMedia.mediaType === 'video' ? (
                           <video
                             ref={(el) => {
                               if (el) videoRefs.current.set(index, el);
                             }}
-                            src={getMediaUrl(reelPrimaryMedia.media_url) ?? ''}
+                            src={getMediaUrl(reelPrimaryMedia.mediaUrl) ?? ''}
                             className="absolute inset-0 w-full h-full object-cover"
                             loop
                             muted={isMuted}
@@ -746,7 +701,7 @@ export default function ReelsPage() {
                           />
                         ) : (
                           <img
-                            src={getMediaUrl(reelPrimaryMedia.media_url) ?? ''}
+                            src={getMediaUrl(reelPrimaryMedia.mediaUrl) ?? ''}
                             alt="Reel media"
                             className="absolute inset-0 w-full h-full object-cover"
                           />
@@ -798,22 +753,22 @@ export default function ReelsPage() {
                         <div className="absolute bottom-4 left-3 right-3 z-20">
                           {/* Riga info utente */}
                           <div className="flex items-center gap-2 mb-2">
-                            <Link href={`/profile/${reel.profile_username}`} onClick={(e) => e.stopPropagation()}>
+                            <Link href={`/profile/${reel.profileUsername}`} onClick={(e) => e.stopPropagation()}>
                               <ProfilePicture
-                                src={reel.profile_image_url}
-                                alt={reel.profile_username}
+                                src={reel.profileImageUrl}
+                                alt={reel.profileUsername}
                                 size={36}
                               />
                             </Link>
                             <Link 
-                              href={`/profile/${reel.profile_username}`}
+                              href={`/profile/${reel.profileUsername}`}
                               className="flex items-center gap-1"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <span className="text-white font-semibold text-sm">
-                                {reel.profile_username}
+                                {reel.profileUsername}
                               </span>
-                              {reel.profile_is_verified && <VerifiedBadge size={12} />}
+                              {reel.profileIsVerified && <VerifiedBadge size={12} />}
                             </Link>
                             <span className="text-white/70">•</span>
                             <button 
@@ -836,7 +791,7 @@ export default function ReelsPage() {
                             <div className="flex items-center gap-1.5 bg-white/20 rounded-full px-2.5 py-1">
                               <Music className="w-3 h-3 text-white" />
                               <span className="text-white text-xs">
-                                {reel.profile_username} · Audio originale
+                                {reel.profileUsername} · Audio originale
                               </span>
                             </div>
                           </div>
@@ -856,7 +811,7 @@ export default function ReelsPage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (!reel.is_liked_by_current_user) {
+                        if (!reel.isLikedByCurrentUser) {
                           setIsLikeAnimating(true);
                           setTimeout(() => setIsLikeAnimating(false), 400);
                         }
@@ -866,13 +821,13 @@ export default function ReelsPage() {
                     >
                       <Heart
                         className={`w-7 h-7 transition-transform ${
-                          reel.is_liked_by_current_user
+                          reel.isLikedByCurrentUser
                             ? 'fill-[var(--color-like)] text-[var(--color-like)]'
                             : 'text-[var(--color-text-primary)]'
                         } ${isLikeAnimating && isCurrent ? 'scale-125' : ''}`}
                       />
                       <span className="text-[var(--color-text-primary)] text-xs font-medium">
-                        {formatCount(reel.likes_count)}
+                        {formatCount(reel.likesCount)}
                       </span>
                     </button>
 
@@ -888,7 +843,7 @@ export default function ReelsPage() {
                       >
                         <MessageCircle className="w-7 h-7 text-[var(--color-text-primary)] icon-mirrored" />
                         <span className="text-[var(--color-text-primary)] text-xs font-medium">
-                          {reel.comments_count}
+                          {reel.commentsCount}
                         </span>
                       </button>
 
@@ -1037,7 +992,7 @@ export default function ReelsPage() {
                     >
                       <Bookmark
                         className={`w-7 h-7 ${
-                          reel.is_saved_by_current_user
+                          reel.isSavedByCurrentUser
                             ? 'fill-[var(--color-text-primary)] text-[var(--color-text-primary)]'
                             : 'text-[var(--color-text-primary)]'
                         }`}
@@ -1055,8 +1010,8 @@ export default function ReelsPage() {
                       style={{ animationDuration: '3s' }}
                     >
                       <ProfilePicture
-                        src={reel.profile_image_url}
-                        alt={reel.profile_username}
+                        src={reel.profileImageUrl}
+                        alt={reel.profileUsername}
                         size={28}
                       />
                     </div>

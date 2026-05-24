@@ -44,6 +44,7 @@ public class SecurityConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/public/**").permitAll()
+                .requestMatchers("/ws/**").permitAll()       // SockJS handshake; JWT auth handled by STOMP ChannelInterceptor
                 .requestMatchers("/api/priv/**").authenticated()
                 .anyRequest().denyAll()
             )

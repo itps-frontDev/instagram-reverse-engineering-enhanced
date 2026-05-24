@@ -26,6 +26,7 @@ import {StoryViewerSkeleton} from '@/components/common/skeletons';
 import { VerifiedBadge, ShareIcon } from '@/components/common';
 import { toggleLikeAction } from '@/features/likes';
 import { registerStoryViewAction } from '@/features/stories/actions';
+import { getOrCreateChatAction, sendMessageAction } from '@/features/directs';
 import { getMediaUrl } from '@/lib/media';
 
 interface Story {
@@ -388,24 +389,11 @@ export default function StoryViewer({
     if (!messageText.trim() || !currentStory) return;
 
     try {
-      // Ottiene o crea chat con il proprietario della storia
-      const chatRes = await fetch('/api/direct/get-or-create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ otherProfileId: currentStory.profile_id }),
-      });
+      const chatResult = await getOrCreateChatAction({ otherProfileId: currentStory.profile_id });
+      if (!chatResult.success) throw new Error(chatResult.error);
 
-      if (!chatRes.ok) throw new Error('Failed to get/create chat');
-      const { chatId } = await chatRes.json();
-
-      // Invia messaggio
-      const sendRes = await fetch('/api/direct/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chatId, text: messageText }),
-      });
-
-      if (!sendRes.ok) throw new Error('Failed to send message');
+      const sendResult = await sendMessageAction({ chatId: chatResult.data.chatId, text: messageText });
+      if (!sendResult.success) throw new Error(sendResult.error);
 
       // Pulisce input e mostra feedback
       setMessageText('');

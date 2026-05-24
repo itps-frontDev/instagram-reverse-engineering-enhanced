@@ -28,12 +28,11 @@ import {ProfilePicture} from '@/components';
  * @interface MessageItem
  */
 export interface MessageItem {
-  
-  id: number; // ID univoco del messaggio
-  sender_profile_id: number; // ID profilo del mittente
-  username: string; // Username del mittente
+  id: string; // UUID univoco del messaggio
+  chatId: string; // UUID della chat di appartenenza
+  senderProfileId: number; // ID profilo del mittente
   text: string; // Testo del messaggio
-  created_at: string; // Data/ora di creazione
+  createdAt: string; // Data/ora di creazione (ISO datetime)
 }
 
 /**
@@ -63,9 +62,9 @@ interface MessageListProps {
  */
 function shouldShowTimeSeparator(currentMsg: MessageItem, prevMsg: MessageItem | null): boolean {
   if (!prevMsg) return true;
-  
-  const currentDate = new Date(currentMsg.created_at);
-  const prevDate = new Date(prevMsg.created_at);
+
+  const currentDate = new Date(currentMsg.createdAt);
+  const prevDate = new Date(prevMsg.createdAt);
   
   // Mostra separatore se sono passati più di 30 minuti tra i messaggi
   const diffMinutes = (currentDate.getTime() - prevDate.getTime()) / (1000 * 60);
@@ -137,10 +136,11 @@ export default function MessageList({ messages, currentProfileId, contactProfile
     prevMessageCountRef.current = 0;
   }, [contactName]);
 
-  // Ordina i messaggi dal più vecchio al più recente per la visualizzazione
-  const sortedMessages = [...messages].sort((a, b) => 
-    new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-  );
+  // Il backend restituisce i messaggi in createdAt DESC (più recente primo).
+  // Invertiamo per mostrare il più vecchio in cima e il più recente in fondo.
+  // Questo approccio è consistente con la paginazione futura: si appendono
+  // i messaggi più vecchi in fondo all'array senza dover ri-sortare.
+  const sortedMessages = [...messages].reverse();
 
   return (
     <div className="flex-1 overflow-y-auto px-4 flex flex-col">
@@ -182,11 +182,10 @@ export default function MessageList({ messages, currentProfileId, contactProfile
       {sortedMessages.map((msg, index) => {
         const prevMsg = index > 0 ? sortedMessages[index - 1] : null;
         const showTimeSeparator = shouldShowTimeSeparator(msg, prevMsg);
-        const isFromMe = msg.sender_profile_id === currentProfileId;
-        
-        // Controlla se il prossimo messaggio è dello stesso mittente
+        const isFromMe = msg.senderProfileId === currentProfileId;
+
         const nextMsg = index < sortedMessages.length - 1 ? sortedMessages[index + 1] : null;
-        const isLastInGroup = !nextMsg || nextMsg.sender_profile_id !== msg.sender_profile_id;
+        const isLastInGroup = !nextMsg || nextMsg.senderProfileId !== msg.senderProfileId;
 
         return (
           <React.Fragment key={msg.id}>
@@ -194,7 +193,7 @@ export default function MessageList({ messages, currentProfileId, contactProfile
             {showTimeSeparator && (
               <div className="flex justify-center my-4">
                 <span className="text-xs text-[var(--text-secondary)]">
-                  {formatTimeSeparator(msg.created_at)}
+                  {formatTimeSeparator(msg.createdAt)}
                 </span>
               </div>
             )}

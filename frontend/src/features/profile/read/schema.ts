@@ -145,6 +145,50 @@ export const getProfilePreviewResultSchema = z.object({
   error: z.string().optional(),
 });
 
+// ============================================================================
+// ME PROFILE — lightweight endpoint for auth context
+// ============================================================================
+
+/** Spring response shape for GET /api/priv/profiles/me */
+export const meProfileSpringDataSchema = z.object({
+  id: z.number().int(),
+  userId: z.string().uuid(),
+  username: z.string(),
+  fullName: z.string().nullable().optional(),
+  profileImageUrl: z.string().nullable().optional(),
+  bio: z.string().nullable().optional(),
+  websiteUrl: z.string().nullable().optional(),
+  isPrivate: z.boolean(),
+  isVerified: z.boolean(),
+  followersCount: z.number().int(),
+  followingCount: z.number().int(),
+  postsCount: z.number().int(),
+});
+
+export const meProfileSpringSuccessSchema = z.object({
+  success: z.literal(true),
+  data: meProfileSpringDataSchema,
+  message: z.string().optional(),
+});
+
+/** Normalised snake_case shape stored in AuthContext */
+export const meProfileSchema = z.object({
+  id: z.number().int(),
+  user_id: z.string(),
+  username: z.string(),
+  full_name: z.string().nullable(),
+  profile_image_url: z.string().nullable(),
+  bio: z.string().nullable(),
+  website_url: z.string().nullable(),
+  is_private: z.boolean(),
+  is_verified: z.boolean(),
+  followers_count: z.number().int(),
+  following_count: z.number().int(),
+  posts_count: z.number().int(),
+});
+
+export type MeProfile = z.infer<typeof meProfileSchema>;
+
 export type GetProfileByUsernameInput = z.infer<typeof getProfileByUsernameInputSchema>;
 export type ProfileByUsernameData = z.infer<typeof profileByUsernameDataSchema>;
 export type ProfileByUsernameResponse = z.infer<typeof profileByUsernameResponseSchema>;

@@ -73,13 +73,3 @@ export {
   type CreateStoryData,
 } from './StoryRepository';
 
-// Direct Message Repository - operazioni su chat e messaggi
-export {
-  directMessageRepository,
-  type Chat,
-  type ChatWithDetails,
-  type MappedChat,
-  type Message,
-  type MessageWithSender,
-  type PotentialContact,
-} from './DirectMessageRepository';
