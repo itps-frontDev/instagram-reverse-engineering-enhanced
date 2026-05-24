@@ -13,7 +13,7 @@
  * 
  * FLUSSO:
  * 1. Utente inserisce credenziali
- * 2. Submit del form verso /api/auth/login
+ * 2. Submit del form verso Server Action loginAction
  * 3. Se successo: redirect alla pagina richiesta o home
  * 4. Se errore: mostra messaggio di errore
  * 
@@ -27,7 +27,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Footer, InstagramLogo } from '@/components/common';
-import { loginAction } from '@/features/auth/actions';
+import { getMyProfileAction, loginAction } from '@/features/auth/actions';
 
 // ============================================================================
 // FORM DI LOGIN
@@ -54,6 +54,12 @@ function LoginForm() {
   // Hooks di navigazione
   // -------------------------------------------------------------------------
   const searchParams = useSearchParams();
+
+  /**
+   * Piccola attesa per gestire race condition transitorie tra Server Action
+   * e disponibilità backend subito dopo restart container.
+   */
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   // -------------------------------------------------------------------------
   // Effetti
@@ -82,8 +88,9 @@ function LoginForm() {
     setError('');
     setLoading(true);
 
+    const redirectParam = searchParams.get('redirect') || '/';
+
     try {
-      const redirectParam = searchParams.get('redirect') || '/';
       const result = await loginAction({ identifier, password, redirect: redirectParam });
 
       if (!result.success) {
@@ -93,7 +100,27 @@ function LoginForm() {
 
       window.location.href = result.data.redirectTo;
     } catch {
-      setError('Spiacenti, si è verificato un problema. Riprova più tardi.');
+      try {
+        // Retry breve: in sviluppo il primo roundtrip può fallire mentre il backend è in warm-up.
+        await delay(350);
+        const retryResult = await loginAction({ identifier, password, redirect: redirectParam });
+        if (retryResult.success) {
+          window.location.href = retryResult.data.redirectTo;
+          return;
+        }
+
+        // Fallback resiliente: se il cookie è stato impostato ma la risposta action si è persa,
+        // verifichiamo la sessione ed evitiamo falso errore lato utente.
+        const profileResult = await getMyProfileAction();
+        if (profileResult.success && profileResult.data) {
+          window.location.href = redirectParam;
+          return;
+        }
+
+        setError(retryResult.error);
+      } catch {
+        setError('Spiacenti, si è verificato un problema. Riprova più tardi.');
+      }
     } finally {
       setLoading(false);
     }

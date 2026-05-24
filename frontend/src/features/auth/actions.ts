@@ -19,6 +19,11 @@ import type { AuthActionResult, LoginData, LoginInput, RegisterData, RegisterInp
 import { loginInputSchema, registerInputSchema } from "@/features/auth/schema";
 
 type CookieStore = Awaited<ReturnType<typeof cookies>>;
+const LOGIN_RETRY_DELAYS_MS = [350, 900, 1500] as const;
+
+function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 function buildTokenCookies(
   cookieStore: CookieStore,
@@ -54,7 +59,28 @@ export async function loginAction(input: LoginInput): Promise<AuthActionResult<L
   const redirectTo = sanitizeInternalRedirectPath(parsed.data.redirect, "/");
 
   try {
-    const tokenPayload = await loginWithSpring(parsed.data);
+    let tokenPayload: Awaited<ReturnType<typeof loginWithSpring>> | null = null;
+    const retryDelays = [0, ...LOGIN_RETRY_DELAYS_MS];
+
+    // Retry progressivo su errori transitori (warm-up backend post restart).
+    for (const retryDelayMs of retryDelays) {
+      try {
+        if (retryDelayMs > 0) {
+          await delay(retryDelayMs);
+        }
+        tokenPayload = await loginWithSpring(parsed.data);
+        break;
+      } catch (error) {
+        if (!(error instanceof AuthBackendError) || error.status < 500) {
+          throw error;
+        }
+      }
+    }
+
+    if (!tokenPayload) {
+      return { success: false, error: "Authentication temporarily unavailable." };
+    }
+
     const cookieStore = await cookies();
     buildTokenCookies(cookieStore, tokenPayload);
     return { success: true, data: { redirectTo } };

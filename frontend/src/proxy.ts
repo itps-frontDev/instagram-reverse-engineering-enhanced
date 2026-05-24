@@ -97,6 +97,18 @@ function applyTokenCookies(response: NextResponse, tokens: RefreshedTokens, acce
  */
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const isServerActionRequest = request.method === 'POST' && request.headers.has('next-action');
+  const isProtectedRoute = protectedRoutes.some((route) =>
+    pathname === route || pathname.startsWith(route + '/')
+  );
+  const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
+
+  // Le Server Actions usano un protocollo di risposta dedicato.
+  // Redirect/risposte custom del middleware su queste richieste possono rompere il transport
+  // lato client (errore generico) anche quando la mutation server è andata a buon fine.
+  if (isServerActionRequest) {
+    return NextResponse.next();
+  }
 
   const accessTokenName = process.env.AUTH_ACCESS_TOKEN_COOKIE_NAME ?? 'iree_access_token';
   const refreshTokenName = process.env.AUTH_REFRESH_TOKEN_COOKIE_NAME ?? 'iree_refresh_token';
@@ -105,7 +117,7 @@ export async function proxy(request: NextRequest) {
 
   let isAuthenticated = false;
 
-  if (accessToken) {
+  if (isProtectedRoute && accessToken) {
     try {
       const springBaseUrl = process.env.SPRING_API_BASE_URL ?? 'http://localhost:8080';
       const res = await fetch(`${springBaseUrl}/api/priv/auth/me`, {
@@ -126,7 +138,7 @@ export async function proxy(request: NextRequest) {
     } catch {
       isAuthenticated = false;
     }
-  } else if (refreshToken) {
+  } else if (isProtectedRoute && refreshToken) {
     // Cookie access token scaduto — prova refresh silenzioso
     const newTokens = await tryRefresh(refreshToken);
     if (newTokens) {
@@ -135,14 +147,6 @@ export async function proxy(request: NextRequest) {
       return redirectRes;
     }
   }
-
-  // Verifica se la route corrente è protetta
-  const isProtectedRoute = protectedRoutes.some((route) =>
-    pathname === route || pathname.startsWith(route + '/')
-  );
-
-  // Verifica se la route corrente è una route di autenticazione
-  const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
 
   // Reindirizza a login se si accede a route protetta senza autenticazione
   if (isProtectedRoute && !isAuthenticated) {
