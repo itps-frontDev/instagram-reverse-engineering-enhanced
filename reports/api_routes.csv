@@ -6,7 +6,7 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/stories/[id]/public,GET,"Recupera storie pubbliche di un profilo (senza auth ma codice usa currentProfile)",Yes,No,Hybrid,No
 /api/stories/[id]/like,POST,"MIGRATED to Spring: POST /api/priv/likes/{story}/{id} - toggle like (replaced by Spring likes service)",Yes,No,Yes,No
 /api/search,GET,"MIGRATED to Spring: /api/priv/search - ricerca profili per username o nome",Yes,No,Yes,No
-/api/reels,GET,"Legacy Next reels feed (video posts) con paginazione; no Spring controller yet",Yes,No,Yes,Yes
+/api/reels,GET,"MIGRATED to Spring: GET /api/priv/reels?limit=&excludeIds= - feed reels casuali (ORDER BY RANDOM()) con excludeIds per infinite scroll senza duplicati",No,No,Yes,No
 /api/profiles/upload-image,POST,"MIGRATED to Spring: /api/priv/profiles/me/picture - PUT - upload foto profilo",Yes,Yes,Yes,No
 /api/profiles/suggestions,GET,"MIGRATED to Spring: /api/priv/follows/suggestions - suggerimenti profili da seguire (top-20 pubblici non seguiti, shuffled per varietà)",No,No,Yes,No
 /api/profiles/security,PUT,"MIGRATED to Spring: /api/priv/profiles/security - Aggiorna email/telefono/password (bcrypt)",Yes,No,Yes,No
