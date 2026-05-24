@@ -1,0 +1,5 @@
+$kind: collection
+name: Reels
+description: Endpoint privato per il feed reels. Restituisce post video accessibili all'utente autenticato in ordine casuale. I reel già visti vengono esclusi tramite excludeIds per evitare duplicati nello scroll infinito.
+variables:
+  reelsExcludeIds: ""

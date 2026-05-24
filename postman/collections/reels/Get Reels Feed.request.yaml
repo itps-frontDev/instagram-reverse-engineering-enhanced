@@ -1,0 +1,31 @@
+$kind: http-request
+name: Get Reels Feed
+description: >
+  Restituisce i reels (post con media_type='video') visibili all'utente autenticato.
+  Visibilità: profili pubblici, profilo proprio, profili seguiti (follow accepted).
+  Ordinamento: casuale (ORDER BY RANDOM()) — ogni richiesta produce un ordine diverso.
+  excludeIds: lista di ID già ricevuti da escludere, per evitare duplicati nello scroll infinito.
+  limit: min=1, max=50, default=10.
+  hasMore=true se i reels restituiti == limit (potrebbero essercene altri).
+  hasMore=false se i reels restituiti < limit (lista esaurita).
+  I campi usano camelCase (isLikedByCurrentUser, profileUsername, mediaUrl, ecc.).
+method: GET
+url: "{{baseUrl}}/api/priv/reels"
+headers:
+  Authorization: Bearer {{accessToken}}
+queryParams:
+  limit: "{{reelsLimit}}"
+  excludeIds: "{{reelsExcludeIds}}"
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |
+      var json = pm.response.json();
+      if (pm.response.code === 200 && json.data && Array.isArray(json.data.reels)) {
+          var newIds = json.data.reels.map(function(r) { return String(r.id); });
+          var existing = pm.collectionVariables.get('reelsExcludeIds');
+          var prev = existing ? existing.split(',').filter(Boolean) : [];
+          var merged = prev.concat(newIds.filter(function(id) { return prev.indexOf(id) === -1; }));
+          pm.collectionVariables.set('reelsExcludeIds', merged.join(','));
+      }
+order: 100
