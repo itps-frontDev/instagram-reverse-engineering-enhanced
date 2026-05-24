@@ -48,8 +48,9 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/feed/comments/like,POST,"MIGRATED to Spring: POST /api/priv/likes/{comment}/{id} - toggle like on comment (handled by Spring)",Yes,No,Yes,Yes
 /api/feed/comments/[id],DELETE,"Legacy Next delete comment endpoint (owner commento o owner post); no Spring comment delete yet",Yes,No,Yes,Yes
 /api/explore,GET,"Legacy Next explore feed: post popolari da profili pubblici; no Spring endpoint yet",Yes,No,Yes,Yes
-/api/direct/send,POST,"Invia messaggio in chat (verifica partecipazione)",Yes,No,Yes,No
-/api/direct/messages,GET,"Recupera messaggi di una chat (chatId query param)",Yes,No,Yes,No
-/api/direct/get-or-create,POST,"Ottieni o crea chat 1-to-1",Yes,No,Yes,No
-/api/direct/chats,GET,"Lista chat dell'utente con dettagli + contatti potenziali",Yes,No,Yes,No
+/api/direct/send,POST,"MIGRATED to Spring: POST /api/priv/direct/send - invia messaggio in chat (verifica partecipazione, broadcast WS afterCommit)",No,No,Yes,No
+/api/direct/messages,GET,"MIGRATED to Spring: GET /api/priv/direct/messages?chatId= - recupera ultimi 100 messaggi di una chat (ORDER BY created_at DESC, id DESC)",No,No,Yes,No
+/api/direct/get-or-create,POST,"MIGRATED to Spring: POST /api/priv/direct/get-or-create - ottieni o crea chat 1-to-1 tra utente corrente e otherProfileId",No,No,Yes,No
+/api/direct/chats,GET,"MIGRATED to Spring: GET /api/priv/direct/chats - lista chat con ultimo messaggio (LATERAL JOIN) + mutual followers senza chat",No,No,Yes,No
+/ws (STOMP),CONNECT+SUBSCRIBE+PUBLISH,"Spring WebSocket STOMP: CONNECT con JWT header → SUBSCRIBE /user/queue/direct per push real-time → PUBLISH /app/direct.send per inviare",No,No,Yes,No
 /api/auth/register,POST,"MIGRATED to Spring: /api/public/auth/register - Registrazione utente (user + profile in transaction)",Yes,No,No,Yes
