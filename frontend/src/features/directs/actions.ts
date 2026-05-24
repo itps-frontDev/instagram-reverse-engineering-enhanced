@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { springFetch } from '@/lib/spring-client';
 import { SpringAuthError } from '@/lib/spring-error';
-import { getAccessTokenCookieName } from '@/lib/auth/backend';
+import { getAccessTokenCookieName, getRefreshTokenCookieName, refreshWithSpring } from '@/lib/auth/backend';
 import { z } from 'zod';
 import {
   getMessagesInputSchema,
@@ -106,4 +106,20 @@ export async function sendMessageAction(input: SendMessageInput): Promise<SendMe
 export async function getAccessTokenForWsAction(): Promise<string | null> {
   const cookieStore = await cookies();
   return cookieStore.get(getAccessTokenCookieName())?.value ?? null;
+}
+
+export async function refreshAndGetAccessTokenAction(): Promise<string | null> {
+  const cookieStore = await cookies();
+  const refreshToken = cookieStore.get(getRefreshTokenCookieName())?.value;
+  if (!refreshToken) return null;
+
+  try {
+    const tokenPayload = await refreshWithSpring(refreshToken);
+    const secure = process.env.NODE_ENV === 'production';
+    cookieStore.set({ name: getAccessTokenCookieName(), value: tokenPayload.accessToken, httpOnly: true, sameSite: 'lax', path: '/', maxAge: tokenPayload.expiresIn, secure });
+    cookieStore.set({ name: getRefreshTokenCookieName(), value: tokenPayload.refreshToken, httpOnly: true, sameSite: 'lax', path: '/', maxAge: tokenPayload.refreshExpiresIn, secure });
+    return tokenPayload.accessToken;
+  } catch {
+    return null;
+  }
 }
