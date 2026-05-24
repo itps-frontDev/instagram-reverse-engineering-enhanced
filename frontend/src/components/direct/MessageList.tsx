@@ -136,10 +136,11 @@ export default function MessageList({ messages, currentProfileId, contactProfile
     prevMessageCountRef.current = 0;
   }, [contactName]);
 
-  // Ordina i messaggi dal più vecchio al più recente per la visualizzazione
-  const sortedMessages = [...messages].sort((a, b) =>
-    new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-  );
+  // Il backend restituisce i messaggi in createdAt DESC (più recente primo).
+  // Invertiamo per mostrare il più vecchio in cima e il più recente in fondo.
+  // Questo approccio è consistente con la paginazione futura: si appendono
+  // i messaggi più vecchi in fondo all'array senza dover ri-sortare.
+  const sortedMessages = [...messages].reverse();
 
   return (
     <div className="flex-1 overflow-y-auto px-4 flex flex-col">

@@ -9,5 +9,5 @@ import java.util.UUID;
 
 public interface MessageJpaRepository extends JpaRepository<Message, UUID> {
 
-    List<Message> findByChatIdAndDeletedAtIsNullOrderByCreatedAtDesc(UUID chatId, Pageable pageable);
+    List<Message> findByChatIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(UUID chatId, Pageable pageable);
 }

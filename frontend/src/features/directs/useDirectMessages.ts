@@ -9,9 +9,10 @@ interface UseDirectMessagesOptions {
   accessToken: string | null;
   onMessage: (message: MessageItem) => void;
   wsUrl: string;
+  onTokenExpired?: () => Promise<string | null>;
 }
 
-export function useDirectMessages({ accessToken, onMessage, wsUrl }: UseDirectMessagesOptions) {
+export function useDirectMessages({ accessToken, onMessage, wsUrl, onTokenExpired }: UseDirectMessagesOptions) {
   // Riferimento al client STOMP — non provoca re-render quando cambia
   const clientRef = useRef<Client | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -22,6 +23,9 @@ export function useDirectMessages({ accessToken, onMessage, wsUrl }: UseDirectMe
   // il prossimo frame venga ricevuto.
   const onMessageRef = useRef(onMessage);
   useEffect(() => { onMessageRef.current = onMessage; }, [onMessage]);
+
+  const onTokenExpiredRef = useRef(onTokenExpired);
+  useEffect(() => { onTokenExpiredRef.current = onTokenExpired; }, [onTokenExpired]);
 
   useEffect(() => {
     // Non connettersi finché il token non è disponibile (letto dalla server action)
@@ -58,7 +62,17 @@ export function useDirectMessages({ accessToken, onMessage, wsUrl }: UseDirectMe
       },
 
       onStompError: (frame) => {
-        console.error('[useDirectMessages] STOMP error:', frame.headers['message']);
+        const msg = frame.headers['message'] ?? '';
+        console.error('[useDirectMessages] STOMP error:', msg);
+        if (msg.includes('JWT expired') && onTokenExpiredRef.current) {
+          onTokenExpiredRef.current().then(newToken => {
+            if (newToken) {
+              // Deactivate here; parent will re-create the client with the new token
+              // when accessToken state updates (useEffect dependency triggers reconnect).
+              client.deactivate();
+            }
+          });
+        }
       },
     });
 

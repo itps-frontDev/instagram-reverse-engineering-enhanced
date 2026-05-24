@@ -24,6 +24,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -98,7 +100,7 @@ public class DirectServiceImpl implements DirectService {
         assertParticipant(chatId, profile.getId());
 
         List<MessageResponseDTO> messages = messageRepository
-                .findByChatIdAndDeletedAtIsNullOrderByCreatedAtDesc(chatId, PageRequest.of(0, 100))
+                .findByChatIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(chatId, PageRequest.of(0, 100))
                 .stream()
                 .map(m -> new MessageResponseDTO(m.getId(), m.getChatId(), m.getSenderProfileId(), m.getText(), m.getCreatedAt()))
                 .toList();
@@ -181,15 +183,23 @@ public class DirectServiceImpl implements DirectService {
                 message.getId(), message.getChatId(), message.getSenderProfileId(),
                 message.getText(), message.getCreatedAt());
 
+        // Il broadcast WS viene registrato per DOPO il commit della transazione.
+        // Così Hibernate ha già fatto flush dell'INSERT prima che i client ricevano il push
+        // ed eventuali re-fetch trovino il messaggio già persistito.
         List<ChatParticipant> participants = participantRepository.findByChatIdAndLeftAtIsNull(chatId);
-        for (ChatParticipant p : participants) {
-            profileRepository.findById(p.getProfileId()).ifPresent(participantProfile -> {
-                String targetUserId = participantProfile.getUserId().toString();
-                messagingTemplate.convertAndSendToUser(targetUserId, "/queue/direct", dto);
-            });
-        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        for (ChatParticipant p : participants) {
+                            profileRepository.findById(p.getProfileId()).ifPresent(participantProfile -> {
+                                String targetUserId = participantProfile.getUserId().toString();
+                                messagingTemplate.convertAndSendToUser(targetUserId, "/queue/direct", dto);
+                            });
+                        }
+                        logger.info("sendMessage: message {} pushed to {} participants in chatId={}", dto.id(), participants.size(), chatId);
+                    }
+                });
 
-        logger.info("sendMessage: message {} pushed to {} participants in chatId={}", message.getId(), participants.size(), chatId);
         return dto;
     }
 

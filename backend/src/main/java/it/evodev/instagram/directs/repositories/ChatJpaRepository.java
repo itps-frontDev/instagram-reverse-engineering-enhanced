@@ -30,7 +30,7 @@ public interface ChatJpaRepository extends JpaRepository<Chat, UUID> {
                 SELECT text, sender_profile_id
                 FROM messages m
                 WHERE m.chat_id = c.id AND m.deleted_at IS NULL
-                ORDER BY m.created_at DESC LIMIT 1
+                ORDER BY m.created_at DESC, m.id DESC LIMIT 1
             ) lm ON true
             LEFT JOIN chat_participants cp2 ON cp2.chat_id = c.id AND cp2.profile_id != :profileId AND cp2.left_at IS NULL
             LEFT JOIN profiles op ON op.id = cp2.profile_id AND op.deleted_at IS NULL

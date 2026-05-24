@@ -39,6 +39,7 @@ import {
   getMessagesAction,
   getOrCreateChatAction,
   getAccessTokenForWsAction,
+  refreshAndGetAccessTokenAction,
   useDirectMessages,
 } from "@/features/directs";
 import type { MessageItem } from "@/features/directs";
@@ -59,6 +60,16 @@ const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:8080/ws';
  * Gestisce lo stato delle chat, la selezione dei contatti e
  * l'invio/ricezione dei messaggi in tempo reale via WebSocket STOMP.
  */
+/** Ordina i contatti per last_message_at DESC (chat più recenti in cima) */
+function sortedByRecent(contacts: ChatContact[]): ChatContact[] {
+  return [...contacts].sort((a, b) => {
+    if (!a.last_message_at && !b.last_message_at) return 0;
+    if (!a.last_message_at) return 1;
+    if (!b.last_message_at) return -1;
+    return new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime();
+  });
+}
+
 export default function DirectPage() {
   // -------------------------------------------------------------------------
   // Hooks di contesto e navigazione
@@ -78,6 +89,8 @@ export default function DirectPage() {
 
   /** ID della chat vera e propria nel database (UUID) */
   const [selectedChatId, setSelectedChatId] = useState<string | undefined>(undefined);
+  const selectedChatIdRef = useRef<string | undefined>(undefined);
+  const profileIdRef = useRef<number | undefined>(undefined);
 
   /** Dati del contatto attualmente selezionato */
   const [selectedContactData, setSelectedContactData] = useState<ChatContact | undefined>(undefined);
@@ -114,6 +127,9 @@ export default function DirectPage() {
   /** Ref per tracciare l'username già caricato e prevenire duplicati */
   const loadedUsernameRef = React.useRef<string | null>(null);
 
+  /** Ref a fetchChats per poterlo chiamare da handleIncomingMessage (closure vuota) */
+  const fetchChatsRef = useRef<() => Promise<void>>(async () => {});
+
   // -------------------------------------------------------------------------
   // Effetti: Caricamento access token per WebSocket
   // -------------------------------------------------------------------------
@@ -126,6 +142,12 @@ export default function DirectPage() {
     getAccessTokenForWsAction().then(setAccessToken);
   }, []);
 
+  // Ref sincronizzati per evitare stale closure in handleIncomingMessage.
+  // I messaggi WS possono arrivare nella finestra tra setSelectedChatId (async)
+  // e il successivo useEffect che aggiorna onMessageRef: i ref sono sempre correnti.
+  useEffect(() => { selectedChatIdRef.current = selectedChatId; }, [selectedChatId]);
+  useEffect(() => { profileIdRef.current = profile?.id; }, [profile?.id]);
+
   // -------------------------------------------------------------------------
   // WebSocket: ricezione messaggi in tempo reale
   // -------------------------------------------------------------------------
@@ -134,13 +156,19 @@ export default function DirectPage() {
    * Callback invocata ad ogni nuovo messaggio ricevuto via WebSocket.
    * Aggiunge il messaggio alla lista se appartiene alla chat aperta,
    * e aggiorna l'anteprima dell'ultima chat nella sidebar sinistra.
+   *
+   * Usa ref invece di closure per selectedChatId/profileId per evitare
+   * race condition tra setState e il useEffect che aggiorna onMessageRef.
    */
   const handleIncomingMessage = useCallback((message: MessageItem) => {
-    if (message.chatId === selectedChatId) {
+    const currentChatId = selectedChatIdRef.current;
+    const currentProfileId = profileIdRef.current;
+
+    if (message.chatId === currentChatId) {
       setMessages(prev => {
         // Se il messaggio è del mittente corrente, sostituisce il corrispettivo
         // messaggio ottimistico (aggiunto in handleSend) per evitare duplicati.
-        const optimisticIdx = message.senderProfileId === profile?.id
+        const optimisticIdx = message.senderProfileId === currentProfileId
           ? prev.findIndex(m => m.isOptimistic && m.chatId === message.chatId && m.text === message.text)
           : -1;
 
@@ -152,18 +180,33 @@ export default function DirectPage() {
         return [message, ...prev];
       });
     }
-    // Aggiorna preview ultimo messaggio per tutte le chat
-    setContacts(prev => prev.map(c =>
-      c.chatId === message.chatId
-        ? { ...c, last_message_text: message.text, last_message_at: message.createdAt, isFromMe: message.senderProfileId === profile?.id }
-        : c
-    ));
-  }, [selectedChatId, profile?.id]);
+    // Aggiorna preview e ri-ordina; se la chat non è ancora in lista (creata da
+    // un'altra pagina), ricarica tutta la lista per ottenerla col profilo completo.
+    setContacts(prev => {
+      const hasChat = prev.some(c => c.chatId === message.chatId);
+      if (!hasChat) {
+        setTimeout(() => fetchChatsRef.current(), 0);
+        return prev;
+      }
+      return sortedByRecent(prev.map(c =>
+        c.chatId === message.chatId
+          ? { ...c, last_message_text: message.text, last_message_at: message.createdAt, isFromMe: message.senderProfileId === currentProfileId }
+          : c
+      ));
+    });
+  }, []);
+
+  const handleTokenExpired = useCallback(async () => {
+    const newToken = await refreshAndGetAccessTokenAction();
+    if (newToken) setAccessToken(newToken);
+    return newToken;
+  }, []);
 
   const { sendMessage, isConnected } = useDirectMessages({
     accessToken,
     onMessage: handleIncomingMessage,
     wsUrl: WS_URL,
+    onTokenExpired: handleTokenExpired,
   });
 
   // -------------------------------------------------------------------------
@@ -192,6 +235,9 @@ export default function DirectPage() {
       }));
     setContacts(mapped);
   }, []);
+
+  /** Mantiene fetchChatsRef aggiornato senza toccare handleIncomingMessage */
+  useEffect(() => { fetchChatsRef.current = fetchChats; }, [fetchChats]);
 
   /** Carica le chat esistenti al mount */
   useEffect(() => { fetchChats(); }, [fetchChats]);
@@ -301,7 +347,17 @@ export default function DirectPage() {
     setLoadingMessages(true);
     getMessagesAction({ chatId: selectedChatId })
       .then(result => {
-        if (result.success) setMessages(result.data);
+        if (!result.success) return;
+        setMessages(result.data);
+        // result.data[0] è il più recente (backend DESC) = l'ultimo visibile dopo il reverse.
+        const latest = result.data[0];
+        if (latest) {
+          setContacts(prev => sortedByRecent(prev.map(c =>
+            c.chatId === selectedChatId
+              ? { ...c, last_message_text: latest.text, last_message_at: latest.createdAt, isFromMe: latest.senderProfileId === profileIdRef.current }
+              : c
+          )));
+        }
       })
       .finally(() => setLoadingMessages(false));
   }, [selectedChatId]);
@@ -328,6 +384,13 @@ export default function DirectPage() {
       isOptimistic: true,
     };
     setMessages(prev => [optimistic, ...prev]);
+
+    // Aggiorna subito la preview e porta la chat in cima alla lista
+    setContacts(prev => sortedByRecent(prev.map(c =>
+      c.chatId === selectedChatId
+        ? { ...c, last_message_text: text, last_message_at: optimistic.createdAt, isFromMe: true }
+        : c
+    )));
 
     try {
       sendMessage(selectedChatId, text);

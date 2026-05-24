@@ -45,7 +45,7 @@ export type GetMessagesResult = z.infer<typeof getMessagesResultSchema>;
 // ─── Get or create chat ───────────────────────────────────────────────────────
 
 export const getOrCreateChatInputSchema = z.object({
-  otherProfileId: z.number().int().positive(),
+  otherProfileId: z.coerce.number().int().positive(),
 });
 export type GetOrCreateChatInput = z.infer<typeof getOrCreateChatInputSchema>;
 
