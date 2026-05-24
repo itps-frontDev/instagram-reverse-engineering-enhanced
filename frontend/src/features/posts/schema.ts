@@ -39,6 +39,44 @@ export const togglePostSaveResultSchema = z.union([
 export type TogglePostSaveInput = z.infer<typeof togglePostSaveInputSchema>;
 export type TogglePostSaveResult = z.infer<typeof togglePostSaveResultSchema>;
 
+export const deletePostInputSchema = z.object({
+  postId: z.coerce.number().int().positive(),
+});
+
+export const deletePostResultSchema = z.union([
+  z.object({
+    success: z.literal(true),
+  }),
+  z.object({
+    success: z.literal(false),
+    error: z.string().trim().min(1),
+  }),
+]);
+
+export type DeletePostInput = z.infer<typeof deletePostInputSchema>;
+export type DeletePostResult = z.infer<typeof deletePostResultSchema>;
+
+export const updatePostCaptionInputSchema = z.object({
+  postId: z.coerce.number().int().positive(),
+  caption: z.string().max(2200),
+});
+
+export const updatePostCaptionResultSchema = z.union([
+  z.object({
+    success: z.literal(true),
+    data: z.object({
+      caption: z.string(),
+    }),
+  }),
+  z.object({
+    success: z.literal(false),
+    error: z.string().trim().min(1),
+  }),
+]);
+
+export type UpdatePostCaptionInput = z.infer<typeof updatePostCaptionInputSchema>;
+export type UpdatePostCaptionResult = z.infer<typeof updatePostCaptionResultSchema>;
+
 
 // Profilo Posts Tab (GET /api/priv/profiles/{username}/posts)
 
@@ -69,3 +107,61 @@ export const GetProfilePostsInputSchema = z.object({
 });
 
 export type GetProfilePostsInput = z.infer<typeof GetProfilePostsInputSchema>;
+
+// ============================================================================
+// Single Post Detail (GET /api/priv/posts/{postId})
+// ============================================================================
+
+export const PostDetailMediaSchema = z.object({
+  // Spring può restituire path relativi (es. posts/123/img-0.jpg), non sempre URL assoluti.
+  mediaUrl: z.string().trim().min(1),
+  mediaType: z.enum(['image', 'video']),
+  position: z.number().int().nonnegative(),
+  // Per immagini il backend può valorizzare null.
+  durationSeconds: z.number().nonnegative().nullable().optional(),
+});
+
+export const PostDetailSchema = z.object({
+  id: z.number().int().positive(),
+  profileId: z.number().int().positive(),
+  caption: z.string().nullable(),
+  likesCount: z.number().int().nonnegative(),
+  commentsCount: z.number().int().nonnegative(),
+  createdAt: z.string(), // ISO datetime
+  profileUsername: z.string(),
+  profileFullName: z.string().nullable(),
+  profileImageUrl: z.string().nullable(),
+  profileIsVerified: z.boolean(),
+  profileHasActiveStory: z.boolean(),
+  profileHasViewedStory: z.boolean(),
+  profileIsPrivate: z.boolean(),
+  isLikedByCurrentUser: z.boolean(),
+  isSavedByCurrentUser: z.boolean(),
+  isFollowingAuthor: z.boolean(),
+  hasTags: z.boolean(),
+  media: z.array(PostDetailMediaSchema),
+});
+
+export const getPostDetailInputSchema = z.object({
+  postId: z.coerce.number().int().positive(),
+});
+
+export const getPostDetailResultSchema = z.union([
+  z.object({
+    success: z.literal(true),
+    data: PostDetailSchema,
+    message: z.string().trim().optional(),
+    error: z.null().optional(),
+  }),
+  z.object({
+    success: z.literal(false),
+    error: z.string().trim().min(1),
+    message: z.string().trim().optional(),
+    data: z.null().optional(),
+  }),
+]);
+
+export type PostDetailMediaDTO = z.infer<typeof PostDetailMediaSchema>;
+export type PostDetailDTO = z.infer<typeof PostDetailSchema>;
+export type GetPostDetailInput = z.infer<typeof getPostDetailInputSchema>;
+export type GetPostDetailResult = z.infer<typeof getPostDetailResultSchema>;

@@ -18,6 +18,7 @@ import { useState, useEffect } from 'react';
 import { X, ChevronLeft } from 'lucide-react';
 import {ProfilePicture} from '@/components';
 import Image from 'next/image';
+import { updatePostCaptionAction } from '@/features/posts';
 
 interface EditPostModalProps {
   isOpen: boolean;
@@ -71,14 +72,8 @@ export default function EditPostModal({
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/posts/${postId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ caption }),
-      });
-
-      if (!response.ok) throw new Error('Failed to update post');
+      const result = await updatePostCaptionAction({ postId, caption });
+      if (!result.success) throw new Error(result.error);
 
       onSave(caption);
       onClose();

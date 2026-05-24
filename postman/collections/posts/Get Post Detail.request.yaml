@@ -1,0 +1,10 @@
+$kind: http-request
+name: Get Post Detail
+description: >
+  Recupera il dettaglio di un singolo post con TUTTI i media ordinati per posizione.
+  Success: { "success": true, "data": { "id": 123, "caption": "...", "likesCount": 10, "commentsCount": 5, "createdAt": "2026-05-24T10:00:00Z", "media": [ { "mediaUrl": "posts/123/img-0.jpg", "mediaType": "image", "position": 0 } ] }, "message": "Post retrieved successfully" }.
+method: GET
+url: "{{baseUrl}}/api/priv/posts/{{postId}}"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 121

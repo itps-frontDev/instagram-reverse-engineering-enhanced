@@ -45,7 +45,7 @@ export default function InstagramLoadingBar() {
     //Start caricamento con progresso simulato
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     setProgress(0);
 
     // Simula progresso (durata totale: 0.04s)

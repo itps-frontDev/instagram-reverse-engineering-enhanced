@@ -36,6 +36,15 @@ public interface PostRepository extends JpaRepository<PostSavePost, Long> {
     Optional<Long> findProfileIdByPostId(@Param("postId") Long postId);
 
     /**
+     * Recupera un post per dettaglio, escludendo record soft-deleted.
+     *
+     * @param postId ID del post
+     * @return Post se esiste e non è cancellato
+     */
+    @Query("SELECT p FROM PostSavePost p WHERE p.id = :postId AND p.deletedAt IS NULL")
+    Optional<PostSavePost> findByIdNotDeleted(@Param("postId") Long postId);
+
+    /**
      * Recupera i post normali (non filtrati per tipo media) di un profilo, ordinati per data decrescente.
      * 
      * Include il primo media (position=0) come thumbnail e il conteggio totale dei media del post.

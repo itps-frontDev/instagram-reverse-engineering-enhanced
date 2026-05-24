@@ -53,7 +53,7 @@ export async function springFetch(
   path: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  let accessToken = await getAccessToken();
+  const accessToken = await getAccessToken();
   if (!accessToken) {
     throw new SpringAuthError(401, "Missing access token.");
   }

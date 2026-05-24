@@ -29,7 +29,7 @@ import { formatTimeAgo } from '@/lib/date-utils';
 import { getMediaUrl } from '@/lib/media';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { deletePostAction } from '@/features/posts';
 import { toggleFollowAction } from '@/features/follow';
 import {
   Heart,
@@ -77,7 +77,7 @@ export default function PostModal({
   hasPrev,
 }: PostModalProps) {
   const { profile: currentProfile } = useAuth();
-  const router = useRouter();
+  const [localPost, setLocalPost] = useState(post);
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -108,6 +108,11 @@ export default function PostModal({
   const [isDeletingComment, setIsDeletingComment] = useState(false);
   const [showEditPostModal, setShowEditPostModal] = useState(false);
   const currentPostTags = postTags ?? [];
+
+  // Sincronizza localPost quando la prop post cambia (es. quando il genitore lo aggiorna)
+  useEffect(() => {
+    setLocalPost(post);
+  }, [post]);
 
   // Inizializza lo stato con il profilo del post che ha già tutte le storie viste
   useEffect(() => {
@@ -278,6 +283,18 @@ export default function PostModal({
       );
   };
 
+  const handlePostLike = async () => {
+   // Aggiornamento ottimistico: aggiorna lo stato locale immediatamente
+   setLocalPost((prev) => ({
+     ...prev,
+     is_liked_by_current_user: !prev.is_liked_by_current_user,
+     likes_count: prev.is_liked_by_current_user ? prev.likes_count - 1 : prev.likes_count + 1,
+   }));
+
+   // Chiama il callback del genitore per sincronizzare lo stato globale
+   onLike(post.id);
+  };
+
   const formatLikesCount = (count: number) => {
     if (count >= 1000000) {
       return `${(count / 1000000).toFixed(1)}M`;
@@ -320,12 +337,8 @@ export default function PostModal({
   const handleDeletePost = async () => {
     setIsDeletingPost(true);
     try {
-      const response = await fetch(`/api/posts/${post.id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      if (!response.ok) throw new Error('Failed to delete post');
+      const result = await deletePostAction({ postId: post.id });
+      if (!result.success) throw new Error(result.error);
 
       // Chiudi tutti i modali e torna alla pagina precedente
       setShowDeletePostModal(false);
@@ -365,7 +378,8 @@ export default function PostModal({
     }
   };
 
-  const isOwnPost = currentProfile && post.profile_id === currentProfile.id;
+  // Normalizziamo gli ID perché il profilo auth può arrivare come stringa.
+  const isOwnPost = currentProfile ? Number(post.profile_id) === Number(currentProfile.id) : false;
 
   if (!isOpen) return null;
 
@@ -432,9 +446,9 @@ export default function PostModal({
 
         {/* Left Side - Media (Image or Video) */}
         <div className="flex-1 bg-gray-100 dark:bg-black flex items-center justify-center relative group/media max-[639px]:max-h-[50vh]">
-          {post.media.length > 0 && post.media[currentMediaIndex] && (
+          {localPost.media.length > 0 && localPost.media[currentMediaIndex] && (
             <>
-              {post.media[currentMediaIndex].media_type === 'video' ? (
+              {localPost.media[currentMediaIndex].media_type === 'video' ? (
                 <div className="relative w-full h-full">
                   <video
                     ref={(el) => {
@@ -447,7 +461,7 @@ export default function PostModal({
                         }
                       }
                     }}
-                    src={getMediaUrl(post.media[currentMediaIndex].media_url) ?? ''}
+                    src={getMediaUrl(localPost.media[currentMediaIndex].media_url) ?? ''}
                     className="w-full h-full object-cover cursor-pointer"
                     autoPlay
                     loop
@@ -489,8 +503,8 @@ export default function PostModal({
                 </div>
               ) : (
                 <Image
-                  src={getMediaUrl(post.media[currentMediaIndex].media_url) ?? ''}
-                  alt={post.caption || 'Post image'}
+                  src={getMediaUrl(localPost.media[currentMediaIndex].media_url) ?? ''}
+                  alt={localPost.caption || 'Post image'}
                   fill
                   className="object-cover"
                   sizes="(max-width: 1200px) 60vw, 1200px"
@@ -500,7 +514,7 @@ export default function PostModal({
           )}
 
           {/* Media Navigation Arrows */}
-          {post.media.length > 1 && (
+          {localPost.media.length > 1 && (
             <>
               {/* Previous Media Arrow */}
               {currentMediaIndex > 0 && (
@@ -519,7 +533,7 @@ export default function PostModal({
               )}
 
               {/* Next Media Arrow */}
-              {currentMediaIndex < post.media.length - 1 && (
+              {currentMediaIndex < localPost.media.length - 1 && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -635,7 +649,7 @@ export default function PostModal({
                   </div>
                 )}
                 {post.profile_is_verified && <VerifiedBadge size={14} />}
-                {!isFollowing && !isPending && currentProfile && post.profile_id !== currentProfile.id && (
+                {!isFollowing && !isPending && currentProfile && !isOwnPost && (
                   <>
                     <span className="text-[#737373] dark:text-[#737373]">•</span>
                     <button 
@@ -980,12 +994,12 @@ export default function PostModal({
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => onLike(post.id)}
+              onClick={handlePostLike}
               className="hover:scale-103 transition-transform"
             >
               <Heart
                 className={`w-6 h-6 ${
-                  post.is_liked_by_current_user
+                  localPost.is_liked_by_current_user
                     ? 'fill-[#ED4956] text-[#ED4956]'
                     : 'text-[#262626] dark:text-[#FAFAFA]'
                 }`}
@@ -999,12 +1013,12 @@ export default function PostModal({
             </button>
           </div>
           <button
-            onClick={() => onSave(post.id)}
+            onClick={() => onSave(localPost.id)}
             className="hover:scale-103 transition-transform"
           >
             <Bookmark
               className={`w-6 h-6 ${
-                post.is_saved_by_current_user
+                localPost.is_saved_by_current_user
                   ? 'fill-[#262626] dark:fill-[#FAFAFA]'
                   : ''
               } text-[#262626] dark:text-[#FAFAFA]`}
@@ -1013,15 +1027,15 @@ export default function PostModal({
         </div>
 
         {/* Likes Count */}
-        {!post.is_likes_hidden && post.likes_count > 0 && (
+        {!localPost.is_likes_hidden && localPost.likes_count > 0 && (
           <div className="text-sm font-semibold text-[#262626] dark:text-[#FAFAFA] pb-2">
-            {isOwnPost ? `Mi piace: ${post.likes_count}` : formatLikesText(post.likes_count)}
+            {isOwnPost ? `Mi piace: ${localPost.likes_count}` : formatLikesText(localPost.likes_count)}
           </div>
         )}
 
         {/* Time */}
         <div className="text-[10px] text-[#8E8E8E] dark:text-[#A8A8A8] uppercase pb-3">
-          {formatTimeAgo(post.created_at)} fa
+          {formatTimeAgo(localPost.created_at)} fa
         </div>
       </div>
 

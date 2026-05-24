@@ -10,10 +10,20 @@ import {
   togglePostSaveResultSchema,
   GetProfilePostsInputSchema,
   ProfilePostsResponseSchema,
+  getPostDetailInputSchema,
+  getPostDetailResultSchema,
   type TogglePostSaveInput,
   type TogglePostSaveResult,
   type GetProfilePostsInput,
   type ProfilePostsResponse,
+  type GetPostDetailInput,
+  type GetPostDetailResult,
+  type DeletePostInput,
+  type DeletePostResult,
+  type UpdatePostCaptionInput,
+  type UpdatePostCaptionResult,
+  deletePostInputSchema,
+  updatePostCaptionInputSchema,
 } from './schema';
 
 function mapPostSaveError(status: number): string {
@@ -156,4 +166,124 @@ export async function getProfilePostsAction(input: GetProfilePostsInput) {
       error: message,
     };
   }
+}
+
+function mapPostDetailError(status: number): string {
+  if (status === 400) return 'Invalid post ID.';
+  if (status === 401) return 'Session expired, please log in again.';
+  if (status === 404) return 'Post not found.';
+  return 'Posts service temporarily unavailable.';
+}
+
+function mapDeletePostError(status: number): string {
+  if (status === 400) return 'Invalid post ID.';
+  if (status === 401) return 'Session expired, please log in again.';
+  if (status === 404) return 'Post not found.';
+  return 'Posts service temporarily unavailable.';
+}
+
+function mapUpdatePostError(status: number): string {
+  if (status === 400) return 'Invalid post update payload.';
+  if (status === 401) return 'Session expired, please log in again.';
+  if (status === 404) return 'Post not found.';
+  return 'Posts service temporarily unavailable.';
+}
+
+/**
+ * Server Action: Recupera il dettaglio di un singolo post dal backend Spring.
+ * 
+ * Endpoint: GET /api/priv/posts/{postId}
+ * 
+ * Include TUTTI i media del post ordinati per position (non solo il primo).
+ */
+export async function getPostDetailAction(input: GetPostDetailInput): Promise<GetPostDetailResult> {
+  const parsedInput = getPostDetailInputSchema.safeParse(input);
+  if (!parsedInput.success) {
+    return { success: false, error: 'Invalid post ID.' };
+  }
+
+  let response: Response;
+  try {
+    response = await springFetch(`/api/priv/posts/${parsedInput.data.postId}`);
+  } catch (error) {
+    if (error instanceof SpringAuthError) {
+      return { success: false, error: 'Session expired, please log in again.' };
+    }
+    return { success: false, error: 'Posts service is unreachable.' };
+  }
+
+  if (!response.ok) {
+    return { success: false, error: mapPostDetailError(response.status) };
+  }
+
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch {
+    return { success: false, error: 'Unexpected response from posts service.' };
+  }
+
+  const parsedPayload = getPostDetailResultSchema.safeParse(payload);
+  if (!parsedPayload.success) {
+    return { success: false, error: 'Invalid posts response payload.' };
+  }
+
+  return parsedPayload.data as GetPostDetailResult;
+}
+
+export async function deletePostAction(input: DeletePostInput): Promise<DeletePostResult> {
+  const parsedInput = deletePostInputSchema.safeParse(input);
+  if (!parsedInput.success) {
+    return { success: false, error: 'Invalid post ID.' };
+  }
+
+  let response: Response;
+  try {
+    response = await springFetch(`/api/priv/posts/${parsedInput.data.postId}`, {
+      method: 'DELETE',
+    });
+  } catch (error) {
+    if (error instanceof SpringAuthError) {
+      return { success: false, error: 'Session expired, please log in again.' };
+    }
+    return { success: false, error: 'Posts service is unreachable.' };
+  }
+
+  if (!response.ok) {
+    return { success: false, error: mapDeletePostError(response.status) };
+  }
+
+  return { success: true };
+}
+
+export async function updatePostCaptionAction(input: UpdatePostCaptionInput): Promise<UpdatePostCaptionResult> {
+  const parsedInput = updatePostCaptionInputSchema.safeParse(input);
+  if (!parsedInput.success) {
+    return { success: false, error: 'Invalid caption.' };
+  }
+
+  let response: Response;
+  try {
+    response = await springFetch(`/api/priv/posts/${parsedInput.data.postId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ caption: parsedInput.data.caption }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    if (error instanceof SpringAuthError) {
+      return { success: false, error: 'Session expired, please log in again.' };
+    }
+    return { success: false, error: 'Posts service is unreachable.' };
+  }
+
+  if (!response.ok) {
+    return { success: false, error: mapUpdatePostError(response.status) };
+  }
+
+  return {
+    success: true,
+    data: {
+      caption: parsedInput.data.caption,
+    },
+  };
 }

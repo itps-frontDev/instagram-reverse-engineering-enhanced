@@ -41,7 +41,7 @@ import {
 import type { FeedPost } from '@/types/feed';
 import PostModal from './PostModal';
 import StoryViewer from './StoryViewer';
-import { fetchPostTagsAction } from '@/features/posts';
+import { deletePostAction, fetchPostTagsAction } from '@/features/posts';
 
 interface PostProps {
   post: FeedPost;
@@ -216,12 +216,8 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
   const handleDeletePost = async () => {
     setIsDeletingPost(true);
     try {
-      const response = await fetch(`/api/posts/${post.id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      if (!response.ok) throw new Error('Failed to delete post');
+      const result = await deletePostAction({ postId: post.id });
+      if (!result.success) throw new Error(result.error);
 
       // Chiudi tutti i modali e ricarica la pagina
       setShowDeletePostModal(false);

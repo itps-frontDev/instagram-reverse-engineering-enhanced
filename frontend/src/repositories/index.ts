@@ -62,15 +62,6 @@ export {
   type PostForView,
 } from './PostRepository';
 
-// Comment Repository - operazioni sui commenti
-export {
-  commentRepository,
-  type Comment,
-  type CommentWithProfile,
-  type CommentBase,
-  type PostForComment,
-} from './CommentRepository';
-
 // Story Repository - operazioni su storie e visualizzazioni
 export {
   storyRepository,

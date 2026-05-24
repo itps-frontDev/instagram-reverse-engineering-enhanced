@@ -36,12 +36,13 @@ import {
   StoryHighlight,
 } from '@/types/profile';
 import type { FeedPost } from '@/types/feed';
+import type { PostDetailDTO } from '@/features/posts';
 import { getProfileByUsernameAction } from '@/features/profile';
 import { createCommentAction } from '@/features/comments';
 import { uploadPfpAction, deletePfpAction } from '@/features/profile/picture/actions';
 import { getMediaUrl } from '@/lib/media';
 import { toggleLikeAction } from '@/features/likes';
-import { getProfilePostsAction, fetchPostTagsAction, togglePostSaveAction } from '@/features/posts';
+import { getPostDetailAction, getProfilePostsAction, fetchPostTagsAction, togglePostSaveAction } from '@/features/posts';
 import { toggleFollowAction } from '@/features/follow';
 
 // ============================================================================
@@ -62,6 +63,37 @@ export default function ProfilePage({
 }: {
   params: Promise<{ username: string }>;
 }) {
+  const mapPostDetailToFeedPost = (postDetail: PostDetailDTO): FeedPost => ({
+    id: postDetail.id,
+    profile_id: postDetail.profileId,
+    caption: postDetail.caption,
+    location: null,
+    is_comments_disabled: false,
+    is_likes_hidden: false,
+    likes_count: postDetail.likesCount,
+    comments_count: postDetail.commentsCount,
+    created_at: postDetail.createdAt,
+    profile_username: postDetail.profileUsername,
+    profile_full_name: postDetail.profileFullName,
+    profile_image_url: postDetail.profileImageUrl,
+    profile_is_verified: postDetail.profileIsVerified,
+    profile_has_active_story: postDetail.profileHasActiveStory,
+    profile_has_viewed_story: postDetail.profileHasViewedStory,
+    profile_is_private: postDetail.profileIsPrivate,
+    media: postDetail.media.map((media, index) => ({
+      id: index,
+      post_id: postDetail.id,
+      media_url: media.mediaUrl,
+      media_type: media.mediaType,
+      duration_seconds: media.durationSeconds ?? null,
+      position: media.position,
+    })),
+    is_liked_by_current_user: postDetail.isLikedByCurrentUser,
+    is_saved_by_current_user: postDetail.isSavedByCurrentUser,
+    is_following_author: postDetail.isFollowingAuthor,
+    has_tags: postDetail.hasTags,
+  });
+
   // ==========================================================================
   // PARAMS E NAVIGATION
   // ==========================================================================
@@ -533,32 +565,31 @@ export default function ProfilePage({
   async function handlePostClick(post: Post) {
     const requestId = ++postModalRequestIdRef.current;
     try {
-      // Carica i dati completi del post con tutti i media
-      const res = await fetch(`/api/posts/${post.id}`);
-      
-      if (!res.ok) {
-        throw new Error('Errore nel caricamento del post');
+      // Carica i dati completi del post via Server Action (Spring Boot)
+      const detailResult = await getPostDetailAction({ postId: post.id });
+      if (!detailResult.success) {
+        throw new Error(detailResult.error || 'Errore nel caricamento del post');
       }
-      
-        const data = await res.json();
-        setSelectedPost(data.post as FeedPost);
-        setSelectedPostTags([]);
-        setShowPostModal(true);
 
-        const tagsResult = await fetchPostTagsAction((data.post as FeedPost).id);
-        if (!tagsResult.success || requestId !== postModalRequestIdRef.current) return;
+      const feedPost = mapPostDetailToFeedPost(detailResult.data);
+      setSelectedPost(feedPost);
+      setSelectedPostTags([]);
+      setShowPostModal(true);
 
-        const transformedTags = tagsResult.data.map(tag => ({
-          taggedUsername: tag.taggedUsername,
-          x_position: tag.xPosition,
-          y_position: tag.yPosition,
-        }));
+      const tagsResult = await fetchPostTagsAction(feedPost.id);
+      if (!tagsResult.success || requestId !== postModalRequestIdRef.current) return;
 
-        setSelectedPostTags(transformedTags);
-      } catch (err) {
-        console.error('Errore fetch post:', err);
-      }
+      const transformedTags = tagsResult.data.map(tag => ({
+        taggedUsername: tag.taggedUsername,
+        x_position: tag.xPosition,
+        y_position: tag.yPosition,
+      }));
+
+      setSelectedPostTags(transformedTags);
+    } catch (err) {
+      console.error('Errore fetch post:', err);
     }
+  }
 
   async function requestSelectedPostTags() {
     if (!selectedPost) return;
