@@ -539,7 +539,7 @@ export default function ReelsPage() {
       // Aggiorna il conteggio commenti del reel
       setReels(prev => prev.map(r => 
         r.id === currentReel.id 
-          ? { ...r, comments_count: r.comments_count + 1 }
+          ? { ...r, commentsCount: r.commentsCount + 1 }
           : r
       ));
     } catch (error) {

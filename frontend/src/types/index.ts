@@ -29,8 +29,3 @@ export * from './profile';
 // Tipi relativi al feed e ai post (FeedPost, PostMedia, Comment, etc.)
 export * from './feed';
 
-// Tipi relativi all'autenticazione (User, TokenPayload, etc.)
-export * from './auth';
-
-// Tipi relativi alle risposte API (ApiError, ApiSuccess, etc.)
-export * from './api';

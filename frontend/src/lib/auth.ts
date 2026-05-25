@@ -1,8 +1,6 @@
 import { cookies } from "next/headers";
 
-import { profileRepository } from "@/repositories";
 import { AuthBackendError, getAccessTokenCookieName, meWithSpring } from "@/lib/auth/backend";
-import { type Profile } from "@/types/profile";
 
 type CurrentUser = {
   id: string;
@@ -36,27 +34,12 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   }
 }
 
-export async function getCurrentProfile(): Promise<Profile | null> {
-  try {
-    const user = await getCurrentUser();
-    if (!user) return null;
-    return await profileRepository.findByUserId(user.id) || null;
-  } catch (error) {
-    console.error("[Auth] Errore nel recupero del profilo corrente:", error);
-    return null;
-  }
-}
-
 export async function isAuthenticated(): Promise<boolean> {
   return (await getCurrentUser()) !== null;
 }
 
 export async function getCurrentUserId(): Promise<string | null> {
   return (await getCurrentUser())?.id ?? null;
-}
-
-export async function getCurrentProfileId(): Promise<number | null> {
-  return (await getCurrentProfile())?.id ?? null;
 }
 
 export async function getAccessToken(): Promise<string | null> {
