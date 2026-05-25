@@ -6,7 +6,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.Map;
 
@@ -27,13 +26,6 @@ public class StoryViewExceptionHandler {
         logger.warn("Story view validation failed: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(error("STORY_VIEW_VALIDATION_ERROR", e.getMessage()));
-    }
-
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<Map<String, Object>> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
-        logger.warn("Story view path param type mismatch: {}", e.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(error("STORY_VIEW_VALIDATION_ERROR", "Invalid story id: " + e.getValue()));
     }
 
     @ExceptionHandler(StoryViewException.class)

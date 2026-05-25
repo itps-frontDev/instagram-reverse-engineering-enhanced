@@ -25,25 +25,14 @@ import { LoadingSpinner } from '@/components/common';
 import {StoryViewerSkeleton} from '@/components/common/skeletons';
 import { VerifiedBadge, ShareIcon } from '@/components/common';
 import { toggleLikeAction } from '@/features/likes';
-import { registerStoryViewAction } from '@/features/stories/actions';
+import {
+  fetchActiveStoriesAction,
+  fetchProfileStoriesAction,
+  registerStoryViewAction,
+  type StoryItem,
+} from '@/features/stories';
 import { getOrCreateChatAction, sendMessageAction } from '@/features/directs';
 import { getMediaUrl } from '@/lib/media';
-
-interface Story {
-  id: number;
-  profile_id: number;
-  username: string;
-  profile_image_url: string | null;
-  is_verified?: boolean;
-  media_url: string;
-  media_type: 'image' | 'video';
-  duration_seconds: number;
-  views_count: number;
-  created_at: string;
-  expires_at: string;
-  is_liked_by_me?: boolean;
-  is_viewed?: number;
-}
 
 interface StoryViewerProps {
   profileUsername: string;
@@ -66,15 +55,15 @@ export default function StoryViewer({
   onUserChange,
   onAllStoriesViewed,
 }: StoryViewerProps) {
-  const [stories, setStories] = useState<Story[]>([]);
+  const [stories, setStories] = useState<StoryItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [messageText, setMessageText] = useState('');
-  const [prevUserPreviews, setPrevUserPreviews] = useState<Story[]>([]);
-  const [nextUserPreviews, setNextUserPreviews] = useState<Story[]>([]);
+  const [prevUserPreviews, setPrevUserPreviews] = useState<StoryItem[]>([]);
+  const [nextUserPreviews, setNextUserPreviews] = useState<StoryItem[]>([]);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [transitionDirection, setTransitionDirection] = useState<'left' | 'right' | null>(null);
   const [isReturning, setIsReturning] = useState(false);
@@ -89,37 +78,31 @@ export default function StoryViewer({
     let mounted = true;
     async function load() {
       try {
-        let res;
-        if (profileId) {
-          res = await fetch(`/api/stories/${profileId}/public`);
-        } else {
-          res = await fetch('/api/stories');
-        }
         if (!mounted) return;
-        if (res.ok) {
-          const data = await res.json();
-          let profileStories;
-          if (profileId) {
-            profileStories = data.stories || [];
-          } else {
-            profileStories = (data.stories || [])
-              .filter((s: Story) => s.username === profileUsername)
-              .sort((a: Story, b: Story) => 
-                new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-              );
-          }
-          setStories(profileStories);
-          // Trova indice storia iniziale
-          if (initialStoryId && profileStories.length > 0) {
-            const idx = profileStories.findIndex((s: Story) => s.id === initialStoryId);
-            setCurrentIndex(idx >= 0 ? idx : 0);
-            // Imposta stato like iniziale
-            const initialStory = profileStories[idx >= 0 ? idx : 0];
-            setIsLiked(initialStory?.is_liked_by_me || false);
-          } else if (profileStories.length > 0) {
-            // Imposta stato like per la prima storia se non c'è initialStoryId
-            setIsLiked(profileStories[0]?.is_liked_by_me || false);
-          }
+
+        const result = profileId
+          ? await fetchProfileStoriesAction({ profileId })
+          : await fetchActiveStoriesAction();
+
+        if (!result.success || !result.data) {
+          setStories([]);
+          return;
+        }
+
+        const profileStories = profileId
+          ? result.data.stories
+          : result.data.stories
+              .filter((story) => story.username === profileUsername)
+              .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+        setStories(profileStories);
+        if (initialStoryId && profileStories.length > 0) {
+          const idx = profileStories.findIndex((s) => s.id === initialStoryId);
+          setCurrentIndex(idx >= 0 ? idx : 0);
+          const initialStory = profileStories[idx >= 0 ? idx : 0];
+          setIsLiked(initialStory?.is_liked_by_me || false);
+        } else if (profileStories.length > 0) {
+          setIsLiked(profileStories[0]?.is_liked_by_me || false);
         }
       } catch (e) {
         console.error('Failed to fetch stories:', e);
@@ -148,33 +131,30 @@ export default function StoryViewer({
 
     async function loadPreviews() {
       try {
-        const res = await fetch('/api/stories');
-        if (res.ok) {
-          const data = await res.json();
-          const allStories = data.stories || [];
+        const result = await fetchActiveStoriesAction();
+        if (!result.success || !result.data) return;
 
-          // Previous users previews (up to 2)
-          const prevPreviews: Story[] = [];
-          for (let i = 1; i <= 2; i++) {
-            if (currentUserIndex - i >= 0) {
-              const prevUsername = allUsernames[currentUserIndex - i];
-              const prevStory = allStories.find((s: Story) => s.username === prevUsername);
-              if (prevStory) prevPreviews.push(prevStory);
-            }
-          }
-          setPrevUserPreviews(prevPreviews);
+        const allStories = result.data.stories;
 
-          // Next users previews (up to 2)
-          const nextPreviews: Story[] = [];
-          for (let i = 1; i <= 2; i++) {
-            if (currentUserIndex + i < allUsernames.length) {
-              const nextUsername = allUsernames[currentUserIndex + i];
-              const nextStory = allStories.find((s: Story) => s.username === nextUsername);
-              if (nextStory) nextPreviews.push(nextStory);
-            }
+        const prevPreviews: StoryItem[] = [];
+        for (let i = 1; i <= 2; i++) {
+          if (currentUserIndex - i >= 0) {
+            const prevUsername = allUsernames[currentUserIndex - i];
+            const prevStory = allStories.find((s) => s.username === prevUsername);
+            if (prevStory) prevPreviews.push(prevStory);
           }
-          setNextUserPreviews(nextPreviews);
         }
+        setPrevUserPreviews(prevPreviews);
+
+        const nextPreviews: StoryItem[] = [];
+        for (let i = 1; i <= 2; i++) {
+          if (currentUserIndex + i < allUsernames.length) {
+            const nextUsername = allUsernames[currentUserIndex + i];
+            const nextStory = allStories.find((s) => s.username === nextUsername);
+            if (nextStory) nextPreviews.push(nextStory);
+          }
+        }
+        setNextUserPreviews(nextPreviews);
       } catch (e) {
         console.error('Failed to load preview stories:', e);
       }
@@ -203,7 +183,7 @@ export default function StoryViewer({
           if (updated[currentIndex]) {
             updated[currentIndex] = {
               ...updated[currentIndex],
-              is_viewed: 1
+              is_viewed: true
             };
           }
           // Se tutte le storie sono ora viste, notifica il container

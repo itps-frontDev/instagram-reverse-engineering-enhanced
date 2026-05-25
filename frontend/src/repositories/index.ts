@@ -54,13 +54,4 @@ export {
   type PostForView,
 } from './PostRepository';
 
-// Story Repository - operazioni su storie e visualizzazioni
-export {
-  storyRepository,
-  type Story,
-  type StoryWithProfile,
-  type StoryWithStatus,
-  type ProfileStoryGroup,
-  type StoryViewer,
-  type CreateStoryData,
-} from './StoryRepository';
+

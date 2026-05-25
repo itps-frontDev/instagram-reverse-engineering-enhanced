@@ -1,0 +1,11 @@
+$kind: http-request
+name: Get Profile Stories
+description: >
+  Restituisce le stories attive di un profilo se il viewer ha accesso.
+  Richiede il parametro profileId numerico.
+  Success: { "success": true, "data": { "stories": [...] }, "message": "Stories fetched successfully" }.
+method: GET
+url: "{{baseUrl}}/api/priv/stories/profiles/{{profileId}}"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 100

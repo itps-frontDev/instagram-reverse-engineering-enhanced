@@ -15,24 +15,11 @@
 'use client';
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useRef, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import StoryViewer from './StoryViewer';
 import {StoriesSkeleton} from '@/components/common/skeletons';
 import {ProfilePicture} from '@/components';
-
-interface StoryItem {
-  id: number;
-  profile_id: number;
-  username: string;
-  profile_image_url: string | null;
-  media_url: string;
-  media_type: 'image' | 'video';
-  duration_seconds: number;
-  views_count: number;
-  created_at: string;
-  expires_at: string;
-  is_viewed?: number;
-}
+import { fetchActiveStoriesAction, type StoryItem } from '@/features/stories';
 
 interface ProfileStories {
   profile_id: number;
@@ -67,42 +54,40 @@ export default function Stories() {
     async function load() {
       try {
         setLoading(true);
-        const res = await fetch('/api/stories');
+        const result = await fetchActiveStoriesAction();
         if (!mounted) return;
-        if (res.ok) {
-          const data = await res.json();
-          
-          // Group stories by profile
-          const profileMap = new Map<number, ProfileStories>();
-          (data.stories || []).forEach((story: StoryItem) => {
-            if (!profileMap.has(story.profile_id)) {
-              profileMap.set(story.profile_id, {
-                profile_id: story.profile_id,
-                username: story.username,
-                profile_image_url: story.profile_image_url,
-                stories: [],
-                allViewed: true
-              });
-            }
-            const profile = profileMap.get(story.profile_id)!;
-            profile.stories.push(story);
-            // Se anche una sola storia non è vista, allViewed = false
-            if (!story.is_viewed) {
-              profile.allViewed = false;
-            }
-          });
 
-          // Converti in array e ordina: non viste prima, viste dopo
-          const profilesArray = Array.from(profileMap.values());
-          profilesArray.sort((a, b) => {
-            if (a.allViewed === b.allViewed) return 0;
-            return a.allViewed ? 1 : -1; // Non viste prima
-          });
-
-          setProfileStories(profilesArray);
-        } else {
+        if (!result.success || !result.data) {
           setProfileStories([]);
+          return;
         }
+
+        const profileMap = new Map<number, ProfileStories>();
+        result.data.stories.forEach((story: StoryItem) => {
+          if (!profileMap.has(story.profile_id)) {
+            profileMap.set(story.profile_id, {
+              profile_id: story.profile_id,
+              username: story.username,
+              profile_image_url: story.profile_image_url,
+              stories: [],
+              allViewed: true,
+            });
+          }
+
+          const profile = profileMap.get(story.profile_id)!;
+          profile.stories.push(story);
+          if (!story.is_viewed) {
+            profile.allViewed = false;
+          }
+        });
+
+        const profilesArray = Array.from(profileMap.values());
+        profilesArray.sort((a, b) => {
+          if (a.allViewed === b.allViewed) return 0;
+          return a.allViewed ? 1 : -1;
+        });
+
+        setProfileStories(profilesArray);
       } catch (e) {
         console.error('Failed to fetch stories:', e);
         setProfileStories([]);
@@ -163,7 +148,7 @@ export default function Stories() {
         return prev.map((profile) => {
           if (profile.profile_id === profileId) {
             // Marca tutte le storie come viste
-            const updatedStories = profile.stories.map((s) => ({ ...s, is_viewed: 1 }));
+            const updatedStories = profile.stories.map((s) => ({ ...s, is_viewed: true }));
             return {
               ...profile,
               stories: updatedStories,
@@ -264,4 +249,3 @@ export default function Stories() {
     </>
   );
 }
-

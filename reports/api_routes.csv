@@ -1,7 +1,7 @@
 path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
-/api/stories,GET,"GET: fetch active stories",Yes,No,No,Yes
+/api/stories,GET,"MIGRATED to Spring: /api/priv/stories - active stories feed for the authenticated user",Yes,No,No,Yes
 /api/stories/[id]/view,POST,"MIGRATED to Spring: /api/priv/stories/{storyId}/view - legacy endpoint removed",No,No,Yes,No
-/api/stories/[id]/public,GET,"Fetch public stories for a profile (unauthenticated but code uses currentProfile)",Yes,No,Hybrid,No
+/api/stories/[id]/public,GET,"MIGRATED to Spring: /api/priv/stories/profiles/{profileId} - profile-scoped stories viewer",Yes,No,Hybrid,No
 /api/stories/[id]/like,POST,"MIGRATED to Spring: POST /api/priv/likes/{story}/{id} - toggle like (replaced by Spring)",Yes,No,Yes,No
 /api/search,GET,"MIGRATED to Spring: /api/priv/search - profile search by username or name",Yes,No,Yes,No
 /api/reels,GET,"MIGRATED to Spring: /api/priv/reels - reels feed (video posts) with pagination and excludeIds support",No,No,Yes,No

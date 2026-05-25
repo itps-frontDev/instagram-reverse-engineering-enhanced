@@ -1,0 +1,10 @@
+$kind: http-request
+name: Get Active Stories
+description: >
+  Restituisce le stories attive accessibili all'utente autenticato.
+  Success: { "success": true, "data": { "stories": [...] }, "message": "Stories fetched successfully" }.
+method: GET
+url: "{{baseUrl}}/api/priv/stories"
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 99
