@@ -1,7 +1,5 @@
 path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
-/api/test-db,GET,"Health-check: SQLite version and table list",Yes,No,No,No
 /api/stories,GET,"GET: fetch active stories",Yes,No,No,Yes
-/api/stories/[id]/viewers,GET,"List story viewers (owner only)",Yes,No,Yes,No
 /api/stories/[id]/view,POST,"MIGRATED to Spring: /api/priv/stories/{storyId}/view - legacy endpoint removed",No,No,Yes,No
 /api/stories/[id]/public,GET,"Fetch public stories for a profile (unauthenticated but code uses currentProfile)",Yes,No,Hybrid,No
 /api/stories/[id]/like,POST,"MIGRATED to Spring: POST /api/priv/likes/{story}/{id} - toggle like (replaced by Spring)",Yes,No,Yes,No
