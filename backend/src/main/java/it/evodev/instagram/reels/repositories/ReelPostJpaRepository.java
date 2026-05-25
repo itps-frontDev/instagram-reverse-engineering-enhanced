@@ -39,7 +39,7 @@ public interface ReelPostJpaRepository extends JpaRepository<ReelPost, Long> {
             INNER JOIN profiles pr ON p.profile_id = pr.id
             WHERE p.deleted_at IS NULL
               AND pr.deleted_at IS NULL
-              AND p.id NOT IN (:excludeIds)
+              AND p.id != ALL(:excludeIds)
               AND EXISTS (
                   SELECT 1 FROM post_media pm
                   WHERE pm.post_id = p.id AND pm.media_type = 'video' AND pm.deleted_at IS NULL
@@ -60,6 +60,6 @@ public interface ReelPostJpaRepository extends JpaRepository<ReelPost, Long> {
     List<ReelFeedProjection> findReelFeed(
             @Param("currentProfileId") Long currentProfileId,
             @Param("limit") int limit,
-            @Param("excludeIds") List<Long> excludeIds
+            @Param("excludeIds") Long[] excludeIds
     );
 }

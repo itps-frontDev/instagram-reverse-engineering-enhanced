@@ -44,11 +44,8 @@ public class ReelServiceImpl implements ReelService {
         var profile = profileRepository.findByUserIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new ReelNotFoundException("Profilo non trovato."));
 
-        // Sentinel [-1L] prevents empty IN () clause in native query
-        List<Long> effectiveExcludeIds = excludeIds.isEmpty() ? List.of(-1L) : excludeIds;
-
         List<ReelFeedProjection> projections = reelPostJpaRepository.findReelFeed(
-                profile.getId(), limit, effectiveExcludeIds
+                profile.getId(), limit, excludeIds.toArray(Long[]::new)
         );
 
         if (projections.isEmpty()) {
