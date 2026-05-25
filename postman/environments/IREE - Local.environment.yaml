@@ -10,13 +10,4 @@ values:
     value: ''
   - key: accessToken
     value: ''
-  # Comments API variables
-  - key: postId
-    value: '1'
-  - key: commentId
-    value: '1'
-  - key: commentLimit
-    value: '20'
-  - key: commentOffset
-    value: '0'
 color: 120
