@@ -5,6 +5,8 @@ import it.evodev.instagram.auth.services.AuthSubjectService;
 import it.evodev.instagram.comments.dto.request.CommentCreateRequestDTO;
 import it.evodev.instagram.comments.dto.response.CommentDataDTO;
 import it.evodev.instagram.comments.dto.response.CommentListDataDTO;
+import it.evodev.instagram.comments.events.CommentCreatedEvent;
+import it.evodev.instagram.comments.events.CommentDeletedEvent;
 import it.evodev.instagram.comments.exception.CommentForbiddenException;
 import it.evodev.instagram.comments.exception.CommentNotFoundException;
 import it.evodev.instagram.comments.exception.CommentUnauthorizedException;
@@ -15,19 +17,16 @@ import it.evodev.instagram.comments.repository.CommentRepository.CommentFeedProj
 import it.evodev.instagram.comments.repository.CommentRepository.CommentOwnershipProjection;
 import it.evodev.instagram.comments.repository.CommentRepository.CommentPostAccessProjection;
 import it.evodev.instagram.comments.service.CommentsService;
-import it.evodev.instagram.notifications.models.commands.NotificationDispatchCommand;
-import it.evodev.instagram.notifications.models.enums.NotificationReferenceType;
-import it.evodev.instagram.notifications.services.NotificationService;
 import it.evodev.instagram.profile.exceptions.ProfileNotFoundException;
 import it.evodev.instagram.profile.service.ProfileVisibilityService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -35,14 +34,12 @@ import java.util.UUID;
 public class CommentsServiceImpl implements CommentsService {
 
     private static final Logger logger = LoggerFactory.getLogger(CommentsServiceImpl.class);
-    private static final String COMMENT_NOTIFICATION_TYPE = "comment";
-    private static final String COMMENT_REPLY_NOTIFICATION_TYPE = "comment_reply";
 
     private final CommentRepository commentRepository;
     private final ProfileRepository profileRepository;
     private final AuthSubjectService authSubjectService;
     private final ProfileVisibilityService profileVisibilityService;
-    private final NotificationService notificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional(readOnly = true)
@@ -124,7 +121,7 @@ public class CommentsServiceImpl implements CommentsService {
                 .map(this::toDto)
                 .orElseThrow(() -> new CommentNotFoundException("Comment not found after creation"));
 
-        dispatchCommentNotification(saved.getId(), post, parentId, currentProfileId);
+        publishCommentCreatedEvent(saved.getId(), post, parentId, currentProfileId);
 
         logger.info("Creating comment completed - currentProfileId: {}, postId: {}, commentId: {}",
                 currentProfileId, postId, saved.getId());
@@ -159,6 +156,8 @@ public class CommentsServiceImpl implements CommentsService {
             commentRepository.adjustPostCommentsCount(ownership.getPostId(), -1L);
         }
 
+        publishCommentDeletedEvent(resolvedCommentId, ownership, currentProfileId);
+
         logger.info("Deleting comment completed - currentProfileId: {}, commentId: {}", currentProfileId, resolvedCommentId);
     }
 
@@ -172,35 +171,31 @@ public class CommentsServiceImpl implements CommentsService {
         }
     }
 
-    private void dispatchCommentNotification(Long commentId, CommentPostAccessProjection post, Long parentId, Long senderProfileId) {
-        Long recipientProfileId;
-        String notificationType;
-
-        if (parentId == null) {
-            recipientProfileId = post.getProfileId();
-            notificationType = COMMENT_NOTIFICATION_TYPE;
-        } else {
-            recipientProfileId = commentRepository.findAuthorProfileIdById(parentId)
-                    .orElse(null);
-            notificationType = COMMENT_REPLY_NOTIFICATION_TYPE;
-        }
+    private void publishCommentCreatedEvent(Long commentId, CommentPostAccessProjection post, Long parentId, Long senderProfileId) {
+        Long recipientProfileId = parentId == null
+                ? post.getProfileId()
+                : commentRepository.findAuthorProfileIdById(parentId).orElse(null);
 
         if (recipientProfileId == null || recipientProfileId.equals(senderProfileId)) {
             return;
         }
 
-        try {
-            notificationService.dispatchInternal(new NotificationDispatchCommand(
-                    recipientProfileId,
-                    senderProfileId,
-                    notificationType,
-                    NotificationReferenceType.COMMENT.name().toLowerCase(Locale.ROOT),
-                    commentId
-            ));
-        } catch (RuntimeException exception) {
-            logger.error("Failed to dispatch comment notification - senderProfileId: {}, recipientProfileId: {}, commentId: {} - {}",
-                    senderProfileId, recipientProfileId, commentId, exception.getMessage());
+        eventPublisher.publishEvent(new CommentCreatedEvent(commentId, senderProfileId, recipientProfileId, parentId));
+    }
+
+    private void publishCommentDeletedEvent(Long commentId, CommentOwnershipProjection ownership, Long deleterProfileId) {
+        Long senderProfileId = ownership.getProfileId();
+        Long parentId = ownership.getParentId();
+
+        Long recipientProfileId = parentId == null
+                ? ownership.getPostOwnerProfileId()
+                : commentRepository.findAuthorProfileIdById(parentId).orElse(null);
+
+        if (recipientProfileId == null || senderProfileId.equals(recipientProfileId)) {
+            return;
         }
+
+        eventPublisher.publishEvent(new CommentDeletedEvent(commentId, senderProfileId, recipientProfileId, parentId));
     }
 
     private CommentDataDTO toDto(CommentFeedProjection projection) {
