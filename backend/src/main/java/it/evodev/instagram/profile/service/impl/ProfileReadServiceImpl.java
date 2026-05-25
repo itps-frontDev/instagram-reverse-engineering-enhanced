@@ -162,6 +162,8 @@ public class ProfileReadServiceImpl implements ProfileReadService {
                 .profileImageUrl(p.getProfileImageUrl())
                 .bio(p.getBio())
                 .websiteUrl(p.getWebsiteUrl())
+                .gender(p.getGender())
+                .customGender(p.getCustomGender())
                 .privateProfile(Boolean.TRUE.equals(p.getIsPrivate()))
                 .verified(Boolean.TRUE.equals(p.getIsVerified()))
                 .followersCount(defaultInt(p.getFollowersCount()))

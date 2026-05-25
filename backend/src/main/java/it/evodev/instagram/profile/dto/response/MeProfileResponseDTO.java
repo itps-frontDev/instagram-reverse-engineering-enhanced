@@ -18,6 +18,10 @@ public class MeProfileResponseDTO {
     private String profileImageUrl;
     private String bio;
     private String websiteUrl;
+    private String gender;
+
+    @JsonProperty("custom_gender")
+    private String customGender;
 
     @JsonProperty("isPrivate")
     private boolean privateProfile;

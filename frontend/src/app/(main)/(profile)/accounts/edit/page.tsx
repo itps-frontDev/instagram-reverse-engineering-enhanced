@@ -13,9 +13,8 @@
  */
 
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth';
-import { profileRepository } from '@/repositories';
 import { EditProfileForm } from '@/components/settings';
+import { getMeProfileAction } from '@/features/profile';
 
 // ============================================================================
 // COMPONENTE PAGINA
@@ -24,23 +23,17 @@ import { EditProfileForm } from '@/components/settings';
 /**
  * EditProfilePage - Pagina modifica profilo
  * 
- * Server Component che recupera il profilo tramite repository
+ * Server Component che recupera il profilo autenticato da Spring
  * e renderizza il form di modifica.
  * 
  * @returns Pagina modifica profilo
  */
 export default async function EditProfilePage() {
-  const user = await getCurrentUser();
+  const profileResult = await getMeProfileAction();
 
-  if (!user) {
+  if (!profileResult.success || !profileResult.data) {
     redirect('/login');
   }
 
-  const profile = await profileRepository.findByUserId(user.id);
-
-  if (!profile) {
-    redirect('/login');
-  }
-
-  return <EditProfileForm profile={profile} />;
+  return <EditProfileForm profile={profileResult.data} />;
 }

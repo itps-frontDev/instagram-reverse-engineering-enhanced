@@ -54,6 +54,8 @@ export async function getMeProfileAction(): Promise<GetMeProfileResult> {
     profile_image_url: d.profileImageUrl ?? null,
     bio: d.bio ?? null,
     website_url: d.websiteUrl ?? null,
+    gender: d.gender ?? null,
+    custom_gender: d.custom_gender ?? null,
     is_private: d.isPrivate,
     is_verified: d.isVerified,
     followers_count: d.followersCount,

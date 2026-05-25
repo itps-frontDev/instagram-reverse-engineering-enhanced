@@ -22,6 +22,8 @@ public interface ProfileVisibilityProfileJpaRepository extends JpaRepository<Pro
                 CAST(p.profile_image_url AS VARCHAR) AS profileImageUrl,
                 CAST(p.bio AS VARCHAR) AS bio,
                 CAST(p.website_url AS VARCHAR) AS websiteUrl,
+                p.gender AS gender,
+                p.custom_gender AS customGender,
                 p.is_private AS isPrivate,
                 p.is_verified AS isVerified,
                 p.followers_count AS followersCount,

@@ -10,6 +10,8 @@ public interface MeProfileProjection {
     String getProfileImageUrl();
     String getBio();
     String getWebsiteUrl();
+    String getGender();
+    String getCustomGender();
     Boolean getIsPrivate();
     Boolean getIsVerified();
     Integer getFollowersCount();
