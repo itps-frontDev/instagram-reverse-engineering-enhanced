@@ -1,0 +1,36 @@
+$kind: http-request
+name: Create Post
+description: >
+  Crea un nuovo post con una o più immagini (max 10). Accetta multipart/form-data.
+  Alla creazione incrementa profiles.posts_count.
+  Error cases: 400 se immagini mancanti, > 10, vuote o formato non supportato (solo JPEG, PNG, GIF, WebP);
+  401 se token mancante; 413 se la richiesta supera il limite multipart (50 MB).
+method: POST
+url: "{{baseUrl}}/api/priv/posts"
+headers:
+  Authorization: Bearer {{accessToken}}
+body:
+  type: formdata
+  content:
+    - type: file
+      key: images
+      src:
+        - /C:/Users/Cristian/Downloads/avatar.jpg
+      disabled: false
+    - type: text
+      key: caption
+      value: "Test caption dalla collezione Postman"
+      disabled: false
+    - type: text
+      key: location
+      value: "Milano, Italia"
+      disabled: false
+    - type: text
+      key: isCommentsDisabled
+      value: "false"
+      disabled: false
+    - type: text
+      key: isLikesHidden
+      value: "false"
+      disabled: false
+order: 100

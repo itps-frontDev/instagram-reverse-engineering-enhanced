@@ -140,6 +140,7 @@ public class PostsDetailServiceImpl implements PostsDetailService {
         post.setDeletedAt(now);
         postRepository.save(post);
         postMediaRepository.softDeleteByPostId(postId, now);
+        profileRepository.decrementPostsCount(post.getProfileId());
         logger.info("Post soft-deleted. Post ID: {}", postId);
     }
 

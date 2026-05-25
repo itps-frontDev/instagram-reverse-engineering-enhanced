@@ -5,6 +5,12 @@ const nextConfig: NextConfig = {
   // genera .next/standalone con runtime minimale
   output: "standalone",
 
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "50mb",
+    },
+  },
+
   images: {
     unoptimized: true,
     remotePatterns: [

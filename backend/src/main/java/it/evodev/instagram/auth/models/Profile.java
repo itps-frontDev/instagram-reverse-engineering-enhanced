@@ -46,4 +46,7 @@ public class Profile {
 
     @Column(name = "is_private", nullable = false)
     private boolean isPrivate;
+
+    @Column(name = "posts_count", nullable = false)
+    private int postsCount;
 }

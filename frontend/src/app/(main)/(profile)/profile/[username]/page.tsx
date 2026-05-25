@@ -299,7 +299,10 @@ export default function ProfilePage({
       if (pageNum === 0) {
         setPosts(newPosts);
       } else {
-        setPosts((prev) => [...prev, ...newPosts]);
+        setPosts((prev) => {
+          const existingIds = new Set(prev.map(p => p.id));
+          return [...prev, ...newPosts.filter(p => !existingIds.has(p.id))];
+        });
       }
 
       setHasMore(more);

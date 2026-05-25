@@ -24,6 +24,7 @@ import { useState, useRef, DragEvent, useEffect } from 'react';
 import Image from 'next/image';
 import { X } from 'lucide-react';
 import {ProfilePicture} from '@/components';
+import { createPostAction } from '@/features/posts';
 
 interface CreatePostModalProps {
   isOpen: boolean;
@@ -243,36 +244,31 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
         );
       }
       
-      const response = await fetch('/api/posts/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          images: processedMedia,
-          caption: caption.trim(),
-          location: '',
-          isCommentsDisabled: false,
-          isLikesHidden: false,
-        }),
-      });
+      const formData = new FormData();
+      await Promise.all(processedMedia.map(async (dataUrl, i) => {
+        const res = await fetch(dataUrl);
+        const blob = await res.blob();
+        const mimeType = blob.type || 'image/jpeg';
+        const ext = mimeType.split('/')[1]?.replace('jpeg', 'jpg') ?? 'jpg';
+        formData.append('images', new File([blob], `image-${i}.${ext}`, { type: mimeType }));
+      }));
+      if (caption.trim()) formData.append('caption', caption.trim());
+      formData.append('isCommentsDisabled', 'false');
+      formData.append('isLikesHidden', 'false');
 
-      const data = await response.json();
+      const result = await createPostAction(formData);
 
-      if (data.success) {
-        // Successo! Chiudi modale e resetta stato
+      if (result.success) {
         setUploadedImages([]);
         setCurrentImageIndex(0);
         setShowMediaManager(false);
         setCaption('');
         setPhase('crop');
         onClose();
-        
-        console.log('Post created successfully with ID:', data.postId);
         window.location.reload();
       } else {
-        console.error('Failed to create post:', data.error);
-        alert('Errore durante la creazione del post: ' + data.error);
+        console.error('Failed to create post:', result.error);
+        alert('Errore durante la creazione del post: ' + result.error);
       }
     } catch (error) {
       console.error('Error creating post:', error);

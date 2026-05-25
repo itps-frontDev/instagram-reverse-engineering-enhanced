@@ -1,5 +1,6 @@
 export * from './actions';
 export * from './schema';
+export type { CreatePostInput, CreatePostResult } from './schema';
 
 // Tags sub-feature
 export { fetchPostTagsAction } from './tags/actions';

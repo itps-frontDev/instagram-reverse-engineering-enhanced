@@ -1,5 +1,20 @@
 import { z } from 'zod';
 
+export const createPostInputSchema = z.object({
+  images: z.array(z.instanceof(File)).min(1, "Almeno un'immagine è richiesta").max(10, 'Massimo 10 immagini'),
+  caption: z.string().max(2200).optional(),
+  location: z.string().optional(),
+  isCommentsDisabled: z.boolean().default(false),
+  isLikesHidden: z.boolean().default(false),
+});
+export type CreatePostInput = z.infer<typeof createPostInputSchema>;
+
+export const createPostResultSchema = z.discriminatedUnion('success', [
+  z.object({ success: z.literal(true), postId: z.number().int() }),
+  z.object({ success: z.literal(false), error: z.string() }),
+]);
+export type CreatePostResult = z.infer<typeof createPostResultSchema>;
+
 export const togglePostSaveInputSchema = z.object({
   postId: z.coerce.number().int().positive(),
 });

@@ -3,6 +3,7 @@ package it.evodev.instagram.posts.exception;
 import it.evodev.instagram.posts.dto.response.PostApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -21,6 +22,20 @@ public class PostsExceptionHandler {
         logger.error("Posts save exception handled. Error: {}", exception.getMessage());
         return ResponseEntity.status(exception.getStatus())
                 .body(PostApiResponse.error(exception.getErrorCode(), exception.getMessage()));
+    }
+
+    @ExceptionHandler(PostCreateValidationException.class)
+    public ResponseEntity<PostApiResponse<Void>> handlePostCreateValidation(PostCreateValidationException exception) {
+        logger.warn("Post create validation error: {}", exception.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(PostApiResponse.error("POST_CREATE_VALIDATION_ERROR", exception.getMessage()));
+    }
+
+    @ExceptionHandler(PostCreateUnauthorizedException.class)
+    public ResponseEntity<PostApiResponse<Void>> handlePostCreateUnauthorized(PostCreateUnauthorizedException exception) {
+        logger.warn("Post create unauthorized: {}", exception.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(PostApiResponse.error("POST_CREATE_UNAUTHORIZED", exception.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)

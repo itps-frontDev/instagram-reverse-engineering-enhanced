@@ -1,6 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { springFetch } from '@/lib/spring-client';
 import { SpringAuthError } from '@/lib/spring-error';
 import { getAccessTokenCookieName } from '@/lib/auth/backend';
@@ -12,6 +13,7 @@ import {
   ProfilePostsResponseSchema,
   getPostDetailInputSchema,
   getPostDetailResultSchema,
+  createPostInputSchema,
   type TogglePostSaveInput,
   type TogglePostSaveResult,
   type GetProfilePostsInput,
@@ -22,6 +24,8 @@ import {
   type DeletePostResult,
   type UpdatePostCaptionInput,
   type UpdatePostCaptionResult,
+  type CreatePostInput,
+  type CreatePostResult,
   deletePostInputSchema,
   updatePostCaptionInputSchema,
 } from './schema';
@@ -254,6 +258,30 @@ export async function deletePostAction(input: DeletePostInput): Promise<DeletePo
   }
 
   return { success: true };
+}
+
+export async function createPostAction(formData: FormData): Promise<CreatePostResult> {
+  const images = formData.getAll('images') as File[];
+  if (!images.length) return { success: false, error: 'Almeno un\'immagine è richiesta.' };
+  if (images.length > 10) return { success: false, error: 'Massimo 10 immagini.' };
+
+  let response: Response;
+  try {
+    response = await springFetch('/api/priv/posts', { method: 'POST', body: formData });
+  } catch (error) {
+    if (error instanceof SpringAuthError) redirect('/login');
+    return { success: false, error: 'Servizio non raggiungibile.' };
+  }
+
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    if (response.status === 401) redirect('/login');
+    const detail = payload?.message ?? payload?.error ?? null;
+    return { success: false, error: detail ?? (response.status === 400 ? 'Immagini o dati non validi.' : 'Errore nella creazione del post.') };
+  }
+
+  return { success: true, postId: payload.data.postId };
 }
 
 export async function updatePostCaptionAction(input: UpdatePostCaptionInput): Promise<UpdatePostCaptionResult> {

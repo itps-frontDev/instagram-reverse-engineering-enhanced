@@ -21,4 +21,14 @@ public interface ProfileRepository extends JpaRepository<Profile, Long> {
     @Transactional
     @Query("UPDATE Profile p SET p.profileImageUrl = :url WHERE p.id = :id")
     void updateProfileImageUrl(@Param("id") Long id, @Param("url") String url);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Profile p SET p.postsCount = p.postsCount + 1 WHERE p.id = :id")
+    void incrementPostsCount(@Param("id") Long id);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Profile p SET p.postsCount = GREATEST(p.postsCount - 1, 0) WHERE p.id = :id")
+    void decrementPostsCount(@Param("id") Long id);
 }

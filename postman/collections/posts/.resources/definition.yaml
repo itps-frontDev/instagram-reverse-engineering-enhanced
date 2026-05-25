@@ -2,6 +2,7 @@ $kind: collection
 name: Posts
 description: >
   Endpoint privati per la gestione dei post:
+  - Create Post: Crea un nuovo post con immagini (multipart/form-data, max 10)
   - Get Profile Posts: Recupera i post di un profilo (posts, reels, saved, tagged)
   - Get Home Feed: Feed home autenticato
   - Get Explore Feed: Feed esplora pubblico
