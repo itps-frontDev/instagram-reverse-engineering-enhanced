@@ -28,7 +28,7 @@ path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
 /api/profiles/[username]/followers,GET,"MIGRATED to Spring: /api/priv/profiles/{username}/followers - list followers with privacy check and followStatus for each item",No,No,Yes,No
 /api/profiles/[username]/follow-status,GET,"MIGRATED to Spring: /api/priv/follows/{username}/status - follow relationship state between current user and target profile",No,No,Yes,No
 /api/profiles/[username]/can-view,GET,"MIGRATED to Spring: /api/priv/profiles/{username}/can-view - check if user can view profile content (privacy)",Yes,No,Yes,No
-/api/posts/create,POST,"Legacy Next create post: save images and create post_media in transaction; no Spring create endpoint yet",Yes,Yes,Yes,Yes
+/api/posts/create,POST,"MIGRATED to Spring: POST /api/priv/posts - create post with multipart/form-data (images + optional caption/location); supports JPEG PNG GIF WebP MP4 MOV WebM; increments profiles.posts_count; legacy Next.js route deleted",Yes,Yes,Yes,No
 /api/posts/[postId]/unsave,POST,"MIGRATED to Spring: POST /api/priv/posts/{postId}/save-toggle - unsave via toggle endpoint (legacy removed)",No,No,Yes,No
 /api/posts/[postId]/unlike,POST,"MIGRATED to Spring: POST /api/priv/likes/{post}/{id} - unlike via Spring likes toggle (legacy replaced)",Yes,No,Yes,Yes
 /api/posts/[postId]/tags,GET,"MIGRATED to Spring: GET /api/priv/posts/{postId}/tags - fetch post tags with tagged profile username (legacy removed)",No,No,Yes,No
