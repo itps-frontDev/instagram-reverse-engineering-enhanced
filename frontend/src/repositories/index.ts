@@ -9,24 +9,19 @@
  * Permette di importare più cose con un singolo import statement.
  * 
  * SENZA barrel: 
- *   import { userRepository } from '@/repositories/UserRepository';
  *   import { profileRepository } from '@/repositories/ProfileRepository';
  * 
  * CON barrel:
- *   import { userRepository, profileRepository } from '@/repositories';
+ *   import { profileRepository, postRepository } from '@/repositories';
  * 
  * @module repositories
  * 
  * @example
  * import { 
- *   userRepository, 
  *   profileRepository,
  *   postRepository
  * } from '@/repositories';
- * 
- * // Operazioni utente
- * const user = await userRepository.findById(1);
- * 
+ *
  * // Operazioni profilo
  * const profile = await profileRepository.findByUsername('johndoe');
  * 
@@ -38,9 +33,6 @@
 // ============================================================================
 // EXPORT DEI REPOSITORY
 // ============================================================================
-
-// User Repository - operazioni sulla tabella users
-export { userRepository, type CreateUserData, type UpdateUserData } from './UserRepository';
 
 // Profile Repository - operazioni sulla tabella profiles
 export {
@@ -72,4 +64,3 @@ export {
   type StoryViewer,
   type CreateStoryData,
 } from './StoryRepository';
-
