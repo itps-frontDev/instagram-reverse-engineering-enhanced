@@ -4,8 +4,8 @@ import it.evodev.instagram.follow.models.Follow;
 import it.evodev.instagram.follow.repositories.FollowJpaRepository;
 import it.evodev.instagram.profile.dto.response.ProfileVisibilityDataDTO;
 import it.evodev.instagram.profile.exceptions.ProfileNotFoundException;
-import it.evodev.instagram.profile.models.ProfileVisibilityProfile;
-import it.evodev.instagram.profile.repository.ProfileVisibilityProfileJpaRepository;
+import it.evodev.instagram.profile.models.Profile;
+import it.evodev.instagram.profile.repository.ProfileJpaRepository;
 import it.evodev.instagram.profile.service.ProfileVisibilityService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -21,7 +21,7 @@ public class ProfileVisibilityServiceImpl implements ProfileVisibilityService {
 
     private static final Logger logger = LoggerFactory.getLogger(ProfileVisibilityServiceImpl.class);
 
-    private final ProfileVisibilityProfileJpaRepository profileRepository;
+    private final ProfileJpaRepository profileRepository;
     private final FollowJpaRepository followRepository;
 
     @Override
@@ -29,22 +29,22 @@ public class ProfileVisibilityServiceImpl implements ProfileVisibilityService {
         logger.info("Evaluating profile visibility. Current user: {}, Target username: {}", currentUserId, targetUsername);
 
         // Resolve target profile by username
-        Optional<ProfileVisibilityProfile> targetOpt = profileRepository.findByUsernameIgnoreCaseAndDeletedAtIsNull(targetUsername);
+        Optional<Profile> targetOpt = profileRepository.findByUsernameIgnoreCaseAndDeletedAtIsNull(targetUsername);
         if (targetOpt.isEmpty()) {
             logger.warn("Target profile not found. Username: {}", targetUsername);
             throw new ProfileNotFoundException("Profile not found");
         }
 
-        ProfileVisibilityProfile targetProfile = targetOpt.get();
+        Profile targetProfile = targetOpt.get();
 
         // Resolve current user's profile
-        Optional<ProfileVisibilityProfile> currentOpt = profileRepository.findByUserIdAndDeletedAtIsNull(currentUserId);
+        Optional<Profile> currentOpt = profileRepository.findByUserIdAndDeletedAtIsNull(currentUserId);
         if (currentOpt.isEmpty()) {
             logger.warn("Current user profile not found. User ID: {}", currentUserId);
             throw new ProfileNotFoundException("User profile not found");
         }
 
-        ProfileVisibilityProfile currentProfile = currentOpt.get();
+        Profile currentProfile = currentOpt.get();
 
         // Decision: owner can always view
         if (currentProfile.getId().equals(targetProfile.getId())) {

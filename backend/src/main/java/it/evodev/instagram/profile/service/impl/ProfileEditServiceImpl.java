@@ -13,8 +13,8 @@ import it.evodev.instagram.profile.exceptions.InvalidAgeException;
 import it.evodev.instagram.profile.exceptions.ProfileBadRequestException;
 import it.evodev.instagram.profile.exceptions.ProfileConflictException;
 import it.evodev.instagram.profile.exceptions.ProfileNotFoundException;
-import it.evodev.instagram.profile.models.ProfileEditProfile;
-import it.evodev.instagram.profile.repository.ProfileEditProfileJpaRepository;
+import it.evodev.instagram.profile.models.Profile;
+import it.evodev.instagram.profile.repository.ProfileEditJpaRepository;
 import it.evodev.instagram.profile.service.ProfileEditService;
 import it.evodev.instagram.auth.models.User;
 import it.evodev.instagram.auth.repositories.UserRepository;
@@ -36,14 +36,14 @@ public class ProfileEditServiceImpl implements ProfileEditService {
     private static final Logger logger = LoggerFactory.getLogger(ProfileEditServiceImpl.class);
     private static final int MIN_AGE = 13;
 
-    private final ProfileEditProfileJpaRepository profileEditRepository;
+    private final ProfileEditJpaRepository profileEditRepository;
     private final UserRepository userRepository;
 
     @Override
     public ProfileEditDataDTO editProfile(UUID currentUserId, ProfileEditRequestDTO request) {
         logger.info("Editing profile. Current user: {}", currentUserId);
 
-        ProfileEditProfile profile = profileEditRepository.findByUserIdAndDeletedAtIsNull(currentUserId)
+        Profile profile = profileEditRepository.findByUserIdAndDeletedAtIsNull(currentUserId)
                 .orElseThrow(() -> {
                     logger.warn("Current user profile not found for edit. User ID: {}", currentUserId);
                     return new ProfileNotFoundException("Profile not found");
@@ -74,7 +74,7 @@ public class ProfileEditServiceImpl implements ProfileEditService {
             profile.setCustomGender(normalizeOptionalText(request.getCustomGender()));
         }
 
-        ProfileEditProfile saved = profileEditRepository.save(profile);
+        Profile saved = profileEditRepository.save(profile);
         logger.info("Profile edited successfully. Profile ID: {}", saved.getId());
 
         return new ProfileEditDataDTO(saved.getBio(), saved.getWebsiteUrl(), saved.getGender(), saved.getCustomGender());
@@ -84,7 +84,7 @@ public class ProfileEditServiceImpl implements ProfileEditService {
     public ProfilePersonalDataDTO updatePersonalInfo(UUID currentUserId, ProfilePersonalRequestDTO request) {
         logger.info("Updating personal profile info. Current user: {}", currentUserId);
 
-        ProfileEditProfile currentProfile = profileEditRepository.findByUserIdAndDeletedAtIsNull(currentUserId)
+        Profile currentProfile = profileEditRepository.findByUserIdAndDeletedAtIsNull(currentUserId)
                 .orElseThrow(() -> {
                     logger.warn("Current user profile not found for personal update. User ID: {}", currentUserId);
                     return new ProfileNotFoundException("Profile not found");
@@ -110,7 +110,7 @@ public class ProfileEditServiceImpl implements ProfileEditService {
         currentProfile.setUsername(normalizedUsername);
         currentProfile.setFullName(normalizeOptionalText(request.getFullName()));
 
-        ProfileEditProfile saved = profileEditRepository.save(currentProfile);
+        Profile saved = profileEditRepository.save(currentProfile);
 
         logger.info("Personal profile info updated successfully. Profile ID: {}", saved.getId());
 
@@ -201,7 +201,7 @@ public class ProfileEditServiceImpl implements ProfileEditService {
     public ProfilePrivacyDataDTO updatePrivacy(UUID currentUserId, ProfilePrivacyRequestDTO request) {
         logger.info("Updating privacy for user: {} with requested isPrivate: {}", currentUserId, request.getIsPrivate());
 
-        ProfileEditProfile currentProfile = profileEditRepository.findByUserIdAndDeletedAtIsNull(currentUserId)
+        Profile currentProfile = profileEditRepository.findByUserIdAndDeletedAtIsNull(currentUserId)
                 .orElseThrow(() -> {
                     logger.warn("Current user profile not found for privacy update. User ID: {}", currentUserId);
                     return new ProfileNotFoundException("Profile not found");

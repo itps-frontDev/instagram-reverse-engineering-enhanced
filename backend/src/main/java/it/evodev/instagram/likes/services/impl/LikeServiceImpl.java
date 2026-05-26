@@ -44,6 +44,7 @@ public class LikeServiceImpl implements LikeService {
 
         LikeStrategy strategy = strategyRegistry.resolve(type);
         strategy.validateExists(likeableId);
+        strategy.validateCanAccess(profileId, likeableId);
 
         Optional<Like> existing = likeRepository.findByProfileIdAndLikeableTypeAndLikeableId(profileId, type, likeableId);
 

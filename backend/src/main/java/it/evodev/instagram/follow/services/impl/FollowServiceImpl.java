@@ -15,8 +15,8 @@ import it.evodev.instagram.follow.exceptions.FollowValidationException;
 import it.evodev.instagram.follow.models.Follow;
 import it.evodev.instagram.follow.repositories.FollowJpaRepository;
 import it.evodev.instagram.follow.services.FollowService;
-import it.evodev.instagram.profile.models.ProfileVisibilityProfile;
-import it.evodev.instagram.profile.repository.ProfileVisibilityProfileJpaRepository;
+import it.evodev.instagram.profile.models.Profile;
+import it.evodev.instagram.profile.repository.ProfileJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,15 +37,15 @@ public class FollowServiceImpl implements FollowService {
     private static final Logger logger = LoggerFactory.getLogger(FollowServiceImpl.class);
 
     private final FollowJpaRepository followRepository;
-    private final ProfileVisibilityProfileJpaRepository profileRepository;
+    private final ProfileJpaRepository profileRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     // ─── Read ────────────────────────────────────────────────────────────────
 
     @Override
     public FollowStatusDataDTO getFollowStatus(UUID viewerUserId, String targetUsername) {
-        ProfileVisibilityProfile viewer = resolveByUserId(viewerUserId);
-        ProfileVisibilityProfile target = resolveByUsername(targetUsername);
+        Profile viewer = resolveByUserId(viewerUserId);
+        Profile target = resolveByUsername(targetUsername);
 
         if (viewer.getId().equals(target.getId())) {
             return new FollowStatusDataDTO("self");
@@ -61,8 +61,8 @@ public class FollowServiceImpl implements FollowService {
 
     @Override
     public List<FollowerDataDTO> getFollowers(UUID viewerUserId, String targetUsername) {
-        ProfileVisibilityProfile viewer = resolveByUserId(viewerUserId);
-        ProfileVisibilityProfile target = resolveByUsername(targetUsername);
+        Profile viewer = resolveByUserId(viewerUserId);
+        Profile target = resolveByUsername(targetUsername);
 
         enforceReadAccess(viewer, target, "followers");
 
@@ -75,8 +75,8 @@ public class FollowServiceImpl implements FollowService {
 
     @Override
     public List<FollowerDataDTO> getFollowing(UUID viewerUserId, String targetUsername) {
-        ProfileVisibilityProfile viewer = resolveByUserId(viewerUserId);
-        ProfileVisibilityProfile target = resolveByUsername(targetUsername);
+        Profile viewer = resolveByUserId(viewerUserId);
+        Profile target = resolveByUsername(targetUsername);
 
         enforceReadAccess(viewer, target, "following");
 
@@ -89,7 +89,7 @@ public class FollowServiceImpl implements FollowService {
 
     @Override
     public List<SuggestionDTO> getSuggestions(UUID currentUserId) {
-        ProfileVisibilityProfile current = resolveByUserId(currentUserId);
+        Profile current = resolveByUserId(currentUserId);
 
         List<SuggestionDTO> top20 = followRepository.findSuggestionsForCurrentUser(current.getId())
                 .stream()
@@ -110,7 +110,7 @@ public class FollowServiceImpl implements FollowService {
     @Override
     @Transactional
     public FollowToggleResponseDTO toggle(UUID followerUserId, Long followingProfileId) {
-        ProfileVisibilityProfile follower = resolveByUserId(followerUserId);
+        Profile follower = resolveByUserId(followerUserId);
 
         if (follower.getId().equals(followingProfileId)) {
             throw new FollowValidationException("Cannot follow yourself");
@@ -176,7 +176,7 @@ public class FollowServiceImpl implements FollowService {
     @Override
     @Transactional
     public FollowMutationResponseDTO accept(UUID ownerUserId, Long requesterProfileId) {
-        ProfileVisibilityProfile owner = resolveByUserId(ownerUserId);
+        Profile owner = resolveByUserId(ownerUserId);
 
         Follow follow = followRepository
                 .findByFollowerProfileIdAndFollowingProfileIdAndStatusAndDeletedAtIsNull(
@@ -199,7 +199,7 @@ public class FollowServiceImpl implements FollowService {
     @Override
     @Transactional
     public FollowMutationResponseDTO reject(UUID ownerUserId, Long requesterProfileId) {
-        ProfileVisibilityProfile owner = resolveByUserId(ownerUserId);
+        Profile owner = resolveByUserId(ownerUserId);
 
         Follow follow = followRepository
                 .findByFollowerProfileIdAndFollowingProfileIdAndStatusAndDeletedAtIsNull(
@@ -220,7 +220,7 @@ public class FollowServiceImpl implements FollowService {
     @Override
     @Transactional
     public FollowMutationResponseDTO removeFollower(UUID ownerUserId, Long followerProfileId) {
-        ProfileVisibilityProfile owner = resolveByUserId(ownerUserId);
+        Profile owner = resolveByUserId(ownerUserId);
 
         Follow follow = followRepository
                 .findByFollowerProfileIdAndFollowingProfileIdAndStatusAndDeletedAtIsNull(
@@ -242,17 +242,17 @@ public class FollowServiceImpl implements FollowService {
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
-    private ProfileVisibilityProfile resolveByUserId(UUID userId) {
+    private Profile resolveByUserId(UUID userId) {
         return profileRepository.findByUserIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new FollowNotFoundException("User profile not found for userId: " + userId));
     }
 
-    private ProfileVisibilityProfile resolveByUsername(String username) {
+    private Profile resolveByUsername(String username) {
         return profileRepository.findByUsernameIgnoreCaseAndDeletedAtIsNull(username)
                 .orElseThrow(() -> new FollowNotFoundException("Profile not found: " + username));
     }
 
-    private void enforceReadAccess(ProfileVisibilityProfile viewer, ProfileVisibilityProfile target, String listType) {
+    private void enforceReadAccess(Profile viewer, Profile target, String listType) {
         boolean isOwner = viewer.getId().equals(target.getId());
         if (!isOwner && Boolean.TRUE.equals(target.getIsPrivate())) {
             boolean isAcceptedFollower = followRepository

@@ -15,8 +15,8 @@ import it.evodev.instagram.directs.repositories.MessageJpaRepository;
 import it.evodev.instagram.directs.repositories.projections.ChatWithDetailsProjection;
 import it.evodev.instagram.directs.repositories.projections.MutualFollowerProjection;
 import it.evodev.instagram.directs.services.DirectService;
-import it.evodev.instagram.profile.models.ProfileVisibilityProfile;
-import it.evodev.instagram.profile.repository.ProfileVisibilityProfileJpaRepository;
+import it.evodev.instagram.profile.models.Profile;
+import it.evodev.instagram.profile.repository.ProfileJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +44,7 @@ public class DirectServiceImpl implements DirectService {
     private final ChatJpaRepository chatRepository;
     private final ChatParticipantJpaRepository participantRepository;
     private final MessageJpaRepository messageRepository;
-    private final ProfileVisibilityProfileJpaRepository profileRepository;
+    private final ProfileJpaRepository profileRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
     // ─── Read ────────────────────────────────────────────────────────────────
@@ -52,7 +52,7 @@ public class DirectServiceImpl implements DirectService {
     @Override
     public List<ChatSummaryResponseDTO> getChats(UUID userId) {
         logger.info("getChats: start for userId={}", userId);
-        ProfileVisibilityProfile profile = resolveByUserId(userId);
+        Profile profile = resolveByUserId(userId);
 
         List<ChatWithDetailsProjection> rawChats = chatRepository.findChatsWithDetails(profile.getId());
 
@@ -96,7 +96,7 @@ public class DirectServiceImpl implements DirectService {
     @Override
     public List<MessageResponseDTO> getMessages(UUID userId, UUID chatId) {
         logger.info("getMessages: start for userId={}, chatId={}", userId, chatId);
-        ProfileVisibilityProfile profile = resolveByUserId(userId);
+        Profile profile = resolveByUserId(userId);
         assertParticipant(chatId, profile.getId());
 
         List<MessageResponseDTO> messages = messageRepository
@@ -115,7 +115,7 @@ public class DirectServiceImpl implements DirectService {
     @Transactional
     public GetOrCreateChatResponseDTO getOrCreateChat(UUID userId, Long otherProfileId) {
         logger.info("getOrCreateChat: start for userId={}, otherProfileId={}", userId, otherProfileId);
-        ProfileVisibilityProfile profile = resolveByUserId(userId);
+        Profile profile = resolveByUserId(userId);
 
         if (profile.getId().equals(otherProfileId)) {
             throw new DirectValidationException("Cannot create a chat with yourself");
@@ -154,7 +154,7 @@ public class DirectServiceImpl implements DirectService {
     @Transactional
     public MessageResponseDTO sendMessage(UUID userId, UUID chatId, String text) {
         logger.info("sendMessage: start for userId={}, chatId={}", userId, chatId);
-        ProfileVisibilityProfile profile = resolveByUserId(userId);
+        Profile profile = resolveByUserId(userId);
         assertParticipant(chatId, profile.getId());
 
         if (text == null || text.isBlank()) {
@@ -205,7 +205,7 @@ public class DirectServiceImpl implements DirectService {
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
-    private ProfileVisibilityProfile resolveByUserId(UUID userId) {
+    private Profile resolveByUserId(UUID userId) {
         return profileRepository.findByUserIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new DirectNotFoundException("User profile not found for userId: " + userId));
     }

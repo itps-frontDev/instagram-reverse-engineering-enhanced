@@ -9,7 +9,7 @@ import it.evodev.instagram.posts.exception.PostCreateUnauthorizedException;
 import it.evodev.instagram.posts.exception.PostCreateValidationException;
 import it.evodev.instagram.posts.model.Post;
 import it.evodev.instagram.posts.model.PostMedia;
-import it.evodev.instagram.posts.repository.PostCreateRepository;
+import it.evodev.instagram.posts.repository.PostRepository;
 import it.evodev.instagram.posts.repository.PostMediaRepository;
 import it.evodev.instagram.posts.service.PostCreateService;
 import lombok.RequiredArgsConstructor;
@@ -54,7 +54,7 @@ public class PostCreateServiceImpl implements PostCreateService {
 
     private final AuthSubjectService authSubjectService;
     private final ProfileRepository profileRepository;
-    private final PostCreateRepository postCreateRepository;
+    private final PostRepository postRepository;
     private final PostMediaRepository postMediaRepository;
     private final BlobStorageService blobStorageService;
 
@@ -99,7 +99,7 @@ public class PostCreateServiceImpl implements PostCreateService {
         post.setCreatedAt(now);
         post.setUpdatedAt(now);
 
-        Post saved = postCreateRepository.save(post);
+        Post saved = postRepository.save(post);
         Long postId = saved.getId();
 
         for (int i = 0; i < images.size(); i++) {

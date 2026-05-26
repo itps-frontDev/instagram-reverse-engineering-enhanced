@@ -1,5 +1,7 @@
 package it.evodev.instagram.profile.dto.response;
 
+import it.evodev.instagram.posts.model.enums.MediaType;
+import it.evodev.instagram.posts.model.enums.PostType;
 import lombok.Builder;
 import lombok.Data;
 
@@ -7,7 +9,10 @@ import lombok.Data;
 @Builder
 public class RecentPostPreviewDTO {
     private Long id;
-    private String mediaUrl;   // TODO(Post): sarà valorizzato con SAS URL temporaneo (15 min) via MediaService
-    private String type;       // TODO(Post): "post" | "reel"
-    // TODO(Post): aggiungere altri campi quando modulo post sarà migrato su Spring
+    private String mediaUrl;
+    private MediaType mediaType;
+
+    public PostType getType() {
+        return mediaType != null ? mediaType.toPostType() : PostType.POST;
+    }
 }

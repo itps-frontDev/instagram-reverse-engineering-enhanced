@@ -1,6 +1,6 @@
 package it.evodev.instagram.profile.picture.services.impl;
 
-import it.evodev.instagram.auth.models.Profile;
+import it.evodev.instagram.profile.models.Profile;
 import it.evodev.instagram.auth.repositories.ProfileRepository;
 import it.evodev.instagram.media.services.BlobStorageService;
 import it.evodev.instagram.profile.picture.exceptions.ProfilePictureException;

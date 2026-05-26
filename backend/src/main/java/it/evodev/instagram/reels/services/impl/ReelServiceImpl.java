@@ -1,6 +1,6 @@
 package it.evodev.instagram.reels.services.impl;
 
-import it.evodev.instagram.profile.repository.ProfileVisibilityProfileJpaRepository;
+import it.evodev.instagram.profile.repository.ProfileJpaRepository;
 import it.evodev.instagram.reels.dto.responses.ReelFeedResponseDTO;
 import it.evodev.instagram.reels.dto.responses.ReelItemDTO;
 import it.evodev.instagram.reels.dto.responses.ReelMediaItemDTO;
@@ -30,7 +30,7 @@ public class ReelServiceImpl implements ReelService {
 
     private final ReelPostJpaRepository reelPostJpaRepository;
     private final ReelPostMediaJpaRepository reelPostMediaJpaRepository;
-    private final ProfileVisibilityProfileJpaRepository profileRepository;
+    private final ProfileJpaRepository profileRepository;
 
     @Override
     @Transactional(readOnly = true)

@@ -59,7 +59,7 @@ public interface PostTagRepository extends JpaRepository<PostTag, Long> {
             (SELECT COUNT(*) FROM PostMedia pm2 WHERE pm2.postId = p.id AND pm2.deletedAt IS NULL) AS mediaCount
         )
         FROM PostMedia pm
-        RIGHT JOIN PostSavePost p ON pm.postId = p.id AND pm.position = 0 AND pm.deletedAt IS NULL
+        RIGHT JOIN Post p ON pm.postId = p.id AND pm.position = 0 AND pm.deletedAt IS NULL
         INNER JOIN PostTag pt ON pt.postId = p.id
         WHERE pt.taggedProfileId = :taggedProfileId
           AND p.deletedAt IS NULL

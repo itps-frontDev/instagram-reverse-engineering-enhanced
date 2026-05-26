@@ -17,7 +17,7 @@ import java.time.OffsetDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-public class PostSaveSavedPost {
+public class SavedPost {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,8 +48,8 @@ public class PostSaveSavedPost {
         deletedAt = null;
     }
 
-    public static PostSaveSavedPost create(Long profileId, Long postId) {
-        PostSaveSavedPost entity = new PostSaveSavedPost();
+    public static SavedPost create(Long profileId, Long postId) {
+        SavedPost entity = new SavedPost();
         entity.setProfileId(profileId);
         entity.setPostId(postId);
         entity.setDeletedAt(null);

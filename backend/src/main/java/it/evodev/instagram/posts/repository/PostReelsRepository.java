@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Map;
 
-import it.evodev.instagram.posts.model.PostSavePost;
+import it.evodev.instagram.posts.model.Post;
 
 /**
  * Repository specializzato per il recupero dei reels (video) di un profilo.
@@ -19,7 +19,7 @@ import it.evodev.instagram.posts.model.PostSavePost;
  * @repository PostReelsRepository
  */
 @Repository
-public interface PostReelsRepository extends JpaRepository<PostSavePost, Long> {
+public interface PostReelsRepository extends JpaRepository<Post, Long> {
 
     /**
      * Recupera i reels (video) di un profilo ordinati per data decrescente.
@@ -48,7 +48,7 @@ public interface PostReelsRepository extends JpaRepository<PostSavePost, Long> {
             (SELECT COUNT(*) FROM PostMedia pm2 WHERE pm2.postId = p.id AND pm2.deletedAt IS NULL) AS mediaCount
         )
         FROM PostMedia pm
-        RIGHT JOIN PostSavePost p ON pm.postId = p.id AND pm.position = 0 AND pm.deletedAt IS NULL
+        RIGHT JOIN Post p ON pm.postId = p.id AND pm.position = 0 AND pm.deletedAt IS NULL
         WHERE p.profileId = :profileId 
           AND p.deletedAt IS NULL 
           AND pm.mediaType = 'video'

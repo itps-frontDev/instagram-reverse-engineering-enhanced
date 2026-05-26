@@ -1,6 +1,6 @@
 package it.evodev.instagram.media.strategies;
 
-import it.evodev.instagram.auth.models.Profile;
+import it.evodev.instagram.profile.models.Profile;
 import it.evodev.instagram.media.enums.MediaCategory;
 import it.evodev.instagram.media.exceptions.MediaAccessDeniedException;
 import it.evodev.instagram.media.exceptions.MediaNotFoundException;

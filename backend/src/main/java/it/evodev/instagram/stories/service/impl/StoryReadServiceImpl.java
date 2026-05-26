@@ -1,13 +1,13 @@
 package it.evodev.instagram.stories.service.impl;
 
 import it.evodev.instagram.follow.repositories.FollowJpaRepository;
-import it.evodev.instagram.profile.models.ProfileVisibilityProfile;
-import it.evodev.instagram.profile.repository.ProfileVisibilityProfileJpaRepository;
+import it.evodev.instagram.profile.models.Profile;
+import it.evodev.instagram.profile.repository.ProfileJpaRepository;
 import it.evodev.instagram.profile.service.ProfileVisibilityService;
 import it.evodev.instagram.stories.dto.response.StoryCollectionDataDTO;
 import it.evodev.instagram.stories.dto.response.StoryItemDTO;
-import it.evodev.instagram.stories.exception.read.StoryNotFoundOrNotAccessibleException;
-import it.evodev.instagram.stories.exception.read.StoryReadValidationException;
+import it.evodev.instagram.stories.exception.StoryNotFoundException;
+import it.evodev.instagram.stories.exception.StoryValidationException;
 import it.evodev.instagram.stories.repository.StoryReadProjection;
 import it.evodev.instagram.stories.repository.StoryReadRepository;
 import it.evodev.instagram.stories.service.StoryReadService;
@@ -25,7 +25,7 @@ public class StoryReadServiceImpl implements StoryReadService {
 
     private static final Logger logger = LoggerFactory.getLogger(StoryReadServiceImpl.class);
 
-    private final ProfileVisibilityProfileJpaRepository profileRepository;
+    private final ProfileJpaRepository profileRepository;
     private final ProfileVisibilityService profileVisibilityService;
     private final StoryReadRepository storyReadRepository;
 
@@ -48,17 +48,17 @@ public class StoryReadServiceImpl implements StoryReadService {
         logger.info("Fetching stories by profile. User: {}, ProfileId: {}", currentUserId, profileId);
 
         if (profileId == null || profileId <= 0) {
-            throw new StoryReadValidationException("Profile id must be a positive number.");
+            throw new StoryValidationException("Profile id must be a positive number.");
         }
 
         Long viewerProfileId = resolveViewerProfileId(currentUserId);
-        ProfileVisibilityProfile targetProfile = profileRepository.findById(profileId)
+        Profile targetProfile = profileRepository.findById(profileId)
                 .filter(profile -> profile.getDeletedAt() == null)
-                .orElseThrow(() -> new StoryNotFoundOrNotAccessibleException("Story not found or not accessible."));
+                .orElseThrow(() -> new StoryNotFoundException("Story not found or not accessible."));
 
         if (!profileVisibilityService.canViewProfile(currentUserId, targetProfile.getUsername()).isCanView()) {
             logger.warn("Story access denied. Viewer profile: {}, Target profile: {}", viewerProfileId, profileId);
-            throw new StoryNotFoundOrNotAccessibleException("Story not found or not accessible.");
+            throw new StoryNotFoundException("Story not found or not accessible.");
         }
 
         List<StoryItemDTO> stories = storyReadRepository.findActiveStoriesByProfileId(profileId, viewerProfileId)
@@ -72,8 +72,8 @@ public class StoryReadServiceImpl implements StoryReadService {
 
     private Long resolveViewerProfileId(UUID currentUserId) {
         return profileRepository.findByUserIdAndDeletedAtIsNull(currentUserId)
-                .map(ProfileVisibilityProfile::getId)
-                .orElseThrow(() -> new StoryReadValidationException("Authenticated profile not found."));
+                .map(Profile::getId)
+                .orElseThrow(() -> new StoryValidationException("Authenticated profile not found."));
     }
 
 

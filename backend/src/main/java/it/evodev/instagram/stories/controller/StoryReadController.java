@@ -1,4 +1,4 @@
-package it.evodev.instagram.stories.controller.read;
+package it.evodev.instagram.stories.controller;
 
 import it.evodev.instagram.stories.dto.response.StoryApiResponse;
 import it.evodev.instagram.stories.dto.response.StoryCollectionDataDTO;

@@ -10,4 +10,6 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
 
     Optional<Like> findByProfileIdAndLikeableTypeAndLikeableId(
             Long profileId, LikeableType likeableType, Long likeableId);
+
+    long countByLikeableTypeAndLikeableIdAndDeletedAtIsNull(LikeableType likeableType, Long likeableId);
 }

@@ -1,6 +1,6 @@
 package it.evodev.instagram.common.service;
 
-import it.evodev.instagram.auth.models.Profile;
+import it.evodev.instagram.profile.models.Profile;
 import it.evodev.instagram.auth.repositories.ProfileRepository;
 import it.evodev.instagram.auth.services.AuthSubjectService;
 import jakarta.persistence.PersistenceException;

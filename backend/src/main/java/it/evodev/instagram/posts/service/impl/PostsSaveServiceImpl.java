@@ -6,9 +6,9 @@ import it.evodev.instagram.posts.dto.response.PostSaveDataDTO;
 import it.evodev.instagram.posts.exception.PostSaveNotFoundException;
 import it.evodev.instagram.posts.exception.PostSaveUnauthorizedException;
 import it.evodev.instagram.posts.exception.PostSaveValidationException;
-import it.evodev.instagram.posts.model.PostSaveSavedPost;
-import it.evodev.instagram.posts.repository.PostSavePostRepository;
-import it.evodev.instagram.posts.repository.PostSaveSavedPostRepository;
+import it.evodev.instagram.posts.model.SavedPost;
+import it.evodev.instagram.posts.repository.PostRepository;
+import it.evodev.instagram.posts.repository.SavedPostRepository;
 import it.evodev.instagram.posts.service.PostsSaveService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -25,8 +25,8 @@ public class PostsSaveServiceImpl implements PostsSaveService {
     private static final Logger logger = LoggerFactory.getLogger(PostsSaveServiceImpl.class);
 
     private final ProfileRepository profileRepository;
-    private final PostSavePostRepository postSavePostRepository;
-    private final PostSaveSavedPostRepository postSaveSavedPostRepository;
+    private final PostRepository postRepository;
+    private final SavedPostRepository savedPostRepository;
     private final AuthSubjectService authSubjectService;
 
     @Override
@@ -45,22 +45,22 @@ public class PostsSaveServiceImpl implements PostsSaveService {
 
         logger.info("Toggle save started - profileId: {}, postId: {}", profileId, postId);
 
-        if (!postSavePostRepository.existsByIdAndDeletedAtIsNull(postId)) {
+        if (!postRepository.existsByIdAndDeletedAtIsNull(postId)) {
             logger.warn("Toggle save failed - post not found, postId: {}", postId);
             throw new PostSaveNotFoundException("Post not found");
         }
 
-        PostSaveSavedPost entity = postSaveSavedPostRepository
+        SavedPost entity = savedPostRepository
                 .findTopByProfileIdAndPostIdOrderByCreatedAtDesc(profileId, postId)
                 .orElse(null);
 
         if (entity == null) {
-            entity = PostSaveSavedPost.create(profileId, postId);
+            entity = SavedPost.create(profileId, postId);
         } else {
             entity.toggle();
         }
 
-        postSaveSavedPostRepository.save(entity);
+        savedPostRepository.save(entity);
         boolean saved = entity.isActive();
         logger.info("Toggle save completed - profileId: {}, postId: {}, saved: {}", profileId, postId, saved);
 

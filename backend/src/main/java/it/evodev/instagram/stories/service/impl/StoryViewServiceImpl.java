@@ -2,8 +2,8 @@ package it.evodev.instagram.stories.service.impl;
 
 import it.evodev.instagram.auth.repositories.ProfileRepository;
 import it.evodev.instagram.stories.dto.response.StoryViewResponseDTO;
-import it.evodev.instagram.stories.exception.StoryNotFoundOrNotAccessibleException;
-import it.evodev.instagram.stories.exception.StoryViewValidationException;
+import it.evodev.instagram.stories.exception.StoryNotFoundException;
+import it.evodev.instagram.stories.exception.StoryValidationException;
 import it.evodev.instagram.stories.repository.StoryViewRepository;
 import it.evodev.instagram.stories.service.StoryViewService;
 import lombok.RequiredArgsConstructor;
@@ -27,12 +27,12 @@ public class StoryViewServiceImpl implements StoryViewService {
     @Transactional
     public StoryViewResponseDTO registerView(UUID authSubjectUuid, Long storyId) {
         if (storyId == null || storyId <= 0) {
-            throw new StoryViewValidationException("Story id must be a positive number.");
+            throw new StoryValidationException("Story id must be a positive number.");
         }
 
         Long viewerProfileId = profileRepository
                 .findIdByUserIdAndDeletedAtIsNull(authSubjectUuid)
-                .orElseThrow(() -> new StoryViewValidationException("Authenticated profile not found."));
+                .orElseThrow(() -> new StoryValidationException("Authenticated profile not found."));
 
         logger.info("Story view registration started - storyId: {}, viewerProfileId: {}", storyId, viewerProfileId);
 
@@ -40,7 +40,7 @@ public class StoryViewServiceImpl implements StoryViewService {
         if (!accessible) {
             logger.warn("Story view denied because story is not accessible - storyId: {}, viewerProfileId: {}",
                     storyId, viewerProfileId);
-            throw new StoryNotFoundOrNotAccessibleException("Story not found or not accessible.");
+            throw new StoryNotFoundException("Story not found or not accessible.");
         }
 
         int insertedRows = storyViewRepository.insertStoryViewIfAbsent(storyId, viewerProfileId);

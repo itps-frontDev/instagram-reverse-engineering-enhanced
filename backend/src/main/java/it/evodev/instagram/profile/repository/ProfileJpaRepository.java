@@ -2,16 +2,17 @@ package it.evodev.instagram.profile.repository;
 
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import it.evodev.instagram.profile.models.ProfileVisibilityProfile;
+import it.evodev.instagram.profile.models.Profile;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 import java.util.UUID;
 
-public interface ProfileVisibilityProfileJpaRepository extends JpaRepository<ProfileVisibilityProfile, Long> {
-    Optional<ProfileVisibilityProfile> findByUsernameIgnoreCaseAndDeletedAtIsNull(String username);
-    Optional<ProfileVisibilityProfile> findByUserIdAndDeletedAtIsNull(UUID userId);
+public interface ProfileJpaRepository extends JpaRepository<Profile, Long> {
+    Optional<Profile> findByUsernameIgnoreCaseAndDeletedAtIsNull(String username);
+    Optional<Profile> findByUserIdAndDeletedAtIsNull(UUID userId);
 
     @Query(value = """
             SELECT
@@ -37,6 +38,7 @@ public interface ProfileVisibilityProfileJpaRepository extends JpaRepository<Pro
 
     @Query(value = """
             SELECT
+                p.id AS id,
                 CAST(p.username AS VARCHAR) AS username,
                 CAST(p.full_name AS VARCHAR) AS fullName,
                 CAST(p.profile_image_url AS VARCHAR) AS profileImageUrl,

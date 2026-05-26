@@ -3,17 +3,19 @@ package it.evodev.instagram.profile.service.impl;
 import it.evodev.instagram.profile.dto.response.BirthdayDataDTO;
 import it.evodev.instagram.follow.dto.responses.FollowStatusDataDTO;
 import it.evodev.instagram.follow.services.FollowService;
+import it.evodev.instagram.posts.repository.PostRepository;
 import it.evodev.instagram.profile.dto.response.MeProfileResponseDTO;
 import it.evodev.instagram.profile.dto.response.ProfileByUsernameDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfilePreviewDataDTO;
+import it.evodev.instagram.posts.model.enums.MediaType;
 import it.evodev.instagram.profile.dto.response.RecentPostPreviewDTO;
 import it.evodev.instagram.profile.dto.response.ProfileVisibilityDataDTO;
 import it.evodev.instagram.profile.exceptions.ProfileNotFoundException;
-import it.evodev.instagram.profile.models.ProfileVisibilityProfile;
+import it.evodev.instagram.profile.models.Profile;
 import it.evodev.instagram.profile.repository.MeProfileProjection;
 import it.evodev.instagram.profile.repository.ProfileByUsernameProjection;
 import it.evodev.instagram.profile.repository.ProfilePreviewProjection;
-import it.evodev.instagram.profile.repository.ProfileVisibilityProfileJpaRepository;
+import it.evodev.instagram.profile.repository.ProfileJpaRepository;
 import it.evodev.instagram.profile.service.ProfileReadService;
 import it.evodev.instagram.profile.service.ProfileVisibilityService;
 import it.evodev.instagram.auth.repositories.UserRepository;
@@ -21,11 +23,13 @@ import it.evodev.instagram.auth.models.User;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -33,16 +37,17 @@ public class ProfileReadServiceImpl implements ProfileReadService {
 
     private static final Logger logger = LoggerFactory.getLogger(ProfileReadServiceImpl.class);
 
-    private final ProfileVisibilityProfileJpaRepository profileRepository;
+    private final ProfileJpaRepository profileRepository;
     private final ProfileVisibilityService profileVisibilityService;
     private final FollowService followService;
     private final UserRepository userRepository;
+    private final PostRepository postRepository;
 
     @Override
     public ProfileByUsernameDataDTO getProfileByUsername(UUID currentUserId, String targetUsername) {
         logger.info("Fetching profile by username. Current user: {}, Target username: {}", currentUserId, targetUsername);
 
-        Optional<ProfileVisibilityProfile> currentProfileOpt = profileRepository.findByUserIdAndDeletedAtIsNull(currentUserId);
+        Optional<Profile> currentProfileOpt = profileRepository.findByUserIdAndDeletedAtIsNull(currentUserId);
         if (currentProfileOpt.isEmpty()) {
             logger.warn("Current user profile not found. User ID: {}", currentUserId);
             throw new ProfileNotFoundException("User profile not found");
@@ -98,7 +103,6 @@ public class ProfileReadServiceImpl implements ProfileReadService {
                 .followersCount(defaultInt(projection.getFollowersCount()))
                 .followingCount(defaultInt(projection.getFollowingCount()))
                 .postsCount(defaultInt(projection.getPostsCount()))
-                // TODO(Strangler Story/Post): questi flag restano dipendenti dai moduli stories/posts finché non completata la migrazione.
                 .hasReels(Boolean.TRUE.equals(projection.getHasReels()))
                 .hasAnyActiveStory(Boolean.TRUE.equals(projection.getHasAnyActiveStory()))
                 .hasActiveStory(Boolean.TRUE.equals(projection.getHasActiveStory()))
@@ -126,9 +130,9 @@ public class ProfileReadServiceImpl implements ProfileReadService {
                 || !Boolean.TRUE.equals(projection.getIsPrivate())
                 || "accepted".equalsIgnoreCase(followStatus);
 
-        // TODO(Post): sostituire [] con chiamata a PostService.getRecentPosts(profileId, 3) quando il modulo post sarà migrato.
-        // TODO(Post): ogni mediaUrl dovrà essere un SAS URL temporaneo (15 min) generato via MediaService.
-        List<RecentPostPreviewDTO> recentPosts = List.of();
+        List<RecentPostPreviewDTO> recentPosts = canView
+                ? fetchRecentPosts(projection.getId())
+                : List.of();
 
         return ProfilePreviewDataDTO.builder()
                 .username(projection.getUsername())
@@ -142,6 +146,17 @@ public class ProfileReadServiceImpl implements ProfileReadService {
                 .canView(canView)
                 .recentPosts(recentPosts)
                 .build();
+    }
+
+    private List<RecentPostPreviewDTO> fetchRecentPosts(Long profileId) {
+        List<Map<String, Object>> raw = postRepository.findProfilePosts(profileId, PageRequest.of(0, 3));
+        return raw.stream()
+                .map(m -> RecentPostPreviewDTO.builder()
+                        .id(((Number) m.get("id")).longValue())
+                        .mediaUrl((String) m.get("mediaUrl"))
+                        .mediaType(MediaType.fromString((String) m.get("mediaType")))
+                        .build())
+                .toList();
     }
 
     @Override

@@ -1,6 +1,6 @@
 package it.evodev.instagram.media.services;
 
-import it.evodev.instagram.auth.models.Profile;
+import it.evodev.instagram.profile.models.Profile;
 import it.evodev.instagram.auth.repositories.ProfileRepository;
 import it.evodev.instagram.media.dto.StreamableMedia;
 import it.evodev.instagram.media.enums.MediaCategory;

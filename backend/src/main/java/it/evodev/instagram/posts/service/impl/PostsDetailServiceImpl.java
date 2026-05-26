@@ -1,7 +1,7 @@
 package it.evodev.instagram.posts.service.impl;
 
 import it.evodev.instagram.auth.services.AuthSubjectService;
-import it.evodev.instagram.auth.models.Profile;
+import it.evodev.instagram.profile.models.Profile;
 import it.evodev.instagram.auth.repositories.ProfileRepository;
 import it.evodev.instagram.follow.repositories.FollowJpaRepository;
 import it.evodev.instagram.likes.models.enums.LikeableType;
@@ -12,13 +12,13 @@ import it.evodev.instagram.posts.exception.PostSaveNotFoundException;
 import it.evodev.instagram.posts.exception.PostSaveUnauthorizedException;
 import it.evodev.instagram.posts.exception.PostSaveValidationException;
 import it.evodev.instagram.posts.model.PostMedia;
-import it.evodev.instagram.posts.model.PostSavePost;
+import it.evodev.instagram.posts.model.Post;
 import it.evodev.instagram.posts.repository.PostMediaRepository;
 import it.evodev.instagram.posts.repository.PostRepository;
-import it.evodev.instagram.posts.repository.PostSaveSavedPostRepository;
+import it.evodev.instagram.posts.repository.SavedPostRepository;
 import it.evodev.instagram.posts.repository.PostTagRepository;
 import it.evodev.instagram.profile.repository.ProfileByUsernameProjection;
-import it.evodev.instagram.profile.repository.ProfileVisibilityProfileJpaRepository;
+import it.evodev.instagram.profile.repository.ProfileJpaRepository;
 import it.evodev.instagram.posts.service.PostVisibilityService;
 import it.evodev.instagram.posts.service.PostsDetailService;
 import lombok.RequiredArgsConstructor;
@@ -44,10 +44,10 @@ public class PostsDetailServiceImpl implements PostsDetailService {
     private final PostVisibilityService postVisibilityService;
     private final ProfileRepository profileRepository;
     private final LikeRepository likeRepository;
-    private final PostSaveSavedPostRepository postSaveSavedPostRepository;
+    private final SavedPostRepository savedPostRepository;
     private final FollowJpaRepository followJpaRepository;
     private final PostTagRepository postTagRepository;
-    private final ProfileVisibilityProfileJpaRepository profileVisibilityProfileJpaRepository;
+    private final ProfileJpaRepository profileVisibilityProfileJpaRepository;
 
     @Override
     public PostDetailDTO getPostDetail(String authSubject, Long postId) {
@@ -58,7 +58,7 @@ public class PostsDetailServiceImpl implements PostsDetailService {
         UUID currentUserId = authSubjectService.parseUserId(authSubject,
             () -> new PostSaveUnauthorizedException("Authentication subject is invalid"));
 
-        PostSavePost post = postRepository.findByIdNotDeleted(postId)
+        Post post = postRepository.findByIdNotDeleted(postId)
             .orElseThrow(() -> new PostSaveNotFoundException("Post non trovato"));
 
         // Usiamo il controllo centralizzato di visibilità per evitare bypass su profili privati.
@@ -77,7 +77,7 @@ public class PostsDetailServiceImpl implements PostsDetailService {
             .findByProfileIdAndLikeableTypeAndLikeableId(currentProfileId, LikeableType.POST, postId)
             .isPresent();
 
-        boolean isSavedByCurrentUser = postSaveSavedPostRepository
+        boolean isSavedByCurrentUser = savedPostRepository
             .findTopByProfileIdAndPostIdOrderByCreatedAtDesc(currentProfileId, postId)
             .map(saved -> saved.getDeletedAt() == null)
             .orElse(false);
@@ -114,7 +114,7 @@ public class PostsDetailServiceImpl implements PostsDetailService {
             authorContext != null && Boolean.TRUE.equals(authorContext.getIsVerified()),
             authorContext != null && Boolean.TRUE.equals(authorContext.getHasActiveStory()),
             authorContext != null && Boolean.TRUE.equals(authorContext.getHasViewedStory()),
-            authorProfile.isPrivate(),
+            Boolean.TRUE.equals(authorProfile.getIsPrivate()),
             isLikedByCurrentUser,
             isSavedByCurrentUser,
             isFollowingAuthor,
@@ -135,7 +135,7 @@ public class PostsDetailServiceImpl implements PostsDetailService {
     @Override
     @Transactional
     public void deletePost(String authSubject, Long postId) {
-        PostSavePost post = validateOwnerAndGetPost(authSubject, postId);
+        Post post = validateOwnerAndGetPost(authSubject, postId);
         OffsetDateTime now = OffsetDateTime.now();
         post.setDeletedAt(now);
         postRepository.save(post);
@@ -154,14 +154,14 @@ public class PostsDetailServiceImpl implements PostsDetailService {
             throw new PostSaveValidationException("Caption troppo lunga (max 2200 caratteri)");
         }
 
-        PostSavePost post = validateOwnerAndGetPost(authSubject, postId);
+        Post post = validateOwnerAndGetPost(authSubject, postId);
         post.setCaption(caption);
         postRepository.save(post);
         logger.info("Post caption updated. Post ID: {}", postId);
         return caption;
     }
 
-    private PostSavePost validateOwnerAndGetPost(String authSubject, Long postId) {
+    private Post validateOwnerAndGetPost(String authSubject, Long postId) {
         if (postId == null || postId <= 0) {
             throw new PostSaveValidationException("Post ID non valido");
         }
@@ -172,7 +172,7 @@ public class PostsDetailServiceImpl implements PostsDetailService {
         Long currentProfileId = profileRepository.findIdByUserIdAndDeletedAtIsNull(currentUserId)
             .orElseThrow(() -> new PostSaveUnauthorizedException("Profilo utente autenticato non trovato"));
 
-        PostSavePost post = postRepository.findByIdNotDeleted(postId)
+        Post post = postRepository.findByIdNotDeleted(postId)
             .orElseThrow(() -> new PostSaveNotFoundException("Post non trovato"));
 
         if (!post.getProfileId().equals(currentProfileId)) {

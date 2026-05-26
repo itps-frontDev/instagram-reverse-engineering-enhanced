@@ -1,6 +1,6 @@
 package it.evodev.instagram.profile.repository;
 
-import it.evodev.instagram.profile.models.ProfileEditProfile;
+import it.evodev.instagram.profile.models.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -9,8 +9,8 @@ import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface ProfileEditProfileJpaRepository extends JpaRepository<ProfileEditProfile, Long> {
-    Optional<ProfileEditProfile> findByUserIdAndDeletedAtIsNull(UUID userId);
+public interface ProfileEditJpaRepository extends JpaRepository<Profile, Long> {
+    Optional<Profile> findByUserIdAndDeletedAtIsNull(UUID userId);
     boolean existsByUsernameIgnoreCaseAndDeletedAtIsNullAndIdNot(String username, Long excludedProfileId);
 
     @Modifying

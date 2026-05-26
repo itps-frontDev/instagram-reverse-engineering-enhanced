@@ -3,6 +3,7 @@ package it.evodev.instagram.likes.strategies.comment;
 import it.evodev.instagram.comments.repository.CommentRepository;
 import it.evodev.instagram.likes.exceptions.LikeableNotFoundException;
 import it.evodev.instagram.likes.models.enums.LikeableType;
+import it.evodev.instagram.likes.strategies.LikeAccessChecker;
 import it.evodev.instagram.likes.strategies.LikeStrategy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component;
 public class CommentLikeStrategy implements LikeStrategy {
 
     private final CommentRepository commentRepository;
+    private final LikeAccessChecker accessChecker;
 
     @Override
     public LikeableType supportedType() {
@@ -23,6 +25,12 @@ public class CommentLikeStrategy implements LikeStrategy {
         if (!commentRepository.existsByIdAndDeletedAtIsNull(likeableId)) {
             throw new LikeableNotFoundException("Comment not found: " + likeableId);
         }
+    }
+
+    @Override
+    public void validateCanAccess(Long requesterProfileId, Long likeableId) {
+        commentRepository.findOwnershipById(likeableId).ifPresent(ownership ->
+                accessChecker.enforceAccess(requesterProfileId, ownership.getPostOwnerProfileId()));
     }
 
     @Override

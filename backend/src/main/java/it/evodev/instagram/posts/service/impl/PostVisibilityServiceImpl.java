@@ -1,6 +1,6 @@
 package it.evodev.instagram.posts.service.impl;
 
-import it.evodev.instagram.auth.models.Profile;
+import it.evodev.instagram.profile.models.Profile;
 import it.evodev.instagram.auth.repositories.ProfileRepository;
 import it.evodev.instagram.posts.service.PostVisibilityService;
 import it.evodev.instagram.follow.repositories.FollowJpaRepository;
@@ -54,7 +54,7 @@ public class PostVisibilityServiceImpl implements PostVisibilityService {
         }
 
         // Decision: public profile always viewable
-        if (!postOwnerProfile.isPrivate()) {
+        if (!Boolean.TRUE.equals(postOwnerProfile.getIsPrivate())) {
             logger.debug("Post visibility: post owner is public. Returning true");
             return true;
         }

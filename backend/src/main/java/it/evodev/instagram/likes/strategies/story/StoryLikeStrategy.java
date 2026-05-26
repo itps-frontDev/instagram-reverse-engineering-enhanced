@@ -2,19 +2,25 @@ package it.evodev.instagram.likes.strategies.story;
 
 import it.evodev.instagram.likes.exceptions.LikeableNotFoundException;
 import it.evodev.instagram.likes.models.enums.LikeableType;
+import it.evodev.instagram.likes.repositories.LikeRepository;
+import it.evodev.instagram.likes.strategies.LikeAccessChecker;
 import it.evodev.instagram.likes.strategies.LikeStrategy;
-import org.springframework.jdbc.core.JdbcTemplate;
+import it.evodev.instagram.stories.repository.StoryReadRepository;
 import org.springframework.stereotype.Component;
 
-// TODO: replace JdbcTemplate with StoryRepository injection when the stories module
-//  is migrated to Spring Boot — all jdbc calls here become repository method calls
+import java.time.OffsetDateTime;
+
 @Component
 public class StoryLikeStrategy implements LikeStrategy {
 
-    private final JdbcTemplate jdbc;
+    private final StoryReadRepository storyRepository;
+    private final LikeRepository likeRepository;
+    private final LikeAccessChecker accessChecker;
 
-    public StoryLikeStrategy(JdbcTemplate jdbc) {
-        this.jdbc = jdbc;
+    public StoryLikeStrategy(StoryReadRepository storyRepository, LikeRepository likeRepository, LikeAccessChecker accessChecker) {
+        this.storyRepository = storyRepository;
+        this.likeRepository = likeRepository;
+        this.accessChecker = accessChecker;
     }
 
     @Override
@@ -24,11 +30,16 @@ public class StoryLikeStrategy implements LikeStrategy {
 
     @Override
     public void validateExists(Long likeableId) {
-        Integer count = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM stories WHERE id = ? AND deleted_at IS NULL AND expires_at > NOW()",
-                Integer.class, likeableId);
-        if (count == null || count == 0) {
+        if (!storyRepository.existsByIdAndDeletedAtIsNullAndExpiresAtAfter(likeableId, OffsetDateTime.now())) {
             throw new LikeableNotFoundException("Story not found or expired: " + likeableId);
+        }
+    }
+
+    @Override
+    public void validateCanAccess(Long requesterProfileId, Long likeableId) {
+        Long ownerProfileId = storyRepository.findProfileIdByStoryId(likeableId).orElse(null);
+        if (ownerProfileId != null) {
+            accessChecker.enforceAccess(requesterProfileId, ownerProfileId);
         }
     }
 
@@ -39,16 +50,11 @@ public class StoryLikeStrategy implements LikeStrategy {
 
     @Override
     public long getCount(Long likeableId) {
-        Long count = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM likes WHERE likeable_type = 'story' AND likeable_id = ? AND deleted_at IS NULL",
-                Long.class, likeableId);
-        return count != null ? count : 0L;
+        return likeRepository.countByLikeableTypeAndLikeableIdAndDeletedAtIsNull(LikeableType.STORY, likeableId);
     }
 
     @Override
     public Long resolveAuthorProfileId(Long likeableId) {
-        return jdbc.queryForObject(
-                "SELECT profile_id FROM stories WHERE id = ? AND deleted_at IS NULL",
-                Long.class, likeableId);
+        return storyRepository.findProfileIdByStoryId(likeableId).orElse(null);
     }
 }

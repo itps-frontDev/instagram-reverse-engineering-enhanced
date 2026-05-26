@@ -6,12 +6,12 @@ import it.evodev.instagram.posts.dto.response.ProfilePostsResponseDTO;
 import it.evodev.instagram.posts.exception.PostSaveUnauthorizedException;
 import it.evodev.instagram.posts.repository.PostReelsRepository;
 import it.evodev.instagram.posts.repository.PostRepository;
-import it.evodev.instagram.posts.repository.PostSaveSavedPostRepository;
+import it.evodev.instagram.posts.repository.SavedPostRepository;
 import it.evodev.instagram.posts.repository.PostTagRepository;
 import it.evodev.instagram.posts.service.PostsProfileService;
 import it.evodev.instagram.profile.exceptions.ProfileNotFoundException;
-import it.evodev.instagram.profile.models.ProfileVisibilityProfile;
-import it.evodev.instagram.profile.repository.ProfileVisibilityProfileJpaRepository;
+import it.evodev.instagram.profile.models.Profile;
+import it.evodev.instagram.profile.repository.ProfileJpaRepository;
 import it.evodev.instagram.profile.service.ProfileVisibilityService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -48,10 +48,10 @@ public class PostsProfileServiceImpl implements PostsProfileService {
 
     private final PostRepository postRepository;
     private final PostReelsRepository postReelsRepository;
-    private final PostSaveSavedPostRepository postSaveSavedPostRepository;
+    private final SavedPostRepository savedPostRepository;
     private final PostTagRepository postTagRepository;
     private final ProfileVisibilityService profileVisibilityService;
-    private final ProfileVisibilityProfileJpaRepository profileRepository;
+    private final ProfileJpaRepository profileRepository;
     private final AuthSubjectService authSubjectService;
 
     @Override
@@ -76,7 +76,7 @@ public class PostsProfileServiceImpl implements PostsProfileService {
         }
 
         // 3. Risolvi profilo target
-        ProfileVisibilityProfile targetProfile = profileRepository
+        Profile targetProfile = profileRepository
             .findByUsernameIgnoreCaseAndDeletedAtIsNull(targetUsername)
             .orElseThrow(() -> {
                 logger.warn("Target profile not found: {}", targetUsername);
@@ -85,7 +85,7 @@ public class PostsProfileServiceImpl implements PostsProfileService {
 
         // 4. Gating: tab 'saved' solo owner
         if ("saved".equalsIgnoreCase(tab)) {
-            ProfileVisibilityProfile currentProfile = profileRepository
+            Profile currentProfile = profileRepository
                 .findByUserIdAndDeletedAtIsNull(currentUserId)
                 .orElseThrow(() -> {
                     logger.warn("Current user profile not found. User ID: {}", currentUserId);
@@ -110,7 +110,7 @@ public class PostsProfileServiceImpl implements PostsProfileService {
             }
             case "saved" -> {
                 logger.info("Fetching saved posts for profile: {}", targetUsername);
-                yield postSaveSavedPostRepository.findProfileSavedPosts(targetProfile.getId(), pageable);
+                yield savedPostRepository.findProfileSavedPosts(targetProfile.getId(), pageable);
             }
             case "tagged" -> {
                 logger.info("Fetching tagged posts for profile: {}", targetUsername);

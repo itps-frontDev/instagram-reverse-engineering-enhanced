@@ -11,7 +11,7 @@ import it.evodev.instagram.auth.exceptions.AuthException;
 import it.evodev.instagram.auth.exceptions.EmailAlreadyExistsException;
 import it.evodev.instagram.auth.exceptions.InvalidTokenException;
 import it.evodev.instagram.auth.exceptions.UsernameAlreadyExistsException;
-import it.evodev.instagram.auth.models.Profile;
+import it.evodev.instagram.profile.models.Profile;
 import it.evodev.instagram.auth.models.User;
 import it.evodev.instagram.auth.repositories.ProfileRepository;
 import it.evodev.instagram.auth.repositories.UserRepository;
