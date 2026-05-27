@@ -1,0 +1,29 @@
+plugins {
+    id 'org.springframework.boot'
+}
+
+dependencies {
+    // Spring Cloud Gateway usa WebFlux (stack reattivo Reactor/Netty), NON Spring MVC.
+    // Non aggiungere spring-boot-starter-web: entrerebbe in conflitto con WebFlux
+    // perché i due stack non possono coesistere nello stesso processo.
+    implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
+
+    // Permette al gateway di risolvere "lb://core" e "lb://directs-service"
+    // interrogando Eureka per ottenere l'IP:porta del servizio reale.
+    // Il load balancer round-robin è incluso transitivamente.
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+
+    // Legge la configurazione delle route dal Config Server invece che dall'application.properties locale.
+    implementation 'org.springframework.cloud:spring-cloud-starter-config'
+
+    // Espone /actuator/health usato da Docker per l'health check del container.
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // ── TEST ──────────────────────────────────────────────
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

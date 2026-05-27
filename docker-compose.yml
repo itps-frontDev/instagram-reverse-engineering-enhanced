@@ -1,13 +1,11 @@
-version: '3.9'
-
 services:
 
   # ── FRONTEND ──────────────────────────────────────────
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile     # usa il Dockerfile di produzione
-    image: iree/frontend         # nome dell'immagine buildada
+      dockerfile: Dockerfile
+    image: iree/frontend
     ports:
       - "3000:3000"
     environment:
@@ -15,28 +13,63 @@ services:
       NEXT_PUBLIC_WS_URL: ${API_URL}/ws
       NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL}
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
-      SPRING_API_BASE_URL: http://backend:8080
+      # Con la nuova architettura il frontend parla con il gateway, non direttamente con core.
+      # Il gateway è l'unico punto di ingresso su porta 8080 e smista lui verso i servizi giusti.
+      SPRING_API_BASE_URL: http://api-gateway:8080
       AUTH_ACCESS_TOKEN_COOKIE_NAME: ${AUTH_ACCESS_TOKEN_COOKIE_NAME}
       AUTH_ACCESS_TOKEN_COOKIE_PATH: ${AUTH_ACCESS_TOKEN_COOKIE_PATH}
       AUTH_REFRESH_TOKEN_COOKIE_NAME: ${AUTH_REFRESH_TOKEN_COOKIE_NAME}
       AUTH_REFRESH_TOKEN_COOKIE_PATH: ${AUTH_REFRESH_TOKEN_COOKIE_PATH}
     depends_on:
-      - backend
-      # Docker avvia frontend DOPO backend,
-      # ma non aspetta che backend sia "pronto" —
-      # solo che il container sia partito
+      - api-gateway
+      # Docker avvia frontend DOPO api-gateway,
+      # ma non aspetta che sia "pronto" —
+      # solo che il container sia partito.
 
-  # ── BACKEND ───────────────────────────────────────────
-  backend:
+  # ── SERVICE DISCOVERY (Eureka) ────────────────────────
+  # Registro centrale: ogni microservizio si registra qui all'avvio
+  # e il gateway interroga Eureka per sapere su quale IP:porta gira un servizio.
+  # Parte per primo perché tutti gli altri dipendono da lui.
+  service-discovery:
     build:
       context: ./backend
-      dockerfile: Dockerfile     # usa il Dockerfile di produzione
-    image: iree/backend
+      dockerfile: service-discovery/Dockerfile
+    image: iree/service-discovery
     ports:
-      - "8080:8080"
+      - "8761:8761"   # Dashboard Eureka raggiungibile da browser in sviluppo
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8761/actuator/health | grep UP || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── CONFIG SERVER ─────────────────────────────────────
+  # Fonte centralizzata di configurazione per tutti i microservizi.
+  # Legge i file .properties da classpath:/config e li serve via HTTP.
+  # NON si registra su Eureka (altrimenti i servizi non possono trovarlo
+  # prima di avere la config — un classico problema chicken-and-egg).
+  config-server:
+    build:
+      context: ./backend
+      dockerfile: config-server/Dockerfile
+    image: iree/config-server
+    ports:
+      - "8888:8888"   # Utile in sviluppo per verificare la config: GET /core/default
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8888/actuator/health | grep UP || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── CORE (monolite Spring Boot) ────────────────────────
+  # Gestisce tutto tranne i messaggi diretti: auth, profili, post, storie, notifiche, ecc.
+  # La porta 8081 NON è esposta all'esterno: il traffico arriva sempre tramite api-gateway.
+  core:
+    build:
+      context: ./backend
+      dockerfile: core/Dockerfile
+    image: iree/core
     environment:
-      # Queste variabili vengono passate DENTRO il container
-      # I valori ${...} vengono sostituiti dal file .env
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME}
       # "db" è il nome del servizio PostgreSQL definito sotto —
       # Docker risolve automaticamente "db" come hostname
@@ -44,36 +77,81 @@ services:
       SPRING_DATASOURCE_USERNAME: ${DB_USER}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       SPRING_DATA_REDIS_HOST: redis
+      # "redis" è il nome del servizio Redis — stessa convenzione di "db"
       SPRING_DATA_REDIS_PORT: 6379
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET}
       AZURE_STORAGE_CONNECTION_STRING: ${AZURE_STORAGE_CONNECTION_STRING}
-      # In produzione: connection string reale dal portale Azure
-      # In sviluppo: sovrascritta dall'override con quella di Azurite
       AZURE_STORAGE_CONTAINER_NAME: ${AZURE_STORAGE_CONTAINER_NAME}
     depends_on:
       db:
         condition: service_healthy
-        # Aspetta che PostgreSQL sia davvero pronto
-        # (non solo avviato, ma in grado di accettare connessioni)
-        # grazie all'healthcheck definito sotto
       redis:
         condition: service_started
+      service-discovery:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+
+  # ── DIRECTS SERVICE ───────────────────────────────────
+  # Microservizio dedicato alla messaggistica in tempo reale (WebSocket + REST).
+  # Condivide il database con core ma non esegue migrazioni Liquibase:
+  # le tabelle chats/messages/chat_participants vengono create da core.
+  # La porta 8082 NON è esposta all'esterno: il traffico arriva tramite api-gateway.
+  directs-service:
+    build:
+      context: ./backend
+      dockerfile: directs-service/Dockerfile
+    image: iree/directs-service
+    environment:
+      # Stesso DB di core — directs legge/scrive le stesse tabelle.
+      # "db" viene risolto da Docker come hostname del container PostgreSQL.
+      DB_URL: jdbc:postgresql://db:5432/${DB_NAME}
+      DB_USERNAME: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      # Stesso segreto JWT di core — i token emessi da core sono validi anche qui
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET}
+    depends_on:
+      db:
+        condition: service_healthy
+      service-discovery:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+
+  # ── API GATEWAY ───────────────────────────────────────
+  # Unico punto di ingresso pubblico su porta 8080.
+  # Non contiene logica: smista le richieste verso i servizi interni
+  # basandosi sulle route definite in config-server/config/api-gateway.properties.
+  #   /ws/**                  → directs-service (WebSocket STOMP)
+  #   /api/priv/direct/**     → directs-service (REST)
+  #   /**                     → core (tutto il resto)
+  api-gateway:
+    build:
+      context: ./backend
+      dockerfile: api-gateway/Dockerfile
+    image: iree/api-gateway
+    ports:
+      - "8080:8080"   # Unica porta esposta all'esterno
+    depends_on:
+      service-discovery:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
 
   # ── DATABASE ──────────────────────────────────────────
   db:
-    image: postgres:16-alpine    # immagine ufficiale PostgreSQL
+    image: postgres:16-alpine
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
-      # Named volume: i dati del DB sopravvivono
-      # ai restart del container
+      # Named volume: i dati del DB sopravvivono ai restart del container
     healthcheck:
       # Verifica che PostgreSQL sia pronto ad accettare connessioni
-      # prima che il backend provi a connettersi
+      # prima che core o directs-service provino a connettersi
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s      # controlla ogni 5 secondi
       timeout: 5s       # se non risponde in 5s → fallito

@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
 
   frontend:
@@ -26,11 +24,13 @@ services:
       # a controllare i file ogni tot millisecondi invece di
       # aspettare gli eventi → hot reload funziona su Windows.
 
-  backend:
+  # In sviluppo core ha hot-reload: il bind mount porta il sorgente
+  # dal PC nel container e bootRun ricompila al volo con devtools.
+  core:
     build:
-      dockerfile: Dockerfile.dev   # sovrascrive il Dockerfile base
+      dockerfile: core/Dockerfile.dev   # sovrascrive il Dockerfile base
     volumes:
-      - ./backend:/app             # bind mount: codice dal tuo PC
+      - ./backend:/app             # bind mount: tutta la root multi-module
       - gradle_cache:/root/.gradle # named volume: cache Gradle.
                                    # Senza questo volume, ogni rebuild del container
                                    # riscaricherebbe centinaia di MB di dipendenze.
@@ -47,9 +47,26 @@ services:
       - "5005:5005"                # porta debugger remoto Java (IntelliJ/VSCode)
     depends_on:
       - azurite
-      # In sviluppo il backend deve aspettare anche Azurite.
+      # In sviluppo core deve aspettare anche Azurite.
       # Nel base compose non c'è questa dipendenza perché
       # in produzione si usa Azure reale (nessun container).
+
+  # In sviluppo directs-service ha lo stesso bind mount di core:
+  # entrambi puntano a ./backend perché è la root del multi-module.
+  # Gradle sceglie il sottomodulo giusto tramite :directs-service:bootRun.
+  directs-service:
+    build:
+      dockerfile: directs-service/Dockerfile.dev
+    volumes:
+      - ./backend:/app                      # stessa root di core — Gradle gestisce i sottomoduli
+      - gradle_cache_directs:/root/.gradle  # volume SEPARATO da core: se i due container
+                                            # condividessero lo stesso volume e partissero
+                                            # contemporaneamente, Gradle andrebbe in deadlock
+                                            # su /app/.gradle/*/fileHashes.lock
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+    ports:
+      - "5006:5006"                # porta debugger remoto Java separata da core
 
   db:
     ports:
@@ -86,6 +103,7 @@ services:
       - "10002:10002"   # Table service
 
 volumes:
-  gradle_cache:    # cache Gradle persistente tra rebuild
-  pnpm_store:      # store globale pnpm persistente tra rebuild
-  azuritedata:     # blob e dati Azurite persistenti tra rebuild
+  gradle_cache:          # cache Gradle di core, persistente tra rebuild
+  gradle_cache_directs:  # cache Gradle di directs-service, separata per evitare lock conflict
+  pnpm_store:            # store globale pnpm persistente tra rebuild
+  azuritedata:           # blob e dati Azurite persistenti tra rebuild

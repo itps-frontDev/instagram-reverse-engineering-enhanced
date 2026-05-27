@@ -1,0 +1,603 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        SEED DI DATI DEMO
+        =================
+        Tutti i changeset sotto hanno context="dev": vengono eseguiti SOLO quando
+        Liquibase viene avviato con spring.liquibase.contexts=dev.
+        In produzione (contexts=prod) questi changeset vengono ignorati.
+
+        I blocchi DO $$ ... $$ sono PL/pgSQL anonimi: PostgreSQL li esegue come
+        una stored procedure inline. setseed() fissa il generatore di numeri casuali
+        in modo che il risultato sia deterministico ad ogni rebuild del DB.
+
+        Ogni changeset è autonomo e registrato in databasechangelog:
+        non verrà mai rieseguito anche se il container viene ricreato.
+    -->
+
+    <!-- ── pgcrypto: necessaria per bcrypt (nessun context → gira sempre) ── -->
+    <changeSet id="004-pgcrypto" author="seed">
+        <sql>CREATE EXTENSION IF NOT EXISTS pgcrypto;</sql>
+        <rollback>DROP EXTENSION IF EXISTS pgcrypto;</rollback>
+    </changeSet>
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         1. USERS + PROFILES   (80 record)
+         ════════════════════════════════════════════════════════════════════ -->
+    <changeSet id="004-dev-seed-users-profiles" author="seed" context="dev">
+        <sql splitStatements="false"><![CDATA[
+DO $$
+DECLARE
+    first_names   TEXT[] := ARRAY[
+        'Emma','Liam','Olivia','Noah','Ava','Ethan','Sophia','Mason',
+        'Isabella','William','Mia','James','Charlotte','Benjamin','Amelia',
+        'Lucas','Harper','Henry','Evelyn','Alexander','Abigail','Michael',
+        'Emily','Daniel','Elizabeth','Matthew','Sofia','Jackson','Avery',
+        'Sebastian','Ella','Jack','Scarlett','Aiden','Grace','Owen','Chloe',
+        'Samuel','Victoria','Joseph','Riley','John','Aria','David','Lily',
+        'Wyatt','Aubrey','Carter','Zoey','Jayden','Penelope','Luke','Lillian',
+        'Gabriel','Addison','Anthony','Jane','Mike','Sarah','Alex','Lisa',
+        'Chris','Rachel','Ryan','Jessica','Tyler','Hannah','Kevin','Nicole'];
+    last_names    TEXT[] := ARRAY[
+        'Smith','Johnson','Williams','Brown','Jones','Garcia','Miller','Davis',
+        'Rodriguez','Martinez','Hernandez','Lopez','Gonzalez','Wilson','Anderson',
+        'Thomas','Taylor','Moore','Jackson','Martin','Lee','Perez','Thompson',
+        'White','Harris','Sanchez','Clark','Ramirez','Lewis','Robinson','Walker',
+        'Young','Allen','King','Wright','Scott','Torres','Nguyen','Hill','Flores',
+        'Green','Adams','Nelson','Baker','Hall','Rivera','Campbell','Mitchell',
+        'Carter','Roberts','Gomez','Phillips','Evans','Turner','Diaz','Doe',
+        'Cruz','Reyes','Cooper','Reed','Bailey','Bell','Murphy','Morgan'];
+    bio_templates TEXT[] := ARRAY[
+        'Living my best life','Photography enthusiast','Coffee lover | World traveler',
+        'Entrepreneur | Goal setter','Creative soul','Fitness addict','Bookworm | Writer',
+        'Music is life','Foodie adventures','Plant parent','Dog mom/dad','Film buff',
+        'Adventure seeker','Mindfulness practitioner','Tech enthusiast','Gamer',
+        'Spreading positivity','Beach lover','Baking enthusiast','Cyclist',
+        'Wanderlust | Making memories','Actor | Dreamer','Gym rat | Protein shakes',
+        'Fashion blogger','Ramen connoisseur','Musician | Songwriter',
+        'Surf life','Island vibes only','Content creator','Life is a circus'];
+    email_domains TEXT[] := ARRAY['gmail.com','yahoo.com','outlook.com','icloud.com','example.com'];
+
+    pw_hash TEXT;
+    i       INTEGER;
+    fn      TEXT;
+    ln      TEXT;
+    uname   TEXT;
+    em      TEXT;
+    ph      TEXT;
+    dob     DATE;
+    bio     TEXT;
+    website TEXT;
+    img     TEXT;
+    priv    BOOLEAN;
+    verif   BOOLEAN;
+    uid     UUID;
+BEGIN
+    PERFORM setseed(0.42);
+
+    -- Un unico hash condiviso: tutti gli utenti demo hanno password "password123"
+    pw_hash := crypt('password123', gen_salt('bf', 4));
+
+    FOR i IN 0..79 LOOP
+        fn    := first_names [1 + (floor(random() * array_length(first_names,  1)))::int];
+        ln    := last_names  [1 + (floor(random() * array_length(last_names,   1)))::int];
+        uname := lower(fn || ln) || CASE WHEN i = 0 THEN '' ELSE i::text END;
+        em    := uname || '@' || email_domains[1 + (floor(random() * array_length(email_domains, 1)))::int];
+        ph    := CASE WHEN random() < 0.7
+                      THEN '+1' || (2000000000 + (floor(random() * 7999999999))::bigint)::text
+                      ELSE NULL END;
+        dob   := make_date(
+                     1980 + (floor(random() * 26))::int,
+                     1    + (floor(random() * 12))::int,
+                     1    + (floor(random() * 28))::int);
+
+        INSERT INTO users (email, phone_number, password_hash, date_of_birth, is_email_verified)
+        VALUES (em, ph, pw_hash, dob, TRUE)
+        RETURNING id INTO uid;
+
+        bio     := CASE WHEN random() < 0.7
+                        THEN bio_templates[1 + (floor(random() * array_length(bio_templates, 1)))::int]
+                        ELSE NULL END;
+        website := CASE WHEN random() < 0.3 THEN 'https://' || uname || '.com' ELSE NULL END;
+        img     := CASE WHEN i >= 4 THEN 'https://i.pravatar.cc/300?u=' || uname ELSE NULL END;
+        priv    := random() < 0.25;
+        verif   := random() < 0.15;
+
+        INSERT INTO profiles
+            (user_id, username, full_name, bio, website_url, profile_image_url,
+             is_private, is_verified, followers_count, following_count, posts_count)
+        VALUES
+            (uid, uname, fn || ' ' || ln, bio, website, img,
+             priv, verif, 0, 0, 0);
+    END LOOP;
+END $$;
+        ]]></sql>
+        <rollback>
+            DELETE FROM profiles WHERE user_id IN (SELECT id FROM users WHERE email LIKE '%@gmail.com' OR email LIKE '%@yahoo.com' OR email LIKE '%@outlook.com' OR email LIKE '%@icloud.com' OR email LIKE '%@example.com');
+            DELETE FROM users   WHERE email LIKE '%@gmail.com' OR email LIKE '%@yahoo.com' OR email LIKE '%@outlook.com' OR email LIKE '%@icloud.com' OR email LIKE '%@example.com';
+        </rollback>
+    </changeSet>
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         2. FOLLOWS   (~30% di probabilità tra ogni coppia)
+         ════════════════════════════════════════════════════════════════════ -->
+    <changeSet id="004-dev-seed-follows" author="seed" context="dev">
+        <sql splitStatements="false"><![CDATA[
+DO $$
+DECLARE
+    profile_ids BIGINT[];
+    fid         BIGINT;
+    gid         BIGINT;
+    is_priv     BOOLEAN;
+    st          TEXT;
+    i           INTEGER;
+    j           INTEGER;
+BEGIN
+    PERFORM setseed(0.43);
+    profile_ids := ARRAY(SELECT id FROM profiles ORDER BY id);
+
+    FOR i IN 1..array_length(profile_ids, 1) LOOP
+        FOR j IN 1..array_length(profile_ids, 1) LOOP
+            CONTINUE WHEN i = j;
+            CONTINUE WHEN random() > 0.30;
+
+            fid := profile_ids[i];
+            gid := profile_ids[j];
+
+            SELECT is_private INTO is_priv FROM profiles WHERE id = gid;
+
+            -- Profilo privato: 15% di probabilità che la richiesta rimanga pending
+            st := CASE WHEN is_priv AND random() < 0.15 THEN 'pending' ELSE 'accepted' END;
+
+            INSERT INTO follows (follower_profile_id, following_profile_id, status)
+            VALUES (fid, gid, st)
+            ON CONFLICT DO NOTHING;
+        END LOOP;
+    END LOOP;
+
+    -- Ricalcola contatori dal grafo reale
+    UPDATE profiles p SET
+        followers_count = (
+            SELECT COUNT(*) FROM follows
+            WHERE following_profile_id = p.id AND deleted_at IS NULL AND status = 'accepted'),
+        following_count = (
+            SELECT COUNT(*) FROM follows
+            WHERE follower_profile_id  = p.id AND deleted_at IS NULL AND status = 'accepted');
+END $$;
+        ]]></sql>
+        <rollback>DELETE FROM follows;</rollback>
+    </changeSet>
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         3. POSTS + MEDIA IMAGE   (8-15 post per profilo, 70% singola img)
+         ════════════════════════════════════════════════════════════════════ -->
+    <changeSet id="004-dev-seed-posts" author="seed" context="dev">
+        <sql splitStatements="false"><![CDATA[
+DO $$
+DECLARE
+    post_captions TEXT[] := ARRAY[
+        'Another beautiful day','Living for moments like these','Grateful for this view',
+        'Can''t believe this is real','Just vibing','Weekend mood','Making memories',
+        'Good times with great people','Chasing sunsets','Adventure awaits',
+        'Feeling blessed','Life is beautiful','Creating my own sunshine','Just because',
+        'No filter needed','Capturing the moment','Living my truth',
+        'Here''s to the good times','Happiness looks good on me','Throwback to this amazing day'];
+
+    rec         RECORD;
+    num_posts   INTEGER;
+    media_count INTEGER;
+    post_id     BIGINT;
+    j           INTEGER;
+    k           INTEGER;
+BEGIN
+    PERFORM setseed(0.44);
+
+    FOR rec IN SELECT id FROM profiles ORDER BY id LOOP
+        num_posts := 8 + (floor(random() * 8))::int;  -- 8-15 post
+
+        FOR j IN 1..num_posts LOOP
+            -- 30% di probabilità di avere un carosello (2-5 immagini)
+            media_count := CASE WHEN random() < 0.3 THEN 2 + (floor(random() * 4))::int ELSE 1 END;
+
+            INSERT INTO posts (profile_id, caption, likes_count, comments_count)
+            VALUES (
+                rec.id,
+                post_captions[1 + (floor(random() * array_length(post_captions, 1)))::int],
+                10  + (floor(random() * 491))::int,
+                (floor(random() * 51))::int)
+            RETURNING id INTO post_id;
+
+            FOR k IN 0..media_count - 1 LOOP
+                INSERT INTO post_media (post_id, media_url, media_type, position)
+                VALUES (
+                    post_id,
+                    'https://picsum.photos/seed/post' || post_id || 'img' || k || '/1080/1350',
+                    'image',
+                    k);
+            END LOOP;
+        END LOOP;
+
+        UPDATE profiles SET posts_count = num_posts WHERE id = rec.id;
+    END LOOP;
+END $$;
+        ]]></sql>
+        <rollback>
+            DELETE FROM post_media WHERE media_type = 'image';
+            DELETE FROM posts WHERE id NOT IN (SELECT post_id FROM post_media WHERE media_type = 'video');
+        </rollback>
+    </changeSet>
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         4. REELS   (20 video, uno per i primi 20 profili)
+         ════════════════════════════════════════════════════════════════════ -->
+    <changeSet id="004-dev-seed-reels" author="seed" context="dev">
+        <sql splitStatements="false"><![CDATA[
+DO $$
+DECLARE
+    reel_captions TEXT[] := ARRAY[
+        'Check this out!','POV: Living my best life','This is everything','Wait for it...',
+        'Caught on camera','Vibes only','No way this happened!','Golden hour magic',
+        'Behind the scenes','Making memories','This view though','Adventure mode: ON',
+        'Life update','Mood','Can''t stop watching this','A message from the matchwinner',
+        'Best day ever!','Saturday vibes','This is art','Pure happiness'];
+    video_urls    TEXT[] := ARRAY[
+        'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+        'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+        'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+        'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+        'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
+        'https://storage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
+        'https://storage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4'];
+
+    rec     RECORD;
+    post_id BIGINT;
+BEGIN
+    PERFORM setseed(0.45);
+
+    -- Assegna un reel ai primi 20 profili (TARGET_REELS = 20)
+    FOR rec IN SELECT id FROM profiles ORDER BY id LIMIT 20 LOOP
+        INSERT INTO posts (profile_id, caption, likes_count, comments_count)
+        VALUES (
+            rec.id,
+            reel_captions[1 + (floor(random() * array_length(reel_captions, 1)))::int],
+            1000  + (floor(random() * 99001))::int,
+            50    + (floor(random() * 951))::int)
+        RETURNING id INTO post_id;
+
+        INSERT INTO post_media (post_id, media_url, media_type, duration_seconds, position)
+        VALUES (
+            post_id,
+            video_urls[1 + (floor(random() * array_length(video_urls, 1)))::int],
+            'video',
+            5 + (floor(random() * 56))::int,
+            0);
+
+        -- Ricalcola posts_count includendo il reel appena inserito
+        UPDATE profiles
+        SET posts_count = (
+            SELECT COUNT(*) FROM posts WHERE profile_id = rec.id AND deleted_at IS NULL)
+        WHERE id = rec.id;
+    END LOOP;
+END $$;
+        ]]></sql>
+        <rollback>DELETE FROM post_media WHERE media_type = 'video';</rollback>
+    </changeSet>
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         5. POST TAGS   (40% dei post ha 1-3 tag di profili)
+         ════════════════════════════════════════════════════════════════════ -->
+    <changeSet id="004-dev-seed-post-tags" author="seed" context="dev">
+        <sql splitStatements="false"><![CDATA[
+DO $$
+DECLARE
+    profile_ids BIGINT[];
+    post_rec    RECORD;
+    num_tags    INTEGER;
+    tagged_id   BIGINT;
+    i           INTEGER;
+BEGIN
+    PERFORM setseed(0.46);
+    profile_ids := ARRAY(SELECT id FROM profiles ORDER BY id);
+
+    FOR post_rec IN SELECT id FROM posts WHERE deleted_at IS NULL ORDER BY id LOOP
+        CONTINUE WHEN random() > 0.40;
+
+        num_tags := 1 + (floor(random() * 3))::int;  -- 1-3 tag
+
+        FOR i IN 1..num_tags LOOP
+            tagged_id := profile_ids[1 + (floor(random() * array_length(profile_ids, 1)))::int];
+
+            INSERT INTO post_tags (post_id, tagged_profile_id, x_position, y_position)
+            VALUES (post_rec.id, tagged_id, random(), random())
+            ON CONFLICT DO NOTHING;
+        END LOOP;
+    END LOOP;
+END $$;
+        ]]></sql>
+        <rollback>DELETE FROM post_tags;</rollback>
+    </changeSet>
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         6. STORIES   (3-8 storie per profilo, scadono tra 99 anni)
+         ════════════════════════════════════════════════════════════════════ -->
+    <changeSet id="004-dev-seed-stories" author="seed" context="dev">
+        <sql splitStatements="false"><![CDATA[
+DO $$
+DECLARE
+    rec         RECORD;
+    num_stories INTEGER;
+    expires_at  TIMESTAMPTZ := NOW() + INTERVAL '99 years';
+    j           INTEGER;
+BEGIN
+    PERFORM setseed(0.47);
+
+    FOR rec IN SELECT id FROM profiles ORDER BY id LOOP
+        num_stories := 3 + (floor(random() * 6))::int;  -- 3-8 storie
+
+        FOR j IN 0..num_stories - 1 LOOP
+            INSERT INTO stories (profile_id, media_url, media_type, duration_seconds, expires_at)
+            VALUES (
+                rec.id,
+                'https://picsum.photos/seed/story' || rec.id || 'img' || j || '/1080/1920',
+                'image',
+                5,
+                expires_at);
+        END LOOP;
+    END LOOP;
+END $$;
+        ]]></sql>
+        <rollback>DELETE FROM stories;</rollback>
+    </changeSet>
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         7. STORY VIEWS
+         Solo i follower (accepted) + il proprietario (70% chance).
+         40% di probabilità di visualizzazione per ogni coppia ammissibile.
+         ════════════════════════════════════════════════════════════════════ -->
+    <changeSet id="004-dev-seed-story-views" author="seed" context="dev">
+        <sql splitStatements="false"><![CDATA[
+DO $$
+DECLARE
+    story_rec   RECORD;
+    profile_rec RECORD;
+BEGIN
+    PERFORM setseed(0.48);
+
+    FOR story_rec IN SELECT id, profile_id FROM stories ORDER BY id LOOP
+        FOR profile_rec IN SELECT id FROM profiles ORDER BY id LOOP
+
+            IF story_rec.profile_id = profile_rec.id THEN
+                -- 30% il proprietario non guarda la propria storia
+                CONTINUE WHEN random() < 0.30;
+            ELSE
+                -- Solo i follower accepted possono vedere
+                CONTINUE WHEN NOT EXISTS (
+                    SELECT 1 FROM follows
+                    WHERE follower_profile_id  = profile_rec.id
+                      AND following_profile_id = story_rec.profile_id
+                      AND status               = 'accepted'
+                      AND deleted_at IS NULL);
+            END IF;
+
+            CONTINUE WHEN random() > 0.40;
+
+            INSERT INTO story_views (story_id, viewer_profile_id)
+            VALUES (story_rec.id, profile_rec.id)
+            ON CONFLICT DO NOTHING;
+
+            UPDATE stories SET views_count = views_count + 1 WHERE id = story_rec.id;
+
+        END LOOP;
+    END LOOP;
+END $$;
+        ]]></sql>
+        <rollback>DELETE FROM story_views;</rollback>
+    </changeSet>
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         8. SAVED POSTS   (1.5% di probabilità)
+         Rispetta la privacy: solo pubblici, proprietario o follower.
+         ════════════════════════════════════════════════════════════════════ -->
+    <changeSet id="004-dev-seed-saved-posts" author="seed" context="dev">
+        <sql splitStatements="false"><![CDATA[
+DO $$
+DECLARE
+    post_rec    RECORD;
+    profile_rec RECORD;
+BEGIN
+    PERFORM setseed(0.49);
+
+    FOR post_rec IN
+        SELECT p.id, p.profile_id, pr.is_private
+        FROM   posts p
+        JOIN   profiles pr ON p.profile_id = pr.id
+        WHERE  p.deleted_at IS NULL
+        ORDER  BY p.id
+    LOOP
+        FOR profile_rec IN SELECT id FROM profiles ORDER BY id LOOP
+
+            CONTINUE WHEN post_rec.is_private
+                       AND post_rec.profile_id <> profile_rec.id
+                       AND NOT EXISTS (
+                               SELECT 1 FROM follows
+                               WHERE follower_profile_id  = profile_rec.id
+                                 AND following_profile_id = post_rec.profile_id
+                                 AND status               = 'accepted'
+                                 AND deleted_at IS NULL);
+
+            IF random() < 0.015 THEN
+                INSERT INTO saved_posts (post_id, profile_id)
+                VALUES (post_rec.id, profile_rec.id)
+                ON CONFLICT DO NOTHING;
+            END IF;
+
+        END LOOP;
+    END LOOP;
+END $$;
+        ]]></sql>
+        <rollback>
+            DELETE FROM saved_posts;
+        </rollback>
+    </changeSet>
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         9. COMMENTI   (0-7 per post)
+         ════════════════════════════════════════════════════════════════════ -->
+    <changeSet id="004-dev-seed-comments" author="seed" context="dev">
+        <sql splitStatements="false"><![CDATA[
+DO $$
+DECLARE
+    comment_templates TEXT[] := ARRAY[
+        'Love this!','Amazing!','So beautiful','Goals!','Stunning','This is perfect',
+        'Can''t stop looking at this','Wow!','Incredible','You''re killing it!',
+        'This is art','Obsessed','Perfection','Need this in my life','So good!',
+        'Beautiful capture','Love the vibes','This speaks to me','Absolutely gorgeous','You nailed it!'];
+
+    profile_ids  BIGINT[];
+    post_rec     RECORD;
+    commenter_id BIGINT;
+    num_comments INTEGER;
+    i            INTEGER;
+BEGIN
+    PERFORM setseed(0.50);
+    profile_ids := ARRAY(SELECT id FROM profiles ORDER BY id);
+
+    FOR post_rec IN
+        SELECT p.id, p.profile_id, pr.is_private
+        FROM   posts p
+        JOIN   profiles pr ON p.profile_id = pr.id
+        WHERE  p.deleted_at IS NULL
+        ORDER  BY p.id
+    LOOP
+        num_comments := (floor(random() * 8))::int;
+
+        FOR i IN 1..num_comments LOOP
+            commenter_id := profile_ids[1 + (floor(random() * array_length(profile_ids, 1)))::int];
+
+            CONTINUE WHEN post_rec.is_private
+                       AND post_rec.profile_id <> commenter_id
+                       AND NOT EXISTS (
+                               SELECT 1 FROM follows
+                               WHERE follower_profile_id  = commenter_id
+                                 AND following_profile_id = post_rec.profile_id
+                                 AND status               = 'accepted'
+                                 AND deleted_at IS NULL);
+
+            INSERT INTO comments (post_id, profile_id, text)
+            VALUES (post_rec.id, commenter_id,
+                    comment_templates[1 + (floor(random() * array_length(comment_templates, 1)))::int]);
+
+            UPDATE posts SET comments_count = comments_count + 1 WHERE id = post_rec.id;
+        END LOOP;
+    END LOOP;
+END $$;
+        ]]></sql>
+        <rollback>
+            DELETE FROM comments;
+        </rollback>
+    </changeSet>
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         10. LIKES POLIMORFICI (post 35%, commenti 8%, storie 20%)
+         ════════════════════════════════════════════════════════════════════ -->
+    <changeSet id="004-dev-seed-likes" author="seed" context="dev">
+        <sql splitStatements="false"><![CDATA[
+DO $$
+DECLARE
+    post_rec    RECORD;
+    profile_rec RECORD;
+    comment_rec RECORD;
+    story_rec   RECORD;
+BEGIN
+    PERFORM setseed(0.52);
+
+    -- ── Post likes (35%, rispetta la privacy) ───────────────────────────
+    FOR post_rec IN
+        SELECT p.id, p.profile_id, pr.is_private
+        FROM   posts p
+        JOIN   profiles pr ON p.profile_id = pr.id
+        WHERE  p.deleted_at IS NULL
+        ORDER  BY p.id
+    LOOP
+        FOR profile_rec IN SELECT id FROM profiles ORDER BY id LOOP
+
+            CONTINUE WHEN post_rec.is_private
+                       AND post_rec.profile_id <> profile_rec.id
+                       AND NOT EXISTS (
+                               SELECT 1 FROM follows
+                               WHERE follower_profile_id  = profile_rec.id
+                                 AND following_profile_id = post_rec.profile_id
+                                 AND status               = 'accepted'
+                                 AND deleted_at IS NULL);
+
+            CONTINUE WHEN random() > 0.35;
+
+            INSERT INTO likes (profile_id, likeable_type, likeable_id)
+            VALUES (profile_rec.id, 'post', post_rec.id)
+            ON CONFLICT DO NOTHING;
+
+            IF FOUND THEN
+                UPDATE posts SET likes_count = likes_count + 1 WHERE id = post_rec.id;
+            END IF;
+
+        END LOOP;
+    END LOOP;
+
+    -- ── Comment likes (8%) ──────────────────────────────────────────────
+    FOR comment_rec IN SELECT id FROM comments WHERE deleted_at IS NULL ORDER BY id LOOP
+        FOR profile_rec IN SELECT id FROM profiles ORDER BY id LOOP
+            CONTINUE WHEN random() > 0.08;
+
+            INSERT INTO likes (profile_id, likeable_type, likeable_id)
+            VALUES (profile_rec.id, 'comment', comment_rec.id)
+            ON CONFLICT DO NOTHING;
+
+            IF FOUND THEN
+                UPDATE comments SET likes_count = likes_count + 1 WHERE id = comment_rec.id;
+            END IF;
+        END LOOP;
+    END LOOP;
+
+    -- ── Story likes (20%, solo follower accepted o proprietario) ────────
+    FOR story_rec IN SELECT id, profile_id FROM stories WHERE deleted_at IS NULL ORDER BY id LOOP
+        FOR profile_rec IN SELECT id FROM profiles ORDER BY id LOOP
+
+            CONTINUE WHEN story_rec.profile_id <> profile_rec.id
+                       AND NOT EXISTS (
+                               SELECT 1 FROM follows
+                               WHERE follower_profile_id  = profile_rec.id
+                                 AND following_profile_id = story_rec.profile_id
+                                 AND status               = 'accepted'
+                                 AND deleted_at IS NULL);
+
+            CONTINUE WHEN random() > 0.20;
+
+            INSERT INTO likes (profile_id, likeable_type, likeable_id)
+            VALUES (profile_rec.id, 'story', story_rec.id)
+            ON CONFLICT DO NOTHING;
+
+        END LOOP;
+    END LOOP;
+
+END $$;
+        ]]></sql>
+        <rollback>
+            DELETE FROM likes;
+            UPDATE posts    SET likes_count = 0;
+            UPDATE comments SET likes_count = 0;
+        </rollback>
+    </changeSet>
+
+    <!-- Il seed dei direct messages (chats/messages/chat_participants) è stato
+         spostato in directs-service/src/main/resources/db/changelog/seed/
+         perché quelle tabelle appartengono ora a directs-service. -->
+
+</databaseChangeLog>

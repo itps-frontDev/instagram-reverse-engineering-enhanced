@@ -1,0 +1,32 @@
+# syntax=docker/dockerfile:1
+
+# Usa l'immagine Gradle completa — in sviluppo
+# abbiamo bisogno del JDK intero per compilare
+# al volo con bootRun + devtools
+FROM gradle:8-jdk21-alpine
+WORKDIR /app
+
+# NON copiamo il codice sorgente qui.
+# Arriverà tramite bind mount da docker-compose.override.yml:
+#   volumes:
+#     - ./backend:/app
+# Questo significa che /app dentro il container
+# sarà esattamente ./backend sul tuo PC.
+
+# Esponi sia la porta dell'app che quella del debugger
+EXPOSE 8081
+EXPOSE 5005
+
+# bootRun avvia Spring Boot in modalità sviluppo sul sottomodulo core.
+# spring-boot-devtools (già nella dipendenza) monitora
+# i file compilati e riavvia l'app automaticamente.
+# Il profilo "dev" carica application-dev.properties
+# oltre al base application.properties.
+CMD ["./gradlew", ":core:bootRun", \
+     "--project-cache-dir", "/root/.gradle/project-cache", \
+     "--args=--spring.profiles.active=dev"]
+# --project-cache-dir sposta la cache di progetto Gradle (file hash, task output cache, ecc.)
+# da /app/.gradle (dentro il bind mount condiviso con directs-service) a /root/.gradle —
+# il volume Docker esclusivo di questo container.
+# Senza questa opzione entrambi i container scriverebbero in /app/.gradle simultaneamente
+# causando il deadlock su fileHashes.lock.

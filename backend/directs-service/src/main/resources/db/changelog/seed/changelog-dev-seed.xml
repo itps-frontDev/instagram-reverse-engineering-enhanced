@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        SEED DM DEMO
+        ============
+        context="dev": eseguito SOLO quando Liquibase parte con spring.liquibase.contexts=dev.
+        Dipende dai profili già esistenti nel DB (creati dal seed di core).
+        Se profiles è vuoto il blocco DO $$ inserisce 0 record senza errori.
+    -->
+    <changeSet id="004-dev-seed-dms" author="seed" context="dev">
+        <!--
+            Precondizioni con onFail/onError="CONTINUE":
+            se profiles non esiste ancora o è vuota (core non ha ancora
+            completato il suo seed), Liquibase skippa questo changeset
+            SENZA marcarlo come eseguito in databasechangelog.
+            Al prossimo restart di directs-service riproverà automaticamente.
+        -->
+        <preConditions onFail="CONTINUE" onError="CONTINUE">
+            <tableExists tableName="profiles"/>
+            <sqlCheck expectedResult="1">
+                SELECT CASE WHEN EXISTS(SELECT 1 FROM profiles) THEN 1 ELSE 0 END
+            </sqlCheck>
+        </preConditions>
+        <sql splitStatements="false"><![CDATA[
+DO $$
+DECLARE
+    message_templates TEXT[] := ARRAY[
+        'Hey! How are you?','Thanks for following!','Love your recent post!',
+        'Let''s catch up soon','That photo is amazing!','What camera do you use?',
+        'Where is this place?','Great content!','Haha that''s so funny',
+        'Can''t wait to see more','This is goals','Stunning!','You inspire me',
+        'Following back!','Nice to meet you','Do you have any tips?',
+        'This made my day','Beautiful shot!','Keep up the great work','Wow just wow'];
+
+    profile_ids  BIGINT[];
+    p1           BIGINT;
+    p2           BIGINT;
+    chat_id      UUID;
+    sender_id    BIGINT;
+    num_messages INTEGER;
+    i            INTEGER;
+    j            INTEGER;
+    k            INTEGER;
+BEGIN
+    PERFORM setseed(0.51);
+    profile_ids := ARRAY(SELECT id FROM profiles ORDER BY id);
+
+    FOR i IN 1..array_length(profile_ids, 1) LOOP
+        FOR j IN i + 1..array_length(profile_ids, 1) LOOP
+            CONTINUE WHEN random() > 0.20;
+
+            p1 := profile_ids[i];
+            p2 := profile_ids[j];
+
+            INSERT INTO chats DEFAULT VALUES RETURNING id INTO chat_id;
+            INSERT INTO chat_participants (chat_id, profile_id) VALUES (chat_id, p1);
+            INSERT INTO chat_participants (chat_id, profile_id) VALUES (chat_id, p2);
+
+            num_messages := 3 + (floor(random() * 8))::int;
+
+            FOR k IN 1..num_messages LOOP
+                sender_id := CASE WHEN random() < 0.5 THEN p1 ELSE p2 END;
+                INSERT INTO messages (chat_id, sender_profile_id, text)
+                VALUES (chat_id, sender_id,
+                        message_templates[1 + (floor(random() * array_length(message_templates, 1)))::int]);
+            END LOOP;
+
+            UPDATE chats SET last_message_at = NOW() WHERE id = chat_id;
+        END LOOP;
+    END LOOP;
+END $$;
+        ]]></sql>
+        <rollback>
+            DELETE FROM messages;
+            DELETE FROM chat_participants;
+            DELETE FROM chats;
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
