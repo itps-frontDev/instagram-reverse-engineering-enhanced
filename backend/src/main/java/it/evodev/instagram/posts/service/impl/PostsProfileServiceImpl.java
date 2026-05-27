@@ -102,7 +102,18 @@ public class PostsProfileServiceImpl implements PostsProfileService {
         // 5. Paginazione: limit+1 per rilevare hasMore
         Pageable pageable = PageRequest.of(page, POSTS_PER_PAGE + 1);
 
-        // 6. Recupera post per tab
+        // 6. Pre-fetch currentProfile per tab 'tagged' (necessario per filtro visibilità)
+        Profile currentProfile = null;
+        if ("tagged".equals(tab)) {
+            currentProfile = profileRepository
+                .findByUserIdAndDeletedAtIsNull(currentUserId)
+                .orElseThrow(() -> {
+                    logger.warn("Current user profile not found. User ID: {}", currentUserId);
+                    return new ProfileNotFoundException("Profilo utente non trovato");
+                });
+        }
+
+        // 7. Recupera post per tab
         List<Map<String, Object>> rawPosts = switch (tab) {
             case "reels" -> {
                 logger.info("Fetching reels for profile: {}", targetUsername);
@@ -114,7 +125,11 @@ public class PostsProfileServiceImpl implements PostsProfileService {
             }
             case "tagged" -> {
                 logger.info("Fetching tagged posts for profile: {}", targetUsername);
-                yield postTagRepository.findProfileTaggedPosts(targetProfile.getId(), pageable);
+                yield postTagRepository.findProfileTaggedPosts(
+                    targetProfile.getId(), 
+                    currentProfile.getId(), 
+                    pageable
+                );
             }
             default -> {
                 logger.info("Fetching normal posts for profile: {}", targetUsername);
@@ -122,13 +137,13 @@ public class PostsProfileServiceImpl implements PostsProfileService {
             }
         };
 
-        // 7. Verifica hasMore
+        // 8. Verifica hasMore
         boolean hasMore = rawPosts.size() > POSTS_PER_PAGE;
         if (hasMore) {
             rawPosts = rawPosts.subList(0, POSTS_PER_PAGE);
         }
 
-        // 8. Converti Map in DTO
+        // 9. Converti Map in DTO
         List<ProfilePostItemDTO> posts = rawPosts.stream()
             .map(this::mapToDto)
             .collect(Collectors.toList());

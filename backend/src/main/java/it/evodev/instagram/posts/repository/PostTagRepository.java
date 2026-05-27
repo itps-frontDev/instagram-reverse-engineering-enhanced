@@ -42,8 +42,12 @@ public interface PostTagRepository extends JpaRepository<PostTag, Long> {
      * Recupera i post DISTINTI in cui un profilo è taggato, ordinati per data post decrescente.
      * 
      * Include il primo media (position=0) come thumbnail e il conteggio totale dei media del post.
+     * FILTRA i post in base alla visibilità:
+     * - Se il post appartiene a un profilo pubblico: sempre visibile
+     * - Se il post appartiene a un profilo privato: visibile solo se il viewer segue il profilo
      * 
      * @param taggedProfileId ID del profilo che è stato taggato
+     * @param viewerProfileId ID del profilo viewer (per verifica visibilità)
      * @param pageable Paginazione (size, offset)
      * @return Lista di mappe con: id, caption, likesCount, commentsCount, createdAt, mediaUrl, mediaType, mediaCount
      */
@@ -61,12 +65,20 @@ public interface PostTagRepository extends JpaRepository<PostTag, Long> {
         FROM PostMedia pm
         RIGHT JOIN Post p ON pm.postId = p.id AND pm.position = 0 AND pm.deletedAt IS NULL
         INNER JOIN PostTag pt ON pt.postId = p.id
+        INNER JOIN Profile postOwner ON postOwner.id = p.profileId
+        LEFT JOIN Follow f ON f.followerProfileId = :viewerProfileId 
+          AND f.followingProfileId = postOwner.id 
+          AND f.deletedAt IS NULL 
+          AND f.status = 'accepted'
         WHERE pt.taggedProfileId = :taggedProfileId
           AND p.deletedAt IS NULL
+          AND postOwner.deletedAt IS NULL
+          AND (NOT postOwner.isPrivate OR f.id IS NOT NULL)
         ORDER BY p.createdAt DESC
         """)
     List<Map<String, Object>> findProfileTaggedPosts(
         @Param("taggedProfileId") Long taggedProfileId,
+        @Param("viewerProfileId") Long viewerProfileId,
         Pageable pageable
     );
 }

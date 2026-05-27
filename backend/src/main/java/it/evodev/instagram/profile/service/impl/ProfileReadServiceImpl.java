@@ -4,6 +4,7 @@ import it.evodev.instagram.profile.dto.response.BirthdayDataDTO;
 import it.evodev.instagram.follow.dto.responses.FollowStatusDataDTO;
 import it.evodev.instagram.follow.services.FollowService;
 import it.evodev.instagram.posts.repository.PostRepository;
+import it.evodev.instagram.posts.repository.PostReelsRepository;
 import it.evodev.instagram.profile.dto.response.MeProfileResponseDTO;
 import it.evodev.instagram.profile.dto.response.ProfileByUsernameDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfilePreviewDataDTO;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -42,6 +44,7 @@ public class ProfileReadServiceImpl implements ProfileReadService {
     private final FollowService followService;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
+    private final PostReelsRepository postReelsRepository;
 
     @Override
     public ProfileByUsernameDataDTO getProfileByUsername(UUID currentUserId, String targetUsername) {
@@ -149,13 +152,27 @@ public class ProfileReadServiceImpl implements ProfileReadService {
     }
 
     private List<RecentPostPreviewDTO> fetchRecentPosts(Long profileId) {
-        List<Map<String, Object>> raw = postRepository.findProfilePosts(profileId, PageRequest.of(0, 3));
-        return raw.stream()
+        // Recupera sia i post normali che i reels per mostrare i 3 contenuti più recenti
+        List<Map<String, Object>> postsRaw = postRepository.findProfilePosts(profileId, PageRequest.of(0, 3));
+        List<Map<String, Object>> reelsRaw = postReelsRepository.findProfileReels(profileId, PageRequest.of(0, 3));
+        
+        // Combina, deduplicata per ID (in caso di overlap), ordina per data decrescente, poi prendi i primi 3
+        return java.util.stream.Stream.concat(postsRaw.stream(), reelsRaw.stream())
                 .map(m -> RecentPostPreviewDTO.builder()
                         .id(((Number) m.get("id")).longValue())
                         .mediaUrl((String) m.get("mediaUrl"))
                         .mediaType(MediaType.fromString((String) m.get("mediaType")))
+                        .createdAt(((java.time.OffsetDateTime) m.get("createdAt")))
                         .build())
+                .collect(Collectors.toMap(
+                        RecentPostPreviewDTO::getId,
+                        post -> post,
+                        (existing, newer) -> newer
+                ))
+                .values()
+                .stream()
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .limit(3)
                 .toList();
     }
 

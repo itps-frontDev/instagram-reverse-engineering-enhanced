@@ -184,7 +184,7 @@ export default function ProfilePreviewCard({
               href={`/p/${post.id}`}
               className="aspect-square relative overflow-hidden hover:opacity-80 transition-opacity"
             >
-              {post.type === 'reel' ? (
+              {post.type === 'REEL' ? (
                 <video
                   src={getMediaUrl(post.media_url) ?? ''}
                   className="w-full h-full object-cover"
