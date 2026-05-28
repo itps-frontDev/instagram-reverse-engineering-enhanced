@@ -53,7 +53,7 @@ services:
 
   # In sviluppo directs-service ha lo stesso bind mount di core:
   # entrambi puntano a ./backend perché è la root del multi-module.
-  # Gradle sceglie il sottomodulo giusto tramite :directs-service:bootRun.
+  # Gradle costruisce il JAR del modulo directs-service tramite bootJar, e Docker esegue direttamente quel JAR.
   directs-service:
     build:
       dockerfile: directs-service/Dockerfile.dev
