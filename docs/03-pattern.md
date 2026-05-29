@@ -8,14 +8,23 @@
 
 La migrazione dal monolite Next.js a Spring Boot ha seguito lo **Strangler Fig Pattern**, introdotto da Martin Fowler. Il principio è di non riscrivere il sistema dall'inizio, ma affiancare progressivamente la nuova architettura a quella esistente, sostituendo una funzionalità alla volta.
 
-In pratica:
+In pratica, per ogni funzionalità il ciclo è stato:
 
-1. Il backend Spring Boot è stato costruito **in parallelo** al monolite Next.js, senza toccare il sistema esistente.
-2. Le rotte di Next.js sono state migrate **una per una** verso i controller Spring Boot.
-3. Il frontend è stato aggiornato progressivamente per puntare al nuovo backend.
-4. Al termine della migrazione, le API routes di Next.js sono state rimosse.
+1. Creazione del controller, service e repository corrispondente su Spring Boot.
+2. Test dell'endpoint con **Postman**, verificando request/response prima di toccare il frontend.
+3. Aggiornamento del frontend Next.js per puntare al nuovo endpoint Spring Boot.
+4. Rimozione della vecchia API route di Next.js, ormai sostituita.
 
-Questo approccio ha garantito continuità operativa durante l'intera transizione, con la possibilità di rollback parziale su ogni singola feature.
+Il sistema rimaneva funzionante ad ogni iterazione: il frontend continuava a usare le route Next.js non ancora migrate, mentre quelle già migrate chiamavano il backend Spring Boot. Questo ha permesso di procedere funzionalità per funzionalità senza interruzioni.
+
+Una volta completata la migrazione di tutte le rotte, il frontend Next.js è stato ripulito di tutto il codice che non gli apparteneva:
+
+- **Repository** — le classi che interrogavano direttamente SQLite sono state rimosse interamente.
+- **Connessione al database** — eliminata la dipendenza da `sqlite3` e la configurazione della connessione locale.
+- **Server Actions con logica di business** — le action che contenevano logica applicativa (validazioni, trasformazioni dati, query complesse) sono state rimosse. Il frontend ora delega tutto al backend tramite semplici chiamate HTTP.
+- **Seed e migration scripts** — rimossi gli script di inizializzazione del database SQLite (`db:migrate`, `db:seed`), ora gestiti da Liquibase sul backend.
+
+Il risultato è un frontend **esclusivamente UI**: nessuna conoscenza del database, nessuna logica di business, nessuna dipendenza diretta ai dati. Ogni interazione passa per le API REST del backend Spring Boot tramite il gateway.
 
 ---
 
