@@ -61,11 +61,21 @@ LikeStrategy
 
 ### Notifiche
 
-La generazione della notifica dipende dal tipo di evento che la ha scatenata. Una `NotificationStrategy` per tipo (follow, like, commento, tag) viene selezionata e invocata dall'event listener.
+Il sistema di notifiche combina Strategy Pattern, Registry e listener per eventi Spring. Ogni `NotificationStrategy` dichiara il `NotificationType` supportato e implementa `validate()` e `build()`. Il `NotificationStrategyRegistry` le indicizza in una `EnumMap` e risolve la strategia corretta a runtime. I listener sono separati per sottodominio, ciascuno in ascolto del proprio `ApplicationEvent`:
 
-### Storage media
+| Sottodominio | Casi coperti |
+| :--- | :--- |
+| **Follow** | nuovo follow, richiesta follow (profili privati), accettazione, rimozione |
+| **Like** | like su post, su commento, su storia; rimozione like |
+| **Commento** | nuovo commento, risposta a commento |
+| **Menzione** | menzione in post, in commento, in storia |
+| **Altro** | tag in post, visualizzazione storia, messaggio diretto |
 
-L'upload dei media è astratto dietro una strategy, che può puntare ad Azure Blob Storage o al filesystem locale in base alla configurazione dell'ambiente.
+### Accesso ai media
+
+Il controllo di accesso ai media è gestito tramite una `MediaAccessStrategy` per categoria (`PostMediaAccessStrategy`, `StoryMediaAccessStrategy`, `ProfileMediaAccessStrategy`, `MessageMediaAccessStrategy`). Prima di servire un file, il sistema seleziona la strategia corrispondente alla categoria richiesta e verifica se l'utente corrente è autorizzato ad accedervi, sollevando `401`, `403`, `404` o `410` a seconda del caso.
+
+Lo storage è sempre **Azure Blob Storage**, con un'unica implementazione `AzureBlobStorageService`. In sviluppo viene usato **Azurite** come emulatore locale, configurato tramite `docker-compose.override.yml` con una connection string dedicata — nessuna variazione nel codice Java.
 
 ---
 
