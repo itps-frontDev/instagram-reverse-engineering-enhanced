@@ -376,7 +376,7 @@ export default function DirectPage() {
 
     // Aggiungi subito il messaggio in UI senza aspettare l'echo WS
     const optimistic: LocalMessageItem = {
-      id: crypto.randomUUID(),
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
       chatId: selectedChatId,
       senderProfileId: profile.id,
       text,
