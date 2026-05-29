@@ -68,8 +68,6 @@ Il sistema di notifiche combina Strategy Pattern, Registry e listener per eventi
 | **Follow** | nuovo follow, richiesta follow (profili privati), accettazione, rimozione |
 | **Like** | like su post, su commento, su storia; rimozione like |
 | **Commento** | nuovo commento, risposta a commento |
-| **Menzione** | menzione in post, in commento, in storia |
-| **Altro** | tag in post, visualizzazione storia, messaggio diretto |
 
 ### Accesso ai media
 
