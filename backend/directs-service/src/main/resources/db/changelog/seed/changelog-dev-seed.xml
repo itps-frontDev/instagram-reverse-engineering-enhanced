@@ -9,23 +9,11 @@
         SEED DM DEMO
         ============
         context="dev": eseguito SOLO quando Liquibase parte con spring.liquibase.contexts=dev.
-        Dipende dai profili già esistenti nel DB (creati dal seed di core).
-        Se profiles è vuoto il blocco DO $$ inserisce 0 record senza errori.
+        Seed solo dev/demo: usa ID profilo demo deterministici per non dipendere
+        dall'ordine di bootstrap di core. Core crea quei profili nel proprio seed demo,
+        ma directs-service non legge la tabella profiles durante Liquibase.
     -->
     <changeSet id="004-dev-seed-dms" author="seed" context="dev">
-        <!--
-            Precondizioni con onFail/onError="CONTINUE":
-            se profiles non esiste ancora o è vuota (core non ha ancora
-            completato il suo seed), Liquibase skippa questo changeset
-            SENZA marcarlo come eseguito in databasechangelog.
-            Al prossimo restart di directs-service riproverà automaticamente.
-        -->
-        <preConditions onFail="CONTINUE" onError="CONTINUE">
-            <tableExists tableName="profiles"/>
-            <sqlCheck expectedResult="1">
-                SELECT CASE WHEN EXISTS(SELECT 1 FROM profiles) THEN 1 ELSE 0 END
-            </sqlCheck>
-        </preConditions>
         <sql splitStatements="false"><![CDATA[
 DO $$
 DECLARE
@@ -47,8 +35,31 @@ DECLARE
     j            INTEGER;
     k            INTEGER;
 BEGIN
+    IF EXISTS (SELECT 1 FROM chats WHERE deleted_at IS NULL) THEN
+        RETURN;
+    END IF;
+
     PERFORM setseed(0.51);
-    profile_ids := ARRAY(SELECT id FROM profiles ORDER BY id);
+    -- Seed solo dev/demo: questi ID sono creati dal seed demo di core su DB pulito.
+    -- Evita race condition tra core e directs-service senza introdurre FK cross-service.
+    profile_ids := ARRAY[
+        1, 2, 3, 4, 5,
+        6, 7, 8, 9, 10,
+        11, 12, 13, 14, 15,
+        16, 17, 18, 19, 20,
+        21, 22, 23, 24, 25,
+        26, 27, 28, 29, 30,
+        31, 32, 33, 34, 35,
+        36, 37, 38, 39, 40,
+        41, 42, 43, 44, 45,
+        46, 47, 48, 49, 50,
+        51, 52, 53, 54, 55,
+        56, 57, 58, 59, 60,
+        61, 62, 63, 64, 65,
+        66, 67, 68, 69, 70,
+        71, 72, 73, 74, 75,
+        76, 77, 78, 79, 80
+    ]::BIGINT[];
 
     FOR i IN 1..array_length(profile_ids, 1) LOOP
         FOR j IN i + 1..array_length(profile_ids, 1) LOOP
