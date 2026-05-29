@@ -8,7 +8,7 @@
 
 | Componente | Tecnologia | Versione | Ruolo |
 | :--- | :--- | :--- | :--- |
-| **Runtime** | Java | 21 | Linguaggio backend |
+| **Runtime** | Java | 21.0.11 LTS | Linguaggio backend |
 | **Framework** | Spring Boot | 3.4.5 | Application framework (`core` + `directs-service`) |
 | **Cloud** | Spring Cloud | 2024.0.1 | Eureka, Config Server, Gateway |
 | **Build** | Gradle | 9.4.1 | Build tool multi-project |
@@ -27,13 +27,13 @@
 
 | Componente | Tecnologia | Versione | Ruolo |
 | :--- | :--- | :--- | :--- |
-| **Runtime** | Node.js | v22 | Runtime JavaScript |
+| **Runtime** | Node.js | 22.21.1 | Runtime JavaScript |
 | **Package manager** | pnpm | 11.0.9 | Gestione dipendenze |
 | **Framework** | Next.js | 16.2.6 | UI, App Router, Server Components |
 | **UI library** | React | 19.2.6 | Rendering componenti |
-| **Linguaggio** | TypeScript | 5.x | Type safety |
-| **Styling** | Tailwind CSS | v4 | Utility-first CSS |
-| **WebSocket** | @stomp/stompjs | 7.0.0 | Client STOMP per i Direct |
+| **Linguaggio** | TypeScript | 5.9.3 | Type safety |
+| **Styling** | Tailwind CSS | 4.2.4 | Utility-first CSS |
+| **WebSocket** | @stomp/stompjs | 7.3.0 | Client STOMP per i Direct |
 | **WebSocket fallback** | sockjs-client | 1.6.1 | Fallback HTTP per ambienti senza WebSocket nativo |
 
 ---
@@ -56,7 +56,7 @@
 | Aspetto | Monolite Next.js | Sistema Attuale |
 | :--- | :--- | :--- |
 | **Architettura** | Full-stack monolite | Core monolite + microservizio directs |
-| **Backend** | Next.js API Routes (Node.js) | Spring Boot 3.4.5 (Java 21) |
+| **Backend** | Next.js API Routes (Node.js) | Spring Boot 3.4.5 (Java 21.0.11) |
 | **Database** | SQLite3 embedded | PostgreSQL 16 esternato |
 | **Schema versioning** | Assente | Liquibase con changeset XML |
 | **Cache** | Assente | Redis 7 |

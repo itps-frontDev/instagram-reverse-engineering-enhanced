@@ -2,7 +2,7 @@
 
 > Da un prototipo **Next.js full-stack** a un sistema distribuito con **Spring Boot**, microservizi e **WebSocket STOMP**.
 
-![Java](https://img.shields.io/badge/Java-21-orange) ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.4.5-green) ![Spring Cloud](https://img.shields.io/badge/Spring_Cloud-2024.0.1-brightgreen) ![Next.js](https://img.shields.io/badge/Next.js-16-black) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue) ![Redis](https://img.shields.io/badge/Redis-7-red) ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED)
+![Java](https://img.shields.io/badge/Java-21.0.11-orange) ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.4.5-green) ![Spring Cloud](https://img.shields.io/badge/Spring_Cloud-2024.0.1-brightgreen) ![Next.js](https://img.shields.io/badge/Next.js-16.2.6-black) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue) ![Redis](https://img.shields.io/badge/Redis-7-red) ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED)
 
 ---
 
