@@ -7,7 +7,7 @@
 ## Autenticazione e Profili
 
 - **Registrazione e Login** — JWT stateless generato dal backend Spring Boot. Il `SecurityFilterChain` valida il token su ogni richiesta prima che raggiunga qualsiasi controller.
-- **Profilo utente** — visualizzazione e modifica di avatar, bio e informazioni personali.
+- **Profilo utente** — visualizzazione e modifica di avatar, bio e informazioni personali. Visibilità configurabile (pubblico/privato): i profili privati richiedono una richiesta di follow approvata per accedere ai contenuti.
 - **Follow/Unfollow** — sistema di follow con contatori di follower/following aggiornati in tempo reale.
 - **Ricerca utenti** — ricerca per username con risultati paginati.
 
@@ -15,7 +15,7 @@
 
 ## Contenuti
 
-- **Post** — creazione con immagini multiple, caption e tag utente. Visibilità configurabile (pubblico/privato).
+- **Post** — creazione con immagini multiple, caption e tag utente.
 - **Storie** — contenuti effimeri con scadenza automatica.
 - **Reels** — video brevi con visualizzazione a scroll verticale.
 - **Commenti** — sui post, con reply annidate.
@@ -93,4 +93,4 @@ Gestite tramite [Spring Application Events](03-pattern.md#event-driven-con-sprin
 
 ---
 
-→ Continua: [Guida all'Installazione](07-installazione.md)
+[← Stack Tecnologico](05-stack.md) | [Installazione →](07-installazione.md)

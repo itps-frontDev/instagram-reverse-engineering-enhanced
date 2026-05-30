@@ -155,4 +155,4 @@ Il frontend è accessibile su `http://localhost:3000`. Tutte le chiamate API tra
 
 ---
 
-→ Continua: [Troubleshooting](08-troubleshooting.md)
+[← Funzionalità](06-funzionalita.md) | [Troubleshooting →](08-troubleshooting.md)

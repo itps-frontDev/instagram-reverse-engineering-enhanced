@@ -12,14 +12,14 @@
 | **Framework** | Spring Boot | 3.4.5 | Application framework (`core` + `directs-service`) |
 | **Cloud** | Spring Cloud | 2024.0.1 | Eureka, Config Server, Gateway |
 | **Build** | Gradle | 9.4.1 | Build tool multi-project |
-| **ORM** | Spring Data JPA / Hibernate | (via Spring Boot BOM) | Persistenza relazionale |
-| **Sicurezza** | Spring Security | (via Spring Boot BOM) | Filtri HTTP e autorizzazione |
+| **ORM** | Spring Data JPA / Hibernate | 3.4.5 | Persistenza relazionale |
+| **Sicurezza** | Spring Security | 3.4.5 | Filtri HTTP e autorizzazione |
 | **JWT** | JJWT | 0.12.6 | Generazione e validazione token |
-| **WebSocket** | Spring WebSocket + STOMP | (via Spring Boot BOM) | Messaggistica real-time (`directs-service`) |
-| **Cache** | Spring Data Redis | (via Spring Boot BOM) | Caching feed e sessioni |
-| **DB Migration** | Liquibase | (via Spring Boot BOM) | Versionamento schema |
+| **WebSocket** | Spring WebSocket + STOMP | 3.4.5 | Messaggistica real-time (`directs-service`) |
+| **Auth token store** | Spring Data Redis | 3.4.5 | Refresh token, blacklist access token, sessioni utente |
+| **DB Migration** | Liquibase | 4.29.2 | Versionamento schema |
 | **Storage** | Azure Spring Cloud Blob | 5.24.0 | Upload media su Azure Blob Storage |
-| **Utility** | Lombok | (via Spring Boot BOM) | Riduzione boilerplate Java |
+| **Utility** | Lombok | 3.4.5 | Riduzione boilerplate Java |
 
 ---
 
@@ -35,6 +35,7 @@
 | **Styling** | Tailwind CSS | 4.2.4 | Utility-first CSS |
 | **WebSocket** | @stomp/stompjs | 7.3.0 | Client STOMP per i Direct |
 | **WebSocket fallback** | sockjs-client | 1.6.1 | Fallback HTTP per ambienti senza WebSocket nativo |
+| **Validazione** | Zod | 3.25.76 | Schema validation lato client |
 
 ---
 
@@ -43,11 +44,12 @@
 | Componente | Tecnologia | Versione | Ruolo |
 | :--- | :--- | :--- | :--- |
 | **Database** | PostgreSQL | 16 | Persistenza relazionale |
-| **Cache** | Redis | 7 | Cache e sessioni |
-| **Container** | Docker + Docker Compose | — | Orchestrazione servizi |
-| **Discovery** | Eureka (Spring Cloud Netflix) | — | Service registry e load balancing |
-| **Gateway** | Spring Cloud Gateway | — | Reverse proxy + routing |
-| **Config** | Spring Cloud Config Server | — | Configurazione centralizzata |
+| **Token store** | Redis | 7 | Refresh token, blacklist e sessioni utente |
+| **Container** | Docker | 29.4.2 | Containerizzazione servizi |
+| **Orchestrazione** | Docker Compose | 5.1.3 | Avvio e gestione multi-container |
+| **Discovery** | Eureka (Spring Cloud Netflix) | 2024.0.1 | Service registry e load balancing |
+| **Gateway** | Spring Cloud Gateway | 2024.0.1 | Reverse proxy + routing |
+| **Config** | Spring Cloud Config Server | 2024.0.1 | Configurazione centralizzata |
 
 ---
 
@@ -55,11 +57,11 @@
 
 | Aspetto | Monolite Next.js | Sistema Attuale |
 | :--- | :--- | :--- |
-| **Architettura** | Full-stack monolite | Core monolite + microservizio directs |
+| **Architettura** | Full-stack monolite (FE + BE nello stesso progetto Next.js) | Frontend Next.js separato che chiama un backend Spring Boot (core monolite + microservizio directs) |
 | **Backend** | Next.js API Routes (Node.js) | Spring Boot 3.4.5 (Java 21.0.11) |
 | **Database** | SQLite3 embedded | PostgreSQL 16 esternato |
-| **Schema versioning** | Assente | Liquibase con changeset XML |
-| **Cache** | Assente | Redis 7 |
+| **Schema versioning** | Assente | Liquibase 4.29.2 con changeset XML |
+| **Token store** | Assente | Redis 7 (refresh token, blacklist, sessioni) |
 | **Messaggistica** | HTTP Polling | WebSocket STOMP bidirezionale |
 | **Service Discovery** | Assente | Eureka (Spring Cloud) |
 | **Config centralizzata** | Assente | Spring Cloud Config Server |
@@ -69,4 +71,4 @@
 
 ---
 
-→ Continua: [Funzionalità del Sistema](06-funzionalita.md)
+[← Evoluzione per Componente](04-evoluzione.md) | [Funzionalità del Sistema →](06-funzionalita.md)

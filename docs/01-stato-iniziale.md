@@ -57,4 +57,4 @@ instagram-reverse-engineering/
 
 ---
 
-→ Continua: [Pattern Architetturali Applicati](03-pattern.md)
+[Architettura Finale →](02-architettura.md)

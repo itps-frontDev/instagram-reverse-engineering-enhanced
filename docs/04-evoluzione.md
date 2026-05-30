@@ -104,4 +104,4 @@ Basato su Spring Cloud Gateway (Reactor WebFlux). Espone la porta 8080 come unic
 
 ---
 
-→ Continua: [Stack Tecnologico](05-stack.md)
+[← Pattern Architetturali](03-pattern.md) | [Stack Tecnologico →](05-stack.md)

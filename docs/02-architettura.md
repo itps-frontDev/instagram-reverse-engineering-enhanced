@@ -162,4 +162,4 @@ instagram-reverse-engineering-enhanced/
 
 ---
 
-→ Continua: [Evoluzione per Componente](04-evoluzione.md)
+[← Stato Iniziale](01-stato-iniziale.md) | [Pattern Architetturali →](03-pattern.md)

@@ -17,4 +17,4 @@
 
 ---
 
-[← Torna all'indice](../README.md)
+[← Installazione](07-installazione.md) | [Torna all'indice](../README.md)

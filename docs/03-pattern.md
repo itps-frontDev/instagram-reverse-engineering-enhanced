@@ -127,4 +127,4 @@ L'autenticazione è gestita da un `ChannelInterceptor` dedicato che intercetta i
 
 ---
 
-→ Continua: [Evoluzione per Componente](04-evoluzione.md)
+[← Architettura Finale](02-architettura.md) | [Evoluzione per Componente →](04-evoluzione.md)
