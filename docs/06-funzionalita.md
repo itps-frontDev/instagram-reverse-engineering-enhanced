@@ -26,9 +26,9 @@
 
 ## Feed e Scoperta
 
-- **Home Feed** — post degli utenti seguiti, ordinati per recenza. Il feed è cachato su Redis per ridurre il carico sul database nelle letture ripetute.
-- **Esplora** — contenuti pubblici di utenti non ancora seguiti.
-- **Ricerca** — ricerca full-text su post e utenti.
+- **Home Feed** — post degli utenti seguiti, ordinati per recenza.
+- **Esplora** — post di profili pubblici (esclusi i propri), ordinati per engagement (likes e commenti).
+- **Ricerca** — ricerca utenti per username o nome completo.
 
 ---
 
@@ -47,31 +47,35 @@ Gestita interamente dal `directs-service`. Vedi [Evoluzione dei Direct](04-evolu
 
 Gestite tramite [Spring Application Events](03-pattern.md#event-driven-con-spring-application-events).
 
-- **Like su post** — notifica al proprietario del post quando qualcuno mette like.
-- **Nuovo commento** — notifica all'autore del post.
-- **Nuovo follower** — notifica all'utente seguito.
-- **Tag in un post** — notifica all'utente taggato.
-- **Recupero** — le notifiche sono marcabili come lette tramite REST.
+- **Like** — notifica al proprietario del post quando qualcuno mette like.
+- **Commento** — notifica all'autore del post.
+- **Follow** — notifica all'utente seguito (nuovo follower, richiesta follow su profilo privato, accettazione richiesta).
+- **Recupero** — le notifiche sono recuperabili via REST e marcabili come lette.
 
 ---
 
-## Scenari d'Uso Principali
+## Scenari d'Uso
 
-### Autenticazione
+### Registrazione
 
-1. L'utente si registra fornendo username, email e password.
-2. Il backend genera un JWT firmato e lo restituisce al client.
-3. Il frontend include il token nell'header `Authorization: Bearer <token>` di ogni richiesta.
+1. L'utente inserisce email, username, password, nome completo (opzionale) e data di nascita.
+2. Il backend crea l'utente e il profilo associato su PostgreSQL.
+3. Vengono restituiti un access token JWT e un refresh token, quest'ultimo memorizzato su Redis.
+
+### Login
+
+1. L'utente inserisce un identificatore (username, email o numero di telefono) e la password.
+2. Il backend verifica le credenziali e genera un access token JWT firmato e un refresh token.
+3. Il frontend include l'access token nell'header `Authorization: Bearer <token>` di ogni richiesta successiva.
 4. Il `SecurityFilterChain` valida la firma e la scadenza del token prima di raggiungere qualsiasi controller.
 
 ### Pubblicazione di un Post
 
 1. L'utente seleziona le immagini dal dispositivo.
-2. Il frontend invia i file all'endpoint di upload.
-3. Il backend carica i file su **Azure Blob Storage** tramite la `MediaStrategy` e restituisce gli URL pubblici.
-4. L'utente completa caption, tag e visibilità, e invia il post.
-5. Il backend persiste il post su PostgreSQL e pubblica un `PostCreatedEvent`.
-6. Gli utenti taggati ricevono una notifica generata dall'`@EventListener`.
+2. Il frontend invia i file all'endpoint di upload; il backend li carica su **Azure Blob Storage** tramite `AzureBlobStorageService`.
+3. I media non vengono esposti direttamente con URL pubblici Azure: il frontend li serve tramite una **API route Next.js** (`/api/media/[...path]`) che agisce da reverse proxy autenticato verso il backend Spring Boot, il quale streamma il contenuto da Blob Storage.
+4. L'utente completa la caption e invia il post.
+5. Il backend persiste il post e i media associati su PostgreSQL.
 
 ### Invio di un Messaggio Diretto
 
