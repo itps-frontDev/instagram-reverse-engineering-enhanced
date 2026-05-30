@@ -90,27 +90,28 @@ Una volta avviati tutti i container, aprire `http://localhost:3000` nel browser.
 
 ### Registrare un nuovo account
 
-1. Cliccare **"Sign up"** nella schermata di login.
-2. Inserire email, username e password.
-3. Completare il profilo (nome, bio opzionale).
-4. Accedere con le credenziali appena create.
+La registrazione è in due step:
 
-### Usare un account demo (dati di seed)
+**Step 1** — inserire email, password, nome completo e username, poi cliccare **"Avanti"**.
 
-Il seed di sviluppo crea **80 utenti demo** con dati generati automaticamente. Tutti gli account demo hanno la stessa password:
+**Step 2** — selezionare la data di nascita dai dropdown e cliccare **"Avanti"** per completare la registrazione.
+
+L'app reindirizza automaticamente alla pagina di login.
+
+### Accedere con un account demo
+
+Il seed di sviluppo popola automaticamente il database con **80 utenti demo**. Per accedere subito senza registrarsi:
 
 | Campo | Valore |
 | :--- | :--- |
 | **Username** | `lukewhite` |
 | **Password** | `password123` |
 
-Tutti gli altri 79 account demo usano la stessa password `password123`. Per esplorare gli altri username disponibili, connettersi al database (porta 5432 esposta in sviluppo) con **IntelliJ IDEA** (Database tool integrato), DBeaver o TablePlus ed eseguire:
+Tutti gli 80 account demo condividono la stessa password `password123`. Per scoprire altri username disponibili, connettersi al database (porta 5432 esposta in sviluppo) con **IntelliJ IDEA** (Database tool integrato), DBeaver o TablePlus ed eseguire:
 
 ```sql
 SELECT username FROM profiles LIMIT 10;
 ```
-
-Oppure registrare semplicemente un nuovo account: la registrazione è aperta.
 
 ---
 
