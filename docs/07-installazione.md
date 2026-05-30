@@ -22,32 +22,40 @@ Il `docker-compose.yml` legge le variabili da un file `.env` nella root del prog
 
 ```env
 # Database
-DB_NAME=instagram
-DB_USER=postgres
-DB_PASSWORD=postgres
+DB_NAME=iree_db
+DB_USER=iree_user
+DB_PASSWORD=<scegli una password>
 
-# JWT
-AUTH_JWT_SECRET=dev-secret-change-in-production-must-be-long-enough
+# JWT — genera con: openssl rand -base64 32
+AUTH_JWT_SECRET=<output del comando openssl>
 
 # Frontend
 API_URL=http://localhost:8080
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
 
 # Cookie
-AUTH_ACCESS_TOKEN_COOKIE_NAME=access_token
+AUTH_ACCESS_TOKEN_COOKIE_NAME=iree_access_token
 AUTH_ACCESS_TOKEN_COOKIE_PATH=/
-AUTH_REFRESH_TOKEN_COOKIE_NAME=refresh_token
+AUTH_REFRESH_TOKEN_COOKIE_NAME=iree_refresh_token
 AUTH_REFRESH_TOKEN_COOKIE_PATH=/
 
 # CORS
 CORS_ALLOWED_ORIGINS=http://localhost:3000
 
-# Azure Blob Storage (produzione — in sviluppo viene sovrascritto dall'override)
-AZURE_STORAGE_CONNECTION_STRING=
-AZURE_STORAGE_CONTAINER_NAME=
+# Bypass autenticazione — solo sviluppo locale, mai true in produzione
+AUTH_BYPASS=false
+
+# Azure Blob Storage
+# Sviluppo locale con Azurite (emulatore):
+AZURE_STORAGE_CONNECTION_STRING=UseDevelopmentStorage=true
+# Produzione — sostituire con la connection string reale da Azure Portal:
+# AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=https;AccountName=...;AccountKey=...
+AZURE_STORAGE_CONTAINER_NAME=iree-media
 ```
 
-> In sviluppo lo storage Azure è emulato da **Azurite** (definito in `docker-compose.override.yml`). Le variabili `AZURE_*` vengono sovrascritte automaticamente dall'override e possono essere lasciate vuote.
+> In sviluppo lo storage Azure è emulato da **Azurite** (definito in `docker-compose.override.yml`). La connection string `UseDevelopmentStorage=true` viene sovrascritta dall'override con i parametri completi di Azurite — il valore nel `.env` serve come fallback.
+
+Il progetto include un file `.env.example` nella root con tutte le variabili documentate e i comandi per generare i valori sensibili (es. `openssl rand -base64 32` per il JWT secret). Può essere usato come riferimento o come punto di partenza: `cp .env.example .env`.
 
 ---
 
