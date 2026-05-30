@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ["158.158.18.149"],
+  allowedDevOrigins: [
+    "158.158.18.149", 
+    "instagram-demo.spaincentral.cloudapp.azure.com"
+  ],
   // OBBLIGATORIO per Docker production (standalone output)
   // genera .next/standalone con runtime minimale
   output: "standalone",
