@@ -7,51 +7,61 @@
 ## Diagramma del sistema
 
 ```
-                     ┌─────────────────────────────────────┐
-                     │           FRONTEND (Next.js)        │
-                     │           porta 3000                │
-                     └──────────────────┬──────────────────┘
-                                        │ HTTP REST + WebSocket (STOMP)
-                                        ▼
-                     ┌─────────────────────────────────────┐
-                     │         API GATEWAY                 │
-                     │    (Spring Cloud Gateway)           │
-                     │           porta 8080                │
-                     └────────────┬──────────┬────────────┘
-                /api/** (REST)    │          │  /ws/** (WebSocket)
-                                 │          │
-           ┌─────────────────────┘          └──────────────────────┐
-           ▼                                                        ▼
-┌──────────────────────────┐                     ┌──────────────────────────┐
-│  CORE (Spring Boot MVC)  │                     │  DIRECTS SERVICE         │
-│       porta 8081         │                     │  (Spring Boot WebSocket) │
-│                          │                     │       porta 8082         │
-│  Auth, Posts, Feed,      │                     │                          │
-│  Stories, Reels,         │                     │  Chat, Messaggi,         │
-│  Notifiche, Profili,     │                     │  WebSocket STOMP,        │
-│  Likes, Commenti,        │                     │  Auth JWT via            │
-│  Follows, Esplora,       │                     │  ChannelInterceptor      │
-│  Search, Media           │                     └────────────┬─────────────┘
-└──────────────────────────┘                                  │
-           │              ┌─────────────────────┐            │
-           │              │  SERVICE DISCOVERY  │◄───────────┘
-           └─────────────►│  (Eureka Server)    │
-                          │       porta 8761    │
-                          └──────────┬──────────┘
-                                     │
-                          ┌──────────▼──────────┐
-                          │   CONFIG SERVER     │
-                          │  (Spring Cloud      │
-                          │   Config)           │
-                          │     porta 8888      │
-                          └─────────────────────┘
+  ┌─────────────────── AVVIO (prima delle richieste) ──────────────────────┐
+  │                                                                         │
+  │   ┌─────────────────────┐       ┌─────────────────────┐                │
+  │   │   CONFIG SERVER     │       │  SERVICE DISCOVERY  │                │
+  │   │  (Spring Cloud)     │       │  (Eureka Server)    │                │
+  │   │   porta 8888        │       │   porta 8761        │                │
+  │   │                     │       │                     │                │
+  │   │  Serve properties   │       │  Registro centrale  │                │
+  │   │  a tutti i moduli   │       │  dei microservizi   │                │
+  │   └─────────┬───────────┘       └──────────┬──────────┘                │
+  │             │ legge config al bootstrap     │ si registrano all'avvio  │
+  │             ▼                               ▼                           │
+  │        (tutti i servizi Spring Boot leggono config e si registrano)     │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
 
-           ┌──────────────────────────────────────┐
-           │       INFRASTRUTTURA DOCKER           │
-           │                                       │
-           │  PostgreSQL 16  │  Redis 7            │
-           │  porta 5432     │  porta 6379         │
-           └───────────────────────────────────────┘
+  ┌─────────────────── RUNTIME (path delle richieste) ─────────────────────┐
+  │                                                                         │
+  │                ┌─────────────────────────────────────┐                 │
+  │                │           FRONTEND (Next.js)        │                 │
+  │                │           porta 3000                │                 │
+  │                └──────────────────┬──────────────────┘                 │
+  │                                   │ HTTP REST + WebSocket (STOMP)      │
+  │                                   ▼                                    │
+  │                ┌─────────────────────────────────────┐                 │
+  │                │         API GATEWAY                 │                 │
+  │                │    (Spring Cloud Gateway)           │                 │
+  │                │    porta 8080 — risolve i servizi   │                 │
+  │                │    tramite Eureka                   │                 │
+  │                └────────────┬──────────┬────────────┘                 │
+  │           /api/** (REST)    │          │  /ws/** (WebSocket)           │
+  │                             │          │                               │
+  │        ┌────────────────────┘          └─────────────────────┐        │
+  │        ▼                                                      ▼        │
+  │ ┌──────────────────┐                          ┌──────────────────────┐ │
+  │ │  CORE            │                          │  DIRECTS SERVICE     │ │
+  │ │  Spring Boot MVC │                          │  Spring Boot WS      │ │
+  │ │  porta 8081      │                          │  porta 8082          │ │
+  │ │                  │                          │                      │ │
+  │ │  Auth, Posts,    │                          │  Chat, Messaggi,     │ │
+  │ │  Feed, Stories,  │                          │  WebSocket STOMP     │ │
+  │ │  Reels, Likes,   │                          │                      │ │
+  │ │  Follow, Profili,│                          │                      │ │
+  │ │  Notifiche,      │    ┌──────────────────┐  │                      │ │
+  │ │  Esplora, Search │    │  PostgreSQL 16   │  │                      │ │
+  │ │  Media           │───►│  porta 5432      │◄─│                      │ │
+  │ └──────────────────┘    │                  │  └──────────────────────┘ │
+  │                         └──────────────────┘                           │
+  │                         ┌──────────────────┐                           │
+  │                         │    Redis 7        │                           │
+  │                         │    porta 6379     │                           │
+  │                         │  Token JWT e      │                           │
+  │                         │  sessioni         │                           │
+  │                         └──────────────────┘                           │
+  └─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -78,11 +88,11 @@ Monolite Spring Boot che gestisce la quasi totalità del dominio applicativo: au
 
 ### Directs Service (porta 8082)
 
-Microservizio isolato che gestisce la messaggistica diretta in tempo reale tramite WebSocket STOMP. Ha il proprio database (tabelle `chat`, `messages`, `chat_participants`) e le proprie Liquibase migrations, indipendenti dal core.
+Microservizio isolato che gestisce la messaggistica diretta in tempo reale tramite WebSocket STOMP. Condivide lo stesso database PostgreSQL del core ma gestisce le proprie tabelle (`chat`, `messages`, `chat_participants`) tramite Liquibase migrations autonome.
 
 ### Service Discovery — Eureka (porta 8761)
 
-Registry centrale. Tutti i servizi si registrano all'avvio con il proprio nome logico (es. `CORE`, `DIRECTS-SERVICE`). Il gateway usa questi nomi per il routing con load balancing (`lb://core`).
+Registry centrale. Tutti i servizi si registrano all'avvio con il proprio nome logico (es. `core`, `directs-service`). Il gateway usa questi nomi per il routing con load balancing (`lb://core`).
 
 ### Config Server (porta 8888)
 
@@ -106,20 +116,29 @@ instagram-reverse-engineering-enhanced/
 │   ├── 📂 core/                               # Monolite Spring Boot (porta 8081)
 │   │   └── src/main/
 │   │       ├── java/it/evodev/instagram/
-│   │       │   ├── auth/                      # JWT, login, register
+│   │       │   ├── auth/                      # JWT, login, register, filtri sicurezza
+│   │       │   ├── common/                    # DTO e utility condivise tra moduli
+│   │       │   ├── config/                    # Configurazione Spring (CORS, Security)
 │   │       │   ├── posts/                     # Post CRUD
 │   │       │   ├── feed/                      # Home feed
-│   │       │   ├── stories/
-│   │       │   ├── reels/
+│   │       │   ├── stories/                   # Storie con scadenza
+│   │       │   ├── reels/                     # Video brevi
 │   │       │   ├── comments/
-│   │       │   ├── likes/                     # Strategy Pattern
+│   │       │   │   └── events/                # CommentCreatedEvent
+│   │       │   ├── likes/
+│   │       │   │   ├── events/                # LikeCreatedEvent, LikeRemovedEvent
+│   │       │   │   └── strategies/            # PostLike, CommentLike, StoryLike
 │   │       │   ├── follow/
-│   │       │   ├── notifications/             # Event-driven (ApplicationEvent)
+│   │       │   │   └── events/                # FollowCreated/Requested/Accepted/Removed
+│   │       │   ├── notifications/
+│   │       │   │   ├── listeners/             # Un listener per sottodominio
+│   │       │   │   └── strategies/            # Una strategy per NotificationType
 │   │       │   ├── explore/
 │   │       │   ├── search/
 │   │       │   ├── profile/
-│   │       │   ├── media/                     # Azure Blob Storage (Strategy)
-│   │       │   └── redis/                     # Caching annotations
+│   │       │   │   └── picture/               # Upload e gestione immagine profilo
+│   │       │   ├── media/                     # Streaming media + MediaAccessStrategy
+│   │       │   └── redis/                     # RedisService, AuthRedisService
 │   │       └── resources/
 │   │           ├── application.properties
 │   │           └── db/changelog/              # Liquibase migrations
@@ -129,12 +148,15 @@ instagram-reverse-engineering-enhanced/
 │   ├── 📂 directs-service/                    # Microservizio messaggistica (porta 8082)
 │   │   └── src/main/
 │   │       ├── java/it/evodev/directs/
-│   │       │   ├── auth/                      # JWT parsing
+│   │       │   ├── auth/                      # JWT parsing e validazione
 │   │       │   ├── config/                    # WebSocketConfig (STOMP)
 │   │       │   ├── controllers/               # REST + WebSocket handlers
+│   │       │   ├── dto/                       # Request e Response DTO
+│   │       │   ├── exceptions/
 │   │       │   ├── models/                    # Chat, Message, ChatParticipant
 │   │       │   ├── repositories/
-│   │       │   └── services/
+│   │       │   ├── services/
+│   │       │   └── util/
 │   │       └── resources/
 │   │           ├── application.properties
 │   │           └── db/changelog/              # Migrazioni autonome (chat tables)
@@ -151,11 +173,40 @@ instagram-reverse-engineering-enhanced/
 │
 ├── 📂 frontend/                               # Next.js 16 (solo UI)
 │   └── src/
-│       ├── app/
-│       ├── components/
-│       ├── features/
+│       ├── app/                               # App Router — pagine e route
+│       │   ├── (auth)/                        # Login, Register
+│       │   ├── (main)/                        # Pagine autenticate
+│       │   │   ├── (profile)/                 # Profilo e impostazioni account
+│       │   │   ├── direct/                    # Messaggi diretti
+│       │   │   ├── explore/                   # Esplora
+│       │   │   ├── p/[postId]/                # Dettaglio post
+│       │   │   └── reels/                     # Reels
+│       │   └── api/media/[...path]/           # Reverse proxy media → Spring Boot
+│       ├── components/                        # Componenti React riutilizzabili
+│       │   ├── common/                        # Elementi condivisi (skeletons, ecc.)
+│       │   ├── feed/
+│       │   ├── explore/
+│       │   ├── direct/
+│       │   ├── profile/
+│       │   ├── layout/                        # Sidebar, navbar
+│       │   └── ui/                            # Elementi base UI
+│       ├── features/                          # Logica per dominio (actions, hooks)
+│       │   ├── auth/
+│       │   ├── posts/
+│       │   ├── feed/
+│       │   ├── stories/
+│       │   ├── reels/
+│       │   ├── comments/
+│       │   ├── likes/
+│       │   ├── follow/
+│       │   ├── notifications/
+│       │   ├── search/
+│       │   ├── explore/
+│       │   ├── profile/
 │       │   └── directs/                       # Hook WebSocket STOMP
-│       └── lib/                               # Client STOMP + SockJS
+│       ├── lib/                               # Utility condivise, client auth
+│       ├── contexts/                          # React Context providers
+│       └── types/                             # TypeScript interfaces
 │
 └── 📄 docker-compose.yml
 ```

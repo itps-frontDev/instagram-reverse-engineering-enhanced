@@ -67,17 +67,17 @@ docker-compose up -d
 
 Docker Compose avvia i servizi nel seguente ordine (con health check tra le dipendenze):
 
-| Ordine | Servizio | Porta |
-| :--- | :--- | :--- |
-| 1 | PostgreSQL 16 | 5432 (interna) |
-| 2 | Redis 7 | 6379 (interna) |
-| 3 | Azurite (storage emulato) | 10000 (interna) |
-| 4 | Service Discovery (Eureka) | 8761 |
-| 5 | Config Server | 8888 |
-| 6 | Core | 8081 (interna) |
-| 7 | Directs Service | 8082 (interna) |
-| 8 | API Gateway | **8080** |
-| 9 | Frontend | **3000** |
+| Ordine | Servizio | Porta | Note |
+| :--- | :--- | :--- | :--- |
+| 1 | PostgreSQL 16 | 5432 | Esposta in sviluppo (IntelliJ, DBeaver, TablePlus) |
+| 2 | Redis 7 | 6379 | Esposta in sviluppo (Redis Insight) |
+| 3 | Azurite (storage emulato) | 10000 | Solo sviluppo |
+| 4 | Service Discovery (Eureka) | 8761 | Dashboard raggiungibile dal browser |
+| 5 | Config Server | 8888 | Solo interno |
+| 6 | Core | 8081 | Solo via gateway |
+| 7 | Directs Service | 8082 | Solo via gateway |
+| 8 | API Gateway | **8080** | Unico entry point API |
+| 9 | Frontend | **3000** | Entry point UI |
 
 > **Primo avvio** (`--build`): attendere 5-10 minuti — Docker deve scaricare le immagini base, compilare i 5 moduli Gradle e applicare le migrazioni Liquibase con il seed di dati demo.
 > **Avvii successivi** (senza `--build`): 2-3 minuti, il tempo necessario ai servizi Spring Boot di avviarsi, registrarsi su Eureka e superare gli health check.
@@ -112,56 +112,6 @@ Tutti gli 80 account demo condividono la stessa password `password123`. Per scop
 ```sql
 SELECT username FROM profiles LIMIT 10;
 ```
-
----
-
-## Avvio manuale (sviluppo con hot-reload)
-
-Per sviluppare con riavvio rapido dei singoli moduli, avviare solo l'infrastruttura in Docker e i servizi Spring Boot direttamente dalla JVM locale.
-
-**Infrastruttura:**
-```bash
-docker-compose up -d db redis azurite
-```
-
-**Service Discovery e Config Server** (in terminali separati):
-```bash
-cd backend
-./gradlew :service-discovery:bootRun
-./gradlew :config-server:bootRun
-```
-
-**Servizi applicativi** (in terminali separati):
-```bash
-./gradlew :core:bootRun
-./gradlew :directs-service:bootRun
-./gradlew :api-gateway:bootRun
-```
-
-**Frontend:**
-```bash
-cd frontend
-pnpm install
-pnpm dev
-```
-
-Il frontend è accessibile su `http://localhost:3000`. Tutte le chiamate API transitano per il gateway su `http://localhost:8080`.
-
----
-
-## Porte di riferimento
-
-| Servizio | Porta | Note |
-| :--- | :--- | :--- |
-| Frontend | 3000 | Entry point UI |
-| API Gateway | 8080 | Unico entry point API |
-| Core | 8081 | Solo via gateway |
-| Directs Service | 8082 | Solo via gateway |
-| Eureka Dashboard | 8761 | Solo sviluppo |
-| Config Server | 8888 | Solo interno |
-| PostgreSQL | 5432 | Esposta in sviluppo (DBeaver, TablePlus) |
-| Redis | 6379 | Esposta in sviluppo (Redis Insight) |
-| Azurite (Blob) | 10000 | Solo sviluppo |
 
 ---
 
