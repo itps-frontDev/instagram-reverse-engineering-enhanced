@@ -79,7 +79,8 @@ Docker Compose avvia i servizi nel seguente ordine (con health check tra le dipe
 | 8 | API Gateway | **8080** |
 | 9 | Frontend | **3000** |
 
-> Al primo avvio attendere circa 60-90 secondi per l'inizializzazione completa di tutti i servizi.
+> **Primo avvio** (`--build`): attendere 5-10 minuti — Docker deve scaricare le immagini base, compilare i 5 moduli Gradle e applicare le migrazioni Liquibase con il seed di dati demo.
+> **Avvii successivi** (senza `--build`): 2-3 minuti, il tempo necessario ai servizi Spring Boot di avviarsi, registrarsi su Eureka e superare gli health check.
 
 ---
 
