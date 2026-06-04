@@ -6,6 +6,11 @@
 
 ## Diagramma del sistema
 
+![Diagramma dei componenti](diagram/imgs/architecture.drawio.png)
+
+<details>
+<summary>Versione testuale (fallback)</summary>
+
 ```
   ┌─────────────────── AVVIO (prima delle richieste) ──────────────────────┐
   │                                                                         │
@@ -64,6 +69,8 @@
   └─────────────────────────────────────────────────────────────────────────┘
 ```
 
+</details>
+
 ---
 
 ## Flusso delle richieste
@@ -83,6 +90,8 @@ Il frontend non conosce porte o indirizzi interni — chiama sempre e solo `loca
 ## Componenti
 
 ### Core (porta 8081)
+
+![Componenti interni del Core](diagram/imgs/core-components.png)
 
 Monolite Spring Boot che gestisce la quasi totalità del dominio applicativo: autenticazione JWT, post, feed, storie, reels, commenti, likes, follow, profili, esplora, ricerca e media. Le notifiche sono gestite tramite `ApplicationEvent` Spring, che funzionano all'interno della stessa JVM senza bisogno di un message broker esterno.
 
