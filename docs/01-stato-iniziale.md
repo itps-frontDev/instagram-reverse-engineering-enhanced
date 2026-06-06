@@ -6,7 +6,7 @@
 
 ## Caratteristiche dell'architettura originale
 
-L'applicazione originale, disponibile nella repo `instagram-reverse-engineering`, era una **Single Page Application full-stack in Next.js** con le seguenti caratteristiche:
+L'applicazione originale, disponibile nella repo [`instagram-reverse-engineering`](https://github.com/itps-frontDev/instagram-reverse-engineering.git), era una **Single Page Application full-stack in Next.js** con le seguenti caratteristiche:
 
 - **Frontend e backend nello stesso progetto** — le API routes di Next.js fungevano da backend, rendendo impossibile scalare i due livelli in modo indipendente.
 - **SQLite3 come database** — database file-based embedded nel processo Node.js, non adatto a concorrenza o ambienti distribuiti.
