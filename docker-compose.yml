@@ -35,8 +35,6 @@ services:
       context: ./backend
       dockerfile: service-discovery/Dockerfile
     image: iree/service-discovery
-    ports:
-      - "8761:8761"   # Dashboard Eureka raggiungibile da browser in sviluppo
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8761/actuator/health | grep UP || exit 1"]
       interval: 10s
@@ -53,8 +51,6 @@ services:
       context: ./backend
       dockerfile: config-server/Dockerfile
     image: iree/config-server
-    ports:
-      - "8888:8888"   # Utile in sviluppo per verificare la config: GET /core/default
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8888/actuator/health | grep UP || exit 1"]
       interval: 10s

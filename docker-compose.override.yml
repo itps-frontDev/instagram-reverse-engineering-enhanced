@@ -68,6 +68,14 @@ services:
     ports:
       - "5006:5006"                # porta debugger remoto Java separata da core
 
+  service-discovery:
+    ports:
+      - "8761:8761"   # Dashboard Eureka raggiungibile da browser in sviluppo
+
+  config-server:
+    ports:
+      - "8888:8888"   # Utile in sviluppo per verificare la config: GET /core/default
+
   db:
     ports:
       - "5432:5432"
