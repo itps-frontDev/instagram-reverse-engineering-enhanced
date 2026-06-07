@@ -31,7 +31,7 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="USERS;2026-05-11;copilot;02" author="copilot">
+    <changeSet id="USERS;2026-05-11;copilot;02" author="cbiallo">
         <sql splitStatements="false"><![CDATA[
 CREATE OR REPLACE FUNCTION uuid_generate_v7()
 RETURNS uuid

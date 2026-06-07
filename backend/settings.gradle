@@ -1,9 +1,15 @@
 plugins {
+    // Abilita la risoluzione automatica del toolchain: se il JDK dichiarato
+    // in build.gradle (Java 21) non è presente sulla macchina, Gradle lo
+    // scarica da solo tramite foojay, garantendo che sviluppatori locali,
+    // CI e Docker compilino sempre con lo stesso JDK senza configurazione manuale.
     id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
 }
 
 rootProject.name = 'instagram'
 
+// Elenco dei microservizi che compongono il progetto multi-modulo.
+// Ogni entry corrisponde a una sottodirectory con il proprio build.gradle.
 include 'core'
 include 'directs-service'
 include 'service-discovery'

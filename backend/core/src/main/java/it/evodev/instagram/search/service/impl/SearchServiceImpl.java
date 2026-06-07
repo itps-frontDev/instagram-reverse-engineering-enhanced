@@ -4,7 +4,7 @@ import it.evodev.instagram.search.dto.request.SearchRequestDTO;
 import it.evodev.instagram.search.dto.response.SearchAccountResultDTO;
 import it.evodev.instagram.search.dto.response.SearchDataDTO;
 import it.evodev.instagram.search.exception.SearchException;
-import it.evodev.instagram.search.exception.SearchUnauthorizedException;
+import it.evodev.instagram.search.exception.SearchNotFoundException;
 import it.evodev.instagram.search.exception.SearchValidationException;
 import it.evodev.instagram.search.model.SearchProfile;
 import it.evodev.instagram.search.repository.SearchAccountProjection;
@@ -38,10 +38,10 @@ public class SearchServiceImpl implements SearchService {
 
         UUID userId = authSubjectService.parseUserId(
                 authSubject,
-                () -> new SearchUnauthorizedException("Authentication subject is invalid")
+                () -> new SearchException("SEARCH_INTERNAL_ERROR", "Authentication subject is invalid", HttpStatus.INTERNAL_SERVER_ERROR)
         );
         SearchProfile currentProfile = searchProfileRepository.findByUserIdAndDeletedAtIsNull(userId)
-                .orElseThrow(() -> new SearchUnauthorizedException("Authenticated profile not found"));
+                .orElseThrow(() -> new SearchNotFoundException("Authenticated profile not found"));
 
         String normalizedQuery = normalizeQuery(request.getQ());
         int normalizedLimit = normalizeLimit(request.getLimit());

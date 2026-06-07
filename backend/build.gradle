@@ -1,4 +1,12 @@
+// Build root del progetto multi-modulo.
+// Ogni microservizio (api-gateway, config-server, core, directs-service,
+// service-discovery) è un subproject con il proprio build.gradle.
+// Qui si definisce solo ciò che è comune a tutti: plugin, gruppo, versione,
+// toolchain Java e BOM delle dipendenze.
+
 plugins {
+    // apply false: i plugin vengono dichiarati qui per fissare la versione,
+    // ma applicati solo nei subproject che ne hanno bisogno.
     id 'org.springframework.boot'        version '3.4.5' apply false
     id 'io.spring.dependency-management' version '1.1.7' apply false
 }
@@ -11,6 +19,11 @@ subprojects {
     version = '0.0.1-SNAPSHOT'
 
     java {
+        // Il toolchain fissa la versione Java del progetto invece di usare
+        // quella installata sulla macchina. Se il JDK 21 non è presente,
+        // Gradle lo scarica automaticamente tramite il plugin foojay
+        // (configurato in settings.gradle), garantendo che sviluppatori
+        // locali, CI e Docker compilino sempre con lo stesso JDK.
         toolchain {
             languageVersion = JavaLanguageVersion.of(21)
         }
@@ -21,6 +34,8 @@ subprojects {
     }
 
     dependencyManagement {
+        // I BOM allineano le versioni di tutte le librerie Spring senza doverle
+        // specificare manualmente in ogni subproject.
         imports {
             mavenBom 'org.springframework.boot:spring-boot-dependencies:3.4.5'
             mavenBom 'org.springframework.cloud:spring-cloud-dependencies:2024.0.1'

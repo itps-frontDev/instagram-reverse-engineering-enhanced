@@ -35,7 +35,7 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="NOTIFICATIONS;2026-05-12;copilot;02" author="copilot">
+    <changeSet id="NOTIFICATIONS;2026-05-12;copilot;02" author="cbiallo">
         <sql splitStatements="false"><![CDATA[
 DO $$
 BEGIN
