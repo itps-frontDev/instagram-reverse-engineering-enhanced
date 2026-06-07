@@ -8,112 +8,108 @@ import java.util.List;
 @Getter
 public abstract class BasePostDTO<TMedia> {
 
-    @JsonProperty("id")
     private final long id;
 
     @JsonProperty("profile_id")
-    private final long profile_id;
+    private final long profileId;
 
-    @JsonProperty("caption")
     private final String caption;
 
-    @JsonProperty("location")
     private final String location;
 
     @JsonProperty("is_comments_disabled")
-    private final boolean is_comments_disabled;
+    private final boolean commentsDisabled;
 
     @JsonProperty("is_likes_hidden")
-    private final boolean is_likes_hidden;
+    private final boolean likesHidden;
 
     @JsonProperty("likes_count")
-    private final long likes_count;
+    private final long likesCount;
 
     @JsonProperty("comments_count")
-    private final long comments_count;
+    private final long commentsCount;
 
     @JsonProperty("created_at")
-    private final String created_at;
+    private final String createdAt;
 
     @JsonProperty("profile_username")
-    private final String profile_username;
+    private final String profileUsername;
 
     @JsonProperty("profile_full_name")
-    private final String profile_full_name;
+    private final String profileFullName;
 
     @JsonProperty("profile_image_url")
-    private final String profile_image_url;
+    private final String profileImageUrl;
 
     @JsonProperty("profile_is_verified")
-    private final boolean profile_is_verified;
+    private final boolean profileVerified;
 
     @JsonProperty("profile_has_active_story")
-    private final boolean profile_has_active_story;
+    private final boolean profileHasActiveStory;
 
     @JsonProperty("profile_has_viewed_story")
-    private final boolean profile_has_viewed_story;
+    private final boolean profileHasViewedStory;
 
     @JsonProperty("profile_is_private")
-    private final boolean profile_is_private;
+    private final boolean profilePrivate;
 
-    @JsonProperty("media")
     private final List<TMedia> media;
 
     @JsonProperty("is_liked_by_current_user")
-    private final boolean is_liked_by_current_user;
+    private final boolean likedByCurrentUser;
 
     @JsonProperty("is_saved_by_current_user")
-    private final boolean is_saved_by_current_user;
+    private final boolean savedByCurrentUser;
 
     @JsonProperty("is_following_author")
-    private final boolean is_following_author;
+    private final boolean followingAuthor;
 
     @JsonProperty("has_tags")
-    private final boolean has_tags;
+    private final boolean hasTags;
 
     protected BasePostDTO(
             long id,
-            long profile_id,
+            long profileId,
             String caption,
             String location,
-            boolean is_comments_disabled,
-            boolean is_likes_hidden,
-            long likes_count,
-            long comments_count,
-            String created_at,
-            String profile_username,
-            String profile_full_name,
-            String profile_image_url,
-            boolean profile_is_verified,
-            boolean profile_has_active_story,
-            boolean profile_has_viewed_story,
-            boolean profile_is_private,
+            boolean commentsDisabled,
+            boolean likesHidden,
+            long likesCount,
+            long commentsCount,
+            String createdAt,
+            String profileUsername,
+            String profileFullName,
+            String profileImageUrl,
+            boolean profileVerified,
+            boolean profileHasActiveStory,
+            boolean profileHasViewedStory,
+            boolean profilePrivate,
             List<TMedia> media,
-            boolean is_liked_by_current_user,
-            boolean is_saved_by_current_user,
-            boolean is_following_author,
-            boolean has_tags
+            boolean likedByCurrentUser,
+            boolean savedByCurrentUser,
+            boolean followingAuthor,
+            boolean hasTags
     ) {
         this.id = id;
-        this.profile_id = profile_id;
+        this.profileId = profileId;
         this.caption = caption;
         this.location = location;
-        this.is_comments_disabled = is_comments_disabled;
-        this.is_likes_hidden = is_likes_hidden;
-        this.likes_count = likes_count;
-        this.comments_count = comments_count;
-        this.created_at = created_at;
-        this.profile_username = profile_username;
-        this.profile_full_name = profile_full_name;
-        this.profile_image_url = profile_image_url;
-        this.profile_is_verified = profile_is_verified;
-        this.profile_has_active_story = profile_has_active_story;
-        this.profile_has_viewed_story = profile_has_viewed_story;
-        this.profile_is_private = profile_is_private;
+        this.commentsDisabled = commentsDisabled;
+        this.likesHidden = likesHidden;
+        this.likesCount = likesCount;
+        this.commentsCount = commentsCount;
+        this.createdAt = createdAt;
+        this.profileUsername = profileUsername;
+        this.profileFullName = profileFullName;
+        this.profileImageUrl = profileImageUrl;
+        this.profileVerified = profileVerified;
+        this.profileHasActiveStory = profileHasActiveStory;
+        this.profileHasViewedStory = profileHasViewedStory;
+        this.profilePrivate = profilePrivate;
         this.media = media;
-        this.is_liked_by_current_user = is_liked_by_current_user;
-        this.is_saved_by_current_user = is_saved_by_current_user;
-        this.is_following_author = is_following_author;
-        this.has_tags = has_tags;
+        this.likedByCurrentUser = likedByCurrentUser;
+        this.savedByCurrentUser = savedByCurrentUser;
+        this.followingAuthor = followingAuthor;
+        this.hasTags = hasTags;
     }
 }
