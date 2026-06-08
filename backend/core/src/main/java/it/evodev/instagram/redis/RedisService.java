@@ -9,6 +9,12 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 
+/**
+ * Wrapper su RedisTemplate che espone operazioni CRUD semplificate su Redis.
+ *
+ * Tutti i valori vengono serializzati come JSON (configurato in RedisConfig).
+ * Il TTL di default è 3600 secondi (1 ora), sovrascrivibile metodo per metodo.
+ */
 @Slf4j
 @AllArgsConstructor
 @Service

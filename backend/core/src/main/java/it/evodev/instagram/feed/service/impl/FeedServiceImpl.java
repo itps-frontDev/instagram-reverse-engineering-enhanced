@@ -16,6 +16,7 @@ import it.evodev.instagram.feed.repository.FeedMediaProjection;
 import it.evodev.instagram.feed.repository.FeedPostProjection;
 import it.evodev.instagram.feed.repository.FeedRepository;
 import it.evodev.instagram.feed.service.FeedService;
+import it.evodev.instagram.redis.annotations.RedisCacheable;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
