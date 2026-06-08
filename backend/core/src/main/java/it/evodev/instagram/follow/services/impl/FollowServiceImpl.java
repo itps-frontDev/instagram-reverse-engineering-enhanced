@@ -13,6 +13,7 @@ import it.evodev.instagram.follow.exceptions.FollowForbiddenException;
 import it.evodev.instagram.follow.exceptions.FollowNotFoundException;
 import it.evodev.instagram.follow.exceptions.FollowValidationException;
 import it.evodev.instagram.follow.models.Follow;
+import it.evodev.instagram.follow.models.enums.FollowStatus;
 import it.evodev.instagram.follow.repositories.FollowJpaRepository;
 import it.evodev.instagram.follow.services.FollowService;
 import it.evodev.instagram.profile.models.Profile;
@@ -48,13 +49,13 @@ public class FollowServiceImpl implements FollowService {
         Profile target = resolveByUsername(targetUsername);
 
         if (viewer.getId().equals(target.getId())) {
-            return new FollowStatusDataDTO("self");
+            return new FollowStatusDataDTO(FollowStatus.SELF.value());
         }
 
         String status = followRepository
                 .findByFollowerProfileIdAndFollowingProfileIdAndDeletedAtIsNull(viewer.getId(), target.getId())
                 .map(Follow::getStatus)
-                .orElse("none");
+                .orElse(FollowStatus.NONE.value());
 
         return new FollowStatusDataDTO(status);
     }
@@ -126,14 +127,14 @@ public class FollowServiceImpl implements FollowService {
             follow.setDeletedAt(LocalDateTime.now());
             followRepository.save(follow);
 
-            if ("accepted".equals(previousStatus)) {
+            if (FollowStatus.ACCEPTED.equalsValue(previousStatus)) {
                 profileRepository.decrementFollowersCount(followingProfileId);
                 profileRepository.decrementFollowingCount(follower.getId());
             }
 
             eventPublisher.publishEvent(new FollowRemovedEvent(follower.getId(), followingProfileId));
             logger.info("Profile {} unfollowed profile {}", follower.getId(), followingProfileId);
-            return new FollowToggleResponseDTO("removed", "none");
+            return new FollowToggleResponseDTO("removed", FollowStatus.NONE.value());
         }
 
         boolean isPrivate = profileRepository.findById(followingProfileId)
@@ -157,19 +158,19 @@ public class FollowServiceImpl implements FollowService {
         }
 
         if (isPrivate) {
-            follow.setStatus("pending");
+            follow.setStatus(FollowStatus.PENDING.value());
             followRepository.save(follow);
             eventPublisher.publishEvent(new FollowRequestedEvent(follower.getId(), followingProfileId));
             logger.info("Profile {} sent follow request to private profile {}", follower.getId(), followingProfileId);
-            return new FollowToggleResponseDTO("requested", "pending");
+            return new FollowToggleResponseDTO("requested", FollowStatus.PENDING.value());
         } else {
-            follow.setStatus("accepted");
+            follow.setStatus(FollowStatus.ACCEPTED.value());
             followRepository.save(follow);
             profileRepository.incrementFollowersCount(followingProfileId);
             profileRepository.incrementFollowingCount(follower.getId());
             eventPublisher.publishEvent(new FollowCreatedEvent(follower.getId(), followingProfileId));
             logger.info("Profile {} followed public profile {}", follower.getId(), followingProfileId);
-            return new FollowToggleResponseDTO("created", "accepted");
+            return new FollowToggleResponseDTO("created", FollowStatus.ACCEPTED.value());
         }
     }
 
@@ -180,11 +181,11 @@ public class FollowServiceImpl implements FollowService {
 
         Follow follow = followRepository
                 .findByFollowerProfileIdAndFollowingProfileIdAndStatusAndDeletedAtIsNull(
-                        requesterProfileId, owner.getId(), "pending")
+                        requesterProfileId, owner.getId(), FollowStatus.PENDING.value())
                 .orElseThrow(() -> new FollowNotFoundException(
                         "Pending follow request not found from profile " + requesterProfileId));
 
-        follow.setStatus("accepted");
+        follow.setStatus(FollowStatus.ACCEPTED.value());
         follow.setUpdatedAt(LocalDateTime.now());
         followRepository.save(follow);
 
@@ -203,11 +204,11 @@ public class FollowServiceImpl implements FollowService {
 
         Follow follow = followRepository
                 .findByFollowerProfileIdAndFollowingProfileIdAndStatusAndDeletedAtIsNull(
-                        requesterProfileId, owner.getId(), "pending")
+                        requesterProfileId, owner.getId(), FollowStatus.PENDING.value())
                 .orElseThrow(() -> new FollowNotFoundException(
                         "Pending follow request not found from profile " + requesterProfileId));
 
-        follow.setStatus("rejected");
+        follow.setStatus(FollowStatus.REJECTED.value());
         follow.setUpdatedAt(LocalDateTime.now());
         follow.setDeletedAt(LocalDateTime.now());
         followRepository.save(follow);
@@ -224,7 +225,7 @@ public class FollowServiceImpl implements FollowService {
 
         Follow follow = followRepository
                 .findByFollowerProfileIdAndFollowingProfileIdAndStatusAndDeletedAtIsNull(
-                        followerProfileId, owner.getId(), "accepted")
+                        followerProfileId, owner.getId(), FollowStatus.ACCEPTED.value())
                 .orElseThrow(() -> new FollowNotFoundException(
                         "Active follower not found: profile " + followerProfileId));
 
@@ -257,7 +258,7 @@ public class FollowServiceImpl implements FollowService {
         if (!isOwner && Boolean.TRUE.equals(target.getIsPrivate())) {
             boolean isAcceptedFollower = followRepository
                     .findByFollowerProfileIdAndFollowingProfileIdAndStatusAndDeletedAtIsNull(
-                            viewer.getId(), target.getId(), "accepted")
+                            viewer.getId(), target.getId(), FollowStatus.ACCEPTED.value())
                     .isPresent();
             if (!isAcceptedFollower) {
                 logger.warn("Forbidden {} access. Viewer: {}, Target: {}", listType, viewer.getId(), target.getId());

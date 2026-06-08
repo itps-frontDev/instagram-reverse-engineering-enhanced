@@ -3,6 +3,7 @@ package it.evodev.instagram.posts.service.impl;
 import it.evodev.instagram.profile.models.Profile;
 import it.evodev.instagram.auth.repositories.ProfileRepository;
 import it.evodev.instagram.posts.service.PostVisibilityService;
+import it.evodev.instagram.follow.models.enums.FollowStatus;
 import it.evodev.instagram.follow.repositories.FollowJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -64,7 +65,7 @@ public class PostVisibilityServiceImpl implements PostVisibilityService {
                 .findByFollowerProfileIdAndFollowingProfileIdAndStatusAndDeletedAtIsNull(
                         currentProfile.getId(),
                         postOwnerProfileId,
-                        "accepted"
+                        FollowStatus.ACCEPTED.value()
                 )
                 .isPresent();
 

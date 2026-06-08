@@ -8,21 +8,19 @@ import lombok.Getter;
 @AllArgsConstructor
 public class FeedMediaDTO {
 
-    @JsonProperty("id")
     private long id;
 
     @JsonProperty("post_id")
-    private long post_id;
+    private long postId;
 
     @JsonProperty("media_url")
-    private String media_url;
+    private String mediaUrl;
 
     @JsonProperty("media_type")
-    private String media_type;
+    private String mediaType;
 
     @JsonProperty("duration_seconds")
-    private Integer duration_seconds;
+    private Integer durationSeconds;
 
-    @JsonProperty("position")
     private int position;
 }

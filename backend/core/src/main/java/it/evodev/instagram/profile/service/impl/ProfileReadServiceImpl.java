@@ -2,6 +2,7 @@ package it.evodev.instagram.profile.service.impl;
 
 import it.evodev.instagram.profile.dto.response.BirthdayDataDTO;
 import it.evodev.instagram.follow.dto.responses.FollowStatusDataDTO;
+import it.evodev.instagram.follow.models.enums.FollowStatus;
 import it.evodev.instagram.follow.services.FollowService;
 import it.evodev.instagram.posts.repository.PostRepository;
 import it.evodev.instagram.posts.repository.PostReelsRepository;
@@ -72,7 +73,7 @@ public class ProfileReadServiceImpl implements ProfileReadService {
 
         boolean canView = visibilityData.isCanView();
         String followStatus = followStatusData.getStatus();
-        boolean isOwner = "self".equalsIgnoreCase(followStatus);
+        boolean isOwner = FollowStatus.SELF.equalsValue(followStatus);
 
         if (!canView) {
             logger.info("Returning partial profile payload. Username: {}, Follow status: {}", targetUsername, followStatus);
@@ -128,10 +129,10 @@ public class ProfileReadServiceImpl implements ProfileReadService {
 
         FollowStatusDataDTO followStatusData = followService.getFollowStatus(currentUserId, targetUsername);
         String followStatus = followStatusData.getStatus();
-        boolean isOwner = "self".equalsIgnoreCase(followStatus);
+        boolean isOwner = FollowStatus.SELF.equalsValue(followStatus);
         boolean canView = isOwner
                 || !Boolean.TRUE.equals(projection.getIsPrivate())
-                || "accepted".equalsIgnoreCase(followStatus);
+                || FollowStatus.ACCEPTED.equalsValue(followStatus);
 
         List<RecentPostPreviewDTO> recentPosts = canView
                 ? fetchRecentPosts(projection.getId())

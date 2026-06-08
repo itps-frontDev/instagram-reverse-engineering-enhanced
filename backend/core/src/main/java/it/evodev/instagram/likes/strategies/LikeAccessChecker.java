@@ -1,5 +1,6 @@
 package it.evodev.instagram.likes.strategies;
 
+import it.evodev.instagram.follow.models.enums.FollowStatus;
 import it.evodev.instagram.follow.repositories.FollowJpaRepository;
 import it.evodev.instagram.likes.exceptions.LikeValidationException;
 import it.evodev.instagram.profile.repository.ProfileJpaRepository;
@@ -37,7 +38,7 @@ public class LikeAccessChecker {
 
         boolean follows = followRepository
                 .findByFollowerProfileIdAndFollowingProfileIdAndStatusAndDeletedAtIsNull(
-                        requesterProfileId, ownerProfileId, "accepted")
+                        requesterProfileId, ownerProfileId, FollowStatus.ACCEPTED.value())
                 .isPresent();
 
         if (!follows) {

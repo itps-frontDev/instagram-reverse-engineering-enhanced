@@ -3,6 +3,7 @@ package it.evodev.instagram.posts.service.impl;
 import it.evodev.instagram.auth.services.AuthSubjectService;
 import it.evodev.instagram.profile.models.Profile;
 import it.evodev.instagram.auth.repositories.ProfileRepository;
+import it.evodev.instagram.follow.models.enums.FollowStatus;
 import it.evodev.instagram.follow.repositories.FollowJpaRepository;
 import it.evodev.instagram.likes.models.enums.LikeableType;
 import it.evodev.instagram.likes.repositories.LikeRepository;
@@ -86,7 +87,7 @@ public class PostsDetailServiceImpl implements PostsDetailService {
             .findByFollowerProfileIdAndFollowingProfileIdAndStatusAndDeletedAtIsNull(
                 currentProfileId,
                 post.getProfileId(),
-                "accepted"
+                FollowStatus.ACCEPTED.value()
             )
             .isPresent();
 

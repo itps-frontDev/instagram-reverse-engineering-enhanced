@@ -1,6 +1,7 @@
 package it.evodev.instagram.profile.service.impl;
 
 import it.evodev.instagram.follow.models.Follow;
+import it.evodev.instagram.follow.models.enums.FollowStatus;
 import it.evodev.instagram.follow.repositories.FollowJpaRepository;
 import it.evodev.instagram.profile.dto.response.ProfileVisibilityDataDTO;
 import it.evodev.instagram.profile.exceptions.ProfileNotFoundException;
@@ -67,7 +68,7 @@ public class ProfileVisibilityServiceImpl implements ProfileVisibilityService {
             return new ProfileVisibilityDataDTO(false);
         }
 
-        if ("accepted".equalsIgnoreCase(followOpt.get().getStatus())) {
+        if (FollowStatus.ACCEPTED.equalsValue(followOpt.get().getStatus())) {
             logger.info("Profile visibility: target is private with accepted follow row. Returning true");
             return new ProfileVisibilityDataDTO(true);
         }
