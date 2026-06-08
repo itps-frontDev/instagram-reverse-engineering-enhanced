@@ -9,7 +9,7 @@ import it.evodev.instagram.reels.exceptions.ReelUnauthorizedException;
 import it.evodev.instagram.reels.models.ReelPostMedia;
 import it.evodev.instagram.reels.repositories.ReelPostJpaRepository;
 import it.evodev.instagram.reels.repositories.ReelPostMediaJpaRepository;
-import it.evodev.instagram.reels.repositories.projections.ReelFeedProjection;
+import it.evodev.instagram.reels.repositories.ReelFeedProjection;
 import it.evodev.instagram.reels.services.ReelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,12 +45,17 @@ public class ReelServiceImpl implements ReelService {
                 .orElseThrow(() -> new ReelNotFoundException("Profilo non trovato."));
 
         List<ReelFeedProjection> projections = reelPostJpaRepository.findReelFeed(
-                profile.getId(), limit, excludeIds.toArray(Long[]::new)
+                profile.getId(), limit + 1, excludeIds.toArray(Long[]::new)
         );
 
         if (projections.isEmpty()) {
             log.info("[Reels] getReels end — no reels found");
             return new ReelFeedResponseDTO(Collections.emptyList(), false);
+        }
+
+        boolean hasMore = projections.size() > limit;
+        if (hasMore) {
+            projections = projections.subList(0, limit);
         }
 
         List<Long> postIds = projections.stream().map(ReelFeedProjection::getPostId).toList();
@@ -64,7 +69,6 @@ public class ReelServiceImpl implements ReelService {
                 .map(p -> toReelItemDTO(p, mediaByPostId.getOrDefault(p.getPostId(), Collections.emptyList())))
                 .toList();
 
-        boolean hasMore = reels.size() == limit;
         log.info("[Reels] getReels end — returned {} reels, hasMore={}", reels.size(), hasMore);
         return new ReelFeedResponseDTO(reels, hasMore);
     }

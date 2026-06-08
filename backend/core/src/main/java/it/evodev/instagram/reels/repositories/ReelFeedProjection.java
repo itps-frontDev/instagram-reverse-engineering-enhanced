@@ -1,4 +1,4 @@
-package it.evodev.instagram.reels.repositories.projections;
+package it.evodev.instagram.reels.repositories;
 
 import java.time.Instant;
 
