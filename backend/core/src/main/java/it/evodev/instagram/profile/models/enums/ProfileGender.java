@@ -1,8 +1,11 @@
-package it.evodev.instagram.profile.enums;
+package it.evodev.instagram.profile.models.enums;
+
+import lombok.Getter;
 
 import java.util.Arrays;
 import java.util.Optional;
 
+@Getter
 public enum ProfileGender {
     MALE("male"),
     FEMALE("female"),
@@ -13,10 +16,6 @@ public enum ProfileGender {
 
     ProfileGender(String value) {
         this.value = value;
-    }
-
-    public String getValue() {
-        return value;
     }
 
     public static Optional<ProfileGender> fromValue(String value) {

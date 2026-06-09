@@ -8,7 +8,7 @@ import it.evodev.instagram.profile.dto.response.BirthdayDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfileEditDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfilePrivacyDataDTO;
 import it.evodev.instagram.profile.dto.response.ProfilePersonalDataDTO;
-import it.evodev.instagram.profile.enums.ProfileGender;
+import it.evodev.instagram.profile.models.enums.ProfileGender;
 import it.evodev.instagram.profile.exceptions.InvalidAgeException;
 import it.evodev.instagram.profile.exceptions.ProfileBadRequestException;
 import it.evodev.instagram.profile.exceptions.ProfileConflictException;
