@@ -10,6 +10,7 @@
 FROM node:22-alpine AS base
 RUN corepack enable
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 WORKDIR /app
 
 # ─────────────────────────────────────────
@@ -20,14 +21,18 @@ WORKDIR /app
 # pnpm install non viene rieseguito nelle build successive.
 # ─────────────────────────────────────────
 FROM base AS deps
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY package.json pnpm-lock.yaml .npmrc ./
+
+RUN corepack prepare pnpm@11.5.2 --activate
+RUN pnpm install --frozen-lockfile --ignore-scripts
+RUN pnpm rebuild esbuild sharp unrs-resolver
 
 # ─────────────────────────────────────────
 # STAGE 3: BUILD
 # Compila Next.js in modalità produzione.
 # ─────────────────────────────────────────
 FROM base AS builder
+RUN corepack prepare pnpm@10.7.0 --activate
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN pnpm build
@@ -56,7 +61,7 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copia i file pubblici statici
-COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 # Copia l'output standalone di Next.js.
 # --chown: assegna i file all'utente nextjs, non root.

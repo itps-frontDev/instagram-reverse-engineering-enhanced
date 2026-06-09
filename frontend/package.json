@@ -2,7 +2,7 @@
   "name": "instagram-reverse-engineering",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@11.0.9",
+  "packageManager": "pnpm@11.5.2",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -39,11 +39,5 @@
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "sharp"
-    ]
   }
 }

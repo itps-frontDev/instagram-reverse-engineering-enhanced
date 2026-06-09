@@ -2,17 +2,13 @@ services:
 
   # ── FRONTEND ──────────────────────────────────────────
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    image: iree/frontend
+    image: instagramregistry-g8csa4hhfnbmhfby.azurecr.io/frontend:1.0.0 
     ports:
       - "3000:3000"
     environment:
       NEXT_PUBLIC_API_URL: ${API_URL}
       NEXT_PUBLIC_WS_URL: ${API_URL}/ws
       NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL}
-      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
       # Con la nuova architettura il frontend parla con il gateway, non direttamente con core.
       # Il gateway è l'unico punto di ingresso su porta 8080 e smista lui verso i servizi giusti.
       SPRING_API_BASE_URL: http://api-gateway:8080
@@ -31,10 +27,7 @@ services:
   # e il gateway interroga Eureka per sapere su quale IP:porta gira un servizio.
   # Parte per primo perché tutti gli altri dipendono da lui.
   service-discovery:
-    build:
-      context: ./backend
-      dockerfile: service-discovery/Dockerfile
-    image: iree/service-discovery
+    image: instagramregistry-g8csa4hhfnbmhfby.azurecr.io/service-discovery:1.0.0
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8761/actuator/health | grep UP || exit 1"]
       interval: 10s
@@ -47,10 +40,7 @@ services:
   # NON si registra su Eureka (altrimenti i servizi non possono trovarlo
   # prima di avere la config — un classico problema chicken-and-egg).
   config-server:
-    build:
-      context: ./backend
-      dockerfile: config-server/Dockerfile
-    image: iree/config-server
+    image: instagramregistry-g8csa4hhfnbmhfby.azurecr.io/config-server:1.0.0
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8888/actuator/health | grep UP || exit 1"]
       interval: 10s
@@ -61,10 +51,7 @@ services:
   # Gestisce tutto tranne i messaggi diretti: auth, profili, post, storie, notifiche, ecc.
   # La porta 8081 NON è esposta all'esterno: il traffico arriva sempre tramite api-gateway.
   core:
-    build:
-      context: ./backend
-      dockerfile: core/Dockerfile
-    image: iree/core
+    image: instagramregistry-g8csa4hhfnbmhfby.azurecr.io/core:1.0.0
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME}
       # "db" è il nome del servizio PostgreSQL definito sotto —
@@ -95,10 +82,7 @@ services:
   # le tabelle chats/messages/chat_participants vengono create da core.
   # La porta 8082 NON è esposta all'esterno: il traffico arriva tramite api-gateway.
   directs-service:
-    build:
-      context: ./backend
-      dockerfile: directs-service/Dockerfile
-    image: iree/directs-service
+    image: instagramregistry-g8csa4hhfnbmhfby.azurecr.io/directs-service:1.0.0
     environment:
       # Stesso DB di core — directs legge/scrive le stesse tabelle.
       # "db" viene risolto da Docker come hostname del container PostgreSQL.
@@ -123,10 +107,7 @@ services:
   #   /api/priv/direct/**     → directs-service (REST)
   #   /**                     → core (tutto il resto)
   api-gateway:
-    build:
-      context: ./backend
-      dockerfile: api-gateway/Dockerfile
-    image: iree/api-gateway
+    image: instagramregistry-g8csa4hhfnbmhfby.azurecr.io/api-gateway:1.0.0
     ports:
       - "8080:8080"   # Unica porta esposta all'esterno
     depends_on:
@@ -159,6 +140,16 @@ services:
     volumes:
       - redisdata:/data
       # Named volume: sessioni e cache sopravvivono ai restart
+
+  # ── BLOB STORAGE ─────────────────────────────────────────────
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    command: "azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0"
+
 
 # Dichiarazione dei named volume —
 # Docker li crea automaticamente al primo avvio

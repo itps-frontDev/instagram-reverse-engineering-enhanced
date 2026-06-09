@@ -24,10 +24,12 @@ import {
   type BirthdayApiResponse,
 } from './schema';
 
-const SPRING_API_BASE_URL = process.env.SPRING_API_BASE_URL;
-
-if (!SPRING_API_BASE_URL) {
-  throw new Error('SPRING_API_BASE_URL is not configured');
+function requireSpringApiBaseUrl(): string {
+  const url = process.env.SPRING_API_BASE_URL?.trim();
+  if (!url) {
+    throw new Error('SPRING_API_BASE_URL is not configured');
+  }
+  return url.replace(/\/+$/, "");
 }
 
 type ProfileApiErrorPayload = {
@@ -60,6 +62,9 @@ function mapProfileErrorToUserMessage(payload: ProfileApiErrorPayload, fallback:
  * @returns BirthdayResponse (success) o ErrorResponse (error)
  */
 export async function getBirthdayAction(): Promise<BirthdayResponse | ErrorResponse> {
+  
+  const SPRING_API_BASE_URL = requireSpringApiBaseUrl();
+
   try {
     const cookieStore = await cookies();
     const cookieName = getAccessTokenCookieName();
@@ -130,6 +135,9 @@ export async function getBirthdayAction(): Promise<BirthdayResponse | ErrorRespo
 export async function updateBirthdayAction(
   birthday: string
 ): Promise<BirthdayResponse | ErrorResponse> {
+
+  const SPRING_API_BASE_URL = requireSpringApiBaseUrl();
+
   try {
     // Client-side validation con Zod
     const validated = updateBirthdaySchema.parse({ birthday });
