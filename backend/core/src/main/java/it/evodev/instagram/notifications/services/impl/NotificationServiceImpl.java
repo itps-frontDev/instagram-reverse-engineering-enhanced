@@ -33,7 +33,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -222,13 +221,15 @@ public class NotificationServiceImpl implements NotificationService {
             command.types().forEach(type -> acceptedTypes.add(NotificationTypeMapper.toNotificationType(type)));
         }
 
-        List<Notification> candidates = notificationRepository.findByRecipientProfileIdAndDeletedAtIsNullOrderByCreatedAtDesc(command.recipientProfileId());
+        List<Notification> candidates = notificationRepository.findByFilterAndDeletedAtIsNull(
+                command.recipientProfileId(),
+                command.senderProfileId(),
+                normalizedReferenceType,
+                command.referenceId()
+        );
         LocalDateTime now = LocalDateTime.now();
         List<Notification> toDelete = candidates.stream()
-                .filter(n -> command.senderProfileId() == null || Objects.equals(n.getSenderProfileId(), command.senderProfileId()))
                 .filter(n -> acceptedTypes.isEmpty() || acceptedTypes.contains(n.getType()))
-                .filter(n -> normalizedReferenceType == null || n.getReferenceType() == normalizedReferenceType)
-                .filter(n -> command.referenceId() == null || Objects.equals(n.getReferenceId(), command.referenceId()))
                 .peek(n -> n.setDeletedAt(now))
                 .toList();
 

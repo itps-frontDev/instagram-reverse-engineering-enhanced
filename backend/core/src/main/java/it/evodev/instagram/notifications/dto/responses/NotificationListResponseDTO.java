@@ -10,5 +10,5 @@ import java.util.List;
 public class NotificationListResponseDTO {
     private List<NotificationResponseDTO> items;
     private String nextCursor;
-    private Long unreadCountSnapshot;
+    private Long unreadCount;
 }

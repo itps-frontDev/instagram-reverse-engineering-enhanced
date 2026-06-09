@@ -16,7 +16,22 @@ import java.util.UUID;
 public interface NotificationRepository extends JpaRepository<Notification, UUID> {
 
     Optional<Notification> findByIdAndRecipientProfileIdAndDeletedAtIsNull(UUID id, Long recipientProfileId);
-    List<Notification> findByRecipientProfileIdAndDeletedAtIsNullOrderByCreatedAtDesc(Long recipientProfileId);
+
+    @Query("""
+            SELECT n FROM Notification n
+            WHERE n.recipientProfileId = :recipientProfileId
+              AND n.deletedAt IS NULL
+              AND (:senderProfileId IS NULL OR n.senderProfileId = :senderProfileId)
+              AND (:referenceType IS NULL OR n.referenceType = :referenceType)
+              AND (:referenceId IS NULL OR n.referenceId = :referenceId)
+            """)
+    List<Notification> findByFilterAndDeletedAtIsNull(
+            @Param("recipientProfileId") Long recipientProfileId,
+            @Param("senderProfileId") Long senderProfileId,
+            @Param("referenceType") NotificationReferenceType referenceType,
+            @Param("referenceId") Long referenceId
+    );
+
     List<Notification> findByRecipientProfileIdAndSenderProfileIdAndTypeAndDeletedAtIsNull(
             Long recipientProfileId,
             Long senderProfileId,

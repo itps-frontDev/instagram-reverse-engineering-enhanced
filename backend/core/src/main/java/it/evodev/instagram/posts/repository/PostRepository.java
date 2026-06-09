@@ -45,15 +45,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("SELECT p FROM Post p WHERE p.id = :postId AND p.deletedAt IS NULL")
     Optional<Post> findByIdNotDeleted(@Param("postId") Long postId);
 
-    /**
-     * Recupera i post normali (non filtrati per tipo media) di un profilo, ordinati per data decrescente.
-     * 
-     * Include il primo media (position=0) come thumbnail e il conteggio totale dei media del post.
-     * 
-     * @param profileId ID del profilo proprietario dei post
-     * @param pageable Paginazione (size, offset)
-     * @return Lista di mappe con: id, caption, likesCount, commentsCount, createdAt, mediaUrl, mediaType, mediaCount
-     */
     @Query("SELECT p.likesCount FROM Post p WHERE p.id = :postId AND p.deletedAt IS NULL")
     Optional<Long> findLikesCountByPostId(@Param("postId") Long postId);
 
@@ -61,6 +52,15 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("UPDATE Post p SET p.likesCount = GREATEST(0, p.likesCount + :delta) WHERE p.id = :postId AND p.deletedAt IS NULL")
     void adjustLikesCount(@Param("postId") Long postId, @Param("delta") int delta);
 
+    /**
+     * Recupera i post normali (non filtrati per tipo media) di un profilo, ordinati per data decrescente.
+     *
+     * Include il primo media (position=0) come thumbnail e il conteggio totale dei media del post.
+     *
+     * @param profileId ID del profilo proprietario dei post
+     * @param pageable Paginazione (size, offset)
+     * @return Lista di mappe con: id, caption, likesCount, commentsCount, createdAt, mediaUrl, mediaType, mediaCount
+     */
     @Query("""
         SELECT new map(
             p.id AS id,
@@ -74,7 +74,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
         )
         FROM PostMedia pm
         RIGHT JOIN Post p ON pm.postId = p.id AND pm.position = 0 AND pm.deletedAt IS NULL
-        WHERE p.profileId = :profileId 
+        WHERE p.profileId = :profileId
           AND p.deletedAt IS NULL
         ORDER BY p.createdAt DESC
         """)

@@ -1,5 +1,8 @@
 package it.evodev.instagram.posts.model.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum MediaType {
     IMAGE("image"),
     VIDEO("video");
@@ -8,10 +11,6 @@ public enum MediaType {
 
     MediaType(String value) {
         this.value = value;
-    }
-
-    public String getValue() {
-        return value;
     }
 
     public static MediaType fromString(String value) {

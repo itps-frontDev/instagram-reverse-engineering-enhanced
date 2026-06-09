@@ -4,6 +4,7 @@ import it.evodev.instagram.auth.services.AuthSubjectService;
 import it.evodev.instagram.posts.dto.response.ProfilePostItemDTO;
 import it.evodev.instagram.posts.dto.response.ProfilePostsResponseDTO;
 import it.evodev.instagram.posts.exception.PostSaveUnauthorizedException;
+import it.evodev.instagram.posts.exception.PostSaveValidationException;
 import it.evodev.instagram.posts.repository.PostReelsRepository;
 import it.evodev.instagram.posts.repository.PostRepository;
 import it.evodev.instagram.posts.repository.SavedPostRepository;
@@ -61,7 +62,14 @@ public class PostsProfileServiceImpl implements PostsProfileService {
         String tab,
         int page
     ) {
-        logger.info("Fetching profile posts. Target username: {}, Tab: {}, Page: {}", 
+        if (page < 0) {
+            throw new PostSaveValidationException("Page must be >= 0");
+        }
+        if (!tab.matches("^(posts|reels|saved|tagged)$")) {
+            throw new PostSaveValidationException("Invalid tab. Must be: posts, reels, saved, or tagged");
+        }
+
+        logger.info("Fetching profile posts. Target username: {}, Tab: {}, Page: {}",
             targetUsername, tab, page);
 
         // 1. Parse authSubject UUID
