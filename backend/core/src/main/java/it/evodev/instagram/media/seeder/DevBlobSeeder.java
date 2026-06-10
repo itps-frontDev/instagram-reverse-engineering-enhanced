@@ -109,9 +109,9 @@ public class DevBlobSeeder implements ApplicationRunner {
     }
 
     private static final List<String> REEL_PLACEHOLDER_URLS = List.of(
-            "https://www.w3schools.com/html/mov_bbb.mp4",                              // 0.8 MB
-            "https://media.w3.org/2010/05/video/movie_300.mp4",                       // 2.6 MB
-            "https://media.w3.org/2010/05/sintel/trailer.mp4",                        // 4.2 MB
+            "https://samplelib.com/preview/mp4/sample-5s.mp4",                        // 2.8 MB
+            "https://lorem.video/cat_720x1280_h264_30fps_15s_26crf_aac_96kbps.mp4",   // 3.1 MB
+            "https://lorem.video/corgi_720x1280_h264_30fps_15s_26crf_aac_96kbps.mp4",  // 3.2 MB
             "https://download.blender.org/durian/trailer/sintel_trailer-480p.mp4",    // 4.2 MB
             "https://media.w3.org/2010/05/bunny/trailer.mp4"                          // 10.5 MB
     );
