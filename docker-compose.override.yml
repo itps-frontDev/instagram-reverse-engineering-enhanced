@@ -2,6 +2,7 @@ services:
 
   frontend:
     build:
+      context: ./frontend
       dockerfile: Dockerfile.dev   # sovrascrive il Dockerfile base
     volumes:
       - ./frontend:/app            # bind mount: codice dal tuo PC
@@ -28,6 +29,7 @@ services:
   # dal PC nel container e bootRun ricompila al volo con devtools.
   core:
     build:
+      context: ./backend
       dockerfile: core/Dockerfile.dev   # sovrascrive il Dockerfile base
     volumes:
       - ./backend:/app             # bind mount: tutta la root multi-module
@@ -56,6 +58,7 @@ services:
   # Gradle costruisce il JAR del modulo directs-service tramite bootJar, e Docker esegue direttamente quel JAR.
   directs-service:
     build:
+      context: ./backend
       dockerfile: directs-service/Dockerfile.dev
     volumes:
       - ./backend:/app                      # stessa root di core — Gradle gestisce i sottomoduli
