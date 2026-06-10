@@ -1,6 +1,6 @@
 package it.evodev.instagram.posts.dto.response;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 /**
  * DTO per rappresentare un singolo post nella griglia profilo.
@@ -21,7 +21,7 @@ public record ProfilePostItemDTO(
     String caption,
     Integer likesCount,
     Integer commentsCount,
-    OffsetDateTime createdAt,
+    Instant createdAt,
     String mediaUrl,
     String mediaType,
     Integer mediaCount

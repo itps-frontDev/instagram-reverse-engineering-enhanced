@@ -1,6 +1,6 @@
 package it.evodev.directs.dto.responses;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 public record ChatSummaryResponseDTO(
@@ -10,6 +10,6 @@ public record ChatSummaryResponseDTO(
         String otherFullName,
         String otherProfileImageUrl,
         String lastMessageText,
-        LocalDateTime lastMessageAt,
+        Instant lastMessageAt,
         Boolean isFromMe
 ) {}

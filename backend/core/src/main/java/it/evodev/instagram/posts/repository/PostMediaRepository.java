@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.List;
 
 public interface PostMediaRepository extends JpaRepository<PostMedia, Long> {
@@ -28,6 +28,6 @@ public interface PostMediaRepository extends JpaRepository<PostMedia, Long> {
         """)
     int softDeleteByPostId(
         @Param("postId") Long postId,
-        @Param("deletedAt") OffsetDateTime deletedAt
+        @Param("deletedAt") Instant deletedAt
     );
 }

@@ -1,6 +1,6 @@
 package it.evodev.directs.dto.responses;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 public record MessageResponseDTO(
@@ -8,5 +8,5 @@ public record MessageResponseDTO(
         UUID chatId,
         Long senderProfileId,
         String text,
-        LocalDateTime createdAt
+        Instant createdAt
 ) {}

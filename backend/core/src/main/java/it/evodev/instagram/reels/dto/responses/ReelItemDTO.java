@@ -1,6 +1,6 @@
 package it.evodev.instagram.reels.dto.responses;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.List;
 
 public record ReelItemDTO(
@@ -12,7 +12,7 @@ public record ReelItemDTO(
         Boolean isLikesHidden,
         Integer likesCount,
         Integer commentsCount,
-        OffsetDateTime createdAt,
+        Instant createdAt,
         String profileUsername,
         String profileFullName,
         String profileImageUrl,

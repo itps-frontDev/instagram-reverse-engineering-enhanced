@@ -10,7 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "saved_posts")
@@ -31,10 +31,10 @@ public class SavedPost {
     private Long postId;
 
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
-    private OffsetDateTime createdAt;
+    private Instant createdAt;
 
     @Column(name = "deleted_at")
-    private OffsetDateTime deletedAt;
+    private Instant deletedAt;
 
     public boolean isActive() {
         return deletedAt == null;
@@ -42,7 +42,7 @@ public class SavedPost {
 
     public void toggle() {
         if (isActive()) {
-            deletedAt = OffsetDateTime.now();
+            deletedAt = Instant.now();
             return;
         }
         deletedAt = null;

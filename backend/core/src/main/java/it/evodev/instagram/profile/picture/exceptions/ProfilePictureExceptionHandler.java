@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Order(1)
 @RestControllerAdvice(basePackages = "it.evodev.instagram.profile.picture")
@@ -26,20 +26,20 @@ public class ProfilePictureExceptionHandler {
             default -> HttpStatus.BAD_REQUEST;
         };
         return ResponseEntity.status(status)
-                .body(new ProfilePictureErrorDTO(e.getErrorCode(), e.getMessage(), LocalDateTime.now()));
+                .body(new ProfilePictureErrorDTO(e.getErrorCode(), e.getMessage(), Instant.now()));
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ProfilePictureErrorDTO> handleMaxSize(MaxUploadSizeExceededException e) {
         logger.warn("Upload exceeded multipart max size: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
-                .body(new ProfilePictureErrorDTO("FILE_TOO_LARGE", "File exceeds maximum allowed size.", LocalDateTime.now()));
+                .body(new ProfilePictureErrorDTO("FILE_TOO_LARGE", "File exceeds maximum allowed size.", Instant.now()));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ProfilePictureErrorDTO> handleGeneric(Exception e) {
         logger.error("Unhandled exception in profile picture [{}]: {}", e.getClass().getSimpleName(), e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ProfilePictureErrorDTO("INTERNAL_ERROR", "An unexpected error occurred.", LocalDateTime.now()));
+                .body(new ProfilePictureErrorDTO("INTERNAL_ERROR", "An unexpected error occurred.", Instant.now()));
     }
 }

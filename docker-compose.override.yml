@@ -10,6 +10,9 @@ services:
                                    # installati durante il build per Alpine/Linux,
                                    # impedendo che vengano sovrascritti da quelli
                                    # del tuo PC (Windows/Mac)
+      - /app/.next                 # volume anonimo: isola la cache di Turbopack dentro
+                                   # Docker. Impedisce che una cache parziale dal PC
+                                   # (lasciata dal run precedente) causi 404 all'avvio.
       - pnpm_store:/root/.local/share/pnpm/store
                                    # named volume: store globale di pnpm.
                                    # pnpm scarica ogni pacchetto UNA VOLTA in questa

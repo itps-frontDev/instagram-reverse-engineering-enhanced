@@ -8,7 +8,7 @@ import it.evodev.instagram.likes.strategies.LikeStrategy;
 import it.evodev.instagram.stories.repository.StoryReadRepository;
 import org.springframework.stereotype.Component;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 @Component
 public class StoryLikeStrategy implements LikeStrategy {
@@ -30,7 +30,7 @@ public class StoryLikeStrategy implements LikeStrategy {
 
     @Override
     public void validateExists(Long likeableId) {
-        if (!storyRepository.existsByIdAndDeletedAtIsNullAndExpiresAtAfter(likeableId, OffsetDateTime.now())) {
+        if (!storyRepository.existsByIdAndDeletedAtIsNullAndExpiresAtAfter(likeableId, Instant.now())) {
             throw new LikeableNotFoundException("Story not found or expired: " + likeableId);
         }
     }

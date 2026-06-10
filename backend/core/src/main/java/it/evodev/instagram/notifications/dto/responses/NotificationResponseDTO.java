@@ -3,7 +3,7 @@ package it.evodev.instagram.notifications.dto.responses;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Data
@@ -22,5 +22,5 @@ public class NotificationResponseDTO {
     private String referenceImageUrl;
     private String referenceMediaType;
     private Boolean isRead;
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 }

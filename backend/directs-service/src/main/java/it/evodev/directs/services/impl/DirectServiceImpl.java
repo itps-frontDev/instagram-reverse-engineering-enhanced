@@ -27,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -131,7 +131,7 @@ public class DirectServiceImpl implements DirectService {
             return new GetOrCreateChatResponseDTO(existing.get());
         }
 
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         Chat chat = new Chat();
         chat.setIsGroup(false);
@@ -164,7 +164,7 @@ public class DirectServiceImpl implements DirectService {
             throw new DirectValidationException("Message text exceeds 1000 characters");
         }
 
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         Message message = new Message();
         message.setChatId(chatId);
@@ -214,7 +214,7 @@ public class DirectServiceImpl implements DirectService {
         }
     }
 
-    private ChatParticipant participant(UUID chatId, Long profileId, LocalDateTime now) {
+    private ChatParticipant participant(UUID chatId, Long profileId, Instant now) {
         ChatParticipant p = new ChatParticipant();
         p.setChatId(chatId);
         p.setProfileId(profileId);

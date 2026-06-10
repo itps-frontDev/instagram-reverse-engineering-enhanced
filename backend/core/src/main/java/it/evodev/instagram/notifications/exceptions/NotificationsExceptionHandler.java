@@ -11,7 +11,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @RestControllerAdvice(basePackages = "it.evodev.instagram.notifications")
 public class NotificationsExceptionHandler {
@@ -61,7 +61,7 @@ public class NotificationsExceptionHandler {
     }
 
     private static NotificationActionResponseDTO<Object> error(String code, String message) {
-        NotificationErrorDTO payload = new NotificationErrorDTO(code, message, LocalDateTime.now());
+        NotificationErrorDTO payload = new NotificationErrorDTO(code, message, Instant.now());
         return new NotificationActionResponseDTO<>(false, null, payload.getCode(), payload.getMessage());
     }
 }

@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,7 +19,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
         Long getParentId();
         String getText();
         Integer getLikesCount();
-        LocalDateTime getCreatedAt();
+        Instant getCreatedAt();
         String getProfileUsername();
         String getProfileFullName();
         String getProfileImageUrl();

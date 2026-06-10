@@ -1,13 +1,13 @@
 package it.evodev.directs.repositories.projections;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 public interface ChatWithDetailsProjection {
     UUID getChatId();
     Boolean getIsGroup();
     String getChatName();
-    LocalDateTime getLastMessageAt();
+    Instant getLastMessageAt();
     String getLastMessageText();
     Long getLastMessageSenderId();
     Long getOtherProfileId();

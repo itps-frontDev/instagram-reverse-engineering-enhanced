@@ -1,6 +1,6 @@
 package it.evodev.instagram.notifications.repositories;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 public interface NotificationFeedProjection {
@@ -17,5 +17,5 @@ public interface NotificationFeedProjection {
     String getReferenceImageUrl();
     String getReferenceMediaType();
     Boolean getIsRead();
-    LocalDateTime getCreatedAt();
+    Instant getCreatedAt();
 }

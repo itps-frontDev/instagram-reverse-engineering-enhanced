@@ -22,7 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -89,7 +89,7 @@ public class PostCreateServiceImpl implements PostCreateService {
 
         logger.info("POST /api/priv/posts - creating post for profileId: {}, imageCount: {}", profileId, images.size());
 
-        OffsetDateTime now = OffsetDateTime.now();
+        Instant now = Instant.now();
 
         Post post = new Post();
         post.setProfileId(profileId);

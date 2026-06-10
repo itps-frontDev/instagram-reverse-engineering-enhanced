@@ -16,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -87,7 +86,7 @@ public class ReelServiceImpl implements ReelService {
                 p.getIsLikesHidden(),
                 p.getLikesCount(),
                 p.getCommentsCount(),
-                p.getCreatedAt().atOffset(ZoneOffset.UTC),
+                p.getCreatedAt(),
                 p.getProfileUsername(),
                 p.getProfileFullName(),
                 p.getProfileImageUrl(),

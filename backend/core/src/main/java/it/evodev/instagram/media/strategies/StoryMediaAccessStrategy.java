@@ -11,7 +11,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Map;
 
 @Component
@@ -43,8 +43,8 @@ public class StoryMediaAccessStrategy implements MediaAccessStrategy {
 
         Map<String, Object> row = rows.getFirst();
         Timestamp expiresAtTs = (Timestamp) row.get("expires_at");
-        LocalDateTime expiresAt = expiresAtTs != null ? expiresAtTs.toLocalDateTime() : null;
-        if (expiresAt != null && LocalDateTime.now().isAfter(expiresAt)) {
+        Instant expiresAt = expiresAtTs != null ? expiresAtTs.toInstant() : null;
+        if (expiresAt != null && Instant.now().isAfter(expiresAt)) {
             throw new StoryExpiredException("Story has expired.");
         }
 

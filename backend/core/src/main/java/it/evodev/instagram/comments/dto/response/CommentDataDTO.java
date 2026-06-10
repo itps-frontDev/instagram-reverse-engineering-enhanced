@@ -1,6 +1,6 @@
 package it.evodev.instagram.comments.dto.response;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record CommentDataDTO(
         Long id,
@@ -26,7 +26,7 @@ public record CommentDataDTO(
             Long parentId,
             String text,
             Long likesCount,
-            LocalDateTime createdAt,
+            Instant createdAt,
             String profileUsername,
             String profileFullName,
             String profileImageUrl,

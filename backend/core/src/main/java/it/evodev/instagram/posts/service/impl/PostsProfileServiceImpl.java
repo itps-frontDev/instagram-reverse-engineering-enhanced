@@ -21,7 +21,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -174,7 +174,7 @@ public class PostsProfileServiceImpl implements PostsProfileService {
             (String) map.get("caption"),
             ((Number) map.get("likesCount")).intValue(),
             ((Number) map.get("commentsCount")).intValue(),
-            (OffsetDateTime) map.get("createdAt"),
+            (Instant) map.get("createdAt"),
             (String) map.get("mediaUrl"),
             (String) map.get("mediaType"),
             ((Number) map.get("mediaCount")).intValue()

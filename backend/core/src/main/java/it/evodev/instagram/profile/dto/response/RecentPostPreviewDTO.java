@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import lombok.Builder;
 import lombok.Data;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 @Data
 @Builder
@@ -14,7 +14,7 @@ public class RecentPostPreviewDTO {
     private Long id;
     private String mediaUrl;
     private MediaType mediaType;
-    private OffsetDateTime createdAt;
+    private Instant createdAt;
 
     @JsonGetter("type")
     public String getType() {

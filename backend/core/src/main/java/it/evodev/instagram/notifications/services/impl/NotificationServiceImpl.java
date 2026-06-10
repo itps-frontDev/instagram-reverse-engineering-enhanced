@@ -30,7 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -52,7 +52,7 @@ public class NotificationServiceImpl implements NotificationService {
     public NotificationListResponseDTO listForRecipient(UUID authSubjectUuid, Integer limit, String cursor) {
         int resolvedLimit = normalizeLimit(limit);
         Long recipientProfileId = resolveCurrentProfileId(authSubjectUuid);
-        LocalDateTime cursorCreatedAt = NotificationCursorUtil.parseCursor(cursor);
+        Instant cursorCreatedAt = NotificationCursorUtil.parseCursor(cursor);
         logger.info("Listing notifications started - recipientProfileId: {}, limit: {}, cursor: {}", recipientProfileId, resolvedLimit, cursor);
 
         List<NotificationFeedProjection> rows = notificationRepository.findFeedByRecipientProfileId(recipientProfileId, cursorCreatedAt, resolvedLimit);
@@ -117,7 +117,7 @@ public class NotificationServiceImpl implements NotificationService {
                     return new NotificationNotFoundException("Notification not found");
                 });
 
-        notification.setDeletedAt(LocalDateTime.now());
+        notification.setDeletedAt(Instant.now());
         notificationRepository.save(notification);
         logger.info("Delete notification completed - recipientProfileId: {}, notificationUuid: {}", recipientProfileId, notificationUuid);
         return new NotificationMutationResponseDTO(true, 1, "Notification deleted");
@@ -175,7 +175,7 @@ public class NotificationServiceImpl implements NotificationService {
         strategy.validate(context);
         NotificationBuildResult buildResult = strategy.build(context);
 
-        LocalDateTime deduplicationBoundary = LocalDateTime.now().minus(notificationsProperties.getDeduplicationTtl());
+        Instant deduplicationBoundary = Instant.now().minus(notificationsProperties.getDeduplicationTtl());
         boolean duplicated = notificationRepository.existsByRecipientProfileIdAndSenderProfileIdAndTypeAndReferenceTypeAndReferenceIdAndCreatedAtAfterAndDeletedAtIsNull(
                 context.getRecipientProfileId(),
                 context.getSenderProfileId(),
@@ -227,7 +227,7 @@ public class NotificationServiceImpl implements NotificationService {
                 normalizedReferenceType,
                 command.referenceId()
         );
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         List<Notification> toDelete = candidates.stream()
                 .filter(n -> acceptedTypes.isEmpty() || acceptedTypes.contains(n.getType()))
                 .peek(n -> n.setDeletedAt(now))

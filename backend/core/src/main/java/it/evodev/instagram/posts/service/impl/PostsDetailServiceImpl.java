@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -137,7 +137,7 @@ public class PostsDetailServiceImpl implements PostsDetailService {
     @Transactional
     public void deletePost(String authSubject, Long postId) {
         Post post = validateOwnerAndGetPost(authSubject, postId);
-        OffsetDateTime now = OffsetDateTime.now();
+        Instant now = Instant.now();
         post.setDeletedAt(now);
         postRepository.save(post);
         postMediaRepository.softDeleteByPostId(postId, now);

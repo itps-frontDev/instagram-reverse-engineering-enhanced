@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -46,7 +46,7 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
             NotificationType type,
             NotificationReferenceType referenceType,
             Long referenceId,
-            LocalDateTime createdAt
+            Instant createdAt
     );
 
     @Modifying
@@ -95,7 +95,7 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
             """, nativeQuery = true)
     List<NotificationFeedProjection> findFeedByRecipientProfileId(
             @Param("recipientProfileId") Long recipientProfileId,
-            @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
+            @Param("cursorCreatedAt") Instant cursorCreatedAt,
             @Param("limit") int limit
     );
 }

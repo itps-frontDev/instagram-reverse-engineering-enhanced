@@ -163,7 +163,7 @@ public class ProfileReadServiceImpl implements ProfileReadService {
                         .id(((Number) m.get("id")).longValue())
                         .mediaUrl((String) m.get("mediaUrl"))
                         .mediaType(MediaType.fromString((String) m.get("mediaType")))
-                        .createdAt(((java.time.OffsetDateTime) m.get("createdAt")))
+                        .createdAt((java.time.Instant) m.get("createdAt"))
                         .build())
                 .collect(Collectors.toMap(
                         RecentPostPreviewDTO::getId,

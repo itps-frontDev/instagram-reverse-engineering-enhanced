@@ -25,7 +25,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -123,8 +123,8 @@ public class FollowServiceImpl implements FollowService {
         if (activeFollow.isPresent()) {
             Follow follow = activeFollow.get();
             String previousStatus = follow.getStatus();
-            follow.setUpdatedAt(LocalDateTime.now());
-            follow.setDeletedAt(LocalDateTime.now());
+            follow.setUpdatedAt(Instant.now());
+            follow.setDeletedAt(Instant.now());
             followRepository.save(follow);
 
             if (FollowStatus.ACCEPTED.equalsValue(previousStatus)) {
@@ -148,13 +148,13 @@ public class FollowServiceImpl implements FollowService {
         if (softDeleted.isPresent()) {
             follow = softDeleted.get();
             follow.setDeletedAt(null);
-            follow.setUpdatedAt(LocalDateTime.now());
+            follow.setUpdatedAt(Instant.now());
         } else {
             follow = new Follow();
             follow.setFollowerProfileId(follower.getId());
             follow.setFollowingProfileId(followingProfileId);
-            follow.setCreatedAt(LocalDateTime.now());
-            follow.setUpdatedAt(LocalDateTime.now());
+            follow.setCreatedAt(Instant.now());
+            follow.setUpdatedAt(Instant.now());
         }
 
         if (isPrivate) {
@@ -186,7 +186,7 @@ public class FollowServiceImpl implements FollowService {
                         "Pending follow request not found from profile " + requesterProfileId));
 
         follow.setStatus(FollowStatus.ACCEPTED.value());
-        follow.setUpdatedAt(LocalDateTime.now());
+        follow.setUpdatedAt(Instant.now());
         followRepository.save(follow);
 
         profileRepository.incrementFollowersCount(owner.getId());
@@ -209,8 +209,8 @@ public class FollowServiceImpl implements FollowService {
                         "Pending follow request not found from profile " + requesterProfileId));
 
         follow.setStatus(FollowStatus.REJECTED.value());
-        follow.setUpdatedAt(LocalDateTime.now());
-        follow.setDeletedAt(LocalDateTime.now());
+        follow.setUpdatedAt(Instant.now());
+        follow.setDeletedAt(Instant.now());
         followRepository.save(follow);
 
         eventPublisher.publishEvent(new FollowRemovedEvent(requesterProfileId, owner.getId()));
@@ -229,8 +229,8 @@ public class FollowServiceImpl implements FollowService {
                 .orElseThrow(() -> new FollowNotFoundException(
                         "Active follower not found: profile " + followerProfileId));
 
-        follow.setUpdatedAt(LocalDateTime.now());
-        follow.setDeletedAt(LocalDateTime.now());
+        follow.setUpdatedAt(Instant.now());
+        follow.setDeletedAt(Instant.now());
         followRepository.save(follow);
 
         profileRepository.decrementFollowersCount(owner.getId());

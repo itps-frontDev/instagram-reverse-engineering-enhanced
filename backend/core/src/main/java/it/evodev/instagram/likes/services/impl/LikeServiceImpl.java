@@ -18,7 +18,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -51,7 +51,7 @@ public class LikeServiceImpl implements LikeService {
         boolean liked;
         if (existing.isPresent() && existing.get().getDeletedAt() == null) {
             Like like = existing.get();
-            like.setDeletedAt(OffsetDateTime.now());
+            like.setDeletedAt(Instant.now());
             likeRepository.save(like);
             strategy.adjustCount(likeableId, -1);
             liked = false;

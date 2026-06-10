@@ -1,6 +1,6 @@
 package it.evodev.instagram.posts.dto.response;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.List;
 
 public record PostDetailDTO(
@@ -9,7 +9,7 @@ public record PostDetailDTO(
     String caption,
     Integer likesCount,
     Integer commentsCount,
-    OffsetDateTime createdAt,
+    Instant createdAt,
     String profileUsername,
     String profileFullName,
     String profileImageUrl,
