@@ -1,7 +1,7 @@
 package it.evodev.instagram.posts.service.impl;
 
 import it.evodev.instagram.profile.models.Profile;
-import it.evodev.instagram.auth.repositories.ProfileRepository;
+import it.evodev.instagram.profile.repository.ProfileJpaRepository;
 import it.evodev.instagram.posts.service.PostVisibilityService;
 import it.evodev.instagram.follow.models.enums.FollowStatus;
 import it.evodev.instagram.follow.repositories.FollowJpaRepository;
@@ -23,7 +23,7 @@ public class PostVisibilityServiceImpl implements PostVisibilityService {
 
     private static final Logger logger = LoggerFactory.getLogger(PostVisibilityServiceImpl.class);
 
-    private final ProfileRepository profileRepository;
+    private final ProfileJpaRepository profileRepository;
     private final FollowJpaRepository followRepository;
 
     @Override

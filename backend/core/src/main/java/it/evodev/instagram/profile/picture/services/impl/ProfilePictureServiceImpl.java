@@ -1,7 +1,8 @@
 package it.evodev.instagram.profile.picture.services.impl;
 
 import it.evodev.instagram.profile.models.Profile;
-import it.evodev.instagram.auth.repositories.ProfileRepository;
+import it.evodev.instagram.profile.repository.ProfileEditJpaRepository;
+import it.evodev.instagram.profile.repository.ProfileJpaRepository;
 import it.evodev.instagram.media.services.BlobStorageService;
 import it.evodev.instagram.profile.picture.exceptions.ProfilePictureException;
 import it.evodev.instagram.profile.picture.config.ProfilePictureProperties;
@@ -39,7 +40,8 @@ public class ProfilePictureServiceImpl implements ProfilePictureService {
             "image/webp", ".webp"
     );
 
-    private final ProfileRepository profileRepository;
+    private final ProfileJpaRepository profileRepository;
+    private final ProfileEditJpaRepository profileEditRepository;
     private final BlobStorageService blobStorageService;
 
     @Override
@@ -62,7 +64,7 @@ public class ProfilePictureServiceImpl implements ProfilePictureService {
         String existingUrl = profile.getProfileImageUrl();
 
         blobStorageService.upload(new ByteArrayInputStream(bytes), bytes.length, detectedMime, blobName);
-        profileRepository.updateProfileImageUrl(profile.getId(), blobName);
+        profileEditRepository.updateProfileImageUrl(profile.getId(), blobName);
 
         if (existingUrl != null) {
             try {
@@ -85,7 +87,7 @@ public class ProfilePictureServiceImpl implements ProfilePictureService {
             throw new ProfilePictureException("NO_IMAGE", "No profile picture to remove.");
         }
 
-        profileRepository.updateProfileImageUrl(profile.getId(), null);
+        profileEditRepository.updateProfileImageUrl(profile.getId(), null);
 
         try {
             blobStorageService.delete(existingUrl);

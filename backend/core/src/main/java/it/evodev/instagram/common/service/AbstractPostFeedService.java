@@ -1,7 +1,7 @@
 package it.evodev.instagram.common.service;
 
 import it.evodev.instagram.profile.models.Profile;
-import it.evodev.instagram.auth.repositories.ProfileRepository;
+import it.evodev.instagram.profile.repository.ProfileJpaRepository;
 import it.evodev.instagram.auth.services.AuthSubjectService;
 import jakarta.persistence.PersistenceException;
 import org.slf4j.Logger;
@@ -38,7 +38,7 @@ public abstract class AbstractPostFeedService {
      * Lancia l'eccezione fornita se il profilo non esiste o è stato eliminato (soft delete).
      */
     protected Profile resolveCurrentProfile(
-            ProfileRepository profileRepository,
+            ProfileJpaRepository profileRepository,
             UUID userId,
             Supplier<? extends RuntimeException> profileNotFoundExceptionSupplier
     ) {

@@ -7,7 +7,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "auth.jwt")
 public class JwtProperties {
     private String secret;
-    private long accessTokenTtl = 900;
-    private long refreshTokenTtl = 604800;
+    private long accessTokenTtl = 900;       // 15 minuti
+    private long refreshTokenTtl = 604800;   // 7 giorni
     private String issuer = "instagram-be";
 }

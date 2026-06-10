@@ -1,7 +1,7 @@
 package it.evodev.instagram.explore.service.impl;
 
 import it.evodev.instagram.profile.models.Profile;
-import it.evodev.instagram.auth.repositories.ProfileRepository;
+import it.evodev.instagram.profile.repository.ProfileJpaRepository;
 import it.evodev.instagram.auth.services.AuthSubjectService;
 import it.evodev.instagram.explore.dto.request.ExploreRequestDTO;
 import it.evodev.instagram.explore.dto.response.ExploreFeedDataDTO;
@@ -35,7 +35,7 @@ public class ExploreServiceImpl extends AbstractPostFeedService implements Explo
     private static final int MAX_LIMIT = 60;
 
     private final ExploreRepository exploreRepository;
-    private final ProfileRepository profileRepository;
+    private final ProfileJpaRepository profileRepository;
     private final AuthSubjectService authSubjectService;
 
     @Override

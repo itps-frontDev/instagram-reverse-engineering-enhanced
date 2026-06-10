@@ -2,7 +2,7 @@ package it.evodev.instagram.posts.service.impl;
 
 import it.evodev.instagram.auth.services.AuthSubjectService;
 import it.evodev.instagram.profile.models.Profile;
-import it.evodev.instagram.auth.repositories.ProfileRepository;
+import it.evodev.instagram.profile.repository.ProfileEditJpaRepository;
 import it.evodev.instagram.follow.models.enums.FollowStatus;
 import it.evodev.instagram.follow.repositories.FollowJpaRepository;
 import it.evodev.instagram.likes.models.enums.LikeableType;
@@ -43,12 +43,12 @@ public class PostsDetailServiceImpl implements PostsDetailService {
     private final PostRepository postRepository;
     private final PostMediaRepository postMediaRepository;
     private final PostVisibilityService postVisibilityService;
-    private final ProfileRepository profileRepository;
+    private final ProfileJpaRepository profileRepository;
+    private final ProfileEditJpaRepository profileEditRepository;
     private final LikeRepository likeRepository;
     private final SavedPostRepository savedPostRepository;
     private final FollowJpaRepository followJpaRepository;
     private final PostTagRepository postTagRepository;
-    private final ProfileJpaRepository profileVisibilityProfileJpaRepository;
 
     @Override
     public PostDetailDTO getPostDetail(String authSubject, Long postId) {
@@ -93,7 +93,7 @@ public class PostsDetailServiceImpl implements PostsDetailService {
 
         boolean hasTags = !postTagRepository.findTagsByPostId(postId).isEmpty();
 
-        ProfileByUsernameProjection authorContext = profileVisibilityProfileJpaRepository
+        ProfileByUsernameProjection authorContext = profileRepository
             .findProfileByUsernameWithContext(authorProfile.getUsername(), currentProfileId)
             .orElse(null);
 
@@ -141,7 +141,7 @@ public class PostsDetailServiceImpl implements PostsDetailService {
         post.setDeletedAt(now);
         postRepository.save(post);
         postMediaRepository.softDeleteByPostId(postId, now);
-        profileRepository.decrementPostsCount(post.getProfileId());
+        profileEditRepository.decrementPostsCount(post.getProfileId());
         logger.info("Post soft-deleted. Post ID: {}", postId);
     }
 

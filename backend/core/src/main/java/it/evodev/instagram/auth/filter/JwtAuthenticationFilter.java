@@ -29,23 +29,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
+        // Nessun token presente: passa avanti non autenticato; Spring Security gestirà il 401 sulle route protette
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
+        // Rimuove il prefisso "Bearer " per ottenere il JWT grezzo
         String token = authHeader.substring(7);
 
         try {
+            // Verifica firma e scadenza del token; lancia JwtException se non valido
             Claims claims = jwtService.parseAccessToken(token);
 
+            // Controlla la blacklist Redis: i token invalidati dopo un logout sono qui
             if (authRedisService.isTokenBlacklisted(claims.getId())) {
                 filterChain.doFilter(request, response);
                 return;
             }
 
+            // subject è l'UUID dell'utente — accessibile poi con authentication.getName()
             String subject = claims.getSubject();
 
+            // Registra l'utente come autenticato nel contesto della richiesta corrente
             UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                     subject,
                     null,
@@ -55,7 +61,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(authToken);
 
         } catch (JwtException ignored) {
-            // Invalid token — continue as unauthenticated; Spring Security handles the 401
+            // Token invalido o scaduto: passa non autenticato; Spring Security gestirà il 401
         }
 
         filterChain.doFilter(request, response);
@@ -63,6 +69,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
+        // Le route pubbliche non richiedono JWT: salta il filtro completamente
         String path = request.getServletPath();
         return path.startsWith("/api/public/");
     }

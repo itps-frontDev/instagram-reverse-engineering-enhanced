@@ -1,7 +1,7 @@
 package it.evodev.instagram.media.services;
 
 import it.evodev.instagram.profile.models.Profile;
-import it.evodev.instagram.auth.repositories.ProfileRepository;
+import it.evodev.instagram.profile.repository.ProfileJpaRepository;
 import it.evodev.instagram.media.dto.StreamableMedia;
 import it.evodev.instagram.media.enums.MediaCategory;
 import it.evodev.instagram.media.exceptions.InvalidMediaPathException;
@@ -38,7 +38,7 @@ public class MediaService {
 
     private final BlobStorageService blobStorageService;
     private final MediaAccessStrategyRegistry strategyRegistry;
-    private final ProfileRepository profileRepository;
+    private final ProfileJpaRepository profileRepository;
 
     public StreamableMedia resolveMedia(String category, String entityId, String filename, Authentication authentication) {
         validatePath(entityId, filename);

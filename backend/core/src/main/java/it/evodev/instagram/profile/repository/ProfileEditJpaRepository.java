@@ -60,4 +60,16 @@ public interface ProfileEditJpaRepository extends JpaRepository<Profile, Long> {
                AND deleted_at IS NULL
             """, nativeQuery = true)
     int countPendingFollowRequests(@Param("profileId") Long profileId);
+
+    @Modifying
+    @Query("UPDATE Profile p SET p.profileImageUrl = :url WHERE p.id = :id")
+    void updateProfileImageUrl(@Param("id") Long id, @Param("url") String url);
+
+    @Modifying
+    @Query("UPDATE Profile p SET p.postsCount = p.postsCount + 1 WHERE p.id = :id")
+    void incrementPostsCount(@Param("id") Long id);
+
+    @Modifying
+    @Query("UPDATE Profile p SET p.postsCount = GREATEST(p.postsCount - 1, 0) WHERE p.id = :id")
+    void decrementPostsCount(@Param("id") Long id);
 }

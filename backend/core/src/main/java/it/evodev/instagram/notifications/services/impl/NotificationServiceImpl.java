@@ -1,6 +1,6 @@
 package it.evodev.instagram.notifications.services.impl;
 
-import it.evodev.instagram.auth.repositories.ProfileRepository;
+import it.evodev.instagram.profile.repository.ProfileJpaRepository;
 import it.evodev.instagram.notifications.config.NotificationsProperties;
 import it.evodev.instagram.notifications.dto.responses.NotificationListResponseDTO;
 import it.evodev.instagram.notifications.dto.responses.NotificationMutationResponseDTO;
@@ -43,7 +43,7 @@ public class NotificationServiceImpl implements NotificationService {
     private static final Logger logger = LoggerFactory.getLogger(NotificationServiceImpl.class);
 
     private final NotificationRepository notificationRepository;
-    private final ProfileRepository profileRepository;
+    private final ProfileJpaRepository profileRepository;
     private final NotificationStrategyRegistry strategyRegistry;
     private final NotificationsProperties notificationsProperties;
 

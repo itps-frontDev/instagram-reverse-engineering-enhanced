@@ -126,6 +126,9 @@ public interface ProfileJpaRepository extends JpaRepository<Profile, Long> {
             @Param("viewerProfileId") Long viewerProfileId
     );
 
+    @Query("select p.id from Profile p where p.userId = :userId and p.deletedAt is null")
+    Optional<Long> findIdByUserIdAndDeletedAtIsNull(@Param("userId") UUID userId);
+
     @Modifying
     @Query(value = "UPDATE profiles SET followers_count = followers_count + 1 WHERE id = :profileId", nativeQuery = true)
     void incrementFollowersCount(@Param("profileId") Long profileId);

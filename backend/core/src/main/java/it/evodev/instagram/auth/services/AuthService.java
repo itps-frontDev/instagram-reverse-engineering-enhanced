@@ -13,7 +13,7 @@ import it.evodev.instagram.auth.exceptions.InvalidTokenException;
 import it.evodev.instagram.auth.exceptions.UsernameAlreadyExistsException;
 import it.evodev.instagram.profile.models.Profile;
 import it.evodev.instagram.auth.models.User;
-import it.evodev.instagram.auth.repositories.ProfileRepository;
+import it.evodev.instagram.profile.repository.ProfileJpaRepository;
 import it.evodev.instagram.auth.repositories.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -37,7 +37,7 @@ public class AuthService {
     private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository userRepository;
-    private final ProfileRepository profileRepository;
+    private final ProfileJpaRepository profileRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthRedisService authRedisService;
@@ -45,6 +45,11 @@ public class AuthService {
 
     @Transactional
     public LoginResponseDTO login(LoginRequestDTO request) {
+        // TODO: lockout — prima di procedere controllare se l'utente è bloccato (AuthRedisService.isLocked),
+        //  incrementare il contatore su password errata (AuthRedisService.incrementFailedAttempts),
+        //  resettarlo su login riuscito (AuthRedisService.resetFailedAttempts).
+        //  LockoutProperties e AccountLockedException sono già pronti.
+        //  Aggiungere auth.lockout.max-attempts e auth.lockout.lockout-duration in core.properties.
         logger.info("Login started");
         String normalizedIdentifier = request.getIdentifier().trim().toLowerCase();
         User user = userRepository.findByLoginIdentifier(normalizedIdentifier)

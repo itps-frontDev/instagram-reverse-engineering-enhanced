@@ -1,6 +1,6 @@
 package it.evodev.instagram.likes.services.impl;
 
-import it.evodev.instagram.auth.repositories.ProfileRepository;
+import it.evodev.instagram.profile.repository.ProfileJpaRepository;
 import it.evodev.instagram.likes.dto.responses.LikeToggleResponseDTO;
 import it.evodev.instagram.likes.events.LikeCreatedEvent;
 import it.evodev.instagram.likes.events.LikeRemovedEvent;
@@ -31,7 +31,7 @@ public class LikeServiceImpl implements LikeService {
     private final LikeRepository likeRepository;
     private final LikeStrategyRegistry strategyRegistry;
     private final ApplicationEventPublisher eventPublisher;
-    private final ProfileRepository profileRepository;
+    private final ProfileJpaRepository profileRepository;
 
     @Override
     @Transactional

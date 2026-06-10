@@ -1,6 +1,6 @@
 package it.evodev.instagram.posts.service.impl;
 
-import it.evodev.instagram.auth.repositories.ProfileRepository;
+import it.evodev.instagram.profile.repository.ProfileJpaRepository;
 import it.evodev.instagram.auth.services.AuthSubjectService;
 import it.evodev.instagram.posts.dto.response.PostSaveDataDTO;
 import it.evodev.instagram.posts.exception.PostSaveNotFoundException;
@@ -24,7 +24,7 @@ public class PostsSaveServiceImpl implements PostsSaveService {
 
     private static final Logger logger = LoggerFactory.getLogger(PostsSaveServiceImpl.class);
 
-    private final ProfileRepository profileRepository;
+    private final ProfileJpaRepository profileRepository;
     private final PostRepository postRepository;
     private final SavedPostRepository savedPostRepository;
     private final AuthSubjectService authSubjectService;

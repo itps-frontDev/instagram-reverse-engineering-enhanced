@@ -1,7 +1,7 @@
 package it.evodev.instagram.feed.service.impl;
 
 import it.evodev.instagram.profile.models.Profile;
-import it.evodev.instagram.auth.repositories.ProfileRepository;
+import it.evodev.instagram.profile.repository.ProfileJpaRepository;
 import it.evodev.instagram.auth.services.AuthSubjectService;
 import it.evodev.instagram.common.service.AbstractPostFeedService;
 import it.evodev.instagram.common.util.PaginationParamNormalizer;
@@ -36,7 +36,7 @@ public class FeedServiceImpl extends AbstractPostFeedService implements FeedServ
     private static final int MAX_LIMIT = 50;
 
     private final FeedRepository feedRepository;
-    private final ProfileRepository profileRepository;
+    private final ProfileJpaRepository profileRepository;
     private final AuthSubjectService authSubjectService;
 
     @Override

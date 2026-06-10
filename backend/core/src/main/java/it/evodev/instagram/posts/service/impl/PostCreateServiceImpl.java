@@ -1,6 +1,7 @@
 package it.evodev.instagram.posts.service.impl;
 
-import it.evodev.instagram.auth.repositories.ProfileRepository;
+import it.evodev.instagram.profile.repository.ProfileEditJpaRepository;
+import it.evodev.instagram.profile.repository.ProfileJpaRepository;
 import it.evodev.instagram.auth.services.AuthSubjectService;
 import it.evodev.instagram.media.exceptions.BlobStorageException;
 import it.evodev.instagram.media.services.BlobStorageService;
@@ -53,7 +54,8 @@ public class PostCreateServiceImpl implements PostCreateService {
     );
 
     private final AuthSubjectService authSubjectService;
-    private final ProfileRepository profileRepository;
+    private final ProfileJpaRepository profileRepository;
+    private final ProfileEditJpaRepository profileEditRepository;
     private final PostRepository postRepository;
     private final PostMediaRepository postMediaRepository;
     private final BlobStorageService blobStorageService;
@@ -131,7 +133,7 @@ public class PostCreateServiceImpl implements PostCreateService {
             postMediaRepository.save(media);
         }
 
-        profileRepository.incrementPostsCount(profileId);
+        profileEditRepository.incrementPostsCount(profileId);
 
         logger.info("POST /api/priv/posts - post created, postId: {}", postId);
         return new PostCreateResponseDTO(postId);

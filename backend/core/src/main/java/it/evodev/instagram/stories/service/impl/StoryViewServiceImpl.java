@@ -1,6 +1,6 @@
 package it.evodev.instagram.stories.service.impl;
 
-import it.evodev.instagram.auth.repositories.ProfileRepository;
+import it.evodev.instagram.profile.repository.ProfileJpaRepository;
 import it.evodev.instagram.stories.dto.response.StoryViewResponseDTO;
 import it.evodev.instagram.stories.exception.StoryNotFoundException;
 import it.evodev.instagram.stories.exception.StoryValidationException;
@@ -20,7 +20,7 @@ public class StoryViewServiceImpl implements StoryViewService {
 
     private static final Logger logger = LoggerFactory.getLogger(StoryViewServiceImpl.class);
 
-    private final ProfileRepository profileRepository;
+    private final ProfileJpaRepository profileRepository;
     private final StoryViewRepository storyViewRepository;
 
     @Override

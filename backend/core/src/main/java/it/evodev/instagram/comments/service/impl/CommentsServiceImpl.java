@@ -1,6 +1,6 @@
 package it.evodev.instagram.comments.service.impl;
 
-import it.evodev.instagram.auth.repositories.ProfileRepository;
+import it.evodev.instagram.profile.repository.ProfileJpaRepository;
 import it.evodev.instagram.auth.services.AuthSubjectService;
 import it.evodev.instagram.comments.dto.request.CommentCreateRequestDTO;
 import it.evodev.instagram.comments.dto.response.CommentDataDTO;
@@ -36,7 +36,7 @@ public class CommentsServiceImpl implements CommentsService {
     private static final Logger logger = LoggerFactory.getLogger(CommentsServiceImpl.class);
 
     private final CommentRepository commentRepository;
-    private final ProfileRepository profileRepository;
+    private final ProfileJpaRepository profileRepository;
     private final AuthSubjectService authSubjectService;
     private final ProfileVisibilityService profileVisibilityService;
     private final ApplicationEventPublisher eventPublisher;
