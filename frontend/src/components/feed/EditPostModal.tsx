@@ -15,10 +15,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, ChevronLeft } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import {ProfilePicture} from '@/components';
 import Image from 'next/image';
 import { updatePostCaptionAction } from '@/features/posts';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface EditPostModalProps {
   isOpen: boolean;
@@ -30,42 +31,24 @@ interface EditPostModalProps {
   onSave: (newCaption: string) => void;
 }
 
-export default function EditPostModal({ 
-  isOpen, 
-  onClose, 
-  postId, 
-  currentCaption, 
+export default function EditPostModal({
+  isOpen,
+  onClose,
+  postId,
+  currentCaption,
   mediaUrl,
   mediaType = 'image',
-  onSave 
+  onSave
 }: EditPostModalProps) {
+  const { profile: currentProfile } = useAuth();
   const [caption, setCaption] = useState(currentCaption);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentProfile, setCurrentProfile] = useState<{
-    username: string;
-    full_name: string | null;
-    profile_image_url: string | null;
-  } | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       setCaption(currentCaption);
-      fetchCurrentProfile();
     }
   }, [isOpen, currentCaption]);
-
-  const fetchCurrentProfile = async () => {
-    try {
-      const response = await fetch('/api/auth/me');
-      if (response.ok) {
-        const data = await response.json();
-        const payload = data.data ?? data;
-        setCurrentProfile(payload.profile ?? payload);
-      }
-    } catch (error) {
-      console.error('Error fetching current profile:', error);
-    }
-  };
 
   const handleSubmit = async () => {
     if (isSubmitting) return;

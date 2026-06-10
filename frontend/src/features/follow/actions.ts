@@ -1,7 +1,7 @@
 'use server';
 
-import { cookies } from 'next/headers';
-import { buildSpringAuthUrl, getAccessTokenCookieName } from '@/lib/auth/backend';
+import { springFetch } from '@/lib/spring-client';
+import { SpringAuthError } from '@/lib/spring-error';
 import {
   getFollowStatusInputSchema,
   getFollowStatusResultSchema,
@@ -33,13 +33,6 @@ import {
 } from './schema';
 
 
-const TIMEOUT_MS = 5_000;
-
-async function getAccessToken(): Promise<string | null> {
-  const cookieStore = await cookies();
-  return cookieStore.get(getAccessTokenCookieName())?.value ?? null;
-}
-
 async function parseJsonSafe(response: Response): Promise<unknown> {
   try {
     return await response.json();
@@ -54,22 +47,12 @@ export async function getFollowStatusAction(input: GetFollowStatusInput): Promis
   const parsed = getFollowStatusInputSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: 'Invalid input.' };
 
-  const accessToken = await getAccessToken();
-  if (!accessToken) return { success: false, error: 'Authentication required.' };
-
   const { username } = parsed.data;
   let response: Response;
   try {
-    response = await fetch(
-      buildSpringAuthUrl(`/api/priv/follows/${encodeURIComponent(username)}/status`),
-      {
-        method: 'GET',
-        cache: 'no-store',
-        headers: { Authorization: `Bearer ${accessToken}` },
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-      }
-    );
-  } catch {
+    response = await springFetch(`/api/priv/follows/${encodeURIComponent(username)}/status`);
+  } catch (e) {
+    if (e instanceof SpringAuthError) return { success: false, error: 'Authentication required.' };
     return { success: false, error: 'Service unavailable.' };
   }
 
@@ -87,22 +70,12 @@ export async function getFollowersAction(input: GetFollowersInput): Promise<GetF
   const parsed = getFollowersInputSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: 'Invalid input.' };
 
-  const accessToken = await getAccessToken();
-  if (!accessToken) return { success: false, error: 'Authentication required.' };
-
   const { username } = parsed.data;
   let response: Response;
   try {
-    response = await fetch(
-      buildSpringAuthUrl(`/api/priv/follows/${encodeURIComponent(username)}/followers`),
-      {
-        method: 'GET',
-        cache: 'no-store',
-        headers: { Authorization: `Bearer ${accessToken}` },
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-      }
-    );
-  } catch {
+    response = await springFetch(`/api/priv/follows/${encodeURIComponent(username)}/followers`);
+  } catch (e) {
+    if (e instanceof SpringAuthError) return { success: false, error: 'Authentication required.' };
     return { success: false, error: 'Service unavailable.' };
   }
 
@@ -135,22 +108,12 @@ export async function getFollowingAction(input: GetFollowingInput): Promise<GetF
   const parsed = getFollowingInputSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: 'Invalid input.' };
 
-  const accessToken = await getAccessToken();
-  if (!accessToken) return { success: false, error: 'Authentication required.' };
-
   const { username } = parsed.data;
   let response: Response;
   try {
-    response = await fetch(
-      buildSpringAuthUrl(`/api/priv/follows/${encodeURIComponent(username)}/following`),
-      {
-        method: 'GET',
-        cache: 'no-store',
-        headers: { Authorization: `Bearer ${accessToken}` },
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-      }
-    );
-  } catch {
+    response = await springFetch(`/api/priv/follows/${encodeURIComponent(username)}/following`);
+  } catch (e) {
+    if (e instanceof SpringAuthError) return { success: false, error: 'Authentication required.' };
     return { success: false, error: 'Service unavailable.' };
   }
 
@@ -179,21 +142,11 @@ export async function toggleFollowAction(input: ToggleFollowInput): Promise<Togg
   const parsed = toggleFollowInputSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: 'Invalid input.' };
 
-  const accessToken = await getAccessToken();
-  if (!accessToken) return { success: false, error: 'Authentication required.' };
-
   let response: Response;
   try {
-    response = await fetch(
-      buildSpringAuthUrl(`/api/priv/follows/${parsed.data.targetProfileId}`),
-      {
-        method: 'POST',
-        cache: 'no-store',
-        headers: { Authorization: `Bearer ${accessToken}` },
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-      }
-    );
-  } catch {
+    response = await springFetch(`/api/priv/follows/${parsed.data.targetProfileId}`, { method: 'POST' });
+  } catch (e) {
+    if (e instanceof SpringAuthError) return { success: false, error: 'Authentication required.' };
     return { success: false, error: 'Service unavailable.' };
   }
 
@@ -211,21 +164,11 @@ export async function acceptFollowRequestAction(input: FollowMutationInput): Pro
   const parsed = followMutationInputSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: 'Invalid input.' };
 
-  const accessToken = await getAccessToken();
-  if (!accessToken) return { success: false, error: 'Authentication required.' };
-
   let response: Response;
   try {
-    response = await fetch(
-      buildSpringAuthUrl(`/api/priv/follows/requests/${parsed.data.profileId}/accept`),
-      {
-        method: 'POST',
-        cache: 'no-store',
-        headers: { Authorization: `Bearer ${accessToken}` },
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-      }
-    );
-  } catch {
+    response = await springFetch(`/api/priv/follows/requests/${parsed.data.profileId}/accept`, { method: 'POST' });
+  } catch (e) {
+    if (e instanceof SpringAuthError) return { success: false, error: 'Authentication required.' };
     return { success: false, error: 'Service unavailable.' };
   }
 
@@ -243,21 +186,11 @@ export async function rejectFollowRequestAction(input: FollowMutationInput): Pro
   const parsed = followMutationInputSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: 'Invalid input.' };
 
-  const accessToken = await getAccessToken();
-  if (!accessToken) return { success: false, error: 'Authentication required.' };
-
   let response: Response;
   try {
-    response = await fetch(
-      buildSpringAuthUrl(`/api/priv/follows/requests/${parsed.data.profileId}/reject`),
-      {
-        method: 'POST',
-        cache: 'no-store',
-        headers: { Authorization: `Bearer ${accessToken}` },
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-      }
-    );
-  } catch {
+    response = await springFetch(`/api/priv/follows/requests/${parsed.data.profileId}/reject`, { method: 'POST' });
+  } catch (e) {
+    if (e instanceof SpringAuthError) return { success: false, error: 'Authentication required.' };
     return { success: false, error: 'Service unavailable.' };
   }
 
@@ -272,21 +205,11 @@ export async function rejectFollowRequestAction(input: FollowMutationInput): Pro
 }
 
 export async function getSuggestionsAction(): Promise<GetSuggestionsResult> {
-  const accessToken = await getAccessToken();
-  if (!accessToken) return { success: false, error: 'Authentication required.' };
-
   let response: Response;
   try {
-    response = await fetch(
-      buildSpringAuthUrl('/api/priv/follows/suggestions'),
-      {
-        method: 'GET',
-        cache: 'no-store',
-        headers: { Authorization: `Bearer ${accessToken}` },
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-      }
-    );
-  } catch {
+    response = await springFetch('/api/priv/follows/suggestions');
+  } catch (e) {
+    if (e instanceof SpringAuthError) return { success: false, error: 'Authentication required.' };
     return { success: false, error: 'Service unavailable.' };
   }
 
@@ -304,21 +227,11 @@ export async function removeFollowerAction(input: FollowMutationInput): Promise<
   const parsed = followMutationInputSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: 'Invalid input.' };
 
-  const accessToken = await getAccessToken();
-  if (!accessToken) return { success: false, error: 'Authentication required.' };
-
   let response: Response;
   try {
-    response = await fetch(
-      buildSpringAuthUrl(`/api/priv/follows/followers/${parsed.data.profileId}`),
-      {
-        method: 'DELETE',
-        cache: 'no-store',
-        headers: { Authorization: `Bearer ${accessToken}` },
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-      }
-    );
-  } catch {
+    response = await springFetch(`/api/priv/follows/followers/${parsed.data.profileId}`, { method: 'DELETE' });
+  } catch (e) {
+    if (e instanceof SpringAuthError) return { success: false, error: 'Authentication required.' };
     return { success: false, error: 'Service unavailable.' };
   }
 

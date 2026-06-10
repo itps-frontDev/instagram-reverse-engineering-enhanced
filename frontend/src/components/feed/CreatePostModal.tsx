@@ -25,6 +25,7 @@ import Image from 'next/image';
 import { X } from 'lucide-react';
 import {ProfilePicture} from '@/components';
 import { createPostAction } from '@/features/posts';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CreatePostModalProps {
   isOpen: boolean;
@@ -33,6 +34,7 @@ interface CreatePostModalProps {
 }
 
 export default function CreatePostModal({ isOpen, onClose, width = 855 }: CreatePostModalProps) {
+  const { profile: currentProfile } = useAuth();
   const [phase, setPhase] = useState<'crop' | 'details'>('crop'); // Fase corrente della modale
   const [isDragging, setIsDragging] = useState(false); // Stato drag & drop
   const [uploadedImages, setUploadedImages] = useState<string[]>([]); // Array di immagini caricate (data URLs)
@@ -46,7 +48,6 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
   const [isUploading, setIsUploading] = useState(false); // Stato caricamento post
   const [caption, setCaption] = useState(''); // Didascalia del post
   const [hasAudio, setHasAudio] = useState(true);   // Se includere audio nei video
-  const [currentProfile, setCurrentProfile] = useState<{ username: string; full_name: string | null; profile_image_url: string | null } | null>(null); // Profilo utente corrente
   const [isDarkMode, setIsDarkMode] = useState(() => {  // Stato modalità scura
     if (typeof window !== 'undefined') {
       return document.documentElement.classList.contains('dark');
@@ -65,7 +66,6 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
 
   useEffect(() => {
     if (isOpen) {
-      fetchCurrentProfile();
       // Imposta stato dark mode iniziale
       setIsDarkMode(document.documentElement.classList.contains('dark'));
       
@@ -88,19 +88,6 @@ export default function CreatePostModal({ isOpen, onClose, width = 855 }: Create
       };
     }
   }, [isOpen]);
-
-  const fetchCurrentProfile = async () => {
-    try {
-      const response = await fetch('/api/auth/me');
-      if (response.ok) {
-        const data = await response.json();
-        const payload = data.data ?? data;
-        setCurrentProfile(payload.profile ?? payload);
-      }
-    } catch (error) {
-      console.error('Error fetching current profile:', error);
-    }
-  };
 
   const uploadedImage = uploadedImages[currentImageIndex] || null;
   const modalWidth = phase === 'details' ? 1100 : width;

@@ -2,8 +2,9 @@
 
 import { revalidatePath } from 'next/cache';
 
-import { buildSpringAuthUrl } from '@/lib/auth/backend';
-import { getProfileAccessToken, parseJsonSafe } from '@/features/profile/shared';
+import { springFetch } from '@/lib/spring-client';
+import { SpringAuthError } from '@/lib/spring-error';
+import { parseJsonSafe } from '@/features/profile/shared';
 import {
   getSecurityResponseSchema,
   updateSecurityInputSchema,
@@ -18,22 +19,11 @@ export async function getSecurityDataAction(): Promise<{
   data?: { email: string | null; phoneNumber: string | null };
   error?: string;
 }> {
-  const accessToken = await getProfileAccessToken();
-  if (!accessToken) {
-    return { success: false, error: 'Authentication required.' };
-  }
-
   let response: Response;
   try {
-    response = await fetch(buildSpringAuthUrl('/api/priv/profiles/security'), {
-      method: 'GET',
-      cache: 'no-store',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-      signal: AbortSignal.timeout(SECURITY_TIMEOUT_MS),
-    });
-  } catch {
+    response = await springFetch('/api/priv/profiles/security');
+  } catch (e) {
+    if (e instanceof SpringAuthError) return { success: false, error: 'Authentication required.' };
     return { success: false, error: 'Service unavailable.' };
   }
 
@@ -69,24 +59,15 @@ export async function updateSecurityAction(input: UpdateSecurityInput): Promise<
     return { success: false, error: parsedInput.error.issues[0]?.message || 'Invalid input.' };
   }
 
-  const accessToken = await getProfileAccessToken();
-  if (!accessToken) {
-    return { success: false, error: 'Authentication required.' };
-  }
-
   let response: Response;
   try {
-    response = await fetch(buildSpringAuthUrl('/api/priv/profiles/security'), {
+    response = await springFetch('/api/priv/profiles/security', {
       method: 'PUT',
-      cache: 'no-store',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(parsedInput.data),
-      signal: AbortSignal.timeout(SECURITY_TIMEOUT_MS),
     });
-  } catch {
+  } catch (e) {
+    if (e instanceof SpringAuthError) return { success: false, error: 'Authentication required.' };
     return { success: false, error: 'Service unavailable.' };
   }
 

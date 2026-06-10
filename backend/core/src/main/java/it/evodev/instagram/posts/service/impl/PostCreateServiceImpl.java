@@ -48,6 +48,7 @@ public class PostCreateServiceImpl implements PostCreateService {
         Map.entry("image/png",       ".png"),
         Map.entry("image/gif",       ".gif"),
         Map.entry("image/webp",      ".webp"),
+        Map.entry("image/avif",      ".avif"),
         Map.entry("video/mp4",       ".mp4"),
         Map.entry("video/quicktime", ".mov"),
         Map.entry("video/webm",      ".webm")
@@ -159,17 +160,24 @@ public class PostCreateServiceImpl implements PostCreateService {
                 && (bytes[2] & 0xFF) == 0xDF && (bytes[3] & 0xFF) == 0xA3) {
             return "video/webm";
         }
-        // MP4 / MOV: ISO Base Media 'ftyp' box at offset 4
+        // AVIF / MP4 / MOV: ISO Base Media 'ftyp' box at offset 4
         if (bytes.length >= 8
                 && bytes[4] == 0x66 && bytes[5] == 0x74 && bytes[6] == 0x79 && bytes[7] == 0x70) {
-            // QuickTime brand: 'qt  ' (71 74 20 20)
-            if (bytes.length >= 12 && (bytes[8] & 0xFF) == 0x71 && (bytes[9] & 0xFF) == 0x74) {
-                return "video/quicktime";
+            if (bytes.length >= 12) {
+                // QuickTime brand: 'qt  ' (71 74 20 20)
+                if ((bytes[8] & 0xFF) == 0x71 && (bytes[9] & 0xFF) == 0x74) {
+                    return "video/quicktime";
+                }
+                // AVIF brand: 'avif' or 'avis'
+                if (bytes[8] == 0x61 && bytes[9] == 0x76 && bytes[10] == 0x69
+                        && (bytes[11] == 0x66 || bytes[11] == 0x73)) {
+                    return "image/avif";
+                }
             }
             return "video/mp4";
         }
         throw new PostCreateValidationException(
-            "Formato non supportato alla posizione " + position + ". Formati ammessi: JPEG, PNG, GIF, WebP, MP4, MOV, WebM");
+            "Formato non supportato alla posizione " + position + ". Formati ammessi: JPEG, PNG, GIF, WebP, AVIF, MP4, MOV, WebM");
     }
 
     private boolean startsWith(byte[] data, byte[] prefix) {

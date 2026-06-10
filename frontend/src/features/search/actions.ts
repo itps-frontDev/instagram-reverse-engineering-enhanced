@@ -1,8 +1,7 @@
 "use server";
 
-import { cookies } from "next/headers";
-
-import { buildSpringAuthUrl, getAccessTokenCookieName } from "@/lib/auth/backend";
+import { springFetch } from "@/lib/spring-client";
+import { SpringAuthError } from "@/lib/spring-error";
 import {
   searchBackendResponseSchema,
   searchInputSchema,
@@ -10,8 +9,6 @@ import {
   type SearchData,
   type SearchInput,
 } from "@/features/search/schema";
-
-const SEARCH_TIMEOUT_MS = 10_000;
 
 async function parseJsonSafe(response: Response): Promise<unknown> {
   try {
@@ -27,30 +24,17 @@ export async function searchProfilesAction(input: SearchInput): Promise<SearchAc
     return { success: false, error: "Invalid search input." };
   }
 
-  const cookieStore = await cookies();
-  const accessToken = cookieStore.get(getAccessTokenCookieName())?.value;
-  if (!accessToken) {
-    return { success: false, error: "Authentication required." };
-  }
-
   const params = new URLSearchParams({
     q: parsed.data.q,
     type: parsed.data.type,
     limit: String(parsed.data.limit),
   });
-  const url = `${buildSpringAuthUrl("/api/priv/search")}?${params.toString()}`;
 
   let response: Response;
   try {
-    response = await fetch(url, {
-      method: "GET",
-      cache: "no-store",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-      signal: AbortSignal.timeout(SEARCH_TIMEOUT_MS),
-    });
-  } catch {
+    response = await springFetch(`/api/priv/search?${params.toString()}`);
+  } catch (e) {
+    if (e instanceof SpringAuthError) return { success: false, error: "Authentication required." };
     return { success: false, error: "Search service unavailable." };
   }
 

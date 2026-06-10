@@ -1,10 +1,8 @@
 'use server';
 
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { springFetch } from '@/lib/spring-client';
 import { SpringAuthError } from '@/lib/spring-error';
-import { getAccessTokenCookieName } from '@/lib/auth/backend';
 import {
   postSaveBackendResponseSchema,
   togglePostSaveInputSchema,
@@ -93,33 +91,12 @@ export async function togglePostSaveAction(input: TogglePostSaveInput): Promise<
  */
 export async function getProfilePostsAction(input: GetProfilePostsInput) {
   try {
-    // 1. Valida input
     const validatedInput = GetProfilePostsInputSchema.parse(input);
 
-    // 2. Estrai access token
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get(getAccessTokenCookieName())?.value;
-
-    if (!accessToken) {
-      return {
-        success: false,
-        error: 'No authentication token found',
-      };
-    }
-
-    // 3. Fetch da Spring Boot
     const { username, tab = 'posts', page = 0 } = validatedInput;
     const params = new URLSearchParams({ tab, page: String(page) });
-    const url = `${process.env.SPRING_API_BASE_URL}/api/priv/profiles/${encodeURIComponent(username)}/posts?${params}`;
 
-    const res = await fetch(url, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store', // Sempre fresco per paginazione
-    });
+    const res = await springFetch(`/api/priv/profiles/${encodeURIComponent(username)}/posts?${params}`);
 
     // 4. Parse risposta
     const json = await res.json();

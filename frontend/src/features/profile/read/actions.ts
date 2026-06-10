@@ -1,6 +1,7 @@
 'use server';
 
-import { buildSpringAuthUrl } from '@/lib/auth/backend';
+import { springFetch } from '@/lib/spring-client';
+import { SpringAuthError } from '@/lib/spring-error';
 import {
   getProfileByUsernameInputSchema,
   getProfileByUsernameResultSchema,
@@ -16,27 +17,17 @@ import {
   type GetProfilePreviewResult,
   type MeProfile,
 } from './schema';
-import { getProfileAccessToken, parseJsonSafe } from '@/features/profile/shared';
+import { parseJsonSafe } from '@/features/profile/shared';
 
-const GET_PROFILE_BY_USERNAME_TIMEOUT_MS = 5_000;
-const GET_PROFILE_PREVIEW_TIMEOUT_MS = 5_000;
 
 type GetMeProfileResult =
   | { success: true; data: MeProfile }
   | { success: false; error: string };
 
 export async function getMeProfileAction(): Promise<GetMeProfileResult> {
-  const accessToken = await getProfileAccessToken();
-  if (!accessToken) return { success: false, error: 'Authentication required.' };
-
   let response: Response;
   try {
-    response = await fetch(buildSpringAuthUrl('/api/priv/profiles/me'), {
-      method: 'GET',
-      cache: 'no-store',
-      headers: { Authorization: `Bearer ${accessToken}` },
-      signal: AbortSignal.timeout(5_000),
-    });
+    response = await springFetch('/api/priv/profiles/me', { method: 'GET' });
   } catch {
     return { success: false, error: 'Service unavailable.' };
   }
@@ -72,25 +63,12 @@ export async function getProfileByUsernameAction(input: GetProfileByUsernameInpu
     return { success: false, error: 'Invalid input.' };
   }
 
-  const accessToken = await getProfileAccessToken();
-  if (!accessToken) {
-    return { success: false, error: 'Authentication required.' };
-  }
-
   const { username } = parsed.data;
-  const url = `${buildSpringAuthUrl(`/api/priv/profiles/${encodeURIComponent(username)}`)}`;
-
   let response: Response;
   try {
-    response = await fetch(url, {
-      method: 'GET',
-      cache: 'no-store',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-      signal: AbortSignal.timeout(GET_PROFILE_BY_USERNAME_TIMEOUT_MS),
-    });
-  } catch {
+    response = await springFetch(`/api/priv/profiles/${encodeURIComponent(username)}`);
+  } catch (e) {
+    if (e instanceof SpringAuthError) return { success: false, error: 'Authentication required.' };
     return { success: false, error: 'Service unavailable.' };
   }
 
@@ -142,25 +120,12 @@ export async function getProfilePreviewAction(input: GetProfilePreviewInput): Pr
     return { success: false, error: 'Invalid input.' };
   }
 
-  const accessToken = await getProfileAccessToken();
-  if (!accessToken) {
-    return { success: false, error: 'Authentication required.' };
-  }
-
   const { username } = parsed.data;
-  const url = `${buildSpringAuthUrl(`/api/priv/profiles/${encodeURIComponent(username)}/preview`)}`;
-
   let response: Response;
   try {
-    response = await fetch(url, {
-      method: 'GET',
-      cache: 'no-store',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-      signal: AbortSignal.timeout(GET_PROFILE_PREVIEW_TIMEOUT_MS),
-    });
-  } catch {
+    response = await springFetch(`/api/priv/profiles/${encodeURIComponent(username)}/preview`);
+  } catch (e) {
+    if (e instanceof SpringAuthError) return { success: false, error: 'Authentication required.' };
     return { success: false, error: 'Service unavailable.' };
   }
 

@@ -1,9 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
 
-import { buildSpringAuthUrl, getAccessTokenCookieName } from "@/lib/auth/backend";
+import { springFetch } from "@/lib/spring-client";
+import { SpringAuthError } from "@/lib/spring-error";
 import {
   deleteNotificationInputSchema,
   getNotificationsInputSchema,
@@ -70,11 +70,6 @@ async function parseJsonSafe(response: Response): Promise<unknown> {
   }
 }
 
-async function getAccessToken(): Promise<string | null> {
-  const cookieStore = await cookies();
-  return cookieStore.get(getAccessTokenCookieName())?.value ?? null;
-}
-
 function mapError(status: number): string {
   if (status === 401) return "Authentication required.";
   if (status === 403) return "You cannot access this notification.";
@@ -88,24 +83,15 @@ async function callNotificationsApi<T>(input: {
   method?: "GET" | "POST" | "PATCH" | "DELETE";
   body?: unknown;
 }): Promise<NotificationsActionResult<T>> {
-  const accessToken = await getAccessToken();
-  if (!accessToken) {
-    return { success: false, error: "Missing access token." };
-  }
-
   let response: Response;
   try {
-    response = await fetch(buildSpringAuthUrl(input.path), {
+    response = await springFetch(input.path, {
       method: input.method ?? "GET",
-      cache: "no-store",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
+      headers: { "Content-Type": "application/json" },
       body: input.body ? JSON.stringify(input.body) : undefined,
-      signal: AbortSignal.timeout(10_000),
     });
-  } catch {
+  } catch (e) {
+    if (e instanceof SpringAuthError) return { success: false, error: "Authentication required." };
     return { success: false, error: "Notifications backend is unreachable." };
   }
 

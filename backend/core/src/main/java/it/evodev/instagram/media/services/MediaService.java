@@ -29,6 +29,7 @@ public class MediaService {
             Map.entry(".png",  "image/png"),
             Map.entry(".gif",  "image/gif"),
             Map.entry(".webp", "image/webp"),
+            Map.entry(".avif", "image/avif"),
             Map.entry(".mp4",  "video/mp4"),
             Map.entry(".mov",  "video/quicktime"),
             Map.entry(".webm", "video/webm"),

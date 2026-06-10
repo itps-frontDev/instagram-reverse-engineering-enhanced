@@ -53,11 +53,6 @@ export async function springFetch(
   path: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  const accessToken = await getAccessToken();
-  if (!accessToken) {
-    throw new SpringAuthError(401, "Missing access token.");
-  }
-
   const buildRequest = (token: string): RequestInit => ({
     ...options,
     cache: "no-store",
@@ -69,8 +64,20 @@ export async function springFetch(
     signal: options.signal ?? AbortSignal.timeout(10_000),
   });
 
+  let accessToken = await getAccessToken();
+
+  // Access token cookie expired/missing — try silent refresh before giving up
+  if (!accessToken) {
+    accessToken = await tryRefresh();
+    if (!accessToken) {
+      throw new SpringAuthError(401, "Session expired, please log in again.");
+    }
+    return fetch(buildSpringAuthUrl(path), buildRequest(accessToken));
+  }
+
   let response = await fetch(buildSpringAuthUrl(path), buildRequest(accessToken));
 
+  // Token present but rejected by backend (edge case: clock skew, blacklist, etc.)
   if (response.status === 401) {
     const newToken = await tryRefresh();
     if (!newToken) {

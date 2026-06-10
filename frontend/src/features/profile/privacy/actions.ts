@@ -2,11 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 
-import { buildSpringAuthUrl } from '@/lib/auth/backend';
-import { getProfileAccessToken, parseJsonSafe } from '@/features/profile/shared';
+import { springFetch } from '@/lib/spring-client';
+import { SpringAuthError } from '@/lib/spring-error';
+import { parseJsonSafe } from '@/features/profile/shared';
 import { privacyApiResponseSchema, updatePrivacyInputSchema, type UpdatePrivacyInput } from './schema';
 
-const UPDATE_PRIVACY_TIMEOUT_MS = 8_000;
 
 export async function updatePrivacyAction(input: UpdatePrivacyInput): Promise<{
   success: boolean;
@@ -18,25 +18,15 @@ export async function updatePrivacyAction(input: UpdatePrivacyInput): Promise<{
     return { success: false, error: 'Invalid input.' };
   }
 
-  const accessToken = await getProfileAccessToken();
-  if (!accessToken) {
-    return { success: false, error: 'Authentication required.' };
-  }
-
-  const url = buildSpringAuthUrl('/api/priv/profiles/privacy');
   let response: Response;
   try {
-    response = await fetch(url, {
+    response = await springFetch('/api/priv/profiles/privacy', {
       method: 'PUT',
-      cache: 'no-store',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ isPrivate: parsed.data.isPrivate }),
-      signal: AbortSignal.timeout(UPDATE_PRIVACY_TIMEOUT_MS),
     });
-  } catch {
+  } catch (e) {
+    if (e instanceof SpringAuthError) return { success: false, error: 'Authentication required.' };
     return { success: false, error: 'Service unavailable.' };
   }
 

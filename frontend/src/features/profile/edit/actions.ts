@@ -1,7 +1,8 @@
 'use server';
 
-import { buildSpringAuthUrl } from '@/lib/auth/backend';
-import { getProfileAccessToken, parseJsonSafe } from '@/features/profile/shared';
+import { springFetch } from '@/lib/spring-client';
+import { SpringAuthError } from '@/lib/spring-error';
+import { parseJsonSafe } from '@/features/profile/shared';
 import {
   editProfileInputSchema,
   editProfileResponseSchema,
@@ -14,24 +15,15 @@ export async function editProfileAction(input: unknown): Promise<EditProfileActi
     return { success: false, error: 'Invalid input.' };
   }
 
-  const accessToken = await getProfileAccessToken();
-  if (!accessToken) {
-    return { success: false, error: 'Authentication required.' };
-  }
-
   let response: Response;
   try {
-    response = await fetch(buildSpringAuthUrl('/api/priv/profiles/edit'), {
+    response = await springFetch('/api/priv/profiles/edit', {
       method: 'PUT',
-      cache: 'no-store',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(parsedInput.data),
-      signal: AbortSignal.timeout(5_000),
     });
-  } catch {
+  } catch (e) {
+    if (e instanceof SpringAuthError) return { success: false, error: 'Authentication required.' };
     return { success: false, error: 'Service unavailable.' };
   }
 
