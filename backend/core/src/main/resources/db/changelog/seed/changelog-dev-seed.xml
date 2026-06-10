@@ -104,7 +104,7 @@ BEGIN
                         THEN bio_templates[1 + (floor(random() * array_length(bio_templates, 1)))::int]
                         ELSE NULL END;
         website := CASE WHEN random() < 0.3 THEN 'https://' || uname || '.com' ELSE NULL END;
-        img     := CASE WHEN i >= 4 THEN 'https://i.pravatar.cc/300?u=' || uname ELSE NULL END;
+        img     := 'https://i.pravatar.cc/300?u=' || uname;
         priv    := random() < 0.25;
         verif   := random() < 0.15;
 
