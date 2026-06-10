@@ -1,0 +1,18 @@
+services:
+
+  # Sovrascrive SOLO SPRING_PROFILES_ACTIVE di core per attivare il seed.
+  # Usa tutto il resto da docker-compose.yml (immagini, DB, Redis, Azure reale).
+  #
+  # Utilizzo (una tantum, primo avvio sulla VM):
+  #   docker compose -f docker-compose.yml -f docker-compose.seed.yml up
+  #
+  # Al termine, riavvia normalmente senza questo file:
+  #   docker compose -f docker-compose.yml up -d
+  core:
+    environment:
+      # Attiva application-dev.properties:
+      #   - spring.liquibase.contexts=dev  → esegue i changeset context="dev" (seed SQL)
+      #   - @Profile("dev")               → attiva DevBlobSeeder (carica blob su Azure reale)
+      # La AZURE_STORAGE_CONNECTION_STRING reale dalla .env sovrascrive
+      # il fallback Azurite definito in application-dev.properties.
+      SPRING_PROFILES_ACTIVE: dev
