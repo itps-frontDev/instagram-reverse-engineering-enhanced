@@ -63,7 +63,7 @@ public class DevBlobSeeder implements ApplicationRunner {
 
     private int seedProfiles() {
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                "SELECT id, username FROM profiles WHERE deleted_at IS NULL");
+                "SELECT id, username FROM profiles WHERE deleted_at IS NULL AND profile_image_url LIKE 'http%'");
         return processInParallel(rows, row -> {
             long id = ((Number) row.get("id")).longValue();
             String username = row.get("username").toString();
@@ -157,6 +157,7 @@ public class DevBlobSeeder implements ApplicationRunner {
     // Helpers
     // ──────────────────────────────────────────────────────────────────────────
 
+    // Carica il blob solo se non esiste già su Azure — evita upload doppi ai restart
     private void uploadIfAbsent(String blobName, String url, String contentType) {
         if (!blobStorageService.exists(blobName)) {
             byte[] data = download(url);
@@ -164,6 +165,9 @@ public class DevBlobSeeder implements ApplicationRunner {
         }
     }
 
+    // Scarica un file da internet e lo restituisce come array di byte in memoria.
+    // Usa l'HttpClient condiviso (followRedirects attivo) con timeout di 15s.
+    // Lancia RuntimeException se la risposta non è 200 o se la connessione fallisce.
     private byte[] download(String url) {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
@@ -182,6 +186,12 @@ public class DevBlobSeeder implements ApplicationRunner {
         }
     }
 
+    // Esegue `task` su ogni elemento di `rows` in parallelo con un pool di 20 thread.
+    // Ogni CompletableFuture esegue il task in modo asincrono sull'executor;
+    // allOf(...).join() blocca finché tutti i future non sono completati.
+    // Gli errori sui singoli elementi vengono loggati ma non interrompono gli altri.
+    // Il finally garantisce lo shutdown dell'executor anche in caso di eccezione.
+    // Restituisce il numero di elementi processati con successo.
     private <T> int processInParallel(List<T> rows, Consumer<T> task) {
         if (rows.isEmpty()) return 0;
         ExecutorService executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
@@ -201,6 +211,7 @@ public class DevBlobSeeder implements ApplicationRunner {
         } finally {
             executor.shutdown();
             try {
+                // Aspetta max 60s che i thread in corso finiscano prima di uscire
                 executor.awaitTermination(60, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
