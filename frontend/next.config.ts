@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  logging: {
+    incomingRequests: {
+      ignore: [/^\/login/, /^\/register/],
+    },
+  },
+
   allowedDevOrigins: [
     "158.158.18.149", 
     "instagram-demo.spaincentral.cloudapp.azure.com"

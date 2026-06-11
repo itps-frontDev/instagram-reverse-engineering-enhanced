@@ -1,0 +1,62 @@
+path,methods,description,uses_db,uses_fs,requires_jwt,runtime_nodejs
+/api/auth/login,POST,"MIGRATED to Spring: /api/public/auth/login - login con restituzione access token + refresh token",Yes,No,No,Yes
+/api/auth/logout,POST,"MIGRATED to Spring: /api/priv/auth/logout - logout e invalidazione refresh token",No,No,Yes,Yes
+/api/auth/me,GET,"MIGRATED to Spring: /api/priv/auth/me - info utente autenticato corrente",Yes,No,Yes,Yes
+/api/auth/register,POST,"MIGRATED to Spring: /api/public/auth/register - registrazione utente + profilo in transazione",Yes,No,No,Yes
+/api/stories,GET,"MIGRATED to Spring: /api/priv/stories - story feed attivo per l'utente autenticato",Yes,No,No,Yes
+/api/stories,POST,"NOT MIGRATED: creazione story - endpoint mancante in Spring",Yes,Yes,Yes,Yes
+/api/stories/[id]/view,POST,"MIGRATED to Spring: /api/priv/stories/{storyId}/view - registra visualizzazione story in modo idempotente",Yes,No,Yes,No
+/api/stories/[id]/public,GET,"MIGRATED to Spring: /api/priv/stories/profiles/{profileId} - story viewer per profilo",Yes,No,Hybrid,No
+/api/stories/[id]/like,POST,"MIGRATED to Spring: POST /api/priv/likes/story/{id} - toggle like su story (endpoint unificato likes)",Yes,No,Yes,No
+/api/stories/[id]/viewers,GET,"NOT MIGRATED: lista viewer della story - endpoint mancante in Spring",Yes,No,Yes,Yes
+/api/search,GET,"MIGRATED to Spring: /api/priv/search - ricerca profili per username o nome",Yes,No,Yes,No
+/api/reels,GET,"MIGRATED to Spring: /api/priv/reels - reels feed (video post) con paginazione e excludeIds support",No,No,Yes,No
+/api/profiles/upload-image,POST,"MIGRATED to Spring: /api/priv/profiles/me/picture - PUT - upload foto profilo",Yes,Yes,Yes,No
+/api/profiles/suggestions,GET,"MIGRATED to Spring: /api/priv/follows/suggestions - top-20 profili pubblici non seguiti shuffled",No,No,Yes,No
+/api/profiles/security,PUT,"MIGRATED to Spring: /api/priv/profiles/security - aggiorna email/telefono/password (bcrypt)",Yes,No,Yes,No
+/api/profiles/remove-image,DELETE,"MIGRATED to Spring: /api/priv/profiles/me/picture - DELETE - rimozione foto profilo",Yes,Yes,Yes,No
+/api/profiles/privacy,PUT,"MIGRATED to Spring: /api/priv/profiles/privacy - aggiorna privacy profilo e promuove follow request pendenti in bulk",No,No,Yes,No
+/api/profiles/personal,PUT,"MIGRATED to Spring: /api/priv/profiles/personal - aggiorna username e full name con controllo unicità",No,No,Yes,No
+/api/profiles/me/followers,GET,"DEPRECATED: endpoint legacy rimosso; usare GET /api/priv/follows/{username}/followers",No,No,Yes,No
+/api/profiles/follow/reject,POST,"MIGRATED to Spring: /api/priv/follows/requests/{requesterProfileId}/reject - rifiuta follow request (status=rejected + soft delete); pubblica notifica",No,No,Yes,No
+/api/profiles/follow/accept,POST,"MIGRATED to Spring: /api/priv/follows/requests/{requesterProfileId}/accept - accetta follow request; aggiorna contatori e pubblica notifica",No,No,Yes,No
+/api/profiles/edit,PUT,"MIGRATED to Spring: /api/priv/profiles/edit - aggiorna bio, website e gender",No,No,Yes,No
+/api/profiles/birthday,PUT,"MIGRATED to Spring: /api/priv/profiles/birthday - aggiorna data di nascita con validazione età minima (13 anni)",No,No,Yes,No
+/api/profiles/actions/unfollow,POST,"MIGRATED to Spring: /api/priv/follows/{targetProfileId} - unfollow via toggle endpoint",No,No,Yes,No
+/api/profiles/actions/remove-follower,POST,"MIGRATED to Spring: /api/priv/follows/followers/{followerProfileId} - rimuovi follower dal profilo; aggiorna contatori e soft delete",No,No,Yes,No
+/api/profiles/actions/follow,POST,"MIGRATED to Spring: /api/priv/follows/{targetProfileId} - toggle follow/unfollow/cancel con restore-before-insert e notifiche",No,No,Yes,No
+/api/profiles/[username]/upload-image,POST,"MIGRATED to Spring: /api/priv/profiles/me/picture - PUT - upload foto profilo (solo owner)",Yes,Yes,Yes,No
+/api/profiles/[username],GET,"MIGRATED to Spring: /api/priv/profiles/{username} - profilo completo con flag contestuali e payload full/partial per privacy",Yes,No,Yes,No
+/api/profiles/[username]/preview,GET,"MIGRATED to Spring: /api/priv/profiles/{username}/preview - anteprima profilo con post recenti per card hover",Yes,No,Yes,No
+/api/profiles/[username]/remove-image,POST,"MIGRATED to Spring: /api/priv/profiles/me/picture - DELETE - rimozione foto profilo (solo owner)",Yes,No,Yes,No
+/api/profiles/[username]/posts,GET,"MIGRATED to Spring: /api/priv/profiles/{username}/posts - tab posts/reels/saved/tagged con paginazione e controllo privacy",Yes,No,Yes,No
+/api/profiles/[username]/following,GET,"MIGRATED to Spring: /api/priv/follows/{username}/following - lista following con controllo privacy e followStatus per item",No,No,Yes,No
+/api/profiles/[username]/followers,GET,"MIGRATED to Spring: /api/priv/follows/{username}/followers - lista followers con controllo privacy e followStatus per item",No,No,Yes,No
+/api/profiles/[username]/follow-status,GET,"MIGRATED to Spring: /api/priv/follows/{username}/status - stato relazione follow tra utente corrente e profilo target",No,No,Yes,No
+/api/profiles/[username]/can-view,GET,"MIGRATED to Spring: /api/priv/profiles/{username}/can-view - controlla se l'utente può visualizzare i contenuti del profilo (privacy)",Yes,No,Yes,No
+/api/posts/create,POST,"MIGRATED to Spring: POST /api/priv/posts - crea post con multipart/form-data (immagini + caption/location opzionali); supporta JPEG PNG GIF WebP AVIF MP4 MOV WebM; incrementa profiles.posts_count",Yes,Yes,Yes,No
+/api/posts/[postId]/unsave,POST,"MIGRATED to Spring: POST /api/priv/posts/{postId}/save-toggle - unsave via toggle endpoint",No,No,Yes,No
+/api/posts/[postId]/unlike,POST,"MIGRATED to Spring: POST /api/priv/likes/post/{id} - unlike via toggle endpoint unificato Spring likes",Yes,No,Yes,Yes
+/api/posts/[postId]/tags,GET,"MIGRATED to Spring: GET /api/priv/posts/{postId}/tags - fetch tag del post con username del profilo taggato",No,No,Yes,No
+/api/posts/[postId]/save,POST,"MIGRATED to Spring: POST /api/priv/posts/{postId}/save-toggle - save/unsave unificato con risposta {success,data.saved}",No,No,Yes,No
+/api/posts/[postId],GET|DELETE|PATCH,"MIGRATED to Spring: GET /api/priv/posts/{postId} - fetch singolo post con tutti i media; DELETE/PATCH solo owner",Yes,Yes,Yes,Yes
+/api/posts/[postId]/like,POST,"MIGRATED to Spring: POST /api/priv/likes/post/{id} - toggle like (endpoint unificato Spring likes)",Yes,No,Yes,Yes
+/api/posts/[postId]/is-saved,GET,"DEPRECATED: endpoint legacy rimosso; stato save ora incluso nella risposta Spring /api/priv/posts/{postId}",Yes,No,Yes,No
+/api/posts/[postId]/is-liked,GET,"DEPRECATED: endpoint legacy rimosso; stato like ora incluso nella risposta Spring likes",Yes,No,Yes,No
+/api/posts/[postId]/comment,POST,"UNIFIED to Spring: /api/priv/comments - creazione commento; lista e delete unificati su endpoint generico Spring",No,No,Yes,No
+/api/notifications,GET,"MIGRATED to Spring: /api/priv/notifications - lista notifiche con paginazione (limit, cursor)",Yes,No,Yes,Yes
+/api/notifications/unread-count,GET,"MIGRATED to Spring: /api/priv/notifications/unread-count - conteggio notifiche non lette",Yes,No,Yes,Yes
+/api/notifications/mark-read,PATCH,"MIGRATED to Spring: /api/priv/notifications/read-all - marca tutte le notifiche come lette",Yes,No,Yes,Yes
+/api/media/[...path],GET,"BLOB STORAGE PROXY: Next.js serve file media con access control (posts/stories/profili/messaggi); endpoint Spring parallelo /api/priv/media/{category}/{entityId}/{filename}",Yes,Yes,Yes,No
+/api/feed/save,POST,"MIGRATED to Spring: POST /api/priv/posts/{postId}/save-toggle - save dal feed via endpoint unificato Spring",No,No,Yes,No
+/api/feed,GET,"MIGRATED to Spring: /api/priv/feed - home feed con paginazione limit/offset: post di chi segui + post di profili pubblici + ultimo post dell'utente corrente",No,No,Yes,No
+/api/feed/like,POST,"MIGRATED to Spring: POST /api/priv/likes/post/{id} - toggle like dal feed (endpoint unificato Spring likes)",Yes,No,Yes,Yes
+/api/feed/comments,GET|POST,"MIGRATED to Spring: /api/priv/comments - lista e creazione commenti con controllo accesso post privati",Yes,No,Yes,Yes
+/api/feed/comments/like,POST,"MIGRATED to Spring: POST /api/priv/likes/comment/{id} - toggle like su commento (endpoint unificato Spring likes)",Yes,No,Yes,Yes
+/api/feed/comments/[id],DELETE,"MIGRATED to Spring: DELETE /api/priv/comments/{commentId} - elimina commento (owner commento o owner post)",No,No,Yes,No
+/api/explore,GET,"MIGRATED to Spring: /api/priv/explore - explore feed con post popolari da profili pubblici",No,No,Yes,No
+/api/direct/send,POST,"MIGRATED to Spring: POST /api/priv/direct/send - invia messaggio in chat (controllo partecipanti, WebSocket broadcast dopo commit)",No,No,Yes,No
+/api/direct/messages,GET,"MIGRATED to Spring: GET /api/priv/direct/messages?chatId= - ultimi 100 messaggi della chat (ORDER BY created_at DESC, id DESC)",No,No,Yes,No
+/api/direct/get-or-create,POST,"MIGRATED to Spring: POST /api/priv/direct/get-or-create - get o crea chat 1-to-1 tra utente corrente e otherProfileId",No,No,Yes,No
+/api/direct/chats,GET,"MIGRATED to Spring: GET /api/priv/direct/chats - lista chat con ultimo messaggio (LATERAL JOIN) + mutual followers senza chat",No,No,Yes,No
+/api/direct/messages (polling),GET,"MIGRATED to Spring WebSocket STOMP: real-time sostituito da CONNECT con JWT → SUBSCRIBE /user/queue/direct → PUBLISH /app/direct.send; il polling è rimosso",No,No,Yes,Yes

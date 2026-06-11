@@ -26,6 +26,8 @@ Una volta completata la migrazione di tutte le rotte, il frontend Next.js è sta
 
 Il risultato è un frontend **esclusivamente UI**: nessuna conoscenza del database, nessuna logica di business, nessuna dipendenza diretta ai dati. Ogni interazione passa per le API REST del backend Spring Boot tramite il gateway.
 
+La mappatura completa delle route migrate, con stato di migrazione e confronto legacy → Spring, è disponibile in [api/routes.md](api/routes.md).
+
 ---
 
 ## MVC (Model-View-Controller)
