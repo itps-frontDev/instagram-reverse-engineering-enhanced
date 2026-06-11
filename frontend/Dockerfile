@@ -32,7 +32,7 @@ RUN pnpm rebuild esbuild sharp unrs-resolver
 # Compila Next.js in modalità produzione.
 # ─────────────────────────────────────────
 FROM base AS builder
-RUN corepack prepare pnpm@10.7.0 --activate
+RUN corepack prepare pnpm@11.5.2 --activate
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN pnpm build
