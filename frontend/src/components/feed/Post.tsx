@@ -543,7 +543,7 @@ export default function Post({ post, onLike, onSave, onComment }: PostProps) {
           onClose={() => setShowPostOptionsModal(false)}
           onEdit={() => {
             // TODO: Implementare modifica post
-            console.log('Edit post');
+            console.log('Il post può essere modificato dal profilo personale');
           }}
           onDelete={() => {
             setShowPostOptionsModal(false);
