@@ -141,16 +141,6 @@ services:
       - redisdata:/data
       # Named volume: sessioni e cache sopravvivono ai restart
 
-  # ── BLOB STORAGE ─────────────────────────────────────────────
-  azurite:
-    image: mcr.microsoft.com/azure-storage/azurite
-    ports:
-      - "10000:10000"
-      - "10001:10001"
-      - "10002:10002"
-    command: "azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0"
-
-
 # Dichiarazione dei named volume —
 # Docker li crea automaticamente al primo avvio
 volumes:

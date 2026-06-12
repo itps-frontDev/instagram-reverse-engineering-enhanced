@@ -1,5 +1,6 @@
 services:
 
+  # ── FRONTEND ──────────────────────────────────────────
   frontend:
     build:
       context: ./frontend
@@ -22,23 +23,23 @@ services:
     environment:
       NODE_ENV: development
       WATCHPACK_POLLING: "true"
-      AUTH_BYPASS: ${AUTH_BYPASS:-false}
       # Su Windows, Docker non propaga gli eventi di modifica
       # file al container WSL2. WATCHPACK_POLLING forza Next.js
       # a controllare i file ogni tot millisecondi invece di
       # aspettare gli eventi → hot reload funziona su Windows.
 
-  # In sviluppo core ha hot-reload: il bind mount porta il sorgente
-  # dal PC nel container e bootRun ricompila al volo con devtools.
+  # ── CORE (monolite Spring Boot) ────────────────────────
+  # Il bind mount porta il sorgente dal PC nel container.
+  # Per applicare le modifiche: docker-compose restart core
   core:
     build:
       context: ./backend
       dockerfile: core/Dockerfile.dev   # sovrascrive il Dockerfile base
     volumes:
-      - ./backend:/app             # bind mount: tutta la root multi-module
-      - gradle_cache:/root/.gradle # named volume: cache Gradle.
-                                   # Senza questo volume, ogni rebuild del container
-                                   # riscaricherebbe centinaia di MB di dipendenze.
+      - ./backend:/app                  # bind mount: tutta la root multi-module
+      - gradle_cache_core:/root/.gradle # named volume: cache Gradle.
+                                        # Senza questo volume, ogni rebuild del container
+                                        # riscaricherebbe centinaia di MB di dipendenze.
     environment:
       SPRING_PROFILES_ACTIVE: dev
       AZURE_STORAGE_CONNECTION_STRING: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;"
@@ -52,13 +53,11 @@ services:
       - "5005:5005"                # porta debugger remoto Java (IntelliJ/VSCode)
     depends_on:
       - azurite
-      # In sviluppo core deve aspettare anche Azurite.
-      # Nel base compose non c'è questa dipendenza perché
-      # in produzione si usa Azure reale (nessun container).
+      # In produzione Azurite non esiste — si usa Azure Blob Storage reale.
 
-  # In sviluppo directs-service ha lo stesso bind mount di core:
-  # entrambi puntano a ./backend perché è la root del multi-module.
-  # Gradle costruisce il JAR del modulo directs-service tramite bootJar, e Docker esegue direttamente quel JAR.
+  # ── DIRECTS SERVICE ───────────────────────────────────
+  # Stesso bind mount di core — entrambi puntano a ./backend (root multi-module).
+  # Per applicare le modifiche: docker-compose restart directs-service
   directs-service:
     build:
       context: ./backend
@@ -74,6 +73,7 @@ services:
     ports:
       - "5006:5006"                # porta debugger remoto Java separata da core
 
+  # ── SERVICE DISCOVERY (Eureka) ────────────────────────
   service-discovery:
     build:
       context: ./backend
@@ -81,6 +81,7 @@ services:
     ports:
       - "8761:8761"   # Dashboard Eureka raggiungibile da browser in sviluppo
 
+  # ── CONFIG SERVER ─────────────────────────────────────
   config-server:
     build:
       context: ./backend
@@ -88,6 +89,7 @@ services:
     ports:
       - "8888:8888"   # Utile in sviluppo per verificare la config: GET /core/default
 
+  # ── API GATEWAY ───────────────────────────────────────
   api-gateway:
     build:
       context: ./backend
@@ -95,6 +97,7 @@ services:
     ports:
       - "8080:8080"   # Accesso diretto dal browser
 
+  # ── DATABASE ──────────────────────────────────────────
   db:
     ports:
       - "5432:5432"
@@ -103,34 +106,26 @@ services:
       # o IntelliJ Database Tool durante lo sviluppo.
       # In produzione questa porta NON è esposta.
 
+  # ── REDIS ─────────────────────────────────────────────
   redis:
     ports:
       - "6379:6379"
       # Stesso motivo: espone Redis per Redis Insight
       # o altri tool di ispezione in sviluppo.
 
+  # ── AZURITE ─────────────────────────────────────────────
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite
-    # Definito SOLO nell'override: Azurite è un emulatore locale,
-    # in produzione non esiste — si usa Azure Blob Storage reale.
     volumes:
       - azuritedata:/data
-      # Named volume: i blob caricati sopravvivono ai restart del container
-    command: >
-      azurite
-      --blobHost 0.0.0.0
-      --queueHost 0.0.0.0
-      --tableHost 0.0.0.0
-      --location /data
-    # --blobHost 0.0.0.0 → raggiungibile da tutti i container nella rete Docker
-    # --location /data   → salva i dati nel volume montato
+    command: "azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --location /data"
     ports:
       - "10000:10000"   # Blob service  → Azure Storage Explorer / tool locali
       - "10001:10001"   # Queue service
       - "10002:10002"   # Table service
 
 volumes:
-  gradle_cache:          # cache Gradle di core, persistente tra rebuild
+  gradle_cache_core:     # cache Gradle di core, persistente tra rebuild
   gradle_cache_directs:  # cache Gradle di directs-service, separata per evitare lock conflict
   pnpm_store:            # store globale pnpm persistente tra rebuild
   azuritedata:           # blob e dati Azurite persistenti tra rebuild

@@ -42,9 +42,6 @@ AUTH_REFRESH_TOKEN_COOKIE_PATH=/
 # CORS
 CORS_ALLOWED_ORIGINS=http://localhost:3000
 
-# Bypass autenticazione — solo sviluppo locale, mai true in produzione
-AUTH_BYPASS=false
-
 # Azure Blob Storage
 # Sviluppo locale con Azurite (emulatore):
 AZURE_STORAGE_CONNECTION_STRING=UseDevelopmentStorage=true

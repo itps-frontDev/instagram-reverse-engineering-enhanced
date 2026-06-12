@@ -10,6 +10,9 @@ WORKDIR /app
 COPY gradlew ./
 COPY gradle ./gradle
 COPY build.gradle settings.gradle ./
+
+# build.gradle di tutti i sottomoduli — Gradle li richiede tutti per la resolution.
+# COPY con destinazione che termina in / crea la sottodirectory automaticamente.
 COPY core/build.gradle ./core/
 COPY directs-service/build.gradle ./directs-service/
 COPY service-discovery/build.gradle ./service-discovery/

@@ -3,17 +3,16 @@
 FROM gradle:8-jdk21-alpine
 WORKDIR /app
 
-# Il codice sorgente arriva tramite bind mount da docker-compose.override.yml:
-#   volumes:
-#     - ./backend:/app
-# Quindi /app nel container = ./backend sul PC.
+# Il codice sorgente NON viene copiato nell'immagine.
+# Arriva tramite bind mount da docker-compose.override.yml (./backend:/app).
+# Per applicare le modifiche al codice: docker-compose restart directs-service
 
 EXPOSE 8082
 EXPOSE 5006
 
-# Il debugger usa la porta 5006 (5005 è già usata da core)
 CMD ["./gradlew", ":directs-service:bootRun", \
      "--project-cache-dir", "/root/.gradle/project-cache", \
      "--args=--spring.profiles.active=dev"]
-# --project-cache-dir: stessa ragione di core/Dockerfile.dev —
-# evita il lock conflict su /app/.gradle con il container core.
+# --project-cache-dir sposta la cache Gradle fuori da /app/.gradle (bind mount condiviso
+# con core) per evitare deadlock su fileHashes.lock quando i due container
+# partono contemporaneamente.
