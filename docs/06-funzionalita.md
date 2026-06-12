@@ -19,7 +19,7 @@
 - **Storie** — contenuti effimeri con scadenza automatica.
 - **Reels** — video brevi con visualizzazione a scroll verticale.
 - **Commenti** — sui post, con reply annidate.
-- **Likes** — su post, reels e commenti, gestiti tramite [Strategy Pattern](03-pattern.md#strategy-pattern).
+- **Likes** — su post, reels, storie e commenti, gestiti tramite [Strategy Pattern](03-pattern.md#strategy-pattern).
 - **Salvataggio post** — raccolta personale di post salvati.
 
 ---

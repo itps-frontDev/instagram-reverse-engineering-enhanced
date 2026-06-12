@@ -2,14 +2,14 @@
 
 [← Torna all'indice](../README.md)
 
-**Prerequisiti:** Docker Desktop, Java 21.0.11, Node.js 22.21.1, pnpm 11.0.9.
+**Prerequisiti:** Docker Desktop, Java 21.0.11, Node.js 22.21.1, pnpm 11.5.2.
 
 ```bash
 # Verifica versioni
 docker --version
 java --version     # 21.0.11
 node --version     # v22.21.1
-pnpm --version     # 11.0.9
+pnpm --version     # 11.5.2
 ```
 
 > **Node.js v22** — il frontend è testato con Node.js 22.21.1. La v24 può causare incompatibilità con alcune dipendenze native.

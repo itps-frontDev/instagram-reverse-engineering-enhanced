@@ -27,6 +27,7 @@ db/changelog/db.changelog-master.yaml
   ├── changelog-post-tags.xml
   ├── changelog-comments.xml
   ├── changelog-stories.xml
+  ├── changelog-story-views.xml
   ├── changelog-saved-posts.xml
   ├── changelog-likes.xml
   ├── changelog-notifications.xml

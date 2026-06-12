@@ -30,13 +30,15 @@ La mappatura completa delle route migrate, con stato di migrazione e confronto l
 
 ---
 
-## MVC (Model-View-Controller)
+## Architettura a Livelli (Controller–Service–Repository)
 
-Il backend Spring Boot è organizzato secondo il pattern **MVC**. Ogni dominio funzionale (`posts`, `profiles`, `likes`, ecc.) è strutturato in tre livelli chiaramente separati:
+Il backend Spring Boot è costruito sopra Spring MVC, ma non segue il pattern MVC puro: i controller restituiscono JSON, non viste — la presentazione vive interamente nel frontend Next.js, che è un'applicazione separata. Il pattern effettivamente applicato è un'**architettura a livelli**: ogni dominio funzionale (`posts`, `profile`, `likes`, ecc.) è strutturato in tre livelli chiaramente separati:
 
 - **Controller** — espone gli endpoint REST, riceve le richieste HTTP e delega al service. Non contiene logica di business.
 - **Service** — contiene tutta la logica di business e orchestra le operazioni sui repository.
 - **Repository** — strato di accesso al dato via Spring Data JPA. Nessun controller accede direttamente al database.
+
+Rispetto all'MVC classico, il "Model" è qui suddiviso tra service (logica di business), repository (accesso dati) ed entity JPA (stato), mentre la "View" è sostituita dalla serializzazione JSON delle risposte.
 
 ---
 
@@ -52,12 +54,12 @@ Il **Strategy Pattern** è applicato in tre aree:
 
 ### Likes
 
-Il comportamento del "like" varia in base al tipo di contenuto (post, reel, commento). Un'interfaccia `LikeStrategy` definisce il contratto, con implementazioni distinte per ciascun tipo. La strategia corretta viene selezionata a runtime in base al contesto, senza `if/else` nel service.
+Il comportamento del "like" varia in base al tipo di contenuto (post, storia, commento). Un'interfaccia `LikeStrategy` definisce il contratto, con implementazioni distinte per ciascun tipo. La strategia corretta viene selezionata a runtime in base al contesto, senza `if/else` nel service.
 
 ```
 LikeStrategy
   ├── PostLikeStrategy
-  ├── ReelLikeStrategy
+  ├── StoryLikeStrategy
   └── CommentLikeStrategy
 ```
 

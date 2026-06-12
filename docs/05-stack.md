@@ -12,14 +12,14 @@
 | **Framework** | Spring Boot | 3.4.5 | Application framework (`core` + `directs-service`) |
 | **Cloud** | Spring Cloud | 2024.0.1 | Eureka, Config Server, Gateway |
 | **Build** | Gradle | 9.4.1 | Build tool multi-project |
-| **ORM** | Spring Data JPA / Hibernate | 3.4.5 | Persistenza relazionale |
-| **Sicurezza** | Spring Security | 3.4.5 | Filtri HTTP e autorizzazione |
+| **ORM** | Spring Data JPA / Hibernate | 3.4.5 / 6.6.13 | Persistenza relazionale |
+| **Sicurezza** | Spring Security | 6.4.5 | Filtri HTTP e autorizzazione |
 | **JWT** | JJWT | 0.12.6 | Generazione e validazione token |
-| **WebSocket** | Spring WebSocket + STOMP | 3.4.5 | Messaggistica real-time (`directs-service`) |
+| **WebSocket** | Spring WebSocket + STOMP | 6.2.6 (Spring Framework) | Messaggistica real-time (`directs-service`) |
 | **Auth token store** | Spring Data Redis | 3.4.5 | Refresh token, blacklist access token, sessioni utente |
 | **DB Migration** | Liquibase | 4.29.2 | Versionamento schema |
 | **Storage** | Azure Spring Cloud Blob | 5.24.0 | Upload media su Azure Blob Storage |
-| **Utility** | Lombok | 3.4.5 | Riduzione boilerplate Java |
+| **Utility** | Lombok | 1.18.38 | Riduzione boilerplate Java |
 
 ---
 
@@ -28,7 +28,7 @@
 | Componente | Tecnologia | Versione | Ruolo |
 | :--- | :--- | :--- | :--- |
 | **Runtime** | Node.js | 22.21.1 | Runtime JavaScript |
-| **Package manager** | pnpm | 11.0.9 | Gestione dipendenze |
+| **Package manager** | pnpm | 11.5.2 | Gestione dipendenze |
 | **Framework** | Next.js | 16.2.6 | UI, App Router, Server Components |
 | **UI library** | React | 19.2.6 | Rendering componenti |
 | **Linguaggio** | TypeScript | 5.9.3 | Type safety |
@@ -45,8 +45,8 @@
 | :--- | :--- | :--- | :--- |
 | **Database** | PostgreSQL | 16 | Persistenza relazionale |
 | **Token store** | Redis | 7 | Refresh token, blacklist e sessioni utente |
-| **Container** | Docker | 29.4.2 | Containerizzazione servizi |
-| **Orchestrazione** | Docker Compose | 5.1.3 | Avvio e gestione multi-container |
+| **Container** | Docker | — | Containerizzazione servizi |
+| **Orchestrazione** | Docker Compose | — | Avvio e gestione multi-container |
 | **Discovery** | Eureka (Spring Cloud Netflix) | 2024.0.1 | Service registry e load balancing |
 | **Gateway** | Spring Cloud Gateway | 2024.0.1 | Reverse proxy + routing |
 | **Config** | Spring Cloud Config Server | 2024.0.1 | Configurazione centralizzata |

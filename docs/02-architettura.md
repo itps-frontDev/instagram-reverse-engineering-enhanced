@@ -62,9 +62,8 @@ instagram-reverse-engineering-enhanced/
 │   ├── 📂 core/                               # Monolite Spring Boot (porta 8081)
 │   │   └── src/main/
 │   │       ├── java/it/evodev/instagram/
-│   │       │   ├── auth/                      # JWT, login, register, filtri sicurezza
+│   │       │   ├── auth/                      # JWT, login, register, filtri e config sicurezza (CORS)
 │   │       │   ├── common/                    # DTO e utility condivise tra moduli
-│   │       │   ├── config/                    # Configurazione Spring (CORS, Security)
 │   │       │   ├── posts/                     # Post CRUD
 │   │       │   ├── feed/                      # Home feed
 │   │       │   ├── stories/                   # Storie con scadenza

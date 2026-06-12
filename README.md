@@ -18,7 +18,7 @@ La migrazione ha seguito lo **Strangler Fig Pattern**: nessun big-bang rewrite, 
 | :--- | :--- | :--- |
 | 01 | [Stato Iniziale](docs/01-stato-iniziale.md) | Architettura del monolite Next.js, limiti e motivazioni del refactoring |
 | 02 | [Architettura Finale](docs/02-architettura.md) | Diagramma del sistema, componenti, flusso delle richieste e struttura directory |
-| 03 | [Pattern Architetturali](docs/03-pattern.md) | Strangler Fig, MVC, Repository, Strategy, Event-driven, WebSocket STOMP |
+| 03 | [Pattern Architetturali](docs/03-pattern.md) | Strangler Fig, architettura a livelli, Repository, Strategy, Event-driven, WebSocket STOMP |
 | 04 | [Evoluzione per Componente](docs/04-evoluzione.md) | Come ogni parte del sistema è cambiata: DB, Direct, microservizi, Spring Cloud |
 | 05 | [Stack Tecnologico](docs/05-stack.md) | Tecnologie usate e confronto con il sistema originale |
 | 06 | [Funzionalità](docs/06-funzionalita.md) | Feature del sistema e scenari d'uso principali |
