@@ -16,8 +16,12 @@ RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # --frozen-lockfile: installa ESATTAMENTE le versioni in pnpm-lock.yaml
-# senza aggiornare nulla — comportamento deterministico e sicuro
-RUN pnpm install --frozen-lockfile
+# senza aggiornare nulla — comportamento deterministico e sicuro.
+# La cache mount BuildKit conserva lo store pnpm tra i rebuild dell'immagine
+# (a runtime c'è anche il named volume pnpm_store, ma quello non aiuta
+# durante il build).
+RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
 
 # NON copiamo il codice sorgente:
 # arriva tramite bind mount da docker-compose.override.yml

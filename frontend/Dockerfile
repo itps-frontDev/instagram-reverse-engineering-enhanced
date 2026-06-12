@@ -24,7 +24,10 @@ FROM base AS deps
 COPY package.json pnpm-lock.yaml .npmrc ./
 
 RUN corepack prepare pnpm@11.5.2 --activate
-RUN pnpm install --frozen-lockfile --ignore-scripts
+# La cache mount di BuildKit conserva lo store pnpm tra una build e l'altra:
+# i pacchetti si scaricano solo la prima volta, anche se il layer è invalidato.
+RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile --ignore-scripts
 RUN pnpm rebuild esbuild sharp unrs-resolver
 
 # ─────────────────────────────────────────
@@ -33,6 +36,19 @@ RUN pnpm rebuild esbuild sharp unrs-resolver
 # ─────────────────────────────────────────
 FROM base AS builder
 RUN corepack prepare pnpm@11.5.2 --activate
+
+# ATTENZIONE: le variabili NEXT_PUBLIC_* vengono INLINATE NEL BUNDLE QUI,
+# durante `pnpm build` — impostarle a runtime nel compose NON ha effetto
+# sul codice client. Per un deploy con dominio reale vanno passate come
+# build args: docker build --build-arg NEXT_PUBLIC_WS_URL=https://... .
+# I default riproducono lo sviluppo locale (tutto su localhost).
+ARG NEXT_PUBLIC_API_URL=http://localhost:8080
+ARG NEXT_PUBLIC_WS_URL=http://localhost:8080/ws
+ARG NEXT_PUBLIC_BASE_URL=http://localhost:3000
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL
+ENV NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN pnpm build

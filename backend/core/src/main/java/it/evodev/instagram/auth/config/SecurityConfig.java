@@ -45,6 +45,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/ws/**").permitAll()       // SockJS handshake; JWT auth handled by STOMP ChannelInterceptor
+                .requestMatchers("/actuator/health").permitAll() // healthcheck Docker; espone solo {"status":"UP"}, nessun dettaglio
                 .requestMatchers("/api/priv/**").authenticated()
                 .anyRequest().denyAll()
             )

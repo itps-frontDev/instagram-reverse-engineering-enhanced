@@ -1,7 +1,10 @@
 # syntax=docker/dockerfile:1
 
-# Usa l'immagine Gradle completa — serve il JDK intero per compilare con bootRun.
-FROM gradle:8-jdk21-alpine
+# Basta il JDK: il CMD esegue ./gradlew (dal bind mount), cioè il wrapper,
+# che scarica la versione di Gradle fissata in gradle-wrapper.properties.
+# Un'immagine "gradle:*" non servirebbe: il suo Gradle preinstallato
+# non verrebbe mai usato.
+FROM eclipse-temurin:21-jdk-alpine
 WORKDIR /app
 
 # Il codice sorgente NON viene copiato nell'immagine.
@@ -11,9 +14,10 @@ WORKDIR /app
 EXPOSE 8081
 EXPOSE 5005
 
+# Il profilo dev arriva da SPRING_PROFILES_ACTIVE (docker-compose.override.yml),
+# non va ripetuto qui con --args.
 CMD ["./gradlew", ":core:bootRun", \
-     "--project-cache-dir", "/root/.gradle/project-cache", \
-     "--args=--spring.profiles.active=dev"]
+     "--project-cache-dir", "/root/.gradle/project-cache"]
 # --project-cache-dir sposta la cache Gradle fuori da /app/.gradle (bind mount condiviso
 # con directs-service) per evitare deadlock su fileHashes.lock quando i due container
 # partono contemporaneamente.

@@ -2,10 +2,17 @@ services:
 
   # ── FRONTEND ──────────────────────────────────────────
   frontend:
-    image: instagramregistry-g8csa4hhfnbmhfby.azurecr.io/frontend:1.0.0 
+    # REGISTRY e TAG sovrascrivibili da .env — i default riproducono
+    # il comportamento precedente (ACR, tag 1.0.0).
+    image: ${REGISTRY:-instagramregistry-g8csa4hhfnbmhfby.azurecr.io}/frontend:${TAG:-1.0.0}
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
+      # NEXT_PUBLIC_*: efficaci SOLO in sviluppo, dove `next dev` le legge
+      # a runtime. Nell'immagine di produzione sono già inlinate nel bundle
+      # durante `pnpm build` — lì vanno passate come build args
+      # (vedi frontend/Dockerfile, stage builder).
       NEXT_PUBLIC_API_URL: ${API_URL}
       NEXT_PUBLIC_WS_URL: ${API_URL}/ws
       NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL}
@@ -17,22 +24,24 @@ services:
       AUTH_REFRESH_TOKEN_COOKIE_NAME: ${AUTH_REFRESH_TOKEN_COOKIE_NAME}
       AUTH_REFRESH_TOKEN_COOKIE_PATH: ${AUTH_REFRESH_TOKEN_COOKIE_PATH}
     depends_on:
-      - api-gateway
-      # Docker avvia frontend DOPO api-gateway,
-      # ma non aspetta che sia "pronto" —
-      # solo che il container sia partito.
+      api-gateway:
+        condition: service_healthy
+        # Il frontend parte solo quando il gateway risponde sull'actuator —
+        # niente più finestra in cui la UI è su ma le API non rispondono.
 
   # ── SERVICE DISCOVERY (Eureka) ────────────────────────
   # Registro centrale: ogni microservizio si registra qui all'avvio
   # e il gateway interroga Eureka per sapere su quale IP:porta gira un servizio.
   # Parte per primo perché tutti gli altri dipendono da lui.
   service-discovery:
-    image: instagramregistry-g8csa4hhfnbmhfby.azurecr.io/service-discovery:1.0.0
+    image: ${REGISTRY:-instagramregistry-g8csa4hhfnbmhfby.azurecr.io}/service-discovery:${TAG:-1.0.0}
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8761/actuator/health | grep UP || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 20s   # i fallimenti durante il bootstrap non consumano retries
 
   # ── CONFIG SERVER ─────────────────────────────────────
   # Fonte centralizzata di configurazione per tutti i microservizi.
@@ -40,18 +49,31 @@ services:
   # NON si registra su Eureka (altrimenti i servizi non possono trovarlo
   # prima di avere la config — un classico problema chicken-and-egg).
   config-server:
-    image: instagramregistry-g8csa4hhfnbmhfby.azurecr.io/config-server:1.0.0
+    image: ${REGISTRY:-instagramregistry-g8csa4hhfnbmhfby.azurecr.io}/config-server:${TAG:-1.0.0}
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8888/actuator/health | grep UP || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 20s
 
   # ── CORE (monolite Spring Boot) ────────────────────────
   # Gestisce tutto tranne i messaggi diretti: auth, profili, post, storie, notifiche, ecc.
   # La porta 8081 NON è esposta all'esterno: il traffico arriva sempre tramite api-gateway.
   core:
-    image: instagramregistry-g8csa4hhfnbmhfby.azurecr.io/core:1.0.0
+    image: ${REGISTRY:-instagramregistry-g8csa4hhfnbmhfby.azurecr.io}/core:${TAG:-1.0.0}
+    restart: unless-stopped
+    healthcheck:
+      # /actuator/health è permitAll nel SecurityConfig (serve solo per questo check)
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health | grep UP || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s   # bootstrap Spring + migrazioni Liquibase.
+                          # In dev la prima compilazione Gradle può superarlo:
+                          # lo stato "unhealthy" è solo cosmetico finché
+                          # nessun servizio dipende dalla salute di core.
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME}
       # "db" è il nome del servizio PostgreSQL definito sotto —
@@ -70,7 +92,7 @@ services:
       db:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
       service-discovery:
         condition: service_healthy
       config-server:
@@ -78,11 +100,19 @@ services:
 
   # ── DIRECTS SERVICE ───────────────────────────────────
   # Microservizio dedicato alla messaggistica in tempo reale (WebSocket + REST).
-  # Condivide il database con core ma non esegue migrazioni Liquibase:
-  # le tabelle chats/messages/chat_participants vengono create da core.
+  # Condivide il database con core ma gestisce autonomamente le proprie tabelle
+  # (chat, messages, chat_participants) tramite migrazioni Liquibase separate
+  # (directs-service/src/main/resources/db/changelog).
   # La porta 8082 NON è esposta all'esterno: il traffico arriva tramite api-gateway.
   directs-service:
-    image: instagramregistry-g8csa4hhfnbmhfby.azurecr.io/directs-service:1.0.0
+    image: ${REGISTRY:-instagramregistry-g8csa4hhfnbmhfby.azurecr.io}/directs-service:${TAG:-1.0.0}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/actuator/health | grep UP || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
     environment:
       # Stesso DB di core — directs legge/scrive le stesse tabelle.
       # "db" viene risolto da Docker come hostname del container PostgreSQL.
@@ -107,7 +137,14 @@ services:
   #   /api/priv/direct/**     → directs-service (REST)
   #   /**                     → core (tutto il resto)
   api-gateway:
-    image: instagramregistry-g8csa4hhfnbmhfby.azurecr.io/api-gateway:1.0.0
+    image: ${REGISTRY:-instagramregistry-g8csa4hhfnbmhfby.azurecr.io}/api-gateway:${TAG:-1.0.0}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep UP || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     ports:
       - "8080:8080"   # Unica porta esposta all'esterno
     depends_on:
@@ -119,6 +156,7 @@ services:
   # ── DATABASE ──────────────────────────────────────────
   db:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
@@ -137,9 +175,16 @@ services:
   # ── REDIS ─────────────────────────────────────────────
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
     volumes:
       - redisdata:/data
       # Named volume: sessioni e cache sopravvivono ai restart
+    healthcheck:
+      # redis-cli ping fallisce (exit != 0) finché il server non accetta connessioni
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
 # Dichiarazione dei named volume —
 # Docker li crea automaticamente al primo avvio

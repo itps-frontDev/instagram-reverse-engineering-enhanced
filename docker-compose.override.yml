@@ -74,10 +74,15 @@ services:
       - "5006:5006"                # porta debugger remoto Java separata da core
 
   # ── SERVICE DISCOVERY (Eureka) ────────────────────────
+  # Dockerfile unico per tutti i moduli backend: MODULE e PORT
+  # selezionano cosa compilare (vedi backend/Dockerfile).
   service-discovery:
     build:
       context: ./backend
-      dockerfile: service-discovery/Dockerfile
+      dockerfile: Dockerfile
+      args:
+        MODULE: service-discovery
+        PORT: "8761"
     ports:
       - "8761:8761"   # Dashboard Eureka raggiungibile da browser in sviluppo
 
@@ -85,7 +90,10 @@ services:
   config-server:
     build:
       context: ./backend
-      dockerfile: config-server/Dockerfile
+      dockerfile: Dockerfile
+      args:
+        MODULE: config-server
+        PORT: "8888"
     ports:
       - "8888:8888"   # Utile in sviluppo per verificare la config: GET /core/default
 
@@ -93,7 +101,10 @@ services:
   api-gateway:
     build:
       context: ./backend
-      dockerfile: api-gateway/Dockerfile
+      dockerfile: Dockerfile
+      args:
+        MODULE: api-gateway
+        PORT: "8080"
     ports:
       - "8080:8080"   # Accesso diretto dal browser
 
@@ -115,7 +126,12 @@ services:
 
   # ── AZURITE ─────────────────────────────────────────────
   azurite:
-    image: mcr.microsoft.com/azure-storage/azurite
+    # Tag pinnato: senza tag Docker usa "latest", che cambia sotto i piedi
+    # tra un pull e l'altro e rende l'ambiente non riproducibile.
+    # NB: la versione deve supportare l'API version richiesta dall'SDK Azure
+    # del core (azure-storage-blob 12.31.1 → API 2025-07-05 → Azurite >= 3.35).
+    # Se si aggiorna il BOM Azure, probabilmente va aggiornato anche questo tag.
+    image: mcr.microsoft.com/azure-storage/azurite:3.35.0
     volumes:
       - azuritedata:/data
     command: "azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --location /data"

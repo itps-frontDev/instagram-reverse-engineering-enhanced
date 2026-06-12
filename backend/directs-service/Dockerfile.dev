@@ -1,6 +1,8 @@
 # syntax=docker/dockerfile:1
 
-FROM gradle:8-jdk21-alpine
+# Basta il JDK: il CMD esegue ./gradlew (dal bind mount), cioè il wrapper,
+# che scarica la versione di Gradle fissata in gradle-wrapper.properties.
+FROM eclipse-temurin:21-jdk-alpine
 WORKDIR /app
 
 # Il codice sorgente NON viene copiato nell'immagine.
@@ -10,9 +12,10 @@ WORKDIR /app
 EXPOSE 8082
 EXPOSE 5006
 
+# Il profilo dev arriva da SPRING_PROFILES_ACTIVE (docker-compose.override.yml),
+# non va ripetuto qui con --args.
 CMD ["./gradlew", ":directs-service:bootRun", \
-     "--project-cache-dir", "/root/.gradle/project-cache", \
-     "--args=--spring.profiles.active=dev"]
+     "--project-cache-dir", "/root/.gradle/project-cache"]
 # --project-cache-dir sposta la cache Gradle fuori da /app/.gradle (bind mount condiviso
 # con core) per evitare deadlock su fileHashes.lock quando i due container
 # partono contemporaneamente.

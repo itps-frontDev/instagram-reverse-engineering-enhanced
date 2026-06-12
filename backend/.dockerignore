@@ -1,0 +1,13 @@
+# Output di build e cache locali: i Dockerfile compilano da sorgente
+# nello stage builder, quindi questi file non servono nel build context.
+# Senza questo file il context pesa ~96 MB (build/ + .gradle), con ~5 MB.
+build/
+*/build/
+.gradle/
+*/.gradle/
+
+# Documentazione — non serve alle immagini
+AGENTS.md
+
+# NOTA: la directory gradle/ (wrapper) NON va ignorata:
+# i Dockerfile la copiano per eseguire ./gradlew.
