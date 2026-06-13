@@ -9,13 +9,11 @@ services:
     ports:
       - "3000:3000"
     environment:
-      # NEXT_PUBLIC_*: efficaci SOLO in sviluppo, dove `next dev` le legge
-      # a runtime. Nell'immagine di produzione sono già inlinate nel bundle
-      # durante `pnpm build` — lì vanno passate come build args
-      # (vedi frontend/Dockerfile, stage builder).
-      NEXT_PUBLIC_API_URL: ${API_URL}
-      NEXT_PUBLIC_WS_URL: ${API_URL}/ws
-      NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL}
+      # NB: le NEXT_PUBLIC_* NON stanno qui. Nell'immagine di produzione sono
+      # già inlinate nel bundle a build time (vedi frontend/Dockerfile), quindi
+      # a runtime sarebbero inerti. In sviluppo le legge `next dev`: per questo
+      # vivono in docker-compose.override.yml, dove servono davvero.
+      #
       # Con la nuova architettura il frontend parla con il gateway, non direttamente con core.
       # Il gateway è l'unico punto di ingresso su porta 8080 e smista lui verso i servizi giusti.
       SPRING_API_BASE_URL: http://api-gateway:8080

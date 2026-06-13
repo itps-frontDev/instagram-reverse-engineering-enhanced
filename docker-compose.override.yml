@@ -27,6 +27,11 @@ services:
       # file al container WSL2. WATCHPACK_POLLING forza Next.js
       # a controllare i file ogni tot millisecondi invece di
       # aspettare gli eventi → hot reload funziona su Windows.
+      # NEXT_PUBLIC_*: in dev le legge `next dev` a runtime, quindi stanno qui
+      # (in produzione sono inlinate nel bundle a build time — vedi Dockerfile).
+      NEXT_PUBLIC_API_URL: ${API_URL}
+      NEXT_PUBLIC_WS_URL: ${API_URL}/ws
+      NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL}
 
   # ── CORE (monolite Spring Boot) ────────────────────────
   # Il bind mount porta il sorgente dal PC nel container.
