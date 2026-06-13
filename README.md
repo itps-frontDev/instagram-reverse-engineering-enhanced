@@ -22,5 +22,5 @@ La migrazione ha seguito lo **Strangler Fig Pattern**: nessun big-bang rewrite, 
 | 04 | [Evoluzione per Componente](docs/04-evoluzione.md) | Come ogni parte del sistema è cambiata: DB, Direct, microservizi, Spring Cloud |
 | 05 | [Stack Tecnologico](docs/05-stack.md) | Tecnologie usate e confronto con il sistema originale |
 | 06 | [Funzionalità](docs/06-funzionalita.md) | Feature del sistema e scenari d'uso principali |
-| 07 | [Installazione](docs/07-installazione.md) | Guida all'avvio con Docker Compose e in modalità sviluppo |
+| 07 | [Installazione](docs/07-installazione.md) | Guida all'avvio con Docker Compose: modalità sviluppo, produzione e demo online |
 | 08 | [Troubleshooting](docs/08-troubleshooting.md) | Problemi comuni e soluzioni |

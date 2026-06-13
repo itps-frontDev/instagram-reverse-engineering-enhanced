@@ -16,3 +16,10 @@ services:
       # La AZURE_STORAGE_CONNECTION_STRING reale dalla .env sovrascrive
       # il fallback Azurite definito in application-dev.properties.
       SPRING_PROFILES_ACTIVE: dev
+
+  # Anche directs-service ha il proprio seed Liquibase (chat e messaggi demo,
+  # context="dev" in db/changelog/seed/changelog-dev-seed.xml): senza questo
+  # override il suo profilo resta prod e le chat non vengono seedate.
+  directs-service:
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
