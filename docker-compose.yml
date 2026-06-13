@@ -23,6 +23,11 @@ services:
       AUTH_ACCESS_TOKEN_COOKIE_PATH: ${AUTH_ACCESS_TOKEN_COOKIE_PATH}
       AUTH_REFRESH_TOKEN_COOKIE_NAME: ${AUTH_REFRESH_TOKEN_COOKIE_NAME}
       AUTH_REFRESH_TOKEN_COOKIE_PATH: ${AUTH_REFRESH_TOKEN_COOKIE_PATH}
+      # Flag Secure dei cookie di auth, letto a runtime:
+      #   false → demo servita in HTTP puro su dominio reale (il browser
+      #           scarterebbe un cookie Secure e il login resterebbe bloccato)
+      #   true / non impostata → Secure (deploy HTTPS; default in produzione)
+      COOKIE_SECURE: ${COOKIE_SECURE:-}
     depends_on:
       api-gateway:
         condition: service_healthy

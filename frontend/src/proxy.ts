@@ -20,6 +20,7 @@
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { isCookieSecure } from '@/lib/auth/cookie-security';
 
 /**
  * Route che richiedono autenticazione.
@@ -68,7 +69,7 @@ async function tryRefresh(refreshToken: string): Promise<RefreshedTokens | null>
 }
 
 function applyTokenCookies(response: NextResponse, tokens: RefreshedTokens, accessTokenName: string, refreshTokenName: string) {
-  const secure = process.env.NODE_ENV === 'production';
+  const secure = isCookieSecure();
   response.cookies.set({
     name: accessTokenName,
     value: tokens.accessToken,

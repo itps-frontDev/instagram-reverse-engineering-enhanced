@@ -9,6 +9,7 @@ import {
   refreshWithSpring,
 } from "@/lib/auth/backend";
 import { SpringAuthError } from "@/lib/spring-error";
+import { isCookieSecure } from "@/lib/auth/cookie-security";
 
 async function getAccessToken(): Promise<string | null> {
   const cookieStore = await cookies();
@@ -21,7 +22,7 @@ async function tryRefresh(): Promise<string | null> {
     const refreshToken = cookieStore.get(getRefreshTokenCookieName())?.value;
     if (!refreshToken) return null;
 
-    const secure = process.env.NODE_ENV === "production";
+    const secure = isCookieSecure();
     const tokenPayload = await refreshWithSpring(refreshToken);
 
     cookieStore.set({

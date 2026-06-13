@@ -13,6 +13,7 @@ import {
   refreshWithSpring,
   registerWithSpring,
 } from "@/lib/auth/backend";
+import { isCookieSecure } from "@/lib/auth/cookie-security";
 import { sanitizeInternalRedirectPath } from "@/lib/auth/redirect";
 import type { AuthActionResult, LoginData, LoginInput, RegisterData, RegisterInput } from "@/features/auth/schema";
 import { loginInputSchema, registerInputSchema } from "@/features/auth/schema";
@@ -28,7 +29,7 @@ function buildTokenCookies(
   cookieStore: CookieStore,
   payload: { accessToken: string; expiresIn: number; refreshToken: string; refreshExpiresIn: number }
 ) {
-  const secure = process.env.NODE_ENV === "production";
+  const secure = isCookieSecure();
   cookieStore.set({
     name: getAccessTokenCookieName(),
     value: payload.accessToken,

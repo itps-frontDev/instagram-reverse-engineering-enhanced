@@ -173,7 +173,19 @@ docker build \
   -t local/frontend:1.0.0 frontend/
 ```
 
-**3. Avvio.** Con `-f` esplicito, che esclude l'override di sviluppo:
+**3. Cookie su HTTP.** Se lo stack è servito in **HTTP puro** su un dominio
+reale (non `localhost`, non HTTPS) — com'è il caso della VM demo — impostare
+nel `.env`:
+
+```env
+COOKIE_SECURE=false
+```
+
+Senza questo, i cookie di auth vengono emessi con flag `Secure` e il browser
+li scarta su HTTP: il login riesce ma si resta bloccati sulla pagina di login.
+Con un deploy HTTPS lasciare la variabile vuota.
+
+**4. Avvio.** Con `-f` esplicito, che esclude l'override di sviluppo:
 
 ```bash
 # Primo avvio su database vuoto — esegue anche il seed (PostgreSQL + blob):

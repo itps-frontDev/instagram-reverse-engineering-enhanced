@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { springFetch } from '@/lib/spring-client';
 import { SpringAuthError } from '@/lib/spring-error';
 import { getAccessTokenCookieName, getRefreshTokenCookieName, refreshWithSpring } from '@/lib/auth/backend';
+import { isCookieSecure } from '@/lib/auth/cookie-security';
 import { z } from 'zod';
 import {
   getMessagesInputSchema,
@@ -115,7 +116,7 @@ export async function refreshAndGetAccessTokenAction(): Promise<string | null> {
 
   try {
     const tokenPayload = await refreshWithSpring(refreshToken);
-    const secure = process.env.NODE_ENV === 'production';
+    const secure = isCookieSecure();
     cookieStore.set({ name: getAccessTokenCookieName(), value: tokenPayload.accessToken, httpOnly: true, sameSite: 'lax', path: '/', maxAge: tokenPayload.expiresIn, secure });
     cookieStore.set({ name: getRefreshTokenCookieName(), value: tokenPayload.refreshToken, httpOnly: true, sameSite: 'lax', path: '/', maxAge: tokenPayload.refreshExpiresIn, secure });
     return tokenPayload.accessToken;
