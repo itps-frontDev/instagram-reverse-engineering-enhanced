@@ -54,7 +54,7 @@ vim .env
 ```bash
 cd ~/instagram-reverse-engineering-enhanced
 
-git pull origin microservices          # scarica le ultime modifiche
+git pull origin          # scarica le ultime modifiche
 
 # Se hai modificato codice o Dockerfile → ricostruisci
 docker compose down
@@ -72,7 +72,7 @@ docker compose up -d
 ```bash
 docker compose ps                      # stato di tutti i container
 docker compose up -d                   # avvia tutto
-docker compose up --build -d          # avvia tutto e ricostruisce
+docker compose up --build -d           # avvia tutto e ricostruisce
 docker compose down                    # ferma tutto (DB mantenuto)
 docker compose down -v                 # ferma tutto + reset DB
 docker compose restart core            # riavvia un singolo servizio
