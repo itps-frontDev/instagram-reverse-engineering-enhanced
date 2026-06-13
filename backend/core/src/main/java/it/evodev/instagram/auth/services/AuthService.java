@@ -130,10 +130,15 @@ public class AuthService {
         } catch (DataIntegrityViolationException e) {
             logger.error("Register failed due to integrity violation: {}", e.getMessage());
             String message = String.valueOf(e.getMessage()).toLowerCase();
-            if (message.contains("email")) {
+            // Classifica come "già esistente" SOLO se è davvero una violazione di
+            // unicità: il messaggio di una DataIntegrityViolation include l'intera
+            // INSERT (quindi sempre le parole "email"/"username"), perciò un match
+            // grezzo su quelle parole maschererebbe altri errori (es. NOT NULL).
+            boolean isDuplicate = message.contains("duplicate") || message.contains("unique");
+            if (isDuplicate && message.contains("email")) {
                 throw new EmailAlreadyExistsException("Email already registered");
             }
-            if (message.contains("username")) {
+            if (isDuplicate && message.contains("username")) {
                 throw new UsernameAlreadyExistsException("Username already exists");
             }
             throw new AuthException("Registration failed");
