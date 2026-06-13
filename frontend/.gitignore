@@ -147,3 +147,8 @@ data/
 *.db-wal
 data/instagram.db-shm
 data/instagram.db-wal
+
+# pnpm cache/store (evita file generati e migliaia di asset inutili nel repo)
+.pnpm
+.pnpm-store
+pnpm-store
