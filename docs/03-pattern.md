@@ -83,7 +83,7 @@ Lo storage è sempre **Azure Blob Storage**, con un'unica implementazione `Azure
 
 ## Event-Driven con Spring Application Events
 
-Le **notifiche** sono gestite tramite un sistema a eventi interno alla JVM del modulo `core`. Quando si verifica un'azione rilevante, il service pubblica un `ApplicationEvent` Spring tramite `ApplicationEventPublisher`. Un `@EventListener` intercetta l'evento in modo asincrono e genera la notifica corrispondente.
+Le **notifiche** sono gestite tramite un sistema a eventi interno alla JVM del modulo `core`. Quando si verifica un'azione rilevante, il service pubblica un `ApplicationEvent` Spring tramite `ApplicationEventPublisher`. Un `@EventListener` intercetta l'evento ed esegue la logica di notifica in modo sincrono nello stesso thread del publisher.
 
 ```
 LikeService.like()
